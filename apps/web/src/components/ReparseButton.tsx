@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 // Entry-point button for a catalogue re-parse. Owns the behaviour (POST to create a
 // batch → route to the diff-review screen); appearance is supplied by the host page via
 // `className` or `style` so it sits natively wherever it's dropped (SKU detail, imports
@@ -21,7 +22,7 @@ interface ReparseButtonProps {
 const DEFAULT_STYLE: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: '6px',
   fontSize: '12px', fontWeight: 650, fontFamily: 'inherit',
-  color: '#fff', background: '#6366F1', border: 'none',
+  color: '#fff', background: C.indigo, border: 'none',
   borderRadius: '8px', padding: '7px 12px', cursor: 'pointer',
 }
 

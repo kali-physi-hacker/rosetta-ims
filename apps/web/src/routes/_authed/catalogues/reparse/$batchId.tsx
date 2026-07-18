@@ -260,7 +260,7 @@ interface ItemBlockProps {
   edit: ItemEdit
 }
 
-const cbStyle: React.CSSProperties = { accentColor: '#6366F1', width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0, margin: 0 }
+const cbStyle: React.CSSProperties = { accentColor: C.indigo, width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0, margin: 0 }
 
 function ItemBlock({ item, state, expanded, changesOnly, busy, rowBusy, onToggle, onConfirm, onSkip, onUndo, selected, onSelect, edit }: ItemBlockProps) {
   const changed = item.fields.filter(f => f.changed)

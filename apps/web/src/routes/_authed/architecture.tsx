@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 
@@ -6,10 +7,10 @@ export const Route = createFileRoute('/_authed/architecture')({ component: Archi
 type Mode = 'current' | 'target' | 'split'
 
 const PHASE = {
-  1: { bg: '#EEF2FF', color: '#4338CA', border: '#C7D2FE', label: 'Phase 1 — Now' },
+  1: { bg: C.primaryBg, color: C.indigoInk, border: C.indigoLine, label: 'Phase 1 — Now' },
   2: { bg: '#DBEAFE', color: '#1E40AF', border: '#BFDBFE', label: 'Phase 2 — by end July (Desmond)' },
-  3: { bg: '#FEF3C7', color: '#92400E', border: '#FDE68A', label: 'Phase 3 — by end July' },
-  4: { bg: '#DCFCE7', color: '#166534', border: '#BBF7D0', label: 'Phase 4 — by end July (Desmond)' },
+  3: { bg: C.warnBg, color: C.amberInk, border: '#FDE68A', label: 'Phase 3 — by end July' },
+  4: { bg: C.greenBg, color: C.green, border: '#BBF7D0', label: 'Phase 4 — by end July (Desmond)' },
 } as const
 
 function Card({
@@ -30,12 +31,12 @@ function Card({
   width?: string
 }) {
   const TONE: Record<string, { bg: string; border: string; title: string; sub: string }> = {
-    neutral: { bg: 'white',   border: '#E2E8F0', title: '#0F172A', sub: '#64748B' },
-    system:  { bg: '#F8FAFC', border: '#CBD5E1', title: '#0F172A', sub: '#475569' },
-    sheet:   { bg: '#FFFBEB', border: '#FDE68A', title: '#78350F', sub: '#92400E' },
+    neutral: { bg: 'white',   border: C.line, title: C.ink, sub: C.muted },
+    system:  { bg: C.wash, border: C.knobOff, title: C.ink, sub: C.sub },
+    sheet:   { bg: '#FFFBEB', border: '#FDE68A', title: '#78350F', sub: C.amberInk },
     human:   { bg: '#EFF6FF', border: '#BFDBFE', title: '#1E3A8A', sub: '#1E40AF' },
-    output:  { bg: '#F0FDF4', border: '#BBF7D0', title: '#14532D', sub: '#166534' },
-    risk:    { bg: '#FEF2F2', border: '#FECACA', title: '#991B1B', sub: '#B91C1C' },
+    output:  { bg: '#F0FDF4', border: '#BBF7D0', title: '#14532D', sub: C.green },
+    risk:    { bg: C.badBg, border: '#FECACA', title: C.redInk, sub: C.bad },
   }
   const t = TONE[tone]
   const p = phase ? PHASE[phase] : null
@@ -48,7 +49,7 @@ function Card({
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
         <p style={{ fontSize: '12px', fontWeight: 700, color: t.title, lineHeight: 1.3 }}>{title}</p>
         {tag && (
-          <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748B', background: '#F1F5F9', padding: '1px 6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: '9px', fontWeight: 700, color: C.muted, background: C.monoBg, padding: '1px 6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {tag}
           </span>
         )}
@@ -74,21 +75,21 @@ function Arrow({ label, sublabel, direction = 'down' }: { label?: string; sublab
   if (direction === 'right') {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 8px', flexShrink: 0 }}>
-        <span style={{ color: '#94A3B8', fontSize: '16px', fontWeight: 700 }}>→</span>
-        {label && <span style={{ fontSize: '10px', color: '#64748B', fontWeight: 600 }}>{label}</span>}
+        <span style={{ color: C.faint, fontSize: '16px', fontWeight: 700 }}>→</span>
+        {label && <span style={{ fontSize: '10px', color: C.muted, fontWeight: 600 }}>{label}</span>}
       </div>
     )
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '4px 0' }}>
-      {label && <span style={{ fontSize: '10px', color: '#475569', fontWeight: 600 }}>{label}</span>}
-      {sublabel && <span style={{ fontSize: '9px', color: '#94A3B8' }}>{sublabel}</span>}
-      <span style={{ color: '#94A3B8', fontSize: '18px', fontWeight: 700, lineHeight: 1 }}>↓</span>
+      {label && <span style={{ fontSize: '10px', color: C.sub, fontWeight: 600 }}>{label}</span>}
+      {sublabel && <span style={{ fontSize: '9px', color: C.faint }}>{sublabel}</span>}
+      <span style={{ color: C.faint, fontSize: '18px', fontWeight: 700, lineHeight: 1 }}>↓</span>
     </div>
   )
 }
 
-function LayerLabel({ children, color = '#94A3B8' }: { children: React.ReactNode; color?: string }) {
+function LayerLabel({ children, color = C.faint }: { children: React.ReactNode; color?: string }) {
   return (
     <p style={{ fontSize: '9px', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
       {children}
@@ -107,7 +108,7 @@ function Row({ children }: { children: React.ReactNode }) {
 function Pain({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontSize: '10.5px', color: '#991B1B', background: '#FEF2F2',
+      fontSize: '10.5px', color: C.redInk, background: C.badBg,
       border: '1px solid #FECACA', padding: '6px 10px', borderRadius: '6px',
       marginTop: '8px', lineHeight: 1.55,
     }}>
@@ -117,32 +118,32 @@ function Pain({ children }: { children: React.ReactNode }) {
 }
 
 function DataFlowDiagram() {
-  const StepLabel = ({ letter, text, color = '#94A3B8' }: { letter: string; text: string; color?: string }) => (
+  const StepLabel = ({ letter, text, color = C.faint }: { letter: string; text: string; color?: string }) => (
     <p style={{ fontSize: '9px', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px', textAlign: 'center' }}>
       {letter} · {text}
     </p>
   )
 
-  const FlowArrow = ({ label, sublabel, color = '#475569' }: { label: string; sublabel?: string; color?: string }) => (
+  const FlowArrow = ({ label, sublabel, color = C.sub }: { label: string; sublabel?: string; color?: string }) => (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0', gap: '2px' }}>
-      <div style={{ width: '2px', height: '10px', background: '#CBD5E1' }} />
-      <span style={{ fontSize: '9.5px', fontWeight: 600, color, background: color === '#475569' ? '#F1F5F9' : '#F0FDF4', padding: '2px 12px', borderRadius: '10px', border: `1px solid ${color === '#475569' ? '#E2E8F0' : '#BBF7D0'}` }}>{label}</span>
-      {sublabel && <span style={{ fontSize: '9px', color: '#94A3B8' }}>{sublabel}</span>}
-      <div style={{ width: '2px', height: '10px', background: '#CBD5E1' }} />
-      <span style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1 }}>▼</span>
+      <div style={{ width: '2px', height: '10px', background: C.knobOff }} />
+      <span style={{ fontSize: '9.5px', fontWeight: 600, color, background: color === C.sub ? C.monoBg : '#F0FDF4', padding: '2px 12px', borderRadius: '10px', border: `1px solid ${color === C.sub ? C.line : '#BBF7D0'}` }}>{label}</span>
+      {sublabel && <span style={{ fontSize: '9px', color: C.faint }}>{sublabel}</span>}
+      <div style={{ width: '2px', height: '10px', background: C.knobOff }} />
+      <span style={{ fontSize: '13px', color: C.faint, lineHeight: 1 }}>▼</span>
     </div>
   )
 
   return (
     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '24px 28px', marginBottom: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-        <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>End-to-end data flow</h2>
-        <span style={{ fontSize: '10px', fontWeight: 700, background: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A', padding: '2px 8px', borderRadius: '4px' }}>CURRENT &rarr; TARGET</span>
+        <h2 style={{ fontSize: '15px', fontWeight: 700, color: C.ink, margin: 0 }}>End-to-end data flow</h2>
+        <span style={{ fontSize: '10px', fontWeight: 700, background: C.warnBg, color: C.amberInk, border: '1px solid #FDE68A', padding: '2px 8px', borderRadius: '4px' }}>CURRENT &rarr; TARGET</span>
       </div>
-      <p style={{ fontSize: '11.5px', color: '#64748B', marginBottom: '20px', lineHeight: 1.5 }}>
+      <p style={{ fontSize: '11.5px', color: C.muted, marginBottom: '20px', lineHeight: 1.5 }}>
         Today's path: source systems → Logic Layer workbook (3 tabs) → Rosetta IMS. Target: pipelines write straight
         into v7 / Rosetta IMS database; Biz Ops queries v7. Logic Layer Sheet is being replaced.{' '}
-        <strong style={{ color: '#991B1B' }}>IMS never writes upstream to Google Sheet.</strong>
+        <strong style={{ color: C.redInk }}>IMS never writes upstream to Google Sheet.</strong>
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 230px', gap: '24px', alignItems: 'start' }}>
@@ -162,9 +163,9 @@ function DataFlowDiagram() {
                 { name: 'WhatsApp', sub: 'Supplier expiry' },
                 { name: 'SF Express', sub: 'Logistics rate card' },
               ].map(({ name, sub }) => (
-                <div key={name} style={{ flex: 1, background: '#F8FAFC', border: '2px solid #CBD5E1', borderRadius: '8px', padding: '8px 6px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A', margin: 0 }}>{name}</p>
-                  <p style={{ fontSize: '9px', color: '#64748B', margin: '2px 0 0 0', lineHeight: 1.3 }}>{sub}</p>
+                <div key={name} style={{ flex: 1, background: C.wash, border: '2px solid #CBD5E1', borderRadius: '8px', padding: '8px 6px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 700, color: C.ink, margin: 0 }}>{name}</p>
+                  <p style={{ fontSize: '9px', color: C.muted, margin: '2px 0 0 0', lineHeight: 1.3 }}>{sub}</p>
                 </div>
               ))}
             </div>
@@ -174,7 +175,7 @@ function DataFlowDiagram() {
 
           {/* B: Logic Layer workbook with 3 tabs */}
           <div style={{ width: '100%' }}>
-            <StepLabel letter="B" text="Logic Layer workbook (today — being replaced)" color="#92400E" />
+            <StepLabel letter="B" text="Logic Layer workbook (today — being replaced)" color={C.amberInk} />
             <div style={{ background: '#FFFBEB', border: '2px dashed #F59E0B', borderRadius: '8px', padding: '13px 14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '10px' }}>
                 <a
@@ -185,7 +186,7 @@ function DataFlowDiagram() {
                 >
                   Logic Layer Google Sheet ↗
                 </a>
-                <span style={{ fontSize: '9px', fontWeight: 700, background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA', padding: '2px 7px', borderRadius: '3px' }}>TEMPORARY</span>
+                <span style={{ fontSize: '9px', fontWeight: 700, background: C.badBg, color: C.redInk, border: '1px solid #FECACA', padding: '2px 7px', borderRadius: '3px' }}>TEMPORARY</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'left' }}>
                 <div style={{ background: 'rgba(120,53,15,0.06)', borderRadius: '6px', padding: '8px 10px' }}>
@@ -197,21 +198,21 @@ function DataFlowDiagram() {
                       style={{ color: '#78350F', textDecoration: 'underline' }}
                     >Approval Matrix tab ↗</a>
                   </p>
-                  <p style={{ fontSize: '9.5px', color: '#92400E', margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '9.5px', color: C.amberInk, margin: 0, lineHeight: 1.5 }}>
                     The RULES tab. Sam owns it. WOC + GP% thresholds + exception logic.
                     <em> Migrates to code/config in Rosetta.</em>
                   </p>
                 </div>
                 <div style={{ background: 'rgba(120,53,15,0.06)', borderRadius: '6px', padding: '8px 10px' }}>
                   <p style={{ fontSize: '10.5px', fontWeight: 700, color: '#78350F', marginBottom: '3px' }}>📦 Biz Ops tab</p>
-                  <p style={{ fontSize: '9.5px', color: '#92400E', margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '9.5px', color: C.amberInk, margin: 0, lineHeight: 1.5 }}>
                     The 85-col PO TRANSACTIONAL LOG. One row per PO line. Pulls AM rules + Data SKU master.
                     <em> Migrates to purchase_orders table in Rosetta IMS.</em>
                   </p>
                 </div>
                 <div style={{ background: 'rgba(120,53,15,0.06)', borderRadius: '6px', padding: '8px 10px' }}>
                   <p style={{ fontSize: '10.5px', fontWeight: 700, color: '#78350F', marginBottom: '3px' }}>📚 Data tab</p>
-                  <p style={{ fontSize: '9.5px', color: '#92400E', margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '9.5px', color: C.amberInk, margin: 0, lineHeight: 1.5 }}>
                     Old SSOT SKU master cached inside Logic Layer. XLOOKUP'd by Biz Ops (e.g. Data!BM = Basic Cost).
                     <em> Replaced by v7.</em>
                   </p>
@@ -224,28 +225,28 @@ function DataFlowDiagram() {
 
           {/* C: v7 = Rosetta IMS database */}
           <div style={{ width: '100%' }}>
-            <StepLabel letter="C" text="v7 = Rosetta IMS database (the new home)" color="#4338CA" />
-            <div style={{ background: '#EEF2FF', border: '2px solid #818CF8', borderRadius: '8px', padding: '13px 16px' }}>
+            <StepLabel letter="C" text="v7 = Rosetta IMS database (the new home)" color={C.indigoInk} />
+            <div style={{ background: C.primaryBg, border: '2px solid #818CF8', borderRadius: '8px', padding: '13px 16px' }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#3730A3', margin: '0 0 8px 0', textAlign: 'center' }}>Rosetta IMS — multi-table database</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '6px' }}>
                 <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '5px', padding: '6px 8px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '10px', fontWeight: 700, color: '#166534', margin: 0 }}>🟢 SKU_MASTER</p>
-                  <p style={{ fontSize: '9px', color: '#475569', margin: '2px 0 0 0', lineHeight: 1.4 }}>reference cols (cost, MBB, weight, category, hero, fees)</p>
+                  <p style={{ fontSize: '10px', fontWeight: 700, color: C.green, margin: 0 }}>🟢 SKU_MASTER</p>
+                  <p style={{ fontSize: '9px', color: C.sub, margin: '2px 0 0 0', lineHeight: 1.4 }}>reference cols (cost, MBB, weight, category, hero, fees)</p>
                 </div>
                 <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '5px', padding: '6px 8px', textAlign: 'center' }}>
                   <p style={{ fontSize: '10px', fontWeight: 700, color: '#1E40AF', margin: 0 }}>🔵 SKU_MASTER ops cols</p>
-                  <p style={{ fontSize: '9px', color: '#475569', margin: '2px 0 0 0', lineHeight: 1.4 }}>stock_*, demand_120d_*, jit, autoship, expiry</p>
+                  <p style={{ fontSize: '9px', color: C.sub, margin: '2px 0 0 0', lineHeight: 1.4 }}>stock_*, demand_120d_*, jit, autoship, expiry</p>
                 </div>
                 <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '5px', padding: '6px 8px', textAlign: 'center' }}>
                   <p style={{ fontSize: '10px', fontWeight: 700, color: '#5B21B6', margin: 0 }}>🟣 Config tables</p>
-                  <p style={{ fontSize: '9px', color: '#475569', margin: '2px 0 0 0', lineHeight: 1.4 }}>sf_express_rates · (proposed) category_gp_floors</p>
+                  <p style={{ fontSize: '9px', color: C.sub, margin: '2px 0 0 0', lineHeight: 1.4 }}>sf_express_rates · (proposed) category_gp_floors</p>
                 </div>
                 <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '5px', padding: '6px 8px', textAlign: 'center' }}>
                   <p style={{ fontSize: '10px', fontWeight: 700, color: '#7C2D12', margin: 0 }}>🟡 purchase_orders</p>
-                  <p style={{ fontSize: '9px', color: '#475569', margin: '2px 0 0 0', lineHeight: 1.4 }}>(future) per-PO log replacing Biz Ops tab</p>
+                  <p style={{ fontSize: '9px', color: C.sub, margin: '2px 0 0 0', lineHeight: 1.4 }}>(future) per-PO log replacing Biz Ops tab</p>
                 </div>
               </div>
-              <p style={{ fontSize: '10px', color: '#4338CA', margin: '8px 0 0 0', textAlign: 'center', fontStyle: 'italic' }}>
+              <p style={{ fontSize: '10px', color: C.indigoInk, margin: '8px 0 0 0', textAlign: 'center', fontStyle: 'italic' }}>
                 One database. Different tables. Different update cadences. Biz Ops / future-procurement queries one endpoint.
               </p>
             </div>
@@ -271,16 +272,16 @@ function DataFlowDiagram() {
             </div>
           </div>
 
-          <FlowArrow label="exports — direct to source systems" color="#166534" sublabel="Sheet is bypassed on return leg" />
+          <FlowArrow label="exports — direct to source systems" color={C.green} sublabel="Sheet is bypassed on return leg" />
 
           {/* E: Source systems (output) */}
           <div style={{ width: '100%' }}>
-            <StepLabel letter="E" text="Feed corrected data back" color="#166534" />
+            <StepLabel letter="E" text="Feed corrected data back" color={C.green} />
             <div style={{ display: 'flex', gap: '8px' }}>
               {['DaySmart', 'Shopify', 'HKTV'].map((sys) => (
                 <div key={sys} style={{ flex: 1, background: '#F0FDF4', border: '2px solid #86EFAC', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
                   <p style={{ fontSize: '12px', fontWeight: 700, color: '#14532D', margin: 0 }}>{sys}</p>
-                  <p style={{ fontSize: '9.5px', color: '#166534', margin: '2px 0 0 0' }}>corrected costs / prices / stock</p>
+                  <p style={{ fontSize: '9.5px', color: C.green, margin: '2px 0 0 0' }}>corrected costs / prices / stock</p>
                 </div>
               ))}
             </div>
@@ -291,26 +292,26 @@ function DataFlowDiagram() {
         {/* Right: key rules */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '26px' }}>
 
-          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '6px', padding: '10px 12px' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#991B1B', margin: 0 }}>
+          <div style={{ background: C.badBg, border: '1px solid #FECACA', borderRadius: '6px', padding: '10px 12px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: C.redInk, margin: 0 }}>
               ⛔ IMS never writes back to Google Sheets
             </p>
           </div>
 
           <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '10px 12px' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#166534', margin: 0 }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: C.green, margin: 0 }}>
               ✅ One database, one query endpoint for Biz Ops
             </p>
           </div>
 
-          <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 12px' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', margin: 0 }}>
+          <div style={{ background: C.primaryBg, border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 12px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, margin: 0 }}>
               🔵 Operational columns update hourly/daily via pipelines (Desmond)
             </p>
           </div>
 
           <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 12px' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#92400E', margin: 0 }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, margin: 0 }}>
               📋 AM rules tab is the last piece staying in Sheets (Sam owns)
             </p>
           </div>
@@ -408,7 +409,7 @@ function CurrentState() {
 function TargetState() {
   return (
     <div>
-      <LayerLabel color="#4338CA">Phase 1 — Now: IMS as cost SSOT</LayerLabel>
+      <LayerLabel color={C.indigoInk}>Phase 1 — Now: IMS as cost SSOT</LayerLabel>
       <Row>
         <Card tone="system" title="Shopify" subtitle="API integration (eventual)" />
         <Card tone="system" title="HKTVMall" subtitle="API or feed (eventual)" />
@@ -467,7 +468,7 @@ function TargetState() {
 
       <Arrow label="Goods + receipt arrive in HK" />
 
-      <LayerLabel color="#166534">OCR Catalogue Ingestion — LIVE + 3-way match (Desmond)</LayerLabel>
+      <LayerLabel color={C.green}>OCR Catalogue Ingestion — LIVE + 3-way match (Desmond)</LayerLabel>
       <Row>
         <Card
           phase={1}
@@ -497,7 +498,7 @@ function TargetState() {
 
       <Arrow label="OCR-extracted costs approved → cost_source upgraded" />
 
-      <LayerLabel color="#166534">Phase 4 — by end July (Desmond&apos;s mission): Automated writebacks</LayerLabel>
+      <LayerLabel color={C.green}>Phase 4 — by end July (Desmond&apos;s mission): Automated writebacks</LayerLabel>
       <Row>
         <Card
           phase={4}
@@ -545,26 +546,26 @@ function LogicLayerInsights() {
       padding: '20px 24px', marginTop: '20px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid #F1F5F9' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 700, color: C.ink, margin: 0 }}>
           Logic Layer — what the actual rules tell us
         </h2>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: '#64748B', background: '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: C.muted, background: C.monoBg, padding: '2px 8px', borderRadius: '4px' }}>
           Source: <code style={{ fontSize: '10px' }}>docs/logic-layer-snapshot.csv</code>
         </span>
       </div>
 
-      <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.7, marginBottom: '14px' }}>
+      <p style={{ fontSize: '12px', color: C.sub, lineHeight: 1.7, marginBottom: '14px' }}>
         Reading the actual Biz Ops tab changed three of my prior assumptions. Recording them here so we can argue against the corrected picture.
       </p>
 
       {/* The matrix */}
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
         Rules matrix — 4 channels × category-specific thresholds
       </p>
       <div style={{ border: '1px solid #E2E8F0', borderRadius: '6px', overflow: 'hidden', marginBottom: '16px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '110px 110px 160px 130px 1fr', background: '#F8FAFC', padding: '7px 10px', gap: '10px', borderBottom: '1px solid #E2E8F0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '110px 110px 160px 130px 1fr', background: C.wash, padding: '7px 10px', gap: '10px', borderBottom: '1px solid #E2E8F0' }}>
           {['Channel', 'WOC init / cap', 'GP% (Med/Mid/Food)', 'Net-of-fees GP%', 'Action if breached'].map(h => (
-            <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+            <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
           ))}
         </div>
         {rules.map((r, i) => (
@@ -574,29 +575,29 @@ function LogicLayerInsights() {
             background: i % 2 === 0 ? 'white' : '#FAFAFA',
             borderBottom: i < rules.length - 1 ? '1px solid #F1F5F9' : 'none',
           }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A', fontFamily: 'monospace' }}>{r.channel}</span>
-            <span style={{ fontSize: '11px', color: '#475569', fontFamily: 'monospace' }}>{r.woc}</span>
-            <span style={{ fontSize: '11px', color: '#475569', fontFamily: 'monospace' }}>{r.gp}</span>
-            <span style={{ fontSize: '11px', color: '#475569', fontFamily: 'monospace' }}>{r.netGp}</span>
-            <span style={{ fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>{r.action}</span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: C.ink, fontFamily: 'monospace' }}>{r.channel}</span>
+            <span style={{ fontSize: '11px', color: C.sub, fontFamily: 'monospace' }}>{r.woc}</span>
+            <span style={{ fontSize: '11px', color: C.sub, fontFamily: 'monospace' }}>{r.gp}</span>
+            <span style={{ fontSize: '11px', color: C.sub, fontFamily: 'monospace' }}>{r.netGp}</span>
+            <span style={{ fontSize: '11px', color: C.sub, lineHeight: 1.5 }}>{r.action}</span>
           </div>
         ))}
       </div>
 
       {/* Three corrections */}
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
         Three things I had wrong before reading it
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '6px', padding: '12px 14px' }}>
-          <p style={{ fontSize: '11px', fontWeight: 700, color: '#991B1B', marginBottom: '5px' }}>1 · Channels don&apos;t match</p>
-          <p style={{ fontSize: '11px', color: '#B91C1C', lineHeight: 1.55, margin: 0 }}>
+        <div style={{ background: C.badBg, border: '1px solid #FECACA', borderRadius: '6px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: C.redInk, marginBottom: '5px' }}>1 · Channels don&apos;t match</p>
+          <p style={{ fontSize: '11px', color: C.bad, lineHeight: 1.55, margin: 0 }}>
             Logic Layer uses 4 channels (Clinic, STP-JIT, STP-AS, STP-HKTVM). IMS uses 3. JIT and AS are fulfillment <em>sub-modes</em> of the same warehouse — different WOC rules apply.
           </p>
         </div>
         <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '12px 14px' }}>
           <p style={{ fontSize: '11px', fontWeight: 700, color: '#78350F', marginBottom: '5px' }}>2 · It&apos;s a workflow router</p>
-          <p style={{ fontSize: '11px', color: '#92400E', lineHeight: 1.55, margin: 0 }}>
+          <p style={{ fontSize: '11px', color: C.amberInk, lineHeight: 1.55, margin: 0 }}>
             Every &ldquo;action&rdquo; column is a human instruction (&ldquo;Propose Price To Doctor&rdquo;, &ldquo;Amend / Stop The PO&rdquo;). It routes cases to roles — it does not auto-decide. Phase 2 needs to be a case-routing system, not a rules engine.
           </p>
         </div>
@@ -609,40 +610,40 @@ function LogicLayerInsights() {
       </div>
 
       {/* Terminology */}
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
         Terminology check (from SOG-04)
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px', marginBottom: '16px' }}>
         {terms.map(t => (
           <div key={t.code} style={{ padding: '7px 0', borderBottom: '1px solid #F8FAFC' }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A', marginBottom: '2px', fontFamily: 'monospace' }}>{t.code}</p>
-            <p style={{ fontSize: '11px', color: '#64748B', lineHeight: 1.55 }}>{t.def}</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: C.ink, marginBottom: '2px', fontFamily: 'monospace' }}>{t.code}</p>
+            <p style={{ fontSize: '11px', color: C.muted, lineHeight: 1.55 }}>{t.def}</p>
           </div>
         ))}
       </div>
 
       {/* Phase 1 gap — TRIMMED 2026-06-02 after Biz Ops × v7 walkthrough */}
-      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '12px 14px' }}>
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+      <div style={{ background: C.wash, border: '1px solid #E2E8F0', borderRadius: '6px', padding: '12px 14px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
           What v7 still needs before Phase 2 can ingest the full ruleset (updated 2026-06-02)
         </p>
-        <p style={{ fontSize: '11.5px', color: '#64748B', lineHeight: 1.55, marginBottom: '8px', fontStyle: 'italic' }}>
+        <p style={{ fontSize: '11.5px', color: C.muted, lineHeight: 1.55, marginBottom: '8px', fontStyle: 'italic' }}>
           v7 already has hero_sku, mbb_cost_per_unit, competitor_lowest_price, channel_fee_pct_hktv, sf_express_fee.
           Only three real gaps remain:
         </p>
         <ul style={{ margin: 0, paddingLeft: '18px' }}>
-          <li style={{ fontSize: '12px', color: '#475569', lineHeight: 1.7, marginBottom: '2px' }}>
-            <strong style={{ color: '#0F172A' }}>fulfillment_mode</strong> on SKU × channel (JIT vs AS vs N/A) — currently lumped into one e-com channel
+          <li style={{ fontSize: '12px', color: C.sub, lineHeight: 1.7, marginBottom: '2px' }}>
+            <strong style={{ color: C.ink }}>fulfillment_mode</strong> on SKU × channel (JIT vs AS vs N/A) — currently lumped into one e-com channel
           </li>
-          <li style={{ fontSize: '12px', color: '#475569', lineHeight: 1.7, marginBottom: '2px' }}>
-            <strong style={{ color: '#0F172A' }}>doctor_advised_price</strong> — Biz Ops col BF reads this; not in current v7 SKU_MASTER spec
+          <li style={{ fontSize: '12px', color: C.sub, lineHeight: 1.7, marginBottom: '2px' }}>
+            <strong style={{ color: C.ink }}>doctor_advised_price</strong> — Biz Ops col BF reads this; not in current v7 SKU_MASTER spec
           </li>
-          <li style={{ fontSize: '12px', color: '#475569', lineHeight: 1.7 }}>
-            <strong style={{ color: '#0F172A' }}>category_gp_floor</strong> — Biz Ops col BD reads required GP%; needs a categories config table (Medicine 70%, Food 35%, Supp/Prev/PH 40%)
+          <li style={{ fontSize: '12px', color: C.sub, lineHeight: 1.7 }}>
+            <strong style={{ color: C.ink }}>category_gp_floor</strong> — Biz Ops col BD reads required GP%; needs a categories config table (Medicine 70%, Food 35%, Supp/Prev/PH 40%)
           </li>
         </ul>
-        <p style={{ fontSize: '11px', color: '#64748B', marginTop: '8px', lineHeight: 1.55 }}>
-          <a href="/am-walkthrough" style={{ color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>See the full Biz Ops × v7 walkthrough →</a>
+        <p style={{ fontSize: '11px', color: C.muted, marginTop: '8px', lineHeight: 1.55 }}>
+          <a href="/am-walkthrough" style={{ color: C.indigo, textDecoration: 'none', fontWeight: 600 }}>See the full Biz Ops × v7 walkthrough →</a>
         </p>
       </div>
     </div>
@@ -658,7 +659,7 @@ function FourLayerModel() {
       key: 'ref',
       title: 'v7 — REFERENCE',
       emoji: '🟢',
-      color: '#166534', bg: '#DCFCE7', border: '#BBF7D0',
+      color: C.green, bg: C.greenBg, border: '#BBF7D0',
       cadence: 'rare / per-catalogue-refresh',
       examples: 'cost, MBB, weight, category, supplier link, units-per-pack, hero SKU, dispensing fees, channel fees',
       populated: 'OCR + HITL via /data-review; manual edits for human-judgment fields',
@@ -711,15 +712,15 @@ function FourLayerModel() {
       padding: '20px 24px', marginTop: '20px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid #F1F5F9' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 700, color: C.ink, margin: 0 }}>
           Biz Ops × v7 — one database, four layers
         </h2>
-        <a href="/am-walkthrough" style={{ fontSize: '11px', fontWeight: 600, color: '#6366F1', textDecoration: 'none', background: '#EEF2FF', padding: '4px 10px', borderRadius: '4px' }}>
+        <a href="/am-walkthrough" style={{ fontSize: '11px', fontWeight: 600, color: C.indigo, textDecoration: 'none', background: C.primaryBg, padding: '4px 10px', borderRadius: '4px' }}>
           See the 85-col walkthrough →
         </a>
       </div>
 
-      <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.65, marginBottom: '14px' }}>
+      <p style={{ fontSize: '12px', color: C.sub, lineHeight: 1.65, marginBottom: '14px' }}>
         The 2026-06-01 call surfaced Desmond's concern that "SKU master isn't designed to hold daily-changing
         data." The 06-02 follow-up resolved it: v7 = the Rosetta IMS database, and within that database
         we have <strong>different tables (and different columns) with different update cadences</strong>.
@@ -743,23 +744,23 @@ function FourLayerModel() {
         ))}
       </div>
 
-      <p style={{ fontSize: '12px', color: '#0F172A', lineHeight: 1.6, marginBottom: '10px' }}>
+      <p style={{ fontSize: '12px', color: C.ink, lineHeight: 1.6, marginBottom: '10px' }}>
         Plus <strong>⚪ AM FORMULA</strong> — derived in the Biz Ops row (WOC, GP%, approval decisions, rules lookups against
         the Approval Matrix tab). Lives nowhere upstream. ~37 of 85 cols.
       </p>
 
       {/* Pipelines */}
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '16px', marginBottom: '8px' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '16px', marginBottom: '8px' }}>
         Desmond's scope — ingestion pipelines into v7 (not a separate DB)
       </p>
-      <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 14px' }}>
+      <div style={{ background: C.primaryBg, border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 14px' }}>
         {pipelines.map(p => (
           <div key={p.dest} style={{ display: 'grid', gridTemplateColumns: '24px 1fr 24px 240px 80px', gap: '8px', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid rgba(199,210,254,0.5)', fontSize: '11px' }}>
             <span style={{ fontSize: '14px' }}>{p.icon}</span>
             <span style={{ color: '#1E1B4B' }}>{p.src}</span>
-            <span style={{ color: '#94A3B8', textAlign: 'center' }}>→</span>
-            <code style={{ fontSize: '10.5px', color: '#4338CA', background: 'white', padding: '1px 6px', borderRadius: '3px' }}>{p.dest}</code>
-            <span style={{ fontSize: '10px', color: '#64748B', textAlign: 'right' }}>{p.cadence}</span>
+            <span style={{ color: C.faint, textAlign: 'center' }}>→</span>
+            <code style={{ fontSize: '10.5px', color: C.indigoInk, background: 'white', padding: '1px 6px', borderRadius: '3px' }}>{p.dest}</code>
+            <span style={{ fontSize: '10px', color: C.muted, textAlign: 'right' }}>{p.cadence}</span>
           </div>
         ))}
         <p style={{ fontSize: '11px', color: '#1E1B4B', marginTop: '10px', lineHeight: 1.55, paddingTop: '8px', borderTop: '1px solid rgba(199,210,254,0.5)' }}>
@@ -769,7 +770,7 @@ function FourLayerModel() {
       </div>
 
       {/* Gap surfaced */}
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '16px', marginBottom: '8px' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '16px', marginBottom: '8px' }}>
         Gaps surfaced by the walkthrough
       </p>
       <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 14px', fontSize: '11.5px', color: '#451A03', lineHeight: 1.6 }}>
@@ -799,8 +800,8 @@ function ArchitecturePage() {
     <div style={{ maxWidth: '1200px' }}>
       {/* Header */}
       <div style={{ marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>Architecture — Data Flow</h1>
-        <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '3px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink }}>Architecture — Data Flow</h1>
+        <p style={{ fontSize: '12px', color: C.faint, marginTop: '3px' }}>
           Current spreadsheet-driven workflow vs target cloud architecture. A shared visual to argue against.
         </p>
       </div>
@@ -808,7 +809,7 @@ function ArchitecturePage() {
       <DataFlowDiagram />
 
       {/* Mode toggle */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', background: '#F1F5F9', padding: '4px', borderRadius: '8px', width: 'fit-content' }}>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', background: C.monoBg, padding: '4px', borderRadius: '8px', width: 'fit-content' }}>
         {[
           { id: 'current', label: 'Current State' },
           { id: 'target',  label: 'Target State' },
@@ -819,8 +820,8 @@ function ArchitecturePage() {
             onClick={() => setMode(m.id as Mode)}
             style={{
               fontSize: '12px', fontWeight: 600,
-              color: mode === m.id ? 'white' : '#475569',
-              background: mode === m.id ? '#0F172A' : 'transparent',
+              color: mode === m.id ? 'white' : C.sub,
+              background: mode === m.id ? C.ink : 'transparent',
               padding: '6px 14px', borderRadius: '6px',
               border: 'none', cursor: 'pointer',
             }}
@@ -833,7 +834,7 @@ function ArchitecturePage() {
       {/* Diagram */}
       {mode === 'current' && (
         <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '20px 24px' }}>
-          <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
             Current — Spreadsheet as the brain
           </p>
           <CurrentState />
@@ -842,7 +843,7 @@ function ArchitecturePage() {
 
       {mode === 'target' && (
         <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '20px 24px' }}>
-          <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
             Target — IMS owns master data, Rosetta owns decisions
           </p>
           <TargetState />
@@ -852,13 +853,13 @@ function ArchitecturePage() {
       {mode === 'split' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px 18px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
               Current — spreadsheet brain
             </p>
             <CurrentState />
           </div>
           <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px 18px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
               Target — service-based
             </p>
             <TargetState />
@@ -872,7 +873,7 @@ function ArchitecturePage() {
 
       <FourLayerModel />
 
-      <p style={{ fontSize: '11px', color: '#CBD5E1', marginTop: '12px', textAlign: 'center' }}>
+      <p style={{ fontSize: '11px', color: C.knobOff, marginTop: '12px', textAlign: 'center' }}>
         Edit this page at <code>frontend/src/app/architecture/page.tsx</code> as the architecture evolves.
       </p>
     </div>

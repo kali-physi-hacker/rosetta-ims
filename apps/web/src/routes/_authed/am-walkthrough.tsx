@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { AM_ROWS, GAP_META, type GapStatus } from '@/data/am-walkthrough'
@@ -66,23 +67,23 @@ function AMWalkthroughPage() {
       `}</style>
 
       <div style={{ marginBottom: '14px' }}>
-        <p style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
+        <p style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
           Sam's Column Migration Check
         </p>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>
           Biz Ops × v7 Column Walkthrough
         </h1>
-        <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.55, maxWidth: '900px' }}>
+        <p style={{ fontSize: '13px', color: C.sub, lineHeight: 1.55, maxWidth: '900px' }}>
           For each of the {total} Biz Ops columns, this page shows where the cell is populated today
           and where it would come from in the new architecture. <strong>{v7Total} of {total}</strong> columns
           map to Rosetta IMS (v7) — across reference / operational / config tables in the same database.
           {' '}The rest are per-PO entries or in-AM formulas.
         </p>
-        <p style={{ fontSize: '11.5px', color: '#64748B', marginTop: '8px', maxWidth: '900px', fontStyle: 'italic' }}>
+        <p style={{ fontSize: '11.5px', color: C.muted, marginTop: '8px', maxWidth: '900px', fontStyle: 'italic' }}>
           Pre-filled by Claude. Sam: please override anything wrong and fill in the blank{' '}
-          <code style={{ background: '#F1F5F9', padding: '1px 5px', borderRadius: '3px' }}>frequency_of_change</code> and
-          <code style={{ background: '#F1F5F9', padding: '1px 5px', borderRadius: '3px', marginLeft: '4px' }}>sam_notes</code> cells.
-          Edits go to <code style={{ background: '#F1F5F9', padding: '1px 5px', borderRadius: '3px' }}>frontend/src/data/am-walkthrough.ts</code> —
+          <code style={{ background: C.monoBg, padding: '1px 5px', borderRadius: '3px' }}>frequency_of_change</code> and
+          <code style={{ background: C.monoBg, padding: '1px 5px', borderRadius: '3px', marginLeft: '4px' }}>sam_notes</code> cells.
+          Edits go to <code style={{ background: C.monoBg, padding: '1px 5px', borderRadius: '3px' }}>frontend/src/data/am-walkthrough.ts</code> —
           ping Chris.
         </p>
       </div>
@@ -92,7 +93,7 @@ function AMWalkthroughPage() {
         background: '#F0FDF4', border: '1px solid #BBF7D0', borderLeft: '4px solid #16A34A',
         borderRadius: '8px', padding: '14px 18px', marginBottom: '14px', maxWidth: '900px',
       }}>
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
           ✓ Architectural framing (corrected 2026-06-02)
         </p>
         <p style={{ fontSize: '12.5px', color: '#14532D', lineHeight: 1.6, marginBottom: '8px' }}>
@@ -128,18 +129,18 @@ function AMWalkthroughPage() {
         background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px',
         padding: '14px 16px', marginBottom: '14px', maxWidth: '900px',
       }}>
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
           The new architecture — one database, four layers
         </p>
-        <p style={{ fontSize: '12px', color: '#0F172A', lineHeight: 1.6, marginBottom: '12px' }}>
+        <p style={{ fontSize: '12px', color: C.ink, lineHeight: 1.6, marginBottom: '12px' }}>
           v7 = the Rosetta IMS database. It already has all the columns Biz Ops needs (SKU master, stock, demand,
           dispensing fees, expiration dates, hero SKU, channel fees, competitor prices). The right separation
           isn't "v7 vs another database" — it's <strong>different tables in v7 with different update cadences</strong>:
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-          <div style={{ background: '#DCFCE7', borderRadius: '6px', padding: '10px 12px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#166534', marginBottom: '4px' }}>🟢 v7 — REFERENCE</p>
-            <p style={{ fontSize: '11px', color: '#166534', lineHeight: 1.5 }}>
+          <div style={{ background: C.greenBg, borderRadius: '6px', padding: '10px 12px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: C.green, marginBottom: '4px' }}>🟢 v7 — REFERENCE</p>
+            <p style={{ fontSize: '11px', color: C.green, lineHeight: 1.5 }}>
               Slow-changing SKU master: cost, MBB, weight, category, supplier, units-per-pack, hero SKU.
               Edited manually via <code style={{ background: 'rgba(255,255,255,0.5)', padding: '1px 4px', borderRadius: '2px' }}>/data-review</code>.
             </p>
@@ -166,7 +167,7 @@ function AMWalkthroughPage() {
             </p>
           </div>
         </div>
-        <p style={{ fontSize: '12px', color: '#0F172A', lineHeight: 1.6, marginTop: '12px' }}>
+        <p style={{ fontSize: '12px', color: C.ink, lineHeight: 1.6, marginTop: '12px' }}>
           Biz Ops queries one endpoint (Rosetta IMS API). One row per SKU comes back with everything joined
           server-side — cost AND current stock AND demand AND JIT. <strong>No "data from 2 places."</strong>
         </p>
@@ -174,10 +175,10 @@ function AMWalkthroughPage() {
 
       {/* Desmond's scope reframed */}
       <div style={{
-        background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '8px',
+        background: C.primaryBg, border: '1px solid #C7D2FE', borderRadius: '8px',
         padding: '14px 16px', marginBottom: '14px', maxWidth: '900px',
       }}>
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
           Desmond's scope = ingestion pipelines into v7 (not a separate database)
         </p>
         <p style={{ fontSize: '12px', color: '#1E1B4B', lineHeight: 1.55, marginBottom: '10px' }}>
@@ -205,7 +206,7 @@ function AMWalkthroughPage() {
           background: '#FFFBEB', border: '1px solid #FDE68A', borderLeft: '4px solid #F59E0B',
           borderRadius: '8px', padding: '14px 16px', marginBottom: '14px', maxWidth: '900px',
         }}>
-          <p style={{ fontSize: '11px', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: C.amberInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
             🆕 Gap analysis surfaced {counts.v7_proposed} column{counts.v7_proposed === 1 ? '' : 's'} that v7 doesn't have yet
           </p>
           <p style={{ fontSize: '12px', color: '#451A03', lineHeight: 1.55, marginBottom: '6px' }}>
@@ -221,7 +222,7 @@ function AMWalkthroughPage() {
 
       {/* Stat strip */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-        <Stat label="Total Biz Ops columns" value={String(total)} color="#0F172A" />
+        <Stat label="Total Biz Ops columns" value={String(total)} color={C.ink} />
         {(Object.keys(GAP_META) as GapStatus[]).map(k => {
           const m = GAP_META[k]
           return (
@@ -254,11 +255,11 @@ function AMWalkthroughPage() {
         />
         {(filter !== 'ALL' || search) && (
           <button onClick={() => { setFilter('ALL'); setSearch('') }}
-                  style={{ fontSize: '11px', color: '#6366F1', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  style={{ fontSize: '11px', color: C.indigo, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
             Clear filters
           </button>
         )}
-        <span style={{ fontSize: '11px', color: '#64748B' }}>
+        <span style={{ fontSize: '11px', color: C.muted }}>
           Showing {filtered.length} of {total}
         </span>
         <div style={{ flex: 1 }} />
@@ -266,7 +267,7 @@ function AMWalkthroughPage() {
           onClick={downloadCSV}
           style={{
             display: 'flex', alignItems: 'center', gap: '6px',
-            background: '#0F172A', color: 'white', border: 'none',
+            background: C.ink, color: 'white', border: 'none',
             borderRadius: '6px', padding: '6px 12px', cursor: 'pointer',
             fontSize: '11.5px', fontWeight: 600,
           }}
@@ -292,10 +293,10 @@ function AMWalkthroughPage() {
           display: 'grid',
           gridTemplateColumns: '50px 160px 200px 200px 220px 150px 1fr 120px',
           gap: '8px',
-          fontSize: '9.5px', fontWeight: 700, color: '#94A3B8',
+          fontSize: '9.5px', fontWeight: 700, color: C.faint,
           textTransform: 'uppercase', letterSpacing: '0.06em',
           padding: '8px 10px', borderBottom: '1px solid #E2E8F0',
-          background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 1,
+          background: C.wash, position: 'sticky', top: 0, zIndex: 1,
         }}>
           <span>Col</span>
           <span>Section</span>
@@ -318,17 +319,17 @@ function AMWalkthroughPage() {
                 gap: '8px',
                 padding: '8px 10px',
                 borderBottom: '1px solid #F1F5F9',
-                fontSize: '11px', color: '#0F172A',
+                fontSize: '11px', color: C.ink,
                 alignItems: 'start',
               }}
             >
-              <span style={{ fontFamily: 'ui-monospace, monospace', color: '#6366F1', fontWeight: 700 }}>
+              <span style={{ fontFamily: 'ui-monospace, monospace', color: C.indigo, fontWeight: 700 }}>
                 {r.amCol}
               </span>
-              <span style={{ color: '#475569', fontSize: '10px' }}>{r.amSection}</span>
+              <span style={{ color: C.sub, fontSize: '10px' }}>{r.amSection}</span>
               <span style={{ fontWeight: 600 }}>{r.amField}</span>
-              <span style={{ color: '#64748B', fontSize: '10.5px' }}>{r.amSourceToday}</span>
-              <span style={{ color: r.v7Column === '—' ? '#94A3B8' : '#1E40AF', fontFamily: r.v7Column === '—' ? 'inherit' : 'ui-monospace, monospace', fontSize: '10.5px' }}>
+              <span style={{ color: C.muted, fontSize: '10.5px' }}>{r.amSourceToday}</span>
+              <span style={{ color: r.v7Column === '—' ? C.faint : '#1E40AF', fontFamily: r.v7Column === '—' ? 'inherit' : 'ui-monospace, monospace', fontSize: '10.5px' }}>
                 {r.v7Column}
               </span>
               <span>
@@ -336,11 +337,11 @@ function AMWalkthroughPage() {
                   {m.emoji} {m.label}
                 </span>
               </span>
-              <span style={{ color: '#0F172A', fontSize: '10.5px', lineHeight: 1.5 }}>{r.ultimateSource}</span>
-              <span style={{ color: '#64748B', fontSize: '10px', lineHeight: 1.5 }}>
+              <span style={{ color: C.ink, fontSize: '10.5px', lineHeight: 1.5 }}>{r.ultimateSource}</span>
+              <span style={{ color: C.muted, fontSize: '10px', lineHeight: 1.5 }}>
                 {r.frequencyOfChange && <div style={{ fontWeight: 600 }}>↻ {r.frequencyOfChange}</div>}
                 {r.samNotes && <div style={{ marginTop: '2px' }}>{r.samNotes}</div>}
-                {!r.frequencyOfChange && !r.samNotes && <span style={{ color: '#CBD5E1' }}>—</span>}
+                {!r.frequencyOfChange && !r.samNotes && <span style={{ color: C.knobOff }}>—</span>}
               </span>
             </div>
           )
@@ -349,7 +350,7 @@ function AMWalkthroughPage() {
 
       {/* Legend */}
       <div style={{ marginTop: '16px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px' }}>
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
           What each status means
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -360,7 +361,7 @@ function AMWalkthroughPage() {
                 <span className="am-chip" style={{ background: m.bg, color: m.fg, flexShrink: 0 }}>
                   {m.emoji} {m.label}
                 </span>
-                <span style={{ fontSize: '11.5px', color: '#475569', lineHeight: 1.5 }}>{m.description}</span>
+                <span style={{ fontSize: '11.5px', color: C.sub, lineHeight: 1.5 }}>{m.description}</span>
               </div>
             )
           })}
@@ -377,7 +378,7 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
       padding: '8px 12px', display: 'flex', flexDirection: 'column', minWidth: '120px',
     }}>
       <span style={{ fontSize: '20px', fontWeight: 700, color, lineHeight: 1.2 }}>{value}</span>
-      <span style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>{label}</span>
+      <span style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>{label}</span>
     </div>
   )
 }

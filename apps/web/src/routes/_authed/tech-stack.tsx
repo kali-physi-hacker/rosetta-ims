@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { getUser, type IMSUser } from '@/lib/auth'
@@ -20,13 +21,13 @@ function TechStackPage() {
       <div style={{ maxWidth: '1000px' }}>
         {/* Header */}
         <div style={{ marginBottom: '16px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
             For Tech Team
           </p>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>
             Tech Stack & Audit Landing
           </h1>
-          <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.55, maxWidth: '780px' }}>
+          <p style={{ fontSize: '13px', color: C.sub, lineHeight: 1.55, maxWidth: '780px' }}>
             One page to brief any developer or auditor on how Rosetta IMS is built, where the code lives,
             and how to start contributing. This page is a pointer board — canonical docs live in the repo
             itself so they never drift.
@@ -35,10 +36,10 @@ function TechStackPage() {
 
         {/* OBJECTIVE — decouple UI from data */}
         <div style={{
-          background: '#EEF2FF', border: '1px solid #C7D2FE', borderLeft: '4px solid #6366F1',
+          background: C.primaryBg, border: '1px solid #C7D2FE', borderLeft: '4px solid #6366F1',
           borderRadius: '8px', padding: '16px 18px', marginBottom: '14px',
         }}>
-          <p style={{ fontSize: '11px', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
             🎯 Architectural objective — decouple the UI from the data
           </p>
           <p style={{ fontSize: '12.5px', color: '#1E1B4B', lineHeight: 1.6, marginBottom: '8px' }}>
@@ -48,16 +49,16 @@ function TechStackPage() {
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px', marginBottom: '10px' }}>
             <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 12px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#4338CA', marginBottom: '4px' }}>Tech team (data side)</p>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: C.indigoInk, marginBottom: '4px' }}>Tech team (data side)</p>
               <p style={{ fontSize: '11px', color: '#1E1B4B', lineHeight: 1.55, margin: 0 }}>
-                Owns <code style={{ background: '#F1F5F9', padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>backend/</code> —
+                Owns <code style={{ background: C.monoBg, padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>backend/</code> —
                 builds ingestion pipelines, schemas, business logic, API endpoints. Can refactor freely as long as JSON response shapes stay stable.
               </p>
             </div>
             <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 12px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#4338CA', marginBottom: '4px' }}>UI team (Chris)</p>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: C.indigoInk, marginBottom: '4px' }}>UI team (Chris)</p>
               <p style={{ fontSize: '11px', color: '#1E1B4B', lineHeight: 1.55, margin: 0 }}>
-                Owns <code style={{ background: '#F1F5F9', padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>frontend/</code> —
+                Owns <code style={{ background: C.monoBg, padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>frontend/</code> —
                 builds pages, layouts, content, UX. Can rebuild any page completely without touching the backend.
               </p>
             </div>
@@ -67,7 +68,7 @@ function TechStackPage() {
             mirror in <code style={{ background: 'white', padding: '1px 4px', borderRadius: '2px', fontSize: '11px' }}>src/lib/api-types.generated.ts</code>.
             If the backend changes a response shape, TypeScript breaks loudly on the frontend until types are regenerated — drift is detectable.
             Cross-team conversations happen only when the contract changes.{' '}
-            <a href="/architecture" style={{ color: '#6366F1', fontWeight: 600, textDecoration: 'underline' }}>
+            <a href="/architecture" style={{ color: C.indigo, fontWeight: 600, textDecoration: 'underline' }}>
               See /architecture
             </a>{' '}for the full data-flow picture, including how Desmond&apos;s ingestion pipelines fit in.
           </p>
@@ -75,7 +76,7 @@ function TechStackPage() {
 
         {/* Repo link — gated by NDA acknowledgement for non-admins */}
         <GitHubAccessGate />
-        <p style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '20px', lineHeight: 1.5, fontStyle: 'italic' }}>
+        <p style={{ fontSize: '11px', color: C.faint, marginBottom: '20px', lineHeight: 1.5, fontStyle: 'italic' }}>
           🔒 Private repo. If you get a 404 after clicking through, you don&apos;t have GitHub access yet —
           ping Chris to be added as a collaborator, or log into the GitHub account you were granted access on.
         </p>
@@ -83,9 +84,9 @@ function TechStackPage() {
         {/* Stack table */}
         <Section title="Stack">
           <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 130px', gap: '0', padding: '8px 14px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 130px', gap: '0', padding: '8px 14px', background: C.wash, borderBottom: '1px solid #E2E8F0' }}>
               {['Layer', 'Choice', 'Hosted on'].map(h => (
-                <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+                <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
               ))}
             </div>
             {[
@@ -101,9 +102,9 @@ function TechStackPage() {
                 padding: '10px 14px', borderBottom: i < 5 ? '1px solid #F1F5F9' : 'none',
                 fontSize: '12px', alignItems: 'center',
               }}>
-                <span style={{ fontWeight: 700, color: '#0F172A' }}>{r.layer}</span>
-                <span style={{ color: '#475569' }}>{r.choice}</span>
-                <span style={{ color: '#64748B', fontSize: '11px' }}>{r.host}</span>
+                <span style={{ fontWeight: 700, color: C.ink }}>{r.layer}</span>
+                <span style={{ color: C.sub }}>{r.choice}</span>
+                <span style={{ color: C.muted, fontSize: '11px' }}>{r.host}</span>
               </div>
             ))}
           </div>
@@ -153,14 +154,14 @@ function TechStackPage() {
 
         {/* Where data lives */}
         <Section title="Where data physically lives">
-          <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.6, marginBottom: '10px' }}>
+          <p style={{ fontSize: '12px', color: C.sub, lineHeight: 1.6, marginBottom: '10px' }}>
             A common audit question — "what's stored where, and what happens if I delete X?" Honest answer below,
             including known limitations.
           </p>
           <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '230px 320px 1fr', gap: '8px', padding: '8px 14px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '230px 320px 1fr', gap: '8px', padding: '8px 14px', background: C.wash, borderBottom: '1px solid #E2E8F0' }}>
               {['What', 'Where today', 'Notes'].map(h => (
-                <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+                <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
               ))}
             </div>
             {[
@@ -207,9 +208,9 @@ function TechStackPage() {
                 fontSize: '11.5px', alignItems: 'start',
                 background: r.warn ? '#FFFBEB' : 'transparent',
               }}>
-                <span style={{ color: r.warn ? '#92400E' : '#0F172A', fontWeight: 600 }}>{r.what}</span>
-                <span style={{ color: r.warn ? '#7C2D12' : '#475569', lineHeight: 1.5 }}>{r.where}</span>
-                <span style={{ color: r.warn ? '#7C2D12' : '#64748B', lineHeight: 1.5 }}>{r.notes}</span>
+                <span style={{ color: r.warn ? C.amberInk : C.ink, fontWeight: 600 }}>{r.what}</span>
+                <span style={{ color: r.warn ? '#7C2D12' : C.sub, lineHeight: 1.5 }}>{r.where}</span>
+                <span style={{ color: r.warn ? '#7C2D12' : C.muted, lineHeight: 1.5 }}>{r.notes}</span>
               </div>
             ))}
           </div>
@@ -219,7 +220,7 @@ function TechStackPage() {
             background: '#FFFBEB', border: '1px solid #FDE68A', borderLeft: '4px solid #F59E0B',
             borderRadius: '8px', padding: '12px 16px', marginTop: '12px',
           }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: C.amberInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
               ⚠️ Known limitation — catalogue raw files
             </p>
             <p style={{ fontSize: '12px', color: '#451A03', lineHeight: 1.6, marginBottom: '6px' }}>
@@ -240,7 +241,7 @@ function TechStackPage() {
           </div>
 
           {/* Business vs tech reminder */}
-          <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '10px', fontStyle: 'italic', lineHeight: 1.55 }}>
+          <p style={{ fontSize: '11px', color: C.faint, marginTop: '10px', fontStyle: 'italic', lineHeight: 1.55 }}>
             Some of what you see in this app was vibe-coded fast to validate the business hypothesis. Now that the
             hypothesis is proven, tech team can harden the parts that need it (catalogue persistence, ingestion
             pipelines, Postgres migration). The contract between UI and data stays the same — only the implementation behind it changes.
@@ -300,7 +301,7 @@ function TechStackPage() {
               monoUrl={`${API}/health`}
             />
           </div>
-          <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px', fontStyle: 'italic' }}>
+          <p style={{ fontSize: '11px', color: C.faint, marginTop: '8px', fontStyle: 'italic' }}>
             Note: <code>/docs</code> and <code>/openapi.json</code> are public after the next Fly.io deploy. Until then they require the API key —
             you can clone the repo and read <code>api-types.generated.ts</code> directly, which is generated from the same schema.
           </p>
@@ -328,8 +329,8 @@ function TechStackPage() {
                 padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none',
                 fontSize: '12px', alignItems: 'start', gap: '12px',
               }}>
-                <span style={{ color: '#0F172A', fontWeight: 600 }}>{r.q}</span>
-                <span style={{ color: '#475569', lineHeight: 1.5 }}>{r.a}</span>
+                <span style={{ color: C.ink, fontWeight: 600 }}>{r.q}</span>
+                <span style={{ color: C.sub, lineHeight: 1.5 }}>{r.a}</span>
               </div>
             ))}
           </div>
@@ -347,7 +348,7 @@ function TechStackPage() {
         {/* Admin-only — paper trail of who acknowledged */}
         <AcknowledgementLog />
 
-        <p style={{ fontSize: '11px', color: '#CBD5E1', marginTop: '20px', textAlign: 'center' }}>
+        <p style={{ fontSize: '11px', color: C.knobOff, marginTop: '20px', textAlign: 'center' }}>
           Edit this page at <code>frontend/src/app/tech-stack/page.tsx</code>. Canonical docs live in the repo.
         </p>
       </div>
@@ -383,7 +384,7 @@ function GitHubAccessGate() {
         href={REPO} target="_blank" rel="noreferrer" className="ts-link"
         style={{
           display: 'flex', alignItems: 'center', gap: '12px',
-          background: '#0F172A', color: 'white', border: '1px solid #0F172A',
+          background: C.ink, color: 'white', border: '1px solid #0F172A',
           borderRadius: '8px', padding: '14px 18px', textDecoration: 'none',
           marginBottom: '6px',
         }}
@@ -391,11 +392,11 @@ function GitHubAccessGate() {
         <span style={{ fontSize: '20px' }}>📦</span>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: '13px', fontWeight: 700, margin: 0 }}>GitHub repository ↗</p>
-          <p style={{ fontSize: '11px', color: '#94A3B8', margin: '2px 0 0 0', fontFamily: 'ui-monospace, monospace' }}>
+          <p style={{ fontSize: '11px', color: C.faint, margin: '2px 0 0 0', fontFamily: 'ui-monospace, monospace' }}>
             cswf86/rosetta-ims
           </p>
         </div>
-        <span style={{ fontSize: '11px', color: '#94A3B8' }}>admin · gate bypassed</span>
+        <span style={{ fontSize: '11px', color: C.faint }}>admin · gate bypassed</span>
       </a>
     )
   }
@@ -425,8 +426,8 @@ function GitHubAccessGate() {
 
       {!justSubmitted && hasHistory && latestAck && (
         <div style={{
-          fontSize: '11px', color: '#64748B',
-          background: '#F8FAFC', border: '1px solid #E2E8F0',
+          fontSize: '11px', color: C.muted,
+          background: C.wash, border: '1px solid #E2E8F0',
           borderRadius: '6px', padding: '8px 12px', marginBottom: '8px',
           lineHeight: 1.55,
         }}>
@@ -442,7 +443,7 @@ function GitHubAccessGate() {
         className="ts-link"
         style={{
           display: 'flex', alignItems: 'center', gap: '12px', width: '100%',
-          background: '#0F172A', color: 'white',
+          background: C.ink, color: 'white',
           border: '1px solid #0F172A', borderRadius: '8px',
           padding: '14px 18px', cursor: 'pointer',
           marginBottom: '6px', textAlign: 'left',
@@ -454,7 +455,7 @@ function GitHubAccessGate() {
           <p style={{ fontSize: '13px', fontWeight: 700, margin: 0 }}>
             {hasHistory ? 'Submit another access request' : 'Request access to GitHub repo'}
           </p>
-          <p style={{ fontSize: '11px', color: '#94A3B8', margin: '2px 0 0 0' }}>
+          <p style={{ fontSize: '11px', color: C.faint, margin: '2px 0 0 0' }}>
             Click-wrap NDA + emails Chris (your address goes in Reply-To, so his reply comes back to you)
           </p>
         </div>
@@ -537,13 +538,13 @@ function AcknowledgementModal({
           boxShadow: '0 20px 50px rgba(15,23,42,0.3)',
         }}
       >
-        <p style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
+        <p style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
           GitHub Access Request — NDA Acknowledgement
         </p>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>
           Algo Technologies Pte Ltd and its affiliates — proprietary source code
         </h2>
-        <p style={{ fontSize: '12px', color: '#64748B', lineHeight: 1.6, marginBottom: '14px' }}>
+        <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '14px' }}>
           The Rosetta IMS repository contains the proprietary source code, schema, and business logic of
           Algo Technologies Pte Ltd and its affiliates. Submitting this form sends a request email to Chris
           (chris@algogroup.io) — your email is set as Reply-To so when Chris replies, it lands in your inbox.
@@ -551,10 +552,10 @@ function AcknowledgementModal({
           receive a GitHub invitation by email when approved.
         </p>
 
-        <p style={{ fontSize: '10px', fontWeight: 700, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+        <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigo, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
           Tick all 4 boxes — {checkedCount}/4 ticked
         </p>
-        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px 16px', marginBottom: '14px' }}>
+        <div style={{ background: C.wash, border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px 16px', marginBottom: '14px' }}>
           <Check checked={c1} onChange={setC1}>
             <strong>Confidentiality.</strong> The Rosetta IMS source code, schema, business logic, and any
             derivative work or output are confidential and proprietary to Algo Technologies Pte Ltd and its
@@ -607,7 +608,7 @@ function AcknowledgementModal({
         />
 
         {error && (
-          <p style={{ fontSize: '11px', color: '#991B1B', background: '#FEF2F2', border: '1px solid #FECACA', padding: '8px 12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <p style={{ fontSize: '11px', color: C.redInk, background: C.badBg, border: '1px solid #FECACA', padding: '8px 12px', borderRadius: '6px', marginBottom: '12px' }}>
             {error}
           </p>
         )}
@@ -615,7 +616,7 @@ function AcknowledgementModal({
         {/* "what's still needed" helper — shown when submit is blocked */}
         {issues.length > 0 && !submitting && (
           <p style={{
-            fontSize: '11.5px', color: '#92400E',
+            fontSize: '11.5px', color: C.amberInk,
             background: '#FFFBEB', border: '1px solid #FDE68A',
             padding: '8px 12px', borderRadius: '6px', marginBottom: '12px',
             lineHeight: 1.5,
@@ -629,7 +630,7 @@ function AcknowledgementModal({
             onClick={onClose}
             disabled={submitting}
             style={{
-              background: 'transparent', color: '#64748B',
+              background: 'transparent', color: C.muted,
               border: '1px solid #E2E8F0', borderRadius: '6px',
               padding: '8px 16px', fontSize: '12px', fontWeight: 600,
               cursor: submitting ? 'not-allowed' : 'pointer',
@@ -642,7 +643,7 @@ function AcknowledgementModal({
             disabled={!canSubmit}
             title={issues.length > 0 ? `Still needed: ${issues.join('; ')}` : ''}
             style={{
-              background: canSubmit ? '#0F172A' : '#CBD5E1', color: 'white',
+              background: canSubmit ? C.ink : C.knobOff, color: 'white',
               border: 'none', borderRadius: '6px',
               padding: '8px 16px', fontSize: '12px', fontWeight: 600,
               cursor: canSubmit ? 'pointer' : 'not-allowed',
@@ -654,7 +655,7 @@ function AcknowledgementModal({
           </button>
         </div>
 
-        <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '12px', lineHeight: 1.5, fontStyle: 'italic' }}>
+        <p style={{ fontSize: '10px', color: C.faint, marginTop: '12px', lineHeight: 1.5, fontStyle: 'italic' }}>
           Click-wrap acceptance is legally binding under HK Electronic Transactions Ordinance and equivalent
           laws. The record is preserved in our audit log, in Chris&apos;s inbox, and in your inbox.
         </p>
@@ -672,7 +673,7 @@ const inputStyle: React.CSSProperties = {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: '10px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+    <p style={{ fontSize: '10px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
       {children}
     </p>
   )
@@ -687,7 +688,7 @@ function Check({ checked, onChange, children }: { checked: boolean; onChange: (v
         onChange={(e) => onChange(e.target.checked)}
         style={{ marginTop: '3px', flexShrink: 0, width: '14px', height: '14px', cursor: 'pointer' }}
       />
-      <span style={{ fontSize: '12px', color: '#0F172A', lineHeight: 1.55 }}>{children}</span>
+      <span style={{ fontSize: '12px', color: C.ink, lineHeight: 1.55 }}>{children}</span>
     </label>
   )
 }
@@ -713,22 +714,22 @@ function AcknowledgementLog() {
   return (
     <div style={{ marginTop: '24px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
           🔐 Acknowledgement log (admin only)
         </p>
-        <span style={{ fontSize: '10px', color: '#64748B' }}>
+        <span style={{ fontSize: '10px', color: C.muted }}>
           {acks?.length ?? '—'} record{acks?.length === 1 ? '' : 's'}
         </span>
       </div>
       {error && (
-        <p style={{ fontSize: '11px', color: '#991B1B', background: '#FEF2F2', border: '1px solid #FECACA', padding: '8px 10px', borderRadius: '6px' }}>{error}</p>
+        <p style={{ fontSize: '11px', color: C.redInk, background: C.badBg, border: '1px solid #FECACA', padding: '8px 10px', borderRadius: '6px' }}>{error}</p>
       )}
       {acks && acks.length === 0 && (
-        <p style={{ fontSize: '12px', color: '#94A3B8', fontStyle: 'italic' }}>No acknowledgements recorded yet. As soon as a non-admin user clicks through, they appear here.</p>
+        <p style={{ fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>No acknowledgements recorded yet. As soon as a non-admin user clicks through, they appear here.</p>
       )}
       {acks && acks.length > 0 && (
         <div style={{ border: '1px solid #E2E8F0', borderRadius: '6px', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '150px 140px 140px 180px 90px 1fr', gap: '8px', padding: '8px 12px', background: '#F8FAFC', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '150px 140px 140px 180px 90px 1fr', gap: '8px', padding: '8px 12px', background: C.wash, fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>
             <span>Name (typed)</span>
             <span>IMS user</span>
             <span>GitHub user</span>
@@ -741,16 +742,16 @@ function AcknowledgementLog() {
               <div style={{
                 display: 'grid', gridTemplateColumns: '150px 140px 140px 180px 90px 1fr',
                 gap: '8px', padding: '8px 12px',
-                fontSize: '11px', color: '#0F172A', alignItems: 'center',
+                fontSize: '11px', color: C.ink, alignItems: 'center',
               }}>
                 <span style={{ fontWeight: 600 }}>{a.full_name_typed}</span>
-                <span style={{ color: '#475569' }}>{a.user_display ?? `user #${a.user_id}`}</span>
-                <code style={{ color: '#4338CA', fontSize: '10.5px' }}>@{a.github_username}</code>
-                <span style={{ color: '#475569', fontSize: '10.5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.email_requestor ?? '—'}</span>
-                <span style={{ fontSize: '10.5px', color: a.email_sent_at ? '#166534' : (a.email_send_error ? '#991B1B' : '#94A3B8') }}>
+                <span style={{ color: C.sub }}>{a.user_display ?? `user #${a.user_id}`}</span>
+                <code style={{ color: C.indigoInk, fontSize: '10.5px' }}>@{a.github_username}</code>
+                <span style={{ color: C.sub, fontSize: '10.5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.email_requestor ?? '—'}</span>
+                <span style={{ fontSize: '10.5px', color: a.email_sent_at ? C.green : (a.email_send_error ? C.redInk : C.faint) }}>
                   {a.email_sent_at ? '✓ sent' : (a.email_send_error ? '✗ failed' : '—')}
                 </span>
-                <span style={{ color: '#64748B', fontSize: '10.5px' }}>
+                <span style={{ color: C.muted, fontSize: '10.5px' }}>
                   {a.accepted_at.slice(0, 16).replace('T', ' ')} {a.ip_address ? `· ${a.ip_address}` : ''}
                 </span>
               </div>
@@ -758,11 +759,11 @@ function AcknowledgementLog() {
                 <div style={{
                   margin: '0 12px 8px 162px',
                   padding: '6px 10px',
-                  background: '#FEF2F2',
+                  background: C.badBg,
                   border: '1px solid #FECACA',
                   borderRadius: '4px',
                   fontSize: '10.5px',
-                  color: '#991B1B',
+                  color: C.redInk,
                   fontFamily: 'ui-monospace, monospace',
                   lineHeight: 1.5,
                   wordBreak: 'break-word',
@@ -774,7 +775,7 @@ function AcknowledgementLog() {
           ))}
         </div>
       )}
-      <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '8px', lineHeight: 1.5, fontStyle: 'italic' }}>
+      <p style={{ fontSize: '10px', color: C.faint, marginTop: '8px', lineHeight: 1.5, fontStyle: 'italic' }}>
         Records cannot be deleted from the UI (audit integrity). To purge, manually delete from <code>access_acknowledgements</code> in the database.
       </p>
     </div>
@@ -784,7 +785,7 @@ function AcknowledgementLog() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '22px' }}>
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>
         {title}
       </p>
       {children}
@@ -795,14 +796,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function DirCard({ title, subtitle, items }: { title: string; subtitle: string; items: [string, string][] }) {
   return (
     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px' }}>
-      <p style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', fontFamily: 'ui-monospace, monospace', marginBottom: '2px' }}>
+      <p style={{ fontSize: '13px', fontWeight: 700, color: C.ink, fontFamily: 'ui-monospace, monospace', marginBottom: '2px' }}>
         {title}
       </p>
-      <p style={{ fontSize: '10.5px', color: '#94A3B8', marginBottom: '10px' }}>{subtitle}</p>
+      <p style={{ fontSize: '10.5px', color: C.faint, marginBottom: '10px' }}>{subtitle}</p>
       {items.map(([path, desc]) => (
         <div key={path} style={{ display: 'grid', gridTemplateColumns: '190px 1fr', gap: '8px', padding: '4px 0', fontSize: '11px' }}>
-          <code style={{ color: '#4338CA', fontFamily: 'ui-monospace, monospace', fontSize: '11px' }}>{path}</code>
-          <span style={{ color: '#64748B', lineHeight: 1.5 }}>{desc}</span>
+          <code style={{ color: C.indigoInk, fontFamily: 'ui-monospace, monospace', fontSize: '11px' }}>{path}</code>
+          <span style={{ color: C.muted, lineHeight: 1.5 }}>{desc}</span>
         </div>
       ))}
     </div>
@@ -823,12 +824,12 @@ function RepoLink({ href, title, desc, monoUrl }: { href: string; title: string;
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '3px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>{title}</span>
-        <span style={{ fontSize: '10px', color: '#6366F1' }}>↗</span>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: C.ink }}>{title}</span>
+        <span style={{ fontSize: '10px', color: C.indigo }}>↗</span>
       </div>
-      <p style={{ fontSize: '11px', color: '#64748B', margin: 0, lineHeight: 1.5 }}>{desc}</p>
+      <p style={{ fontSize: '11px', color: C.muted, margin: 0, lineHeight: 1.5 }}>{desc}</p>
       {monoUrl && (
-        <p style={{ fontSize: '10.5px', color: '#94A3B8', margin: '4px 0 0 0', fontFamily: 'ui-monospace, monospace' }}>{monoUrl}</p>
+        <p style={{ fontSize: '10.5px', color: C.faint, margin: '4px 0 0 0', fontFamily: 'ui-monospace, monospace' }}>{monoUrl}</p>
       )}
     </a>
   )
@@ -845,8 +846,8 @@ function InAppLink({ href, title, desc }: { href: string; title: string; desc: s
         transition: 'all 0.1s',
       }}
     >
-      <p style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', marginBottom: '3px' }}>{title} →</p>
-      <p style={{ fontSize: '11px', color: '#64748B', margin: 0, lineHeight: 1.45 }}>{desc}</p>
+      <p style={{ fontSize: '12px', fontWeight: 700, color: C.ink, marginBottom: '3px' }}>{title} →</p>
+      <p style={{ fontSize: '11px', color: C.muted, margin: 0, lineHeight: 1.45 }}>{desc}</p>
     </a>
   )
 }

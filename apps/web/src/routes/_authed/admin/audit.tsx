@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { authHeaders, getUser, can, ROLE_LABELS, type Role } from '@/lib/auth'
@@ -26,15 +27,15 @@ interface AuditEvent {
 // action prefix → chip colour
 function actionColor(action: string): { bg: string; fg: string } {
   if (action === 'catalogue.confirm_match' || action === 'catalogue.assign_new') return { bg: '#DBEAFE', fg: '#1E40AF' }  // OCR match
-  if (action === 'catalogue.hitl_verify') return { bg: '#DCFCE7', fg: '#166534' }                                          // manual verify
-  if (action === 'catalogue.hitl_unverify') return { bg: '#FEE2E2', fg: '#991B1B' }                                       // un-verify
-  if (action.startsWith('login.fail')) return { bg: '#FEE2E2', fg: '#991B1B' }
+  if (action === 'catalogue.hitl_verify') return { bg: C.greenBg, fg: C.green }                                          // manual verify
+  if (action === 'catalogue.hitl_unverify') return { bg: C.redBg, fg: C.redInk }                                       // un-verify
+  if (action.startsWith('login.fail')) return { bg: C.redBg, fg: C.redInk }
   if (action.startsWith('login') || action === 'logout') return { bg: '#E0F2FE', fg: '#075985' }
   if (action.startsWith('user.')) return { bg: '#EDE9FE', fg: '#5B21B6' }
-  if (action.startsWith('product.')) return { bg: '#DCFCE7', fg: '#166534' }
-  if (action.startsWith('catalogue.')) return { bg: '#FEF3C7', fg: '#92400E' }
+  if (action.startsWith('product.')) return { bg: C.greenBg, fg: C.green }
+  if (action.startsWith('catalogue.')) return { bg: C.warnBg, fg: C.amberInk }
   if (action.startsWith('sheet.')) return { bg: '#FFE4E6', fg: '#9F1239' }
-  return { bg: '#F1F5F9', fg: '#475569' }
+  return { bg: C.monoBg, fg: C.sub }
 }
 
 function fmt(iso: string): string {
@@ -89,15 +90,15 @@ function AuditPage() {
   if (!can('audit_view')) {
     return (
       <div style={{ padding: '40px', maxWidth: '560px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>Audit Log</h1>
-        <div style={{ marginTop: '12px', padding: '14px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', color: '#991B1B', fontSize: '13px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink }}>Audit Log</h1>
+        <div style={{ marginTop: '12px', padding: '14px 16px', background: C.badBg, border: '1px solid #FECACA', borderRadius: '8px', color: C.redInk, fontSize: '13px' }}>
           <strong>Admin access required.</strong> Your role ({ROLE_LABELS[me?.role ?? 'bizops']}) cannot view the audit log.
         </div>
       </div>
     )
   }
 
-  const th = { padding: '8px 12px', fontSize: '10px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: '0.05em', textAlign: 'left' as const, borderBottom: '1px solid #E2E8F0', position: 'sticky' as const, top: 0, background: '#F8FAFC' }
+  const th = { padding: '8px 12px', fontSize: '10px', fontWeight: 700, color: C.muted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', textAlign: 'left' as const, borderBottom: '1px solid #E2E8F0', position: 'sticky' as const, top: 0, background: C.wash }
   const cell = { padding: '7px 12px', fontSize: '12px', color: '#334155', borderBottom: '1px solid #F1F5F9', verticalAlign: 'top' as const }
   const input = { border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', background: 'white' }
 
@@ -105,10 +106,10 @@ function AuditPage() {
     <div style={{ padding: '28px 32px', maxWidth: '1280px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Audit Log</h1>
-          <p style={{ fontSize: '12.5px', color: '#64748B', marginTop: '4px' }}>Logins, edits, and admin actions — who did what, when, and from where.</p>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink, margin: 0 }}>Audit Log</h1>
+          <p style={{ fontSize: '12.5px', color: C.muted, marginTop: '4px' }}>Logins, edits, and admin actions — who did what, when, and from where.</p>
         </div>
-        <a href="/admin/report" style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 600, background: '#6366F1', color: 'white', borderRadius: '7px', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <a href="/admin/report" style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 600, background: C.indigo, color: 'white', borderRadius: '7px', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
           📊 Onboarding Report
         </a>
       </div>
@@ -118,11 +119,11 @@ function AuditPage() {
           <button key={val} onClick={() => setFCategory(val)} style={{
             padding: '6px 14px', fontSize: '12px', fontWeight: 600, borderRadius: '7px', cursor: 'pointer',
             border: fCategory === val ? '1px solid #6366F1' : '1px solid #E2E8F0',
-            background: fCategory === val ? '#EEF2FF' : 'white',
-            color: fCategory === val ? '#4338CA' : '#64748B',
+            background: fCategory === val ? C.primaryBg : 'white',
+            color: fCategory === val ? C.indigoInk : C.muted,
           }}>{label}</button>
         ))}
-        <span style={{ fontSize: '11px', color: '#94A3B8', alignSelf: 'center', marginLeft: '4px' }}>
+        <span style={{ fontSize: '11px', color: C.faint, alignSelf: 'center', marginLeft: '4px' }}>
           {fCategory === 'hitl' ? 'OCR match + update' : fCategory === 'ocr_match' ? 'confirm / assign-new' : fCategory === 'update' ? 'all product edits' : 'everything'}
         </span>
       </div>
@@ -138,11 +139,11 @@ function AuditPage() {
         </select>
         <input style={{ ...input, width: '220px' }} value={q} onChange={e => setQ(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && load()} placeholder="Search SKU / detail / user…" />
-        <button onClick={load} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, background: '#6366F1', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Search</button>
+        <button onClick={load} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, background: C.indigo, color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Search</button>
         {(fAction || fActor || q || fCategory) && (
-          <button onClick={() => { setFAction(''); setFActor(''); setQ(''); setFCategory('') }} style={{ padding: '6px 12px', fontSize: '12px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '6px', cursor: 'pointer', color: '#64748B' }}>Clear</button>
+          <button onClick={() => { setFAction(''); setFActor(''); setQ(''); setFCategory('') }} style={{ padding: '6px 12px', fontSize: '12px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '6px', cursor: 'pointer', color: C.muted }}>Clear</button>
         )}
-        <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#94A3B8' }}>{events.length} event{events.length === 1 ? '' : 's'}</span>
+        <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.faint }}>{events.length} event{events.length === 1 ? '' : 's'}</span>
       </div>
 
       <div style={{ marginTop: '14px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'auto', maxHeight: '72vh' }}>
@@ -157,18 +158,18 @@ function AuditPage() {
               const c = actionColor(e.action)
               return (
                 <tr key={e.id}>
-                  <td style={{ ...cell, whiteSpace: 'nowrap', color: '#64748B' }}>{fmt(e.created_at)}</td>
+                  <td style={{ ...cell, whiteSpace: 'nowrap', color: C.muted }}>{fmt(e.created_at)}</td>
                   <td style={cell}><span style={{ fontSize: '10.5px', fontWeight: 700, padding: '2px 7px', borderRadius: '5px', background: c.bg, color: c.fg, fontFamily: 'monospace' }}>{e.action}</span></td>
                   <td style={cell}>
-                    <div style={{ fontWeight: 600, color: '#0F172A' }}>{e.actor_display_name ?? e.actor_username ?? '—'}</div>
-                    {e.actor_role && <div style={{ fontSize: '10px', color: '#94A3B8' }}>{ROLE_LABELS[e.actor_role] ?? e.actor_role}</div>}
+                    <div style={{ fontWeight: 600, color: C.ink }}>{e.actor_display_name ?? e.actor_username ?? '—'}</div>
+                    {e.actor_role && <div style={{ fontSize: '10px', color: C.faint }}>{ROLE_LABELS[e.actor_role] ?? e.actor_role}</div>}
                   </td>
                   <td style={cell}>
-                    {e.entity_label ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#4338CA' }}>{e.entity_label}</span> : '—'}
-                    {e.entity_type && <div style={{ fontSize: '10px', color: '#94A3B8' }}>{e.entity_type}</div>}
+                    {e.entity_label ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: C.indigoInk }}>{e.entity_label}</span> : '—'}
+                    {e.entity_type && <div style={{ fontSize: '10px', color: C.faint }}>{e.entity_type}</div>}
                   </td>
-                  <td style={{ ...cell, color: '#64748B', maxWidth: '360px' }}>{summarise(e)}</td>
-                  <td style={{ ...cell, fontFamily: 'monospace', fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap' }}>{e.ip ?? '—'}</td>
+                  <td style={{ ...cell, color: C.muted, maxWidth: '360px' }}>{summarise(e)}</td>
+                  <td style={{ ...cell, fontFamily: 'monospace', fontSize: '11px', color: C.faint, whiteSpace: 'nowrap' }}>{e.ip ?? '—'}</td>
                 </tr>
               )
             })}

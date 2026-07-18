@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { useState, useEffect, useRef } from 'react'
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
 import type { Product, SyncStatus, MbbTermMargin, MbbTerm, CompetitorPrice } from '@/lib/types'
@@ -28,13 +29,13 @@ function StatusMenu({ current, saving, onPick }: { current: string; saving: bool
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button className="btn" onClick={() => setOpen(o => !o)} disabled={saving}>
-        {saving ? 'Saving…' : `Status: ${lbl(current)}`} <span style={{ color: '#94A3B8' }}>▾</span>
+        {saving ? 'Saving…' : `Status: ${lbl(current)}`} <span style={{ color: C.faint }}>▾</span>
       </button>
       {open && (
         <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', boxShadow: '0 10px 30px rgba(15,23,42,0.14)', zIndex: 40, minWidth: '162px', overflow: 'hidden', padding: '4px' }}>
           {opts.map(o => (
             <button key={o} onClick={() => { setOpen(false); if (o !== current) onPick(o) }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', fontSize: '12.5px', border: 'none', borderRadius: '6px', background: o === current ? '#EEF2FF' : 'transparent', color: o === current ? '#4338CA' : '#334155', fontWeight: o === current ? 600 : 400, cursor: 'pointer' }}>
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', fontSize: '12.5px', border: 'none', borderRadius: '6px', background: o === current ? C.primaryBg : 'transparent', color: o === current ? C.indigoInk : '#334155', fontWeight: o === current ? 600 : 400, cursor: 'pointer' }}>
               {lbl(o)}{o === current ? ' ✓' : ''}
             </button>
           ))}
@@ -50,12 +51,12 @@ const gToUnit = (g: number, u: string | null) => +(g / (u === 'lb' ? LB_G : 1000
 const unitToG = (v: number, u: string | null) => Math.round(v * (u === 'lb' ? LB_G : 1000))
 
 const CAT_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
-  'Medicine':     { bg: '#FEE2E2', color: '#991B1B', dot: '#DC2626' },
-  'Preventative': { bg: '#FEF3C7', color: '#92400E', dot: '#D97706' },
+  'Medicine':     { bg: C.redBg, color: C.redInk, dot: '#DC2626' },
+  'Preventative': { bg: C.warnBg, color: C.amberInk, dot: '#D97706' },
   'Supplement':   { bg: '#DBEAFE', color: '#1E40AF', dot: '#2563EB' },
-  'Food':         { bg: '#DCFCE7', color: '#166534', dot: '#15803D' },
-  'Pet Hygiene':  { bg: '#F1F5F9', color: '#475569', dot: '#64748B' },
-  'Not-For-Sale': { bg: '#F1F5F9', color: '#94A3B8', dot: '#94A3B8' },
+  'Food':         { bg: C.greenBg, color: C.green, dot: C.ok },
+  'Pet Hygiene':  { bg: C.monoBg, color: C.sub, dot: C.muted },
+  'Not-For-Sale': { bg: C.monoBg, color: C.faint, dot: C.faint },
 }
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -110,7 +111,7 @@ function auditSummary(e: AuditEvent): string {
 // Shows a value or a clearly visible missing-data flag — never silently blank.
 function Val({ v, fmt }: { v: string | number | null | undefined; fmt?: (x: string | number) => string }) {
   if (v === null || v === undefined || v === '') {
-    return <span style={{ fontSize: '11px', fontWeight: 600, color: '#B45309', background: '#FCF3E6', padding: '1px 6px', borderRadius: '4px' }}>Missing</span>
+    return <span style={{ fontSize: '11px', fontWeight: 600, color: C.amber, background: '#FCF3E6', padding: '1px 6px', borderRadius: '4px' }}>Missing</span>
   }
   return <>{fmt ? fmt(v) : String(v)}</>
 }
@@ -389,25 +390,25 @@ function ItemDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '60px', textAlign: 'center', color: '#94A3B8', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px' }}><Spinner size={15} color="#94A3B8" /> Loading…</div>
+      <div style={{ padding: '60px', textAlign: 'center', color: C.faint, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px' }}><Spinner size={15} color={C.faint} /> Loading…</div>
     )
   }
 
   if (error === '404' || (!loading && !item)) {
     return (
       <div style={{ padding: '40px', textAlign: 'center' }}>
-        <p style={{ fontSize: '16px', fontWeight: 600, color: '#0F172A' }}>Product not found</p>
-        <p style={{ fontSize: '13px', color: '#94A3B8', marginTop: '8px' }}>SKU {sku} does not exist in IMS.</p>
-        <Link to={'/' as never} style={{ display: 'inline-block', marginTop: '16px', fontSize: '13px', color: '#6366F1' }}>← Back to Inventory</Link>
+        <p style={{ fontSize: '16px', fontWeight: 600, color: C.ink }}>Product not found</p>
+        <p style={{ fontSize: '13px', color: C.faint, marginTop: '8px' }}>SKU {sku} does not exist in IMS.</p>
+        <Link to={'/' as never} style={{ display: 'inline-block', marginTop: '16px', fontSize: '13px', color: C.indigo }}>← Back to Inventory</Link>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#991B1B', fontSize: '13px' }}>
+      <div style={{ padding: '40px', textAlign: 'center', color: C.redInk, fontSize: '13px' }}>
         Error loading product: {error}
-        <br /><Link to={'/' as never} style={{ color: '#6366F1', fontSize: '12px', marginTop: '8px', display: 'inline-block' }}>← Back to Inventory</Link>
+        <br /><Link to={'/' as never} style={{ color: C.indigo, fontSize: '12px', marginTop: '8px', display: 'inline-block' }}>← Back to Inventory</Link>
       </div>
     )
   }
@@ -419,7 +420,7 @@ function ItemDetailPage() {
     setCopiedSku(true)
     window.setTimeout(() => setCopiedSku(false), 1500)
   }
-  const cat = CAT_STYLE[p.category] ?? { bg: '#F1F5F9', color: '#64748B', dot: '#64748B' }
+  const cat = CAT_STYLE[p.category] ?? { bg: C.monoBg, color: C.muted, dot: C.muted }
   const primaryCh = p.channels.find(c => c.channel === 'clinic') ?? p.channels[0]
   const gpFailing = !p.channels.every(c => c.recommendation !== 'Raise price ⚠')
 
@@ -437,7 +438,7 @@ function ItemDetailPage() {
   const uomLabel = p.uom ?? 'unit'
   const packLabel = p.pack_unit ?? 'pack'
   const upp = p.units_per_pack ?? 1
-  const wocColor = p.woc == null ? '#8A93A2' : p.woc < 2 ? '#C0362C' : p.woc < 4 ? '#B45309' : '#15803D'
+  const wocColor = p.woc == null ? '#8A93A2' : p.woc < 2 ? '#C0362C' : p.woc < 4 ? C.amber : C.ok
   const wocPct = p.woc == null ? 0 : Math.max(6, Math.min(100, (p.woc / 8) * 100))
   const landed = p.landed_unit_cost ?? p.unit_cost
   const wdbc = p.weekly_demand_by_channel
@@ -499,7 +500,7 @@ function ItemDetailPage() {
 
         {/* Breadcrumb — back to the (filtered) inventory list */}
         <div style={{ marginBottom: '14px', fontSize: '12.5px', color: '#5B6472', display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
-          <span onClick={goBack} style={{ color: '#4F46E5', fontWeight: 600, cursor: 'pointer' }}>← All Inventory</span>
+          <span onClick={goBack} style={{ color: C.indigoStrong, fontWeight: 600, cursor: 'pointer' }}>← All Inventory</span>
           <span style={{ color: '#C2C8D2' }}>/</span>
           <span style={{ color: '#334155' }}>{p.name}</span>
         </div>
@@ -712,7 +713,7 @@ function ItemDetailPage() {
                     <div className="sup" key={s.id}>
                       <div className="sup-h">
                         <div>
-                          <div className="sup-nm">{s.name ?? 'Unnamed supplier'}{isPref && <span className="prefflag">PREFERRED</span>}{s.is_primary && !isPref && <span className="prefflag" style={{ color: '#3730A3', background: '#EEF0FE' }}>PRIMARY</span>}</div>
+                          <div className="sup-nm">{s.name ?? 'Unnamed supplier'}{isPref && <span className="prefflag">PREFERRED</span>}{s.is_primary && !isPref && <span className="prefflag" style={{ color: '#3730A3', background: C.indigoBg }}>PRIMARY</span>}</div>
                           <div className="sup-meta">{[s.code, `ID #${s.supplier_id ?? '—'}`, s.supplier_sku && `SKU ${s.supplier_sku}`].filter(Boolean).join(' · ')}</div>
                         </div>
                         <div className="sup-cost">
@@ -779,7 +780,7 @@ function ItemDetailPage() {
                   </>
                 ) : (
                   <div style={{ border: '1px dashed #D5D8F7', borderRadius: '10px', background: '#FAFBFC', padding: '18px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', fontVariantNumeric: 'tabular-nums' }}>{p.sales_120d.toLocaleString()}</div>
+                    <div style={{ fontSize: '22px', fontWeight: 700, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{p.sales_120d.toLocaleString()}</div>
                     <div style={{ fontSize: '11px', color: '#8A93A2', marginTop: '2px' }}>demand-based estimate ({uomLabel}s / 120d)</div>
                     <div style={{ fontSize: '11.5px', color: '#5B6472', marginTop: '10px', lineHeight: 1.5 }}>No sales pulled for this SKU yet — it may not have sold on clinic, HKTV or Shopify in the last 120 days.</div>
                   </div>
@@ -814,10 +815,10 @@ function ItemDetailPage() {
             <div className="card">
               <div className="ch"><div className="ct">Data quality &amp; verification</div></div>
               <div className="cb">
-                <div className="kv"><span className="k">Grade</span><span className="v" style={{ color: p.data_grade === 'A' ? '#15803D' : '#B45309' }}>{p.data_grade === 'A' ? 'A — complete' : 'C — incomplete'}</span></div>
+                <div className="kv"><span className="k">Grade</span><span className="v" style={{ color: p.data_grade === 'A' ? C.ok : C.amber }}>{p.data_grade === 'A' ? 'A — complete' : 'C — incomplete'}</span></div>
                 <div className="kv"><span className="k">HITL verified</span><span className="v">{p.hitl_verified ? `Yes${p.uom_verified_by ? ` · ${p.uom_verified_by}` : ''}` : 'No'}</span></div>
                 <div className="kv"><span className="k">Verified on</span><span className="v">{fmtDate(p.uom_verified_at) ?? '—'}</span></div>
-                <div className="kv"><span className="k">Pack size</span><span className="v" style={{ color: p.uom_verified_at ? '#15803D' : '#B45309' }}>{p.uom_verified_at ? `Locked · ${upp}/${packLabel}` : upp > 1 ? `${upp}/${packLabel} · unverified` : '—'}</span></div>
+                <div className="kv"><span className="k">Pack size</span><span className="v" style={{ color: p.uom_verified_at ? C.ok : C.amber }}>{p.uom_verified_at ? `Locked · ${upp}/${packLabel}` : upp > 1 ? `${upp}/${packLabel} · unverified` : '—'}</span></div>
                 <div className="kv"><span className="k">Cost source</span><span className="v">{p.cost_source?.replace(/_/g, ' ') ?? '—'}{p.cost_is_stale ? ' · stale' : ''}</span></div>
                 {(p.cost_sheet_conflict || p.pack_sheet_conflict) && (
                   <div className="hitl" style={{ background: '#FBEBEA', borderColor: '#F1CDC9', color: '#7A2A24' }}>
@@ -844,7 +845,7 @@ function ItemDetailPage() {
                   ? <button className="linkbtn" onClick={() => setTagDraft([...(p.tags ?? [])])}>Edit</button>
                   : <span style={{ display: 'flex', gap: '10px' }}>
                       <button className="linkbtn" onClick={() => { setTagDraft(null); setTagInput('') }}>Cancel</button>
-                      <button className="linkbtn" style={{ color: '#15803D' }} onClick={() => saveTags(tagDraft)} disabled={savingTags}>{savingTags ? 'Saving…' : 'Save'}</button>
+                      <button className="linkbtn" style={{ color: C.ok }} onClick={() => saveTags(tagDraft)} disabled={savingTags}>{savingTags ? 'Saving…' : 'Save'}</button>
                     </span>}
               </div>
               <div className="cb">
@@ -1005,7 +1006,7 @@ function SupplierManagerModal({ product, onSaved, onClose }: { product: Product;
   }
 
   const inp: React.CSSProperties = { border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 8px', fontSize: '12px', background: 'white', width: '100%', boxSizing: 'border-box' }
-  const lblS: React.CSSProperties = { fontSize: '10px', fontWeight: 600, color: '#94A3B8', display: 'flex', flexDirection: 'column', gap: '3px' }
+  const lblS: React.CSSProperties = { fontSize: '10px', fontWeight: 600, color: C.faint, display: 'flex', flexDirection: 'column', gap: '3px' }
   // Order-UOM options: this SKU's sell-UOM + pack-unit first (the likeliest picks), then the shared
   // vocabulary; deduped case-insensitively. Rendered via uomSelect, which also keeps any stored value.
   const orderUomOptions = (() => {
@@ -1031,23 +1032,23 @@ function SupplierManagerModal({ product, onSaved, onClose }: { product: Product;
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '48px 20px', overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '14px', width: '720px', maxWidth: '100%', padding: '22px', boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>Manage suppliers</h2>
-          <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: '#94A3B8', cursor: 'pointer', lineHeight: 1 }}>×</button>
+          <h2 style={{ fontSize: '17px', fontWeight: 700, color: C.ink }}>Manage suppliers</h2>
+          <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: C.faint, cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
-        <p style={{ fontSize: '12px', color: '#94A3B8', margin: '2px 0 16px' }}>{product.sku_code} · {rows.length} supplier{rows.length === 1 ? '' : 's'}</p>
+        <p style={{ fontSize: '12px', color: C.faint, margin: '2px 0 16px' }}>{product.sku_code} · {rows.length} supplier{rows.length === 1 ? '' : 's'}</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {rows.map(s => {
             const dr = drafts[s.id]
             return (
-              <div key={s.id} style={{ border: `1px solid ${s.is_primary ? '#C7D2FE' : '#E2E8F0'}`, borderRadius: '10px', padding: '12px', background: s.is_primary ? '#F5F7FF' : 'white' }}>
+              <div key={s.id} style={{ border: `1px solid ${s.is_primary ? C.indigoLine : C.line}`, borderRadius: '10px', padding: '12px', background: s.is_primary ? '#F5F7FF' : 'white' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                   {s.is_primary
-                    ? <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#4338CA', background: '#E0E7FF', padding: '2px 8px', borderRadius: '999px' }}>★ PRIMARY</span>
-                    : <button onClick={() => makePrimary(s.id)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: '#6366F1', background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '3px 9px', cursor: 'pointer' }}>Make primary</button>}
+                    ? <span style={{ fontSize: '10.5px', fontWeight: 700, color: C.indigoInk, background: '#E0E7FF', padding: '2px 8px', borderRadius: '999px' }}>★ PRIMARY</span>
+                    : <button onClick={() => makePrimary(s.id)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: C.indigo, background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '3px 9px', cursor: 'pointer' }}>Make primary</button>}
                   <span style={{ flex: 1 }} />
-                  <button onClick={() => saveRow(s.id)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: '#6366F1', border: 'none', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer' }}>Save</button>
-                  <button onClick={() => removeRow(s.id, s.name)} disabled={busy || rows.length <= 1} title={rows.length <= 1 ? 'A SKU must keep at least one supplier' : 'Remove'} style={{ fontSize: '11px', fontWeight: 600, color: rows.length <= 1 ? '#CBD5E1' : '#DC2626', background: 'white', border: `1px solid ${rows.length <= 1 ? '#E2E8F0' : '#FCA5A5'}`, borderRadius: '6px', padding: '4px 10px', cursor: rows.length <= 1 ? 'not-allowed' : 'pointer' }}>Remove</button>
+                  <button onClick={() => saveRow(s.id)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: C.indigo, border: 'none', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer' }}>Save</button>
+                  <button onClick={() => removeRow(s.id, s.name)} disabled={busy || rows.length <= 1} title={rows.length <= 1 ? 'A SKU must keep at least one supplier' : 'Remove'} style={{ fontSize: '11px', fontWeight: 600, color: rows.length <= 1 ? C.knobOff : '#DC2626', background: 'white', border: `1px solid ${rows.length <= 1 ? C.line : '#FCA5A5'}`, borderRadius: '6px', padding: '4px 10px', cursor: rows.length <= 1 ? 'not-allowed' : 'pointer' }}>Remove</button>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 0.8fr', gap: '8px' }}>
                   <label style={lblS}>Supplier
@@ -1067,21 +1068,21 @@ function SupplierManagerModal({ product, onSaved, onClose }: { product: Product;
                   const eff = !isNaN(bc) ? (upv > 1 ? bc / upv : bc) : null
                   const cs = full[s.id]?.cost_source
                   return (
-                    <div style={{ marginTop: '7px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', fontSize: '11px', color: '#64748B' }}>
+                    <div style={{ marginTop: '7px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', fontSize: '11px', color: C.muted }}>
                       {eff != null
-                        ? <span>Effective unit cost <b style={{ color: '#0F172A' }}>HK${eff.toFixed(2)}</b> / {puom}{upv > 1 && <span style={{ color: '#94A3B8' }}> (HK${bc} ÷ {upv})</span>}</span>
-                        : <span style={{ color: '#CBD5E1' }}>enter cost + basis units to see effective unit cost</span>}
-                      {cs && <span style={{ padding: '1px 7px', borderRadius: '99px', background: '#F1F5F9', color: '#64748B', fontWeight: 600 }}>cost: {cs}</span>}
+                        ? <span>Effective unit cost <b style={{ color: C.ink }}>HK${eff.toFixed(2)}</b> / {puom}{upv > 1 && <span style={{ color: C.faint }}> (HK${bc} ÷ {upv})</span>}</span>
+                        : <span style={{ color: C.knobOff }}>enter cost + basis units to see effective unit cost</span>}
+                      {cs && <span style={{ padding: '1px 7px', borderRadius: '99px', background: C.monoBg, color: C.muted, fontWeight: 600 }}>cost: {cs}</span>}
                     </div>
                   )
                 })()}
                 {parseInt(dr?.units_per_pack ?? '', 10) > 1 && !strOrNull(dr?.pricing_note ?? '') &&
-                  <div style={{ marginTop: '5px', fontSize: '10.5px', color: '#B45309' }}>⚠ Cost basis units &gt; 1 — add a pricing note explaining what the price covers (e.g. per box of N).</div>}
+                  <div style={{ marginTop: '5px', fontSize: '10.5px', color: C.amber }}>⚠ Cost basis units &gt; 1 — add a pricing note explaining what the price covers (e.g. per box of N).</div>}
                 {['Can(s)', 'Pouch(es)'].includes((dr?.order_increment_uom ?? '').trim()) && /\b(dry|bag|kg|lbs?)\b/i.test(current.name) &&
-                  <div style={{ marginTop: '5px', fontSize: '10.5px', color: '#B45309' }}>⚠ Dry/bag product with a can/pouch order UOM — likely wrong.</div>}
+                  <div style={{ marginTop: '5px', fontSize: '10.5px', color: C.amber }}>⚠ Dry/bag product with a can/pouch order UOM — likely wrong.</div>}
                 {/* Supplier ordering terms */}
                 <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #F1F5F9' }}>
-                  <p style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '6px' }}>Supplier ordering</p>
+                  <p style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '6px' }}>Supplier ordering</p>
                   <div style={{ display: 'grid', gridTemplateColumns: '0.7fr 1fr 0.7fr 1fr 1.1fr', gap: '8px' }}>
                     <label style={lblS}>Order increment<input type="number" style={inp} value={dr?.order_increment_qty ?? ''} onChange={e => setDrafts({ ...drafts, [s.id]: { ...dr, order_increment_qty: e.target.value } })} /></label>
                     <label style={lblS}>Increment UOM{uomSelect(dr?.order_increment_uom ?? '', v => setDrafts({ ...drafts, [s.id]: { ...dr, order_increment_uom: v } }))}</label>
@@ -1098,30 +1099,30 @@ function SupplierManagerModal({ product, onSaved, onClose }: { product: Product;
                   </div>
                   <label style={{ ...lblS, marginTop: '8px' }}>Pricing note<input style={inp} placeholder="e.g. Price is per box of 8 tests; 8 sellable units per box" value={dr?.pricing_note ?? ''} onChange={e => setDrafts({ ...drafts, [s.id]: { ...dr, pricing_note: e.target.value } })} /></label>
                   {(full[s.id]?.cost_source === 'catalogue' || full[s.id]?.pack_source === 'catalogue') &&
-                    <div style={{ marginTop: '8px', fontSize: '10.5px', color: '#64748B', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 8px' }}>
+                    <div style={{ marginTop: '8px', fontSize: '10.5px', color: C.muted, background: C.wash, border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 8px' }}>
                       📄 Catalogue evidence{full[s.id]?.cost_source_ref ? ` · ${full[s.id]?.cost_source_ref}` : ''}{full[s.id]?.cost_updated_at ? ` · ${full[s.id]?.cost_updated_at?.slice(0, 10)}` : ''}
                     </div>}
                 </div>
                 <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #F1F5F9', display: 'flex', gap: '7px', alignItems: 'center', flexWrap: 'wrap' }}>
                   {s.stock_status === 'out_of_stock'
-                    ? <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '6px', padding: '2px 8px' }}>● OUT OF STOCK{s.reported_out_at ? ` · since ${s.reported_out_at}` : ''}</span>
-                    : <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#166534', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '6px', padding: '2px 8px' }}>● In stock</span>}
+                    ? <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', background: C.badBg, border: '1px solid #FCA5A5', borderRadius: '6px', padding: '2px 8px' }}>● OUT OF STOCK{s.reported_out_at ? ` · since ${s.reported_out_at}` : ''}</span>
+                    : <span style={{ fontSize: '10.5px', fontWeight: 700, color: C.green, background: C.okBg, border: '1px solid #A7F3D0', borderRadius: '6px', padding: '2px 8px' }}>● In stock</span>}
                   <input placeholder="Restock date" defaultValue={s.expected_restock_at ?? ''} onChange={e => setStockDraft({ ...stockDraft, [s.id]: { restock: e.target.value, note: stockDraft[s.id]?.note ?? s.stock_note ?? '' } })} style={{ ...inp, width: '118px', padding: '4px 8px', fontSize: '11px' }} />
                   <input placeholder="Note" defaultValue={s.stock_note ?? ''} onChange={e => setStockDraft({ ...stockDraft, [s.id]: { restock: stockDraft[s.id]?.restock ?? s.expected_restock_at ?? '', note: e.target.value } })} style={{ ...inp, flex: 1, minWidth: '90px', padding: '4px 8px', fontSize: '11px' }} />
                   {s.stock_status === 'out_of_stock' ? <>
-                    <button onClick={() => setStock(s.id, 'out_of_stock', s)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: '#B45309', background: 'white', border: '1px solid #FCD34D', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>Update</button>
+                    <button onClick={() => setStock(s.id, 'out_of_stock', s)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: C.amber, background: 'white', border: '1px solid #FCD34D', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>Update</button>
                     <button onClick={() => setStock(s.id, 'in_stock', s)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: '#16A34A', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>Back in stock</button>
                   </> : <button onClick={() => setStock(s.id, 'out_of_stock', s)} disabled={busy} style={{ fontSize: '11px', fontWeight: 600, color: '#DC2626', background: 'white', border: '1px solid #FCA5A5', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>Mark out of stock</button>}
-                  {(s.stock_events?.length ?? 0) > 0 && <span style={{ fontSize: '10.5px', color: '#94A3B8' }} title={s.stock_events.map(e => `${e.out_at} → ${e.restock_at ?? 'ongoing'} (${e.days ?? '?'}d)`).join('\n')}>{s.stock_events.length} OOS period{s.stock_events.length > 1 ? 's' : ''}</span>}
+                  {(s.stock_events?.length ?? 0) > 0 && <span style={{ fontSize: '10.5px', color: C.faint }} title={s.stock_events.map(e => `${e.out_at} → ${e.restock_at ?? 'ongoing'} (${e.days ?? '?'}d)`).join('\n')}>{s.stock_events.length} OOS period{s.stock_events.length > 1 ? 's' : ''}</span>}
                 </div>
               </div>
             )
           })}
-          {rows.length === 0 && <p style={{ fontSize: '12px', color: '#94A3B8' }}>No suppliers linked yet — add one below.</p>}
+          {rows.length === 0 && <p style={{ fontSize: '12px', color: C.faint }}>No suppliers linked yet — add one below.</p>}
         </div>
 
         <div style={{ marginTop: '14px', border: '1px dashed #CBD5E1', borderRadius: '10px', padding: '12px', background: '#FAFAFA' }}>
-          <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>Add supplier</p>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>Add supplier</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 0.8fr auto', gap: '8px', alignItems: 'end' }}>
             <label style={lblS}>Supplier
               <select style={inp} value={add.supplier_id} onChange={e => setAdd({ ...add, supplier_id: e.target.value })}>
@@ -1132,12 +1133,12 @@ function SupplierManagerModal({ product, onSaved, onClose }: { product: Product;
             <label style={lblS}>Supplier SKU<input style={inp} value={add.supplier_sku} onChange={e => setAdd({ ...add, supplier_sku: e.target.value })} /></label>
             <label style={lblS}>Cost (HK$)<input type="number" style={inp} value={add.basic_cost} onChange={e => setAdd({ ...add, basic_cost: e.target.value })} /></label>
             <label style={lblS}>Cost basis units<input type="number" style={inp} value={add.units_per_pack} onChange={e => setAdd({ ...add, units_per_pack: e.target.value })} /></label>
-            <button onClick={addSupplier} disabled={busy || !add.supplier_id} style={{ fontSize: '12px', fontWeight: 600, color: 'white', background: !add.supplier_id ? '#CBD5E1' : '#16A34A', border: 'none', borderRadius: '7px', padding: '7px 14px', cursor: !add.supplier_id ? 'default' : 'pointer', height: '34px' }}>Add</button>
+            <button onClick={addSupplier} disabled={busy || !add.supplier_id} style={{ fontSize: '12px', fontWeight: 600, color: 'white', background: !add.supplier_id ? C.knobOff : '#16A34A', border: 'none', borderRadius: '7px', padding: '7px 14px', cursor: !add.supplier_id ? 'default' : 'pointer', height: '34px' }}>Add</button>
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '18px' }}>
-          <button onClick={onClose} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: '#64748B', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>Done</button>
+          <button onClick={onClose} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: C.muted, background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>Done</button>
         </div>
       </div>
     </div>
@@ -1182,45 +1183,45 @@ function ChangeSkuModal({ product, history, onClose }: { product: Product; histo
     } catch { setErr('Could not change SKU'); setBusy(false) }
   }
 
-  const inp: React.CSSProperties = { border: `1px solid ${err ? '#FCA5A5' : '#E2E8F0'}`, borderRadius: '7px', padding: '9px 11px', fontSize: '14px', fontFamily: 'monospace', background: 'white', width: '100%', boxSizing: 'border-box' }
+  const inp: React.CSSProperties = { border: `1px solid ${err ? '#FCA5A5' : C.line}`, borderRadius: '7px', padding: '9px 11px', fontSize: '14px', fontFamily: 'monospace', background: 'white', width: '100%', boxSizing: 'border-box' }
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '70px 20px', overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '14px', width: '460px', maxWidth: '100%', padding: '22px', boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>Change SKU code</h2>
-          <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: '#94A3B8', cursor: 'pointer', lineHeight: 1 }}>×</button>
+          <h2 style={{ fontSize: '17px', fontWeight: 700, color: C.ink }}>Change SKU code</h2>
+          <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: C.faint, cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
-        <p style={{ fontSize: '12px', color: '#94A3B8', margin: '2px 0 16px' }}>Current: <span style={{ fontFamily: 'monospace', color: '#64748B' }}>{product.sku_code}</span></p>
+        <p style={{ fontSize: '12px', color: C.faint, margin: '2px 0 16px' }}>Current: <span style={{ fontFamily: 'monospace', color: C.muted }}>{product.sku_code}</span></p>
 
-        <label style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', display: 'block', marginBottom: '5px' }}>New SKU</label>
+        <label style={{ fontSize: '11px', fontWeight: 600, color: C.muted, display: 'block', marginBottom: '5px' }}>New SKU</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input style={inp} value={val} autoFocus onChange={e => { setVal(e.target.value); setErr(null) }}
             onKeyDown={e => e.key === 'Enter' && save()} placeholder="e.g. 40005811" />
-          <button onClick={regenerate} disabled={regen} title="Generate a unique SKU for this category" style={{ flexShrink: 0, padding: '0 13px', fontSize: '12px', fontWeight: 600, color: '#6366F1', background: 'white', border: '1px solid #C7D2FE', borderRadius: '7px', cursor: regen ? 'default' : 'pointer', whiteSpace: 'nowrap' }}>{regen ? '…' : '⟳ Regenerate'}</button>
+          <button onClick={regenerate} disabled={regen} title="Generate a unique SKU for this category" style={{ flexShrink: 0, padding: '0 13px', fontSize: '12px', fontWeight: 600, color: C.indigo, background: 'white', border: '1px solid #C7D2FE', borderRadius: '7px', cursor: regen ? 'default' : 'pointer', whiteSpace: 'nowrap' }}>{regen ? '…' : '⟳ Regenerate'}</button>
         </div>
         {err && <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '8px', fontWeight: 500 }}>{err}</p>}
 
         {history.length > 0 && (
           <div style={{ marginTop: '16px' }}>
-            <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.04em', marginBottom: '6px' }}>PREVIOUS CODES</div>
+            <div style={{ fontSize: '10.5px', fontWeight: 700, color: C.faint, letterSpacing: '0.04em', marginBottom: '6px' }}>PREVIOUS CODES</div>
             {history.map((h, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: '7px', fontSize: '12px', padding: '4px 0', borderTop: i ? '1px solid #F1F5F9' : 'none' }}>
-                <span style={{ fontFamily: 'monospace', color: '#0F172A', fontWeight: 600 }}>{h.from}</span>
-                <span style={{ color: '#CBD5E1' }}>→</span>
-                <span style={{ fontFamily: 'monospace', color: '#64748B' }}>{h.to}</span>
-                <span style={{ marginLeft: 'auto', color: '#94A3B8', fontSize: '11px', whiteSpace: 'nowrap' }}>{new Date(h.at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}{h.by ? ` · ${h.by}` : ''}</span>
+                <span style={{ fontFamily: 'monospace', color: C.ink, fontWeight: 600 }}>{h.from}</span>
+                <span style={{ color: C.knobOff }}>→</span>
+                <span style={{ fontFamily: 'monospace', color: C.muted }}>{h.to}</span>
+                <span style={{ marginLeft: 'auto', color: C.faint, fontSize: '11px', whiteSpace: 'nowrap' }}>{new Date(h.at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}{h.by ? ` · ${h.by}` : ''}</span>
               </div>
             ))}
           </div>
         )}
-        <div style={{ marginTop: '14px', padding: '9px 11px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', fontSize: '11.5px', color: '#92400E', lineHeight: 1.5 }}>
+        <div style={{ marginTop: '14px', padding: '9px 11px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', fontSize: '11.5px', color: C.amberInk, lineHeight: 1.5 }}>
           Must be unique. The onboarding history follows the rename; external systems (Google Sheet, Shopify, POS) keep the old code until re-synced.
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-          <button onClick={onClose} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 600, color: '#64748B', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
-          <button onClick={save} disabled={busy} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: 'white', background: '#6366F1', border: 'none', borderRadius: '8px', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>{busy ? 'Saving…' : 'Change SKU'}</button>
+          <button onClick={onClose} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 600, color: C.muted, background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={save} disabled={busy} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: 'white', background: C.indigo, border: 'none', borderRadius: '8px', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>{busy ? 'Saving…' : 'Change SKU'}</button>
         </div>
       </div>
     </div>
@@ -1285,19 +1286,19 @@ function EditSkuModal({ product, onSaved, onClose }: { product: Product; onSaved
   }
 
   const inp: React.CSSProperties = { border: '1px solid #E2E8F0', borderRadius: '7px', padding: '8px 10px', fontSize: '13px', background: 'white', width: '100%', boxSizing: 'border-box' }
-  const inpDis: React.CSSProperties = { ...inp, background: '#F8FAFC', color: '#94A3B8', cursor: 'not-allowed' }
-  const lbl: React.CSSProperties = { fontSize: '11px', fontWeight: 600, color: '#64748B', display: 'block', marginBottom: '4px' }
+  const inpDis: React.CSSProperties = { ...inp, background: C.wash, color: C.faint, cursor: 'not-allowed' }
+  const lbl: React.CSSProperties = { fontSize: '11px', fontWeight: 600, color: C.muted, display: 'block', marginBottom: '4px' }
   const field = (label: string, node: React.ReactNode) => <label style={{ display: 'block' }}><span style={lbl}>{label}</span>{node}</label>
-  const hlp: React.CSSProperties = { display: 'block', fontSize: '10.5px', color: '#94A3B8', marginTop: '3px', lineHeight: 1.35 }
+  const hlp: React.CSSProperties = { display: 'block', fontSize: '10.5px', color: C.faint, marginTop: '3px', lineHeight: 1.35 }
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '56px 20px', overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '14px', width: '560px', maxWidth: '100%', padding: '22px', boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>Edit SKU details</h2>
-          <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: '#94A3B8', cursor: 'pointer', lineHeight: 1 }}>×</button>
+          <h2 style={{ fontSize: '17px', fontWeight: 700, color: C.ink }}>Edit SKU details</h2>
+          <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: C.faint, cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
-        <p style={{ fontSize: '12px', color: '#94A3B8', margin: '2px 0 16px' }}>{product.sku_code}</p>
+        <p style={{ fontSize: '12px', color: C.faint, margin: '2px 0 16px' }}>{product.sku_code}</p>
         <datalist id="opt-brands">{opts.brands.map(o => <option key={o} value={o} />)}</datalist>
         <datalist id="opt-subcategories">{opts.subcategories.map(o => <option key={o} value={o} />)}</datalist>
         <datalist id="opt-uoms">{opts.uoms.map(o => <option key={o} value={o} />)}</datalist>
@@ -1352,18 +1353,18 @@ function EditSkuModal({ product, onSaved, onClose }: { product: Product; onSaved
           <div style={{ gridColumn: '1 / -1' }}>{field('Notes', <textarea style={{ ...inp, minHeight: '58px', resize: 'vertical' }} value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} />)}</div>
           <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', cursor: sensitive ? 'pointer' : 'not-allowed' }}>
             <input type="checkbox" checked={f.hero_sku} disabled={!sensitive} onChange={e => setF({ ...f, hero_sku: e.target.checked })} />
-            <span style={{ fontSize: '13px', color: '#0F172A' }}>Hero SKU</span>
+            <span style={{ fontSize: '13px', color: C.ink }}>Hero SKU</span>
           </label>
           <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '8px' }}>
             <input type="checkbox" checked={f.mark_verified} onChange={e => setF({ ...f, mark_verified: e.target.checked })} />
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#166534' }}>Mark as HITL&#8209;Verified on save</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: C.green }}>Mark as HITL&#8209;Verified on save</span>
           </label>
-          <p style={{ gridColumn: '1 / -1', fontSize: '11px', color: '#94A3B8', margin: 0 }}>These are product-level fields. Per-supplier cost, cost-basis units, ordering terms (MOQ / order multiple), bulk-buy tiers and stock live under <b>Manage suppliers</b>.</p>
+          <p style={{ gridColumn: '1 / -1', fontSize: '11px', color: C.faint, margin: 0 }}>These are product-level fields. Per-supplier cost, cost-basis units, ordering terms (MOQ / order multiple), bulk-buy tiers and stock live under <b>Manage suppliers</b>.</p>
         </div>
-        {!sensitive && <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '12px' }}>Name, category, status &amp; hero are locked for your role.</p>}
+        {!sensitive && <p style={{ fontSize: '11px', color: C.faint, marginTop: '12px' }}>Name, category, status &amp; hero are locked for your role.</p>}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-          <button onClick={onClose} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 600, color: '#64748B', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
-          <button onClick={save} disabled={saving} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: 'white', background: '#6366F1', border: 'none', borderRadius: '8px', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Save changes'}</button>
+          <button onClick={onClose} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 600, color: C.muted, background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: 'white', background: C.indigo, border: 'none', borderRadius: '8px', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving…' : 'Save changes'}</button>
         </div>
       </div>
     </div>
@@ -1416,7 +1417,7 @@ function CostMbbEditor({ product, onSaved }: { product: Product; onSaved: (p: Pr
         <div className="costrow">
           <span className="pill land">Unit cost {money(product.unit_cost)} / {uomLabel}{(product.units_per_pack ?? 1) > 1 && product.primary_cost != null ? ` · whole ${money(product.primary_cost)}/${product.pack_unit ?? 'pack'}` : ''}</span>
           {product.units_per_pack && product.units_per_pack > 1 && (
-            <span style={{ color: product.uom_verified_at ? '#15803D' : '#B45309', fontSize: '11.5px' }}>
+            <span style={{ color: product.uom_verified_at ? C.ok : C.amber, fontSize: '11.5px' }}>
               · {product.uom_verified_at ? '✓ ' : ''}{product.units_per_pack} {uomLabel} / {product.pack_unit ?? 'pack'}
             </span>
           )}
@@ -1426,7 +1427,7 @@ function CostMbbEditor({ product, onSaved }: { product: Product; onSaved: (p: Pr
         <div className="subh" style={{ marginTop: '16px' }}>Max-Bulk-Buy terms</div>
         {!sup && <div style={{ fontSize: '12px', color: '#8A93A2' }}>Link a supplier first to add MBB terms.</div>}
         {sup && <>
-          {product.all_suppliers.length > 1 && <p style={{ fontSize: '11px', color: '#8A93A2', marginBottom: '6px' }}>Terms for <b style={{ color: '#0F172A' }}>{sup.name ?? 'primary supplier'}</b> (other suppliers: use Manage in the Suppliers card)</p>}
+          {product.all_suppliers.length > 1 && <p style={{ fontSize: '11px', color: '#8A93A2', marginBottom: '6px' }}>Terms for <b style={{ color: C.ink }}>{sup.name ?? 'primary supplier'}</b> (other suppliers: use Manage in the Suppliers card)</p>}
           {(sup.mbb_term_list ?? []).length === 0 && <div style={{ fontSize: '12px', color: '#8A93A2', marginBottom: '4px' }}>No MBB terms.</div>}
           {(sup.mbb_term_list ?? []).map(t => (
             <div className="term" key={t.id}>

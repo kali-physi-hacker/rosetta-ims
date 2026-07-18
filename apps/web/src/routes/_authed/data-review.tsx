@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import type { Product } from '@/lib/types'
@@ -18,20 +19,20 @@ const CATEGORIES = [
 const STATUSES = ['ACTIVE', 'INACTIVE', 'DISCONTINUED']
 
 const CAT_STYLE: Record<string, { bg: string; color: string }> = {
-  'Medicine':     { bg: '#FEE2E2', color: '#991B1B' },
-  'Preventative': { bg: '#FEF3C7', color: '#92400E' },
+  'Medicine':     { bg: C.redBg, color: C.redInk },
+  'Preventative': { bg: C.warnBg, color: C.amberInk },
   'Supplement':   { bg: '#DBEAFE', color: '#1E40AF' },
-  'Food':         { bg: '#DCFCE7', color: '#166534' },
-  'Pet Hygiene':  { bg: '#F1F5F9', color: '#475569' },
+  'Food':         { bg: C.greenBg, color: C.green },
+  'Pet Hygiene':  { bg: C.monoBg, color: C.sub },
   'Shampoo':      { bg: '#E0E7FF', color: '#3730A3' },
   'Cat Litter':   { bg: '#FFF7ED', color: '#9A3412' },
   'Toys':         { bg: '#FDF4FF', color: '#7E22CE' },
-  'Not-For-Sale': { bg: '#F1F5F9', color: '#94A3B8' },
+  'Not-For-Sale': { bg: C.monoBg, color: C.faint },
 }
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  ACTIVE:       { bg: '#DCFCE7', color: '#166534' },
-  INACTIVE:     { bg: '#FEF3C7', color: '#92400E' },
-  DISCONTINUED: { bg: '#FEE2E2', color: '#991B1B' },
+  ACTIVE:       { bg: C.greenBg, color: C.green },
+  INACTIVE:     { bg: C.warnBg, color: C.amberInk },
+  DISCONTINUED: { bg: C.redBg, color: C.redInk },
 }
 const COST_SOURCE_LABEL: Record<string, string> = {
   catalogue:       '★ Catalogue',
@@ -41,16 +42,16 @@ const COST_SOURCE_LABEL: Record<string, string> = {
   sheet:           '· Sheet seed',
 }
 const COST_SOURCE_STYLE: Record<string, { bg: string; color: string }> = {
-  catalogue:       { bg: '#DCFCE7', color: '#166534' },
+  catalogue:       { bg: C.greenBg, color: C.green },
   invoice_matched: { bg: '#D1FAE5', color: '#065F46' },
   po_issued:       { bg: '#DBEAFE', color: '#1E40AF' },
-  manual:          { bg: '#F1F5F9', color: '#64748B' },
-  sheet:           { bg: '#F8FAFC', color: '#94A3B8' },
+  manual:          { bg: C.monoBg, color: C.muted },
+  sheet:           { bg: C.wash, color: C.faint },
 }
 const GRADE_STYLE: Record<string, { bg: string; color: string }> = {
-  A: { bg: '#DCFCE7', color: '#166534' },
+  A: { bg: C.greenBg, color: C.green },
   B: { bg: '#DBEAFE', color: '#1E40AF' },
-  C: { bg: '#FEE2E2', color: '#991B1B' },
+  C: { bg: C.redBg, color: C.redInk },
 }
 
 function hasIssue(p: Product) {
@@ -77,14 +78,14 @@ function SaveBtn({ saving, dirty, onClick, label = 'Save' }: { saving: boolean; 
   if (!dirty && !saving) return null
   return (
     <button onClick={onClick} disabled={saving}
-      style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', background: saving ? '#E2E8F0' : '#6366F1', color: 'white', border: 'none', borderRadius: '4px', cursor: saving ? 'default' : 'pointer' }}>
+      style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', background: saving ? C.line : C.indigo, color: 'white', border: 'none', borderRadius: '4px', cursor: saving ? 'default' : 'pointer' }}>
       {saving ? 'Saving…' : label}
     </button>
   )
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '3px' }}>{children}</span>
+  return <span style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '3px' }}>{children}</span>
 }
 
 // ── Main content ────────────────────────────────────────────────────────────
@@ -266,7 +267,7 @@ function DataReviewContent() {
   }, [supplierFilter, categoryFilter])
 
   if (loading) return (
-    <div style={{ padding: '60px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Loading…</div>
+    <div style={{ padding: '60px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Loading…</div>
   )
 
   return (
@@ -275,31 +276,31 @@ function DataReviewContent() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <Link to={"/" as never} style={{ fontSize: '12px', color: '#94A3B8', textDecoration: 'none' }}>← All Inventory</Link>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', margin: '4px 0 2px' }}>Data Review</h1>
-            <p style={{ fontSize: '12px', color: '#64748B' }}>
+            <Link to={"/" as never} style={{ fontSize: '12px', color: C.faint, textDecoration: 'none' }}>← All Inventory</Link>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink, margin: '4px 0 2px' }}>Data Review</h1>
+            <p style={{ fontSize: '12px', color: C.muted }}>
               {bulkMode
                 ? 'Bulk Edit — tab between cells, changes are staged. Nothing saves until you click "Save".'
                 : 'Click any row to open the edit panel. Switch to Bulk Edit for spreadsheet-style editing across multiple rows.'}
             </p>
           </div>
-          <a href={exportUrl} style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 600, background: '#0F172A', color: 'white', borderRadius: '6px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          <a href={exportUrl} style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 600, background: C.ink, color: 'white', borderRadius: '6px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
             ↓ Download CSV
           </a>
         </div>
 
         {/* Issue chips — click to filter */}
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px', alignItems: 'center' }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: '2px' }}>Issues:</span>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: '2px' }}>Issues:</span>
           {([
             { key: 'Manually edited',      label: `✎ ${issueCounts.manuallyEdited} manually edited`,                                                      count: issueCounts.manuallyEdited, bg: '#EDE9FE', color: '#6D28D9', activeBg: '#7C3AED', activeColor: 'white' },
-            { key: 'Cost conflict',        label: `⚡ ${issueCounts.costConflict} cost conflict${issueCounts.costConflict !== 1 ? 's' : ''}`,              count: issueCounts.costConflict,   bg: '#FEF3C7', color: '#92400E', activeBg: '#F59E0B', activeColor: 'white' },
-            { key: 'Pack conflict',        label: `⚡ ${issueCounts.packConflict} pack conflict${issueCounts.packConflict !== 1 ? 's' : ''}`,              count: issueCounts.packConflict,   bg: '#FEF3C7', color: '#92400E', activeBg: '#F59E0B', activeColor: 'white' },
+            { key: 'Cost conflict',        label: `⚡ ${issueCounts.costConflict} cost conflict${issueCounts.costConflict !== 1 ? 's' : ''}`,              count: issueCounts.costConflict,   bg: C.warnBg, color: C.amberInk, activeBg: '#F59E0B', activeColor: 'white' },
+            { key: 'Pack conflict',        label: `⚡ ${issueCounts.packConflict} pack conflict${issueCounts.packConflict !== 1 ? 's' : ''}`,              count: issueCounts.packConflict,   bg: C.warnBg, color: C.amberInk, activeBg: '#F59E0B', activeColor: 'white' },
             { key: 'Unverified pack size', label: `📐 ${issueCounts.packUnverified} unverified pack size${issueCounts.packUnverified !== 1 ? 's' : ''}`,  count: issueCounts.packUnverified, bg: '#FFF7ED', color: '#C2410C', activeBg: '#EA580C', activeColor: 'white' },
-            { key: 'Below margin',         label: `↑ ${issueCounts.belowMargin} below margin`,                                                            count: issueCounts.belowMargin,    bg: '#FFFBEB', color: '#B45309', activeBg: '#D97706', activeColor: 'white' },
-            { key: 'Grade C',              label: `C ${issueCounts.gradeC} grade C`,                                                                      count: issueCounts.gradeC,         bg: '#FEE2E2', color: '#991B1B', activeBg: '#DC2626', activeColor: 'white' },
-            { key: 'Missing cost',         label: `$ ${issueCounts.missingCost} missing cost`,                                                                count: issueCounts.missingCost,    bg: '#F0FDF4', color: '#166534', activeBg: '#16A34A', activeColor: 'white' },
-            { key: 'Missing pack size',    label: `⬜ ${issueCounts.missingPack} missing pack size`,                                                           count: issueCounts.missingPack,    bg: '#F0FDF4', color: '#166534', activeBg: '#16A34A', activeColor: 'white' },
+            { key: 'Below margin',         label: `↑ ${issueCounts.belowMargin} below margin`,                                                            count: issueCounts.belowMargin,    bg: '#FFFBEB', color: C.amber, activeBg: '#D97706', activeColor: 'white' },
+            { key: 'Grade C',              label: `C ${issueCounts.gradeC} grade C`,                                                                      count: issueCounts.gradeC,         bg: C.redBg, color: C.redInk, activeBg: '#DC2626', activeColor: 'white' },
+            { key: 'Missing cost',         label: `$ ${issueCounts.missingCost} missing cost`,                                                                count: issueCounts.missingCost,    bg: '#F0FDF4', color: C.green, activeBg: '#16A34A', activeColor: 'white' },
+            { key: 'Missing pack size',    label: `⬜ ${issueCounts.missingPack} missing pack size`,                                                           count: issueCounts.missingPack,    bg: '#F0FDF4', color: C.green, activeBg: '#16A34A', activeColor: 'white' },
           ] as const).filter(chip => chip.count > 0).map(chip => {
             const active = issueFilter === chip.key
             return (
@@ -311,7 +312,7 @@ function DataReviewContent() {
           })}
           {issueFilter !== 'All' && (
             <button onClick={() => setIssueFilter('All')}
-              style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', background: '#F1F5F9', padding: '3px 10px', borderRadius: '99px', border: 'none', cursor: 'pointer' }}>
+              style={{ fontSize: '11px', fontWeight: 600, color: C.muted, background: C.monoBg, padding: '3px 10px', borderRadius: '99px', border: 'none', cursor: 'pointer' }}>
               × clear
             </button>
           )}
@@ -320,41 +321,41 @@ function DataReviewContent() {
         {/* Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '10px 14px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#64748B' }}>Verified by</span>
+            <span style={{ fontSize: '11px', color: C.muted }}>Verified by</span>
             <input type="text" placeholder="Name / initials" value={verifiedBy}
               onChange={e => { setVerifiedBy(e.target.value); localStorage.setItem('ims_verified_by', e.target.value) }}
               style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #E2E8F0', borderRadius: '5px', width: '130px' }} />
           </div>
-          <div style={{ width: '1px', height: '20px', background: '#E2E8F0' }} />
+          <div style={{ width: '1px', height: '20px', background: C.line }} />
           {[
             { label: 'Status',   value: statusFilter,   set: setStatusFilter,   opts: ['All', ...STATUSES] },
             { label: 'Supplier', value: supplierFilter,  set: setSupplierFilter, opts: suppliers },
             { label: 'Category', value: categoryFilter,  set: setCategoryFilter, opts: categories },
           ].map(({ label, value, set, opts }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontSize: '11px', color: '#64748B' }}>{label}</span>
+              <span style={{ fontSize: '11px', color: C.muted }}>{label}</span>
               <select value={value} onChange={e => set(e.target.value)}
-                style={{ padding: '4px 6px', fontSize: '11px', border: '1px solid #E2E8F0', borderRadius: '5px', background: 'white', color: '#0F172A' }}>
+                style={{ padding: '4px 6px', fontSize: '11px', border: '1px solid #E2E8F0', borderRadius: '5px', background: 'white', color: C.ink }}>
                 {opts.map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
           ))}
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
-            <span style={{ fontSize: '11px', color: '#64748B' }}>Issue</span>
+            <span style={{ fontSize: '11px', color: C.muted }}>Issue</span>
             <select value={issueFilter} onChange={e => setIssueFilter(e.target.value)}
-              style={{ padding: '4px 6px', fontSize: '11px', border: '1px solid #E2E8F0', borderRadius: '5px', background: issueFilter !== 'All' ? '#FEF3C7' : 'white', color: issueFilter !== 'All' ? '#92400E' : '#0F172A', fontWeight: issueFilter !== 'All' ? 700 : 400 }}>
+              style={{ padding: '4px 6px', fontSize: '11px', border: '1px solid #E2E8F0', borderRadius: '5px', background: issueFilter !== 'All' ? C.warnBg : 'white', color: issueFilter !== 'All' ? C.amberInk : C.ink, fontWeight: issueFilter !== 'All' ? 700 : 400 }}>
               {['All', 'Any issue', 'Manually edited', 'Cost conflict', 'Pack conflict', 'Unverified pack size', 'Below margin', 'Grade C', 'Missing cost', 'Missing pack size'].map(o => (
                 <option key={o}>{o}</option>
               ))}
             </select>
           </div>
-          <span style={{ fontSize: '11px', color: '#94A3B8' }}>{filtered.length} rows</span>
-          <div style={{ width: '1px', height: '20px', background: '#E2E8F0' }} />
+          <span style={{ fontSize: '11px', color: C.faint }}>{filtered.length} rows</span>
+          <div style={{ width: '1px', height: '20px', background: C.line }} />
           {/* Mode toggle */}
-          <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '6px', padding: '2px', gap: '2px' }}>
+          <div style={{ display: 'flex', background: C.monoBg, borderRadius: '6px', padding: '2px', gap: '2px' }}>
             {(['Normal', 'Bulk Edit'] as const).map(mode => (
               <button key={mode} onClick={() => { setBulkMode(mode === 'Bulk Edit'); if (mode === 'Normal') discardAllStaged() }}
-                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '4px', border: 'none', cursor: 'pointer', background: (mode === 'Bulk Edit') === bulkMode ? '#0F172A' : 'transparent', color: (mode === 'Bulk Edit') === bulkMode ? 'white' : '#64748B' }}>
+                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '4px', border: 'none', cursor: 'pointer', background: (mode === 'Bulk Edit') === bulkMode ? C.ink : 'transparent', color: (mode === 'Bulk Edit') === bulkMode ? 'white' : C.muted }}>
                 {mode}
               </button>
             ))}
@@ -366,8 +367,8 @@ function DataReviewContent() {
           <div style={{ marginBottom: '0' }}>
             <div style={{
               position: 'sticky', top: 0, zIndex: 10, marginBottom: '8px',
-              background: stagedSkus.length > 0 ? '#0F172A' : '#F8FAFC',
-              border: `1px solid ${stagedSkus.length > 0 ? '#1E293B' : '#E2E8F0'}`,
+              background: stagedSkus.length > 0 ? C.ink : C.wash,
+              border: `1px solid ${stagedSkus.length > 0 ? '#1E293B' : C.line}`,
               borderRadius: '8px', padding: '10px 16px',
               display: 'flex', alignItems: 'center', gap: '12px',
             }}>
@@ -376,20 +377,20 @@ function DataReviewContent() {
                   <span style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
                     {stagedSkus.length} row{stagedSkus.length !== 1 ? 's' : ''} with unsaved changes
                   </span>
-                  <span style={{ fontSize: '11px', color: '#94A3B8', flex: 1 }}>
+                  <span style={{ fontSize: '11px', color: C.faint, flex: 1 }}>
                     Amber cells are staged — tab between fields to move fast
                   </span>
                   <button onClick={discardAllStaged} disabled={bulkSaving}
-                    style={{ fontSize: '12px', fontWeight: 600, padding: '6px 14px', background: 'transparent', color: '#94A3B8', border: '1px solid #475569', borderRadius: '6px', cursor: 'pointer' }}>
+                    style={{ fontSize: '12px', fontWeight: 600, padding: '6px 14px', background: 'transparent', color: C.faint, border: '1px solid #475569', borderRadius: '6px', cursor: 'pointer' }}>
                     Discard all
                   </button>
                   <button onClick={saveAllStaged} disabled={bulkSaving}
-                    style={{ fontSize: '12px', fontWeight: 700, padding: '6px 18px', background: '#6366F1', color: 'white', border: 'none', borderRadius: '6px', cursor: bulkSaving ? 'default' : 'pointer' }}>
+                    style={{ fontSize: '12px', fontWeight: 700, padding: '6px 18px', background: C.indigo, color: 'white', border: 'none', borderRadius: '6px', cursor: bulkSaving ? 'default' : 'pointer' }}>
                     {bulkSaving ? 'Saving…' : `Save ${stagedSkus.length} change${stagedSkus.length !== 1 ? 's' : ''}`}
                   </button>
                 </>
               ) : (
-                <span style={{ fontSize: '12px', color: '#64748B' }}>
+                <span style={{ fontSize: '12px', color: C.muted }}>
                   Edit any cell — changes are staged here until you save. Tab to move between fields.
                 </span>
               )}
@@ -397,9 +398,9 @@ function DataReviewContent() {
 
             <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'auto' }}>
               {/* Bulk edit header — Name removed (system-level only); UOM split into sell + buy */}
-              <div style={{ display: 'grid', gridTemplateColumns: '100px 120px 120px 70px 70px 90px 75px 100px 1fr', padding: '8px 12px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', gap: '8px', minWidth: '1000px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '100px 120px 120px 70px 70px 90px 75px 100px 1fr', padding: '8px 12px', background: C.wash, borderBottom: '1px solid #E2E8F0', gap: '8px', minWidth: '1000px' }}>
                 {['SKU · Name', 'Category', 'Status', 'Sell UOM', 'Buy Unit', 'Cost (HKD)', 'Pack qty', 'Brand', 'Issues'].map(h => (
-                  <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+                  <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
                 ))}
               </div>
 
@@ -408,15 +409,15 @@ function DataReviewContent() {
                 const changes = staged[p.sku_code] ?? {}
                 const isDirty = Object.keys(changes).length > 0
                 const cellBase: React.CSSProperties = { width: '100%', padding: '5px 7px', fontSize: '12px', border: '1px solid #E2E8F0', borderRadius: '4px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }
-                const cell = (field: string): React.CSSProperties => ({ ...cellBase, background: field in changes ? '#FFFBEB' : 'white', borderColor: field in changes ? '#F59E0B' : '#E2E8F0' })
+                const cell = (field: string): React.CSSProperties => ({ ...cellBase, background: field in changes ? '#FFFBEB' : 'white', borderColor: field in changes ? '#F59E0B' : C.line })
 
                 const chips: { label: string; color: string; bg: string }[] = []
                 if (p.last_manual_edit_at)                         chips.push({ label: p.last_manual_edit_by ? `✎ ${p.last_manual_edit_by}` : '✎ Edited', color: '#6D28D9', bg: '#EDE9FE' })
-                if (p.cost_sheet_conflict)                          chips.push({ label: '⚡ Cost', color: '#92400E', bg: '#FEF3C7' })
-                if (p.pack_sheet_conflict)                          chips.push({ label: '⚡ Pack', color: '#92400E', bg: '#FEF3C7' })
+                if (p.cost_sheet_conflict)                          chips.push({ label: '⚡ Cost', color: C.amberInk, bg: C.warnBg })
+                if (p.pack_sheet_conflict)                          chips.push({ label: '⚡ Pack', color: C.amberInk, bg: C.warnBg })
                 if (p.units_per_pack != null && !p.uom_verified_at) chips.push({ label: '📐 UPP', color: '#C2410C', bg: '#FFF7ED' })
-                if (p.channels.some(c => c.recommendation === 'Raise price ⚠')) chips.push({ label: '↑ Margin', color: '#B45309', bg: '#FFFBEB' })
-                if (p.data_grade === 'C')                           chips.push({ label: 'C', color: '#991B1B', bg: '#FEE2E2' })
+                if (p.channels.some(c => c.recommendation === 'Raise price ⚠')) chips.push({ label: '↑ Margin', color: C.amber, bg: '#FFFBEB' })
+                if (p.data_grade === 'C')                           chips.push({ label: 'C', color: C.redInk, bg: C.redBg })
 
                 return (
                   <div key={p.sku_code} style={{
@@ -428,8 +429,8 @@ function DataReviewContent() {
                   }}>
                     {/* SKU + name (read-only — name changes must go through system) */}
                     <div title="Name changes must be made at system level (DaySmart / Sheet)">
-                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#6366F1', fontVariantNumeric: 'tabular-nums' }}>{p.sku_code}</div>
-                      <div style={{ fontSize: '10px', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: C.indigo, fontVariantNumeric: 'tabular-nums' }}>{p.sku_code}</div>
+                      <div style={{ fontSize: '10px', color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                     </div>
                     {/* Category — dropdown only */}
                     <select value={(changes['category'] as string) ?? p.category}
@@ -468,7 +469,7 @@ function DataReviewContent() {
                     {/* Issues */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
                       {chips.map(c => <Badge key={c.label} label={c.label} color={c.color} bg={c.bg} />)}
-                      {!chips.length && <span style={{ fontSize: '10px', color: '#94A3B8' }}>✓</span>}
+                      {!chips.length && <span style={{ fontSize: '10px', color: C.faint }}>✓</span>}
                     </div>
                   </div>
                 )
@@ -480,29 +481,29 @@ function DataReviewContent() {
         {/* Normal view — expandable rows table */}
         {!bulkMode && <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
           {/* Header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 140px 50px 90px 24px', padding: '8px 16px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 140px 50px 90px 24px', padding: '8px 16px', background: C.wash, borderBottom: '1px solid #E2E8F0', gap: '8px' }}>
             {['SKU', 'Name · Brand · Issues', 'Supplier', 'Gr.', 'Category', ''].map(h => (
-              <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+              <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
             ))}
           </div>
 
           {filtered.length === 0 ? (
-            <div style={{ padding: '48px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+            <div style={{ padding: '48px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>
               {issueFilter !== 'All' ? `No "${issueFilter}" issues in this filter ✓` : 'No products match.'}
             </div>
           ) : filtered.map(p => {
             const isOpen   = expanded === p.sku_code
             const issue    = hasIssue(p)
-            const catStyle = CAT_STYLE[p.category] ?? { bg: '#F1F5F9', color: '#475569' }
-            const grStyle  = GRADE_STYLE[p.data_grade] ?? { bg: '#F1F5F9', color: '#94A3B8' }
+            const catStyle = CAT_STYLE[p.category] ?? { bg: C.monoBg, color: C.sub }
+            const grStyle  = GRADE_STYLE[p.data_grade] ?? { bg: C.monoBg, color: C.faint }
 
             const issueChips: { label: string; color: string; bg: string }[] = []
             if (p.last_manual_edit_at)                          issueChips.push({ label: p.last_manual_edit_by ? `✎ ${p.last_manual_edit_by}` : '✎ Edited', color: '#6D28D9', bg: '#EDE9FE' })
-            if (p.cost_sheet_conflict)                          issueChips.push({ label: '⚡ Cost conflict',     color: '#92400E', bg: '#FEF3C7' })
-            if (p.pack_sheet_conflict)                          issueChips.push({ label: '⚡ Pack conflict',     color: '#92400E', bg: '#FEF3C7' })
+            if (p.cost_sheet_conflict)                          issueChips.push({ label: '⚡ Cost conflict',     color: C.amberInk, bg: C.warnBg })
+            if (p.pack_sheet_conflict)                          issueChips.push({ label: '⚡ Pack conflict',     color: C.amberInk, bg: C.warnBg })
             if (p.units_per_pack != null && !p.uom_verified_at) issueChips.push({ label: '📐 Unverified pack',  color: '#C2410C', bg: '#FFF7ED' })
-            if (p.channels.some(c => c.recommendation === 'Raise price ⚠')) issueChips.push({ label: '↑ Below margin', color: '#B45309', bg: '#FFFBEB' })
-            if (p.data_grade === 'C')                           issueChips.push({ label: 'Grade C',              color: '#991B1B', bg: '#FEE2E2' })
+            if (p.channels.some(c => c.recommendation === 'Raise price ⚠')) issueChips.push({ label: '↑ Below margin', color: C.amber, bg: '#FFFBEB' })
+            if (p.data_grade === 'C')                           issueChips.push({ label: 'Grade C',              color: C.redInk, bg: C.redBg })
 
             return (
               <div key={p.sku_code} style={{ borderBottom: '1px solid #F1F5F9' }}>
@@ -512,18 +513,18 @@ function DataReviewContent() {
                   style={{
                     display: 'grid', gridTemplateColumns: '100px 1fr 140px 50px 90px 24px',
                     padding: '10px 16px', gap: '8px', alignItems: 'center', cursor: 'pointer',
-                    background: isOpen ? '#EEF2FF' : issue ? '#FAFAFA' : 'white',
+                    background: isOpen ? C.primaryBg : issue ? '#FAFAFA' : 'white',
                     transition: 'background 0.1s',
                   }}
                 >
                   <div>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: isOpen ? '#4338CA' : '#6366F1', fontVariantNumeric: 'tabular-nums' }}>{p.sku_code}</span>
-                    <div style={{ fontSize: '10px', color: p.status === 'ACTIVE' ? '#94A3B8' : '#EF4444', marginTop: '1px' }}>{p.status}</div>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: isOpen ? C.indigoInk : C.indigo, fontVariantNumeric: 'tabular-nums' }}>{p.sku_code}</span>
+                    <div style={{ fontSize: '10px', color: p.status === 'ACTIVE' ? C.faint : '#EF4444', marginTop: '1px' }}>{p.status}</div>
                   </div>
                   <div>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A' }}>{p.name}</p>
-                    {p.brand && <p style={{ fontSize: '10px', color: '#94A3B8' }}>{p.brand}</p>}
-                    {p.sales_120d > 0 && <p style={{ fontSize: '10px', color: '#6366F1' }}>{p.sales_120d} sold/120d</p>}
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: C.ink }}>{p.name}</p>
+                    {p.brand && <p style={{ fontSize: '10px', color: C.faint }}>{p.brand}</p>}
+                    {p.sales_120d > 0 && <p style={{ fontSize: '10px', color: C.indigo }}>{p.sales_120d} sold/120d</p>}
                     {issueChips.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
                         {issueChips.map(c => <Badge key={c.label} label={c.label} color={c.color} bg={c.bg} />)}
@@ -531,12 +532,12 @@ function DataReviewContent() {
                     )}
                   </div>
                   <div>
-                    <p style={{ fontSize: '11px', color: '#475569' }}>{p.supplier_name ?? <span style={{ color: '#EF4444' }}>⚠ None</span>}</p>
-                    {p.all_suppliers.length > 1 && <p style={{ fontSize: '10px', color: '#94A3B8' }}>+{p.all_suppliers.length - 1} more</p>}
+                    <p style={{ fontSize: '11px', color: C.sub }}>{p.supplier_name ?? <span style={{ color: '#EF4444' }}>⚠ None</span>}</p>
+                    {p.all_suppliers.length > 1 && <p style={{ fontSize: '10px', color: C.faint }}>+{p.all_suppliers.length - 1} more</p>}
                   </div>
                   <Badge label={p.data_grade} {...grStyle} />
                   <Badge label={p.category} {...catStyle} />
-                  <span style={{ fontSize: '12px', color: '#94A3B8', textAlign: 'center' }}>{isOpen ? '▲' : '▼'}</span>
+                  <span style={{ fontSize: '12px', color: C.faint, textAlign: 'center' }}>{isOpen ? '▲' : '▼'}</span>
                 </div>
 
                 {/* Expanded editing panel */}
@@ -555,10 +556,10 @@ function DataReviewContent() {
         </div>}
 
         <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-          <p style={{ fontSize: '11px', color: '#94A3B8' }}>
+          <p style={{ fontSize: '11px', color: C.faint }}>
             Edits save to IMS immediately. Export CSV → input into DaySmart / Shopify. Do not feed back to Google Sheet.
           </p>
-          <a href={exportUrl} style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', background: '#F1F5F9', border: '1px solid #E2E8F0', padding: '6px 14px', borderRadius: '6px', textDecoration: 'none' }}>
+          <a href={exportUrl} style={{ fontSize: '12px', fontWeight: 600, color: C.ink, background: C.monoBg, border: '1px solid #E2E8F0', padding: '6px 14px', borderRadius: '6px', textDecoration: 'none' }}>
             ↓ Download CSV
           </a>
         </div>
@@ -595,7 +596,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
   const [invoiceCost, setInvoiceCost] = useState(p.primary_cost != null ? String(p.primary_cost) : '')
   const [showInvoice, setShowInvoice] = useState(false)
 
-  const catStyle = CAT_STYLE[category] ?? { bg: '#F1F5F9', color: '#475569' }
+  const catStyle = CAT_STYLE[category] ?? { bg: C.monoBg, color: C.sub }
 
   async function saveField(field: string, value: string | boolean | null) {
     await patchProduct(sku, field, { [field]: value })
@@ -618,19 +619,19 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '5px 8px', fontSize: '12px', border: '1px solid #E2E8F0',
-    borderRadius: '5px', color: '#0F172A', background: 'white', boxSizing: 'border-box',
+    borderRadius: '5px', color: C.ink, background: 'white', boxSizing: 'border-box',
   }
   const sectionStyle: React.CSSProperties = {
-    background: '#F8FAFC', borderRadius: '6px', padding: '12px 14px',
+    background: C.wash, borderRadius: '6px', padding: '12px 14px',
   }
 
   return (
-    <div style={{ padding: '0 16px 16px', background: '#EEF2FF', borderTop: '1px solid #C7D2FE' }}>
+    <div style={{ padding: '0 16px 16px', background: C.primaryBg, borderTop: '1px solid #C7D2FE' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', paddingTop: '12px' }}>
 
         {/* ── Identity ── */}
         <div style={sectionStyle}>
-          <p style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>Identity</p>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>Identity</p>
 
           <FieldLabel>Name</FieldLabel>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)}
@@ -651,7 +652,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
             <div>
               <FieldLabel>Status</FieldLabel>
               <select value={status} onChange={e => { const v = e.target.value as typeof status; setStatus(v); saveField('status', v) }}
-                style={{ ...inputStyle, background: STATUS_STYLE[status]?.bg ?? '#F1F5F9', fontWeight: 600 }}>
+                style={{ ...inputStyle, background: STATUS_STYLE[status]?.bg ?? C.monoBg, fontWeight: 600 }}>
                 {STATUSES.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
@@ -682,7 +683,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
               placeholder="Internal notes…" />
           </div>
 
-          <div style={{ marginTop: '4px', fontSize: '10px', color: '#94A3B8' }}>
+          <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint }}>
             {isSaving(sku, 'name') || isSaving(sku, 'brand') || isSaving(sku, 'category') || isSaving(sku, 'status') || isSaving(sku, 'uom') || isSaving(sku, 'notes') ? 'Saving…' : ''}
           </div>
         </div>
@@ -690,49 +691,49 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
         {/* ── Suppliers + Cost ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={sectionStyle}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Suppliers</p>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Suppliers</p>
             {p.all_suppliers.length === 0 ? (
               <p style={{ fontSize: '11px', color: '#EF4444' }}>⚠ No supplier linked — fix in the Sheet and re-sync</p>
             ) : p.all_suppliers.map(s => (
               <div key={s.supplier_id ?? s.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 0', borderBottom: '1px solid #F1F5F9' }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A' }}>{s.name ?? '—'}</p>
-                  {s.code && <p style={{ fontSize: '10px', color: '#94A3B8' }}>{s.code}</p>}
-                  {s.basic_cost != null && <p style={{ fontSize: '10px', color: '#475569' }}>HK${s.basic_cost.toFixed(2)} basic</p>}
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: C.ink }}>{s.name ?? '—'}</p>
+                  {s.code && <p style={{ fontSize: '10px', color: C.faint }}>{s.code}</p>}
+                  {s.basic_cost != null && <p style={{ fontSize: '10px', color: C.sub }}>HK${s.basic_cost.toFixed(2)} basic</p>}
                 </div>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                   {s.is_primary && <Badge label="Primary" bg="#DBEAFE" color="#1E40AF" />}
-                  {s.is_preferred && !s.is_primary && <Badge label="Cheapest" bg="#DCFCE7" color="#166534" />}
+                  {s.is_preferred && !s.is_primary && <Badge label="Cheapest" bg={C.greenBg} color={C.green} />}
                   {!s.is_primary && s.supplier_id != null && (
                     <button
                       disabled={isSaving(sku, `primary-${s.supplier_id}`)}
                       onClick={() => callUrl(sku, `primary-${s.supplier_id}`, `${API}/products/${sku}/suppliers/${s.supplier_id}/primary`, 'PATCH')}
-                      style={{ fontSize: '10px', padding: '2px 8px', background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', borderRadius: '3px', cursor: 'pointer' }}>
+                      style={{ fontSize: '10px', padding: '2px 8px', background: C.monoBg, color: C.sub, border: '1px solid #CBD5E1', borderRadius: '3px', cursor: 'pointer' }}>
                       Set primary
                     </button>
                   )}
                 </div>
               </div>
             ))}
-            <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '6px' }}>
-              To link a new supplier, use the <Link to={`/items/${skuToPath(sku)}` as never} style={{ color: '#6366F1' }}>detail page</Link> or re-sync after updating the Sheet.
+            <p style={{ fontSize: '10px', color: C.faint, marginTop: '6px' }}>
+              To link a new supplier, use the <Link to={`/items/${skuToPath(sku)}` as never} style={{ color: C.indigo }}>detail page</Link> or re-sync after updating the Sheet.
             </p>
           </div>
 
           <div style={sectionStyle}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Cost</p>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Cost</p>
             {p.cost_sheet_conflict ? (
-              <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '5px', padding: '8px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 700, color: '#92400E', marginBottom: '4px' }}>⚡ Conflict — Sheet ≠ IMS</p>
+              <div style={{ background: C.warnBg, border: '1px solid #FCD34D', borderRadius: '5px', padding: '8px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, marginBottom: '4px' }}>⚡ Conflict — Sheet ≠ IMS</p>
                 <p style={{ fontSize: '11px', color: '#78350F' }}>Sheet: <strong>HK${p.basic_cost_sheet?.toFixed(2)}</strong></p>
-                <p style={{ fontSize: '11px', color: '#0F172A', marginBottom: '8px' }}>IMS: <strong>HK${p.primary_cost?.toFixed(2)}</strong> · {COST_SOURCE_LABEL[p.cost_source]}</p>
+                <p style={{ fontSize: '11px', color: C.ink, marginBottom: '8px' }}>IMS: <strong>HK${p.primary_cost?.toFixed(2)}</strong> · {COST_SOURCE_LABEL[p.cost_source]}</p>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button disabled={isSaving(sku, 'accept-cost')} onClick={() => callUrl(sku, 'accept-cost', `${API}/products/${sku}/cost/accept-sheet`)}
-                    style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', background: '#92400E', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', background: C.amberInk, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                     {isSaving(sku, 'accept-cost') ? 'Saving…' : 'Use Sheet value'}
                   </button>
                   <button disabled={isSaving(sku, 'dismiss-cost')} onClick={() => callUrl(sku, 'dismiss-cost', `${API}/products/${sku}/cost/dismiss-conflict`)}
-                    style={{ fontSize: '11px', padding: '4px 10px', background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', borderRadius: '4px', cursor: 'pointer' }}>
+                    style={{ fontSize: '11px', padding: '4px 10px', background: C.monoBg, color: C.sub, border: '1px solid #CBD5E1', borderRadius: '4px', cursor: 'pointer' }}>
                     Keep IMS
                   </button>
                 </div>
@@ -741,7 +742,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
               <div>
                 {/* Current cost + source */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: C.ink }}>
                     {p.primary_cost != null ? `HK$${p.primary_cost.toFixed(2)}` : <span style={{ fontSize: '13px', color: '#EF4444' }}>⚠ Missing</span>}
                   </span>
                   {p.primary_cost != null && (
@@ -755,7 +756,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
                 {/* Inline cost edit — for Philippines team direct entry */}
                 {p.cost_source !== 'invoice_matched' && (
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px' }}>
-                    <span style={{ fontSize: '11px', color: '#94A3B8' }}>HK$</span>
+                    <span style={{ fontSize: '11px', color: C.faint }}>HK$</span>
                     <input
                       type="number" min={0} step={0.01}
                       value={costInput}
@@ -776,7 +777,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
 
                 {/* Invoice lock — for Desmond 3-way match */}
                 {p.cost_source === 'invoice_matched' ? (
-                  <div style={{ marginTop: '8px', fontSize: '10px', color: '#166534', background: '#DCFCE7', padding: '6px 8px', borderRadius: '4px', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <div style={{ marginTop: '8px', fontSize: '10px', color: C.green, background: C.greenBg, padding: '6px 8px', borderRadius: '4px', display: 'flex', gap: '4px', alignItems: 'center' }}>
                     <span>🔒</span>
                     <span>Invoice locked · {p.cost_source_ref}</span>
                   </div>
@@ -784,19 +785,19 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
                   <div style={{ marginTop: '8px' }}>
                     {!showInvoice ? (
                       <button onClick={() => setShowInvoice(true)}
-                        style={{ fontSize: '10px', color: '#4338CA', background: 'none', border: '1px solid #C7D2FE', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer' }}>
+                        style={{ fontSize: '10px', color: C.indigoInk, background: 'none', border: '1px solid #C7D2FE', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer' }}>
                         🔒 Lock to invoice (3-way match)
                       </button>
                     ) : (
-                      <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px' }}>
-                        <p style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', marginBottom: '8px' }}>Confirm against invoice</p>
+                      <div style={{ background: C.primaryBg, border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px' }}>
+                        <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, marginBottom: '8px' }}>Confirm against invoice</p>
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                           <input
                             type="text" placeholder="Invoice ref e.g. INV-2026-042"
                             value={invoiceRef} onChange={e => setInvoiceRef(e.target.value)}
                             style={{ ...inputStyle, width: '180px', fontSize: '11px' }}
                           />
-                          <span style={{ fontSize: '11px', color: '#94A3B8' }}>HK$</span>
+                          <span style={{ fontSize: '11px', color: C.faint }}>HK$</span>
                           <input
                             type="number" min={0} step={0.01}
                             placeholder="Cost"
@@ -806,15 +807,15 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
                           <button
                             disabled={!invoiceRef.trim() || !invoiceCost || isSaving(sku, 'lock-invoice')}
                             onClick={() => callUrl(sku, 'lock-invoice', `${API}/products/${sku}/cost/lock-invoice`, 'POST', { invoice_ref: invoiceRef.trim(), confirmed_cost: parseFloat(invoiceCost) })}
-                            style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', background: '#4338CA', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                            style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', background: C.indigoInk, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                             {isSaving(sku, 'lock-invoice') ? 'Locking…' : '🔒 Lock'}
                           </button>
                           <button onClick={() => setShowInvoice(false)}
-                            style={{ fontSize: '11px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}>
+                            style={{ fontSize: '11px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer' }}>
                             Cancel
                           </button>
                         </div>
-                        <p style={{ fontSize: '10px', color: '#6366F1', marginTop: '6px' }}>
+                        <p style={{ fontSize: '10px', color: C.indigo, marginTop: '6px' }}>
                           Once locked at invoice level, Sheet sync cannot overwrite this cost.
                         </p>
                       </div>
@@ -829,38 +830,38 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
         {/* ── Pack Size + Prices ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={sectionStyle}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Pack Size</p>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Pack Size</p>
             {p.pack_sheet_conflict ? (
-              <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '5px', padding: '8px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 700, color: '#92400E', marginBottom: '4px' }}>⚡ Conflict — Sheet ≠ IMS</p>
+              <div style={{ background: C.warnBg, border: '1px solid #FCD34D', borderRadius: '5px', padding: '8px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, marginBottom: '4px' }}>⚡ Conflict — Sheet ≠ IMS</p>
                 <p style={{ fontSize: '11px', color: '#78350F' }}>Sheet: <strong>{p.units_per_pack_sheet} units</strong></p>
-                <p style={{ fontSize: '11px', color: '#0F172A', marginBottom: '8px' }}>IMS: <strong>{p.units_per_pack} units</strong> (verified)</p>
+                <p style={{ fontSize: '11px', color: C.ink, marginBottom: '8px' }}>IMS: <strong>{p.units_per_pack} units</strong> (verified)</p>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button disabled={isSaving(sku, 'accept-uom')} onClick={() => callUrl(sku, 'accept-uom', `${API}/products/${sku}/uom/accept-sheet`, 'POST', { verified_by: verifiedBy || null })}
-                    style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', background: '#92400E', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', background: C.amberInk, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                     Use Sheet
                   </button>
                   <button disabled={isSaving(sku, 'keep-uom')} onClick={() => callUrl(sku, 'keep-uom', `${API}/products/${sku}/uom`, 'PATCH', { verified_by: verifiedBy || null })}
-                    style={{ fontSize: '11px', padding: '4px 10px', background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', borderRadius: '4px', cursor: 'pointer' }}>
+                    style={{ fontSize: '11px', padding: '4px 10px', background: C.monoBg, color: C.sub, border: '1px solid #CBD5E1', borderRadius: '4px', cursor: 'pointer' }}>
                     Keep IMS
                   </button>
                 </div>
               </div>
             ) : p.units_per_pack != null ? (
               <div>
-                <p style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>{p.units_per_pack} <span style={{ fontSize: '12px', fontWeight: 400, color: '#64748B' }}>units/pack</span></p>
+                <p style={{ fontSize: '18px', fontWeight: 700, color: C.ink }}>{p.units_per_pack} <span style={{ fontSize: '12px', fontWeight: 400, color: C.muted }}>units/pack</span></p>
                 {p.uom_verified_at ? (
-                  <p style={{ fontSize: '10px', color: '#166534', marginTop: '2px' }}>✓ Verified {p.uom_verified_at.slice(0, 10)}{p.uom_verified_by ? ` · ${p.uom_verified_by}` : ''}</p>
+                  <p style={{ fontSize: '10px', color: C.green, marginTop: '2px' }}>✓ Verified {p.uom_verified_at.slice(0, 10)}{p.uom_verified_by ? ` · ${p.uom_verified_by}` : ''}</p>
                 ) : (
                   <button disabled={isSaving(sku, 'verify-uom')} onClick={() => callUrl(sku, 'verify-uom', `${API}/products/${sku}/uom`, 'PATCH', { verified_by: verifiedBy || null })}
-                    style={{ marginTop: '6px', fontSize: '11px', fontWeight: 600, padding: '4px 12px', background: '#166534', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    style={{ marginTop: '6px', fontSize: '11px', fontWeight: 600, padding: '4px 12px', background: C.green, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                     {isSaving(sku, 'verify-uom') ? 'Saving…' : '✓ Confirm correct'}
                   </button>
                 )}
               </div>
             ) : (
               <div>
-                <p style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '8px' }}>Pack size not set — enter it here:</p>
+                <p style={{ fontSize: '11px', color: C.faint, marginBottom: '8px' }}>Pack size not set — enter it here:</p>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <input
                     type="number" min={1} step={1}
@@ -869,7 +870,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
                     placeholder="e.g. 100"
                     style={{ ...inputStyle, width: '80px' }}
                   />
-                  <span style={{ fontSize: '11px', color: '#64748B' }}>units/pack</span>
+                  <span style={{ fontSize: '11px', color: C.muted }}>units/pack</span>
                   <SaveBtn
                     saving={isSaving(sku, 'units_per_pack')}
                     dirty={packInput !== '' && parseInt(packInput) > 0}
@@ -885,7 +886,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
 
           <div style={sectionStyle}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <p style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Selling Prices</p>
+              <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Selling Prices</p>
               <SaveBtn saving={isSaving(sku, 'price-clinic') || isSaving(sku, 'price-shopify') || isSaving(sku, 'price-hktv')} dirty={pricesDirty} onClick={savePrices} label="Save prices" />
             </div>
             {[
@@ -894,15 +895,15 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
               { ch: 'hktv',    label: 'HKTVMall',          val: hktvP,    set: setHktvP,    rec: p.channels.find(c => c.channel === 'hktv')?.recommendation },
             ].map(({ ch, label, val, set, rec }) => {
               if (!p.channels.find(c => c.channel === ch)) return null
-              const alertColor = rec === 'Raise price ⚠' ? '#92400E' : rec === 'Check pack size ⚠' ? '#1E40AF' : undefined
+              const alertColor = rec === 'Raise price ⚠' ? C.amberInk : rec === 'Check pack size ⚠' ? '#1E40AF' : undefined
               return (
                 <div key={ch} style={{ display: 'grid', gridTemplateColumns: '100px 1fr auto', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '11px', color: '#64748B' }}>{label}</span>
+                  <span style={{ fontSize: '11px', color: C.muted }}>{label}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '11px', color: '#94A3B8' }}>HK$</span>
+                    <span style={{ fontSize: '11px', color: C.faint }}>HK$</span>
                     <input type="number" min={0} step={0.5} value={val}
                       onChange={e => { set(e.target.value); setPricesDirty(true) }}
-                      style={{ width: '80px', padding: '4px 6px', fontSize: '12px', fontWeight: 600, border: `1px solid ${pricesDirty ? '#6366F1' : '#E2E8F0'}`, borderRadius: '4px', background: pricesDirty ? '#EEF2FF' : 'white', color: '#0F172A' }} />
+                      style={{ width: '80px', padding: '4px 6px', fontSize: '12px', fontWeight: 600, border: `1px solid ${pricesDirty ? C.indigo : C.line}`, borderRadius: '4px', background: pricesDirty ? C.primaryBg : 'white', color: C.ink }} />
                   </div>
                   {rec && rec !== 'Price is OK ✓' && (
                     <span style={{ fontSize: '10px', color: alertColor, fontWeight: 600 }}>
@@ -912,7 +913,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
                 </div>
               )
             })}
-            <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '6px' }}>Saved to IMS → export CSV → input into DaySmart / Shopify</p>
+            <p style={{ fontSize: '10px', color: C.faint, marginTop: '6px' }}>Saved to IMS → export CSV → input into DaySmart / Shopify</p>
           </div>
         </div>
 
@@ -920,10 +921,10 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
 
       {/* Bottom bar */}
       <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to={`/items/${skuToPath(sku)}` as never} style={{ fontSize: '11px', color: '#6366F1', textDecoration: 'none' }}>
+        <Link to={`/items/${skuToPath(sku)}` as never} style={{ fontSize: '11px', color: C.indigo, textDecoration: 'none' }}>
           Full detail page →
         </Link>
-        <button onClick={() => {}} style={{ fontSize: '11px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}>
+        <button onClick={() => {}} style={{ fontSize: '11px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer' }}>
           {/* placeholder for future actions */}
         </button>
       </div>
@@ -936,7 +937,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
 
 function DataReviewPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '60px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: '60px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Loading…</div>}>
       <DataReviewContent />
     </Suspense>
   )

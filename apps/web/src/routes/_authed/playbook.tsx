@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
@@ -95,7 +96,7 @@ function PlaybookPage() {
 
         {/* ══════════════════════════════════ HERO ══════════════════════════════════ */}
         <div style={{
-          background: '#0F172A',
+          background: C.ink,
           color: 'white',
           padding: '48px 0 56px',
           marginBottom: 0,
@@ -131,7 +132,7 @@ function PlaybookPage() {
             </h1>
             <p style={{
               fontSize: '15px',
-              color: '#94A3B8',
+              color: C.faint,
               maxWidth: '600px',
               marginBottom: '36px',
               lineHeight: 1.6,
@@ -142,15 +143,15 @@ function PlaybookPage() {
 
             {/* ══ THE DATA FLOW — this is THE centerpiece ══════════════════ */}
             <div style={{ marginBottom: '40px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#64748B', marginBottom: '14px' }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: C.muted, marginBottom: '14px' }}>
                 How data flows through the system
               </div>
               <div style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
 
                 {/* Stage 1: Source Systems */}
                 <div style={{ flex: 1, background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '10px', padding: '14px 16px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: '8px' }}>1. Source Systems</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11.5px', color: '#E2E8F0' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: C.faint, marginBottom: '8px' }}>1. Source Systems</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11.5px', color: C.line }}>
                     <span>DaySmart (clinic POS)</span>
                     <span>Shopify (e-commerce)</span>
                     <span>HKTVMall (marketplace)</span>
@@ -158,48 +159,48 @@ function PlaybookPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: '#475569' }}>&rarr;</div>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: C.sub }}>&rarr;</div>
 
                 {/* Stage 2: Google Sheets (temporary middle layer) */}
                 <div style={{ flex: 1, background: 'rgba(251,191,36,0.08)', border: '1px dashed rgba(251,191,36,0.35)', borderRadius: '10px', padding: '14px 16px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#FBBF24', marginBottom: '8px' }}>2. Google Sheets <span style={{ fontSize: '8px', color: '#94A3B8', fontWeight: 600, textTransform: 'none', letterSpacing: '0' }}>(temporary staging)</span></div>
-                  <div style={{ fontSize: '11.5px', color: '#E2E8F0', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#FBBF24', marginBottom: '8px' }}>2. Google Sheets <span style={{ fontSize: '8px', color: C.faint, fontWeight: 600, textTransform: 'none', letterSpacing: '0' }}>(temporary staging)</span></div>
+                  <div style={{ fontSize: '11.5px', color: C.line, lineHeight: 1.5 }}>
                     <a href={SHEET_URL} target="_blank" rel="noreferrer" style={{ color: '#FBBF24', textDecoration: 'underline', fontWeight: 600 }}>DATABASE [SSOT]</a>
                     <br />SKU Master + HKTV Inventory
                     <br /><span style={{ fontSize: '10px', color: '#EF4444' }}>Migrating away — IMS becomes the SSOT</span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: '#475569' }}>&rarr;</div>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: C.sub }}>&rarr;</div>
 
                 {/* Stage 3: IMS All Inventory */}
                 <div style={{ flex: 1, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '10px', padding: '14px 16px' }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#818CF8', marginBottom: '8px' }}>3. Rosetta IMS &mdash; All Inventory</div>
-                  <div style={{ fontSize: '11.5px', color: '#E2E8F0', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '11.5px', color: C.line, lineHeight: 1.5 }}>
                     Bird&apos;s eye view of all 3,044 SKUs
                     <br />Data quality graded <strong style={{ color: '#22C55E' }}>A</strong> / <strong style={{ color: '#FBBF24' }}>B</strong> / <strong style={{ color: '#EF4444' }}>C</strong>
-                    <br /><span style={{ fontSize: '10px', color: '#94A3B8' }}>1,858 SKUs (61%) missing cost</span>
+                    <br /><span style={{ fontSize: '10px', color: C.faint }}>1,858 SKUs (61%) missing cost</span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: '#475569' }}>&rarr;</div>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: C.sub }}>&rarr;</div>
 
                 {/* Stage 4: Data Review */}
                 <div style={{ flex: 1, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '10px', padding: '14px 16px' }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#22C55E', marginBottom: '8px' }}>4. Data Review</div>
-                  <div style={{ fontSize: '11.5px', color: '#E2E8F0', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '11.5px', color: C.line, lineHeight: 1.5 }}>
                     <span style={{ color: '#22C55E', fontWeight: 600 }}>OCR extraction</span> (live)
                     <br />Human-in-the-loop review
                     <br />3-way match (accounting automation)
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: '#475569' }}>&rarr;</div>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '18px', color: C.sub }}>&rarr;</div>
 
                 {/* Stage 5: Export back */}
                 <div style={{ flex: 1, background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '10px', padding: '14px 16px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: '8px' }}>5. Export to Sources</div>
-                  <div style={{ fontSize: '11.5px', color: '#E2E8F0', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: C.faint, marginBottom: '8px' }}>5. Export to Sources</div>
+                  <div style={{ fontSize: '11.5px', color: C.line, lineHeight: 1.5 }}>
                     CSV &rarr; DaySmart
                     <br />CSV &rarr; Shopify
                     <br />3-way match &rarr; QuickBooks
@@ -210,7 +211,7 @@ function PlaybookPage() {
             </div>
 
             {/* ── Confidence journey (secondary) ─────────────────────────── */}
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#64748B', marginBottom: '14px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: C.muted, marginBottom: '14px' }}>
               Data confidence journey
             </div>
 
@@ -232,13 +233,13 @@ function PlaybookPage() {
                 <div style={{ fontSize: '48px', fontWeight: 800, lineHeight: 1, letterSpacing: '-2px', marginBottom: '6px', color: '#EF4444' }}>30%</div>
                 <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '10px', color: '#FCA5A5' }}>Where we were</div>
                 <span style={{ display: 'inline-block', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', padding: '2px 8px', borderRadius: '3px', marginBottom: '10px', width: 'fit-content', background: '#7F1D1D', color: '#FCA5A5' }}>Yesterday</span>
-                <p style={{ fontSize: '12.5px', color: '#CBD5E1', lineHeight: 1.6, flex: 1 }}>
+                <p style={{ fontSize: '12.5px', color: C.knobOff, lineHeight: 1.6, flex: 1 }}>
                   Supplier catalogues had errors we couldn&apos;t catch at volume. Every purchase order required manual spot-checking against PDFs. We&apos;ve had double-payments, missed payments, and pricing set from outdated cost data.
                 </p>
               </div>
 
               {/* Arrow */}
-              <div style={{ display: 'flex', alignItems: 'center', padding: '0 6px', fontSize: '24px', color: '#475569', flexShrink: 0 }}>&rarr;</div>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '0 6px', fontSize: '24px', color: C.sub, flexShrink: 0 }}>&rarr;</div>
 
               {/* 80% */}
               <div style={{
@@ -254,8 +255,8 @@ function PlaybookPage() {
               }}>
                 <div style={{ fontSize: '48px', fontWeight: 800, lineHeight: 1, letterSpacing: '-2px', marginBottom: '6px', color: '#818CF8' }}>80%</div>
                 <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '10px', color: '#A5B4FC' }}>OCR + human review</div>
-                <span style={{ display: 'inline-block', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', padding: '2px 8px', borderRadius: '3px', marginBottom: '10px', width: 'fit-content', background: 'rgba(99,102,241,0.25)', color: '#C7D2FE' }}>Live now</span>
-                <p style={{ fontSize: '12.5px', color: '#CBD5E1', lineHeight: 1.6, flex: 1 }}>
+                <span style={{ display: 'inline-block', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', padding: '2px 8px', borderRadius: '3px', marginBottom: '10px', width: 'fit-content', background: 'rgba(99,102,241,0.25)', color: C.indigoLine }}>Live now</span>
+                <p style={{ fontSize: '12.5px', color: C.knobOff, lineHeight: 1.6, flex: 1 }}>
                   AI reads our supplier catalogues and extracts costs, pack sizes, and supplier codes automatically.
                   Our team reviews matches in a bank-reconciliation-style UI. <strong style={{ color: 'white', fontWeight: 600 }}>1,014 items</strong> already
                   processed across <strong style={{ color: 'white', fontWeight: 600 }}>17 suppliers</strong>, at a total AI cost of about <strong style={{ color: 'white', fontWeight: 600 }}>~$8</strong>.
@@ -264,7 +265,7 @@ function PlaybookPage() {
               </div>
 
               {/* Arrow */}
-              <div style={{ display: 'flex', alignItems: 'center', padding: '0 6px', fontSize: '24px', color: '#475569', flexShrink: 0 }}>&rarr;</div>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '0 6px', fontSize: '24px', color: C.sub, flexShrink: 0 }}>&rarr;</div>
 
               {/* 100% */}
               <div style={{
@@ -281,7 +282,7 @@ function PlaybookPage() {
                 <div style={{ fontSize: '48px', fontWeight: 800, lineHeight: 1, letterSpacing: '-2px', marginBottom: '6px', color: '#22C55E' }}>100%</div>
                 <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '10px', color: '#86EFAC' }}>3-way match</div>
                 <span style={{ display: 'inline-block', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', padding: '2px 8px', borderRadius: '3px', marginBottom: '10px', width: 'fit-content', background: 'rgba(34,197,94,0.15)', color: '#86EFAC' }}>Scoped</span>
-                <p style={{ fontSize: '12.5px', color: '#CBD5E1', lineHeight: 1.6, flex: 1 }}>
+                <p style={{ fontSize: '12.5px', color: C.knobOff, lineHeight: 1.6, flex: 1 }}>
                   3-way matching software will match purchase orders against delivery notes and invoices <strong style={{ color: 'white', fontWeight: 600 }}>automatically</strong>.
                   Sam&apos;s team validates before QuickBooks entry. Every cost confirmed against a real document -- not a catalogue, not a memory, an actual invoice.
                 </p>
@@ -297,7 +298,7 @@ function PlaybookPage() {
           <div style={{
             display: 'flex',
             gap: 0,
-            background: '#F1F5F9',
+            background: C.monoBg,
             borderRadius: '10px 10px 0 0',
             padding: '4px 4px 0',
             marginTop: 0,
@@ -311,7 +312,7 @@ function PlaybookPage() {
                   padding: '11px 16px',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: activeTab === tab.id ? '#0F172A' : '#64748B',
+                  color: activeTab === tab.id ? C.ink : C.muted,
                   background: activeTab === tab.id ? 'white' : 'transparent',
                   border: 'none',
                   borderRadius: '8px 8px 0 0',
@@ -338,19 +339,19 @@ function PlaybookPage() {
             {/* ═══════════════════ EVERYONE TAB ═══════════════════ */}
             {activeTab === 'everyone' && (
               <div>
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>The mission</p>
-                <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>Trust the numbers</h2>
-                <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '20px', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>The mission</p>
+                <h2 style={{ fontSize: '16px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>Trust the numbers</h2>
+                <p style={{ fontSize: '13px', color: C.muted, marginBottom: '20px', lineHeight: 1.6 }}>
                   Right now, many SKU costs are missing, wrong, or unverified. That means every margin check,
                   every reorder decision, and every GP report could be quietly wrong. This project fixes that --
                   starting with the highest-sales products, because a data error on something we sell 200 units
                   of every month costs far more than one we sell twice a year.
                 </p>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* What's live / what's coming */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>What&apos;s live / what&apos;s coming</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>What&apos;s live / what&apos;s coming</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
 
                   <StatusCard status="live" tag="LIVE" title="OCR Catalogue Scanner">
@@ -373,10 +374,10 @@ function PlaybookPage() {
 
                 </div>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* Key numbers */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Key numbers</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Key numbers</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
                   <NumberCard value="3,044" label="Active SKUs in IMS" />
                   <NumberCard value="1,858" label="Missing cost data (61%)" />
@@ -389,9 +390,9 @@ function PlaybookPage() {
             {/* ═══════════════════ OPERATIONS TAB ═══════════════════ */}
             {activeTab === 'operations' && (
               <div>
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>For the operations team</p>
-                <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>Your daily workflow is changing. Here&apos;s what&apos;s different.</h2>
-                <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '20px', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>For the operations team</p>
+                <h2 style={{ fontSize: '16px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>Your daily workflow is changing. Here&apos;s what&apos;s different.</h2>
+                <p style={{ fontSize: '13px', color: C.muted, marginBottom: '20px', lineHeight: 1.6 }}>
                   The goal is not to replace people -- it&apos;s to remove the parts of your job that are
                   tedious data-keying so you can focus on the parts that need human judgment.
                 </p>
@@ -399,7 +400,7 @@ function PlaybookPage() {
                 {/* Before / After */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
                   <div>
-                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#991B1B', marginBottom: '12px' }}>Old flow (being retired)</p>
+                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.redInk, marginBottom: '12px' }}>Old flow (being retired)</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <FlowBox variant="old">Warehouse scans delivery notes</FlowBox>
                       <FlowArrow variant="old" />
@@ -411,7 +412,7 @@ function PlaybookPage() {
                     </div>
                   </div>
                   <div>
-                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#166534', marginBottom: '12px' }}>New flow (being built)</p>
+                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.green, marginBottom: '12px' }}>New flow (being built)</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <FlowBox variant="new">Warehouse scans delivery notes</FlowBox>
                       <FlowArrow variant="new" />
@@ -436,94 +437,94 @@ function PlaybookPage() {
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* Who does what now */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Who does what now</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Who does what now</p>
                 <StepList>
                   <StepItem>
-                    <strong style={{ color: '#0F172A' }}>Warehouse team</strong> -- Scans delivery notes at the HK warehouse.
+                    <strong style={{ color: C.ink }}>Warehouse team</strong> -- Scans delivery notes at the HK warehouse.
                     Uploads to the shared Google Drive folder. <em>This step stays the same.</em>{' '}
                     Make sure scans are clear and complete -- The 3-way match OCR needs readable text.
                   </StepItem>
                   <StepItem>
-                    <strong style={{ color: '#0F172A' }}>Catalogue review queue</strong> -- When a new supplier price list arrives,
-                    review it in the <a href="http://localhost:3001/catalogues" style={{ color: '#6366F1', textDecoration: 'none' }}>Catalogue Review Queue</a> in IMS.
+                    <strong style={{ color: C.ink }}>Catalogue review queue</strong> -- When a new supplier price list arrives,
+                    review it in the <a href="http://localhost:3001/catalogues" style={{ color: C.indigo, textDecoration: 'none' }}>Catalogue Review Queue</a> in IMS.
                     The AI has already extracted the data; your job is to approve, reject, or correct matches.
                     Start with 99%+ confidence items (green) -- those are near-certain and fast to clear.
                   </StepItem>
                   <StepItem>
-                    <strong style={{ color: '#0F172A' }}>QuickBooks entry</strong> -- Being automated by the 3-way match system.
+                    <strong style={{ color: C.ink }}>QuickBooks entry</strong> -- Being automated by the 3-way match system.
                     During the transition, continue manual entry for any items that fail automated matching.
                     You will be notified which items need manual handling.
                   </StepItem>
                 </StepList>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* What's being automated */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>What manual steps are being automated</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>What manual steps are being automated</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
-                  <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '16px 18px' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: '#991B1B', marginBottom: '4px' }}>
+                  <div style={{ background: C.badBg, border: '1px solid #FECACA', borderRadius: '8px', padding: '16px 18px' }}>
+                    <p style={{ fontSize: '12px', fontWeight: 700, color: C.redInk, marginBottom: '4px' }}>
                       Manual catalogue reading &rarr; eliminated
                     </p>
-                    <p style={{ fontSize: '11.5px', color: '#B91C1C', lineHeight: 1.6 }}>
+                    <p style={{ fontSize: '11.5px', color: C.bad, lineHeight: 1.6 }}>
                       Claude AI now reads all 43 supplier PDFs. Cost, SKU, pack size, and bulk-buy tiers
                       extracted automatically. Pipeline is maintained centrally.
                     </p>
                   </div>
-                  <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '16px 18px' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: '#991B1B', marginBottom: '4px' }}>
+                  <div style={{ background: C.badBg, border: '1px solid #FECACA', borderRadius: '8px', padding: '16px 18px' }}>
+                    <p style={{ fontSize: '12px', fontWeight: 700, color: C.redInk, marginBottom: '4px' }}>
                       Manual data keying to Sheet + QuickBooks &rarr; automated
                     </p>
-                    <p style={{ fontSize: '11.5px', color: '#B91C1C', lineHeight: 1.6 }}>
+                    <p style={{ fontSize: '11.5px', color: C.bad, lineHeight: 1.6 }}>
                       The 3-way match system handles PO/DN/invoice reconciliation and outputs to QuickBooks.
                       Sam&apos;s junior accountant validates before final entry.
                     </p>
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* FAQ */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>FAQ</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>FAQ</p>
                 <div style={{ marginBottom: '16px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginBottom: '4px' }}>What if the AI gets a price wrong?</p>
-                  <p style={{ fontSize: '12.5px', color: '#64748B', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: C.ink, marginBottom: '4px' }}>What if the AI gets a price wrong?</p>
+                  <p style={{ fontSize: '12.5px', color: C.muted, lineHeight: 1.6 }}>
                     That&apos;s exactly what the review queue is for. Every AI-extracted cost sits in &quot;pending&quot; until a human confirms it.
                     Nothing flows to pricing or QuickBooks without a person signing off.
                   </p>
                 </div>
                 <div style={{ marginBottom: '16px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginBottom: '4px' }}>How long does a catalogue take to process?</p>
-                  <p style={{ fontSize: '12.5px', color: '#64748B', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: C.ink, marginBottom: '4px' }}>How long does a catalogue take to process?</p>
+                  <p style={{ fontSize: '12.5px', color: C.muted, lineHeight: 1.6 }}>
                     Upload to review-ready: under 60 seconds for most PDFs. Review itself depends on the catalogue size --
                     a 50-item list takes about 10 minutes once you know the UI.
                   </p>
                 </div>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* Pre-OCR Catalogue Audit */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Pre-OCR Catalogue Audit</p>
-                <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.7, marginBottom: '14px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Pre-OCR Catalogue Audit</p>
+                <p style={{ fontSize: '13px', color: C.sub, lineHeight: 1.7, marginBottom: '14px' }}>
                   Before burning API credits running OCR on every supplier catalogue, we audited all 47 supplier folders in Drive
                   to confirm which ones have a usable digital catalogue vs which need follow-up with the supplier.
                 </p>
 
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                  <Tag bg="#DCFCE7" color="#166534">{AUDIT_DIGITAL.length} ready to OCR</Tag>
-                  <Tag bg="#FEF3C7" color="#92400E">{AUDIT_SCANNED.length} scanned -- ask supplier for digital</Tag>
-                  <Tag bg="#FEE2E2" color="#991B1B">{AUDIT_MISSING.length} no catalogue -- ask supplier</Tag>
-                  <Tag bg="#F1F5F9" color="#475569">{AUDIT_DUPLICATES.length} duplicate folders to clean up</Tag>
+                  <Tag bg={C.greenBg} color={C.green}>{AUDIT_DIGITAL.length} ready to OCR</Tag>
+                  <Tag bg={C.warnBg} color={C.amberInk}>{AUDIT_SCANNED.length} scanned -- ask supplier for digital</Tag>
+                  <Tag bg={C.redBg} color={C.redInk}>{AUDIT_MISSING.length} no catalogue -- ask supplier</Tag>
+                  <Tag bg={C.monoBg} color={C.sub}>{AUDIT_DUPLICATES.length} duplicate folders to clean up</Tag>
                 </div>
 
                 {/* Green list */}
                 <div style={{ border: '1px solid #BBF7D0', borderRadius: '6px', overflow: 'hidden', marginBottom: '16px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 60px 60px', gap: '10px', background: '#F0FDF4', padding: '7px 12px', borderBottom: '1px solid #BBF7D0' }}>
                     {['Supplier', 'Best file', 'Size', 'Open'].map(h => (
-                      <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#166534', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{h}</span>
+                      <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: C.green, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{h}</span>
                     ))}
                   </div>
                   {AUDIT_DIGITAL.map((s, i) => (
@@ -534,18 +535,18 @@ function PlaybookPage() {
                       borderBottom: i < AUDIT_DIGITAL.length - 1 ? '1px solid #F1F5F9' : 'none',
                     }}>
                       <div>
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', marginBottom: '1px' }}>{s.name}</p>
-                        {s.duplicate_of && <p style={{ fontSize: '10px', color: '#92400E', fontStyle: 'italic' }}>also in &ldquo;{s.duplicate_of}&rdquo; folder</p>}
-                        {s.flag === 'verify' && <p style={{ fontSize: '10px', color: '#92400E', fontWeight: 600 }}>verify</p>}
+                        <p style={{ fontSize: '12px', fontWeight: 600, color: C.ink, marginBottom: '1px' }}>{s.name}</p>
+                        {s.duplicate_of && <p style={{ fontSize: '10px', color: C.amberInk, fontStyle: 'italic' }}>also in &ldquo;{s.duplicate_of}&rdquo; folder</p>}
+                        {s.flag === 'verify' && <p style={{ fontSize: '10px', color: C.amberInk, fontWeight: 600 }}>verify</p>}
                       </div>
                       <div>
-                        <p style={{ fontSize: '11px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.best_file}</p>
-                        <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px', lineHeight: 1.4 }}>{s.notes}</p>
+                        <p style={{ fontSize: '11px', color: C.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.best_file}</p>
+                        <p style={{ fontSize: '10px', color: C.faint, marginTop: '2px', lineHeight: 1.4 }}>{s.notes}</p>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#475569', fontVariantNumeric: 'tabular-nums' }}>{s.size_mb} MB</span>
+                      <span style={{ fontSize: '11px', color: C.sub, fontVariantNumeric: 'tabular-nums' }}>{s.size_mb} MB</span>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <a href={DRIVE_FILE(s.best_file_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: '#166534', textDecoration: 'none' }}>file</a>
-                        <a href={DRIVE_FOLDER(s.folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', color: '#94A3B8', textDecoration: 'none' }}>folder</a>
+                        <a href={DRIVE_FILE(s.best_file_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: C.green, textDecoration: 'none' }}>file</a>
+                        <a href={DRIVE_FOLDER(s.folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', color: C.faint, textDecoration: 'none' }}>folder</a>
                       </div>
                     </div>
                   ))}
@@ -555,7 +556,7 @@ function PlaybookPage() {
                 {AUDIT_SCANNED.length > 0 && (
                   <div style={{ border: '1px solid #FDE68A', borderRadius: '6px', overflow: 'hidden', marginBottom: '16px' }}>
                     <div style={{ background: '#FFFBEB', padding: '7px 12px', borderBottom: '1px solid #FDE68A' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#92400E', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Scanned -- ask supplier for digital ({AUDIT_SCANNED.length})</span>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Scanned -- ask supplier for digital ({AUDIT_SCANNED.length})</span>
                     </div>
                     {AUDIT_SCANNED.map((s, i) => (
                       <div key={s.folder_id} style={{
@@ -566,9 +567,9 @@ function PlaybookPage() {
                         <p style={{ fontSize: '12px', fontWeight: 600, color: '#78350F' }}>{s.name}</p>
                         <div>
                           <p style={{ fontSize: '11px', color: '#78350F' }}>{s.best_file ?? '--'}</p>
-                          <p style={{ fontSize: '10px', color: '#92400E', marginTop: '2px', lineHeight: 1.4 }}>{s.notes}</p>
+                          <p style={{ fontSize: '10px', color: C.amberInk, marginTop: '2px', lineHeight: 1.4 }}>{s.notes}</p>
                         </div>
-                        <a href={DRIVE_FOLDER(s.folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: '#92400E', textDecoration: 'none' }}>folder</a>
+                        <a href={DRIVE_FOLDER(s.folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: C.amberInk, textDecoration: 'none' }}>folder</a>
                       </div>
                     ))}
                   </div>
@@ -576,19 +577,19 @@ function PlaybookPage() {
 
                 {/* Missing list */}
                 <div style={{ border: '1px solid #FECACA', borderRadius: '6px', overflow: 'hidden', marginBottom: '16px' }}>
-                  <div style={{ background: '#FEF2F2', padding: '7px 12px', borderBottom: '1px solid #FECACA' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, color: '#991B1B', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>No catalogue -- ask supplier ({AUDIT_MISSING.length})</span>
+                  <div style={{ background: C.badBg, padding: '7px 12px', borderBottom: '1px solid #FECACA' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: C.redInk, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>No catalogue -- ask supplier ({AUDIT_MISSING.length})</span>
                   </div>
                   {AUDIT_MISSING.map((s, i) => (
                     <div key={s.folder_id} style={{
                       display: 'grid', gridTemplateColumns: '200px 1fr 60px',
                       gap: '10px', padding: '10px 12px', alignItems: 'start',
-                      background: i % 2 === 0 ? '#FEF2F2' : '#FEFEFE',
+                      background: i % 2 === 0 ? C.badBg : '#FEFEFE',
                       borderBottom: i < AUDIT_MISSING.length - 1 ? '1px solid #FECACA' : 'none',
                     }}>
-                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#991B1B' }}>{s.name}</p>
-                      <p style={{ fontSize: '11px', color: '#991B1B', lineHeight: 1.5 }}>{s.notes}</p>
-                      <a href={DRIVE_FOLDER(s.folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: '#991B1B', textDecoration: 'none' }}>folder</a>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: C.redInk }}>{s.name}</p>
+                      <p style={{ fontSize: '11px', color: C.redInk, lineHeight: 1.5 }}>{s.notes}</p>
+                      <a href={DRIVE_FOLDER(s.folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: C.redInk, textDecoration: 'none' }}>folder</a>
                     </div>
                   ))}
                 </div>
@@ -596,8 +597,8 @@ function PlaybookPage() {
                 {/* Duplicate folders */}
                 {AUDIT_DUPLICATES.length > 0 && (
                   <div style={{ border: '1px solid #E2E8F0', borderRadius: '6px', overflow: 'hidden', marginBottom: '16px' }}>
-                    <div style={{ background: '#F8FAFC', padding: '7px 12px', borderBottom: '1px solid #E2E8F0' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#475569', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Duplicate folders to clean up ({AUDIT_DUPLICATES.length})</span>
+                    <div style={{ background: C.wash, padding: '7px 12px', borderBottom: '1px solid #E2E8F0' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: C.sub, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Duplicate folders to clean up ({AUDIT_DUPLICATES.length})</span>
                     </div>
                     {AUDIT_DUPLICATES.map((d, i) => (
                       <div key={d.duplicate_folder_id} style={{
@@ -606,13 +607,13 @@ function PlaybookPage() {
                         background: i % 2 === 0 ? 'white' : '#FAFAFA',
                         borderBottom: i < AUDIT_DUPLICATES.length - 1 ? '1px solid #F1F5F9' : 'none',
                       }}>
-                        <p style={{ fontSize: '11.5px', color: '#475569' }}>
-                          <strong style={{ color: '#0F172A' }}>{d.duplicate_name}</strong>
+                        <p style={{ fontSize: '11.5px', color: C.sub }}>
+                          <strong style={{ color: C.ink }}>{d.duplicate_name}</strong>
                           {' '}is a duplicate of{' '}
-                          <strong style={{ color: '#0F172A' }}>{d.primary}</strong>
+                          <strong style={{ color: C.ink }}>{d.primary}</strong>
                           {' '}-- consolidate into one folder
                         </p>
-                        <a href={DRIVE_FOLDER(d.duplicate_folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: '#6366F1', textDecoration: 'none' }}>open dupe</a>
+                        <a href={DRIVE_FOLDER(d.duplicate_folder_id)} target="_blank" rel="noreferrer" style={{ fontSize: '10.5px', fontWeight: 600, color: C.indigo, textDecoration: 'none' }}>open dupe</a>
                       </div>
                     ))}
                   </div>
@@ -623,67 +624,67 @@ function PlaybookPage() {
             {/* ═══════════════════ ACCOUNTING TAB ═══════════════════ */}
             {activeTab === 'accounting' && (
               <div>
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>For finance + accounting</p>
-                <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>Cost confidence you can close books with</h2>
-                <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '20px', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>For finance + accounting</p>
+                <h2 style={{ fontSize: '16px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>Cost confidence you can close books with</h2>
+                <p style={{ fontSize: '13px', color: C.muted, marginBottom: '20px', lineHeight: 1.6 }}>
                   Every cost figure in the system now carries a confidence level.
                   The hierarchy determines what gets used for GP calculations and what needs further verification.
                 </p>
 
                 {/* Confidence hierarchy */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Cost confidence hierarchy (highest to lowest)</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Cost confidence hierarchy (highest to lowest)</p>
                 <div style={{ marginBottom: '24px' }}>
-                  <ConfTier rank={1} bg="#F0FDF4" border="#BBF7D0" rankBg="#16A34A" labelColor="#166534" descColor="#64748B"
+                  <ConfTier rank={1} bg="#F0FDF4" border="#BBF7D0" rankBg="#16A34A" labelColor={C.green} descColor={C.muted}
                     label="catalogue"
                     desc="Extracted from the live supplier price list via OCR, then confirmed by a reviewer. Top tier — protected from Sheet re-syncs, because a human has signed off on it against the current catalogue."
                   />
-                  <ConfTier rank={2} bg="#EFF6FF" border="#BFDBFE" rankBg="#2563EB" labelColor="#1E40AF" descColor="#64748B"
+                  <ConfTier rank={2} bg="#EFF6FF" border="#BFDBFE" rankBg="#2563EB" labelColor="#1E40AF" descColor={C.muted}
                     label="invoice_matched"
                     desc="Verified against the actual supplier invoice via 3-way match. The gold standard for QuickBooks entry; sits just below a freshly reviewed catalogue cost."
                   />
-                  <ConfTier rank={3} bg="#F8FAFC" border="#E2E8F0" rankBg="#64748B" labelColor="#475569" descColor="#64748B"
+                  <ConfTier rank={3} bg={C.wash} border={C.line} rankBg={C.muted} labelColor={C.sub} descColor={C.muted}
                     label="manual"
                     desc="Human-entered, no source document linked. Treat with caution. Common for legacy data migrated from spreadsheets."
                   />
-                  <ConfTier rank={4} bg="#FEF2F2" border="#FECACA" rankBg="#DC2626" labelColor="#991B1B" descColor="#64748B"
+                  <ConfTier rank={4} bg={C.badBg} border="#FECACA" rankBg="#DC2626" labelColor={C.redInk} descColor={C.muted}
                     label="unknown"
                     desc="No cost data at all. GP cannot be computed. These products need immediate attention -- either locate a catalogue or request a quote from the supplier."
                   />
                 </div>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* 3-way match */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>How 3-way matching works</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>How 3-way matching works</p>
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px',
-                  padding: '20px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', margin: '16px 0',
+                  padding: '20px', background: C.wash, border: '1px solid #E2E8F0', borderRadius: '8px', margin: '16px 0',
                 }}>
-                  <div style={{ textAlign: 'center' as const, padding: '12px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, minWidth: '120px', background: '#EEF2FF', border: '2px solid #818CF8', color: '#3730A3' }}>
+                  <div style={{ textAlign: 'center' as const, padding: '12px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, minWidth: '120px', background: C.primaryBg, border: '2px solid #818CF8', color: '#3730A3' }}>
                     Purchase Order
                   </div>
-                  <div style={{ fontSize: '22px', color: '#94A3B8' }}>&harr;</div>
+                  <div style={{ fontSize: '22px', color: C.faint }}>&harr;</div>
                   <div style={{ textAlign: 'center' as const, padding: '12px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, minWidth: '120px', background: '#FFFBEB', border: '2px solid #F59E0B', color: '#78350F' }}>
                     Delivery Note
                   </div>
-                  <div style={{ fontSize: '22px', color: '#94A3B8' }}>&harr;</div>
+                  <div style={{ fontSize: '22px', color: C.faint }}>&harr;</div>
                   <div style={{ textAlign: 'center' as const, padding: '12px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, minWidth: '120px', background: '#F0FDF4', border: '2px solid #22C55E', color: '#14532D' }}>
                     Supplier Invoice
                   </div>
                 </div>
-                <p style={{ fontSize: '12px', color: '#64748B', textAlign: 'center' as const, lineHeight: 1.6, marginBottom: '20px' }}>
+                <p style={{ fontSize: '12px', color: C.muted, textAlign: 'center' as const, lineHeight: 1.6, marginBottom: '20px' }}>
                   When all three documents agree on quantity and price, the cost is promoted to{' '}
-                  <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.85em', background: '#F1F5F9', padding: '1px 5px', borderRadius: '3px' }}>invoice_matched</code> -- an invoice-verified tier, just below a freshly reviewed catalogue cost.<br />
+                  <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.85em', background: C.monoBg, padding: '1px 5px', borderRadius: '3px' }}>invoice_matched</code> -- an invoice-verified tier, just below a freshly reviewed catalogue cost.<br />
                   The 3-way matching software OCRs scanned delivery notes and outputs matched line items to QuickBooks.
                 </p>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* QuickBooks + month-end */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
                   <div>
-                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>QuickBooks integration scope</p>
-                    <ul style={{ paddingLeft: '18px', fontSize: '12px', color: '#475569', lineHeight: 1.8 }}>
+                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>QuickBooks integration scope</p>
+                    <ul style={{ paddingLeft: '18px', fontSize: '12px', color: C.sub, lineHeight: 1.8 }}>
                       <li>QuickBooks API integration being scoped with finance team</li>
                       <li>Matched line items auto-posted (behind human approval)</li>
                       <li>Unmatched items flagged for manual review by junior accountant</li>
@@ -691,8 +692,8 @@ function PlaybookPage() {
                     </ul>
                   </div>
                   <div>
-                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Month-end closing impact</p>
-                    <ul style={{ paddingLeft: '18px', fontSize: '12px', color: '#475569', lineHeight: 1.8 }}>
+                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Month-end closing impact</p>
+                    <ul style={{ paddingLeft: '18px', fontSize: '12px', color: C.sub, lineHeight: 1.8 }}>
                       <li>Margin analysis moves from &quot;after the fact&quot; to near real-time</li>
                       <li>Cost discrepancies flagged during the month, not at close</li>
                       <li>GP floor breaches visible in IMS before they hit the books</li>
@@ -701,30 +702,30 @@ function PlaybookPage() {
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* GP floors */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>GP floor rules by category</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>GP floor rules by category</p>
                 <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 16px' }}>
                   {[
-                    { cat: 'Medicine', val: '70%', color: '#991B1B' },
-                    { cat: 'Preventative', val: '40%', color: '#92400E' },
-                    { cat: 'Supplement', val: '40%', color: '#92400E' },
-                    { cat: 'Pet Hygiene / Shampoo', val: '40%', color: '#92400E' },
+                    { cat: 'Medicine', val: '70%', color: C.redInk },
+                    { cat: 'Preventative', val: '40%', color: C.amberInk },
+                    { cat: 'Supplement', val: '40%', color: C.amberInk },
+                    { cat: 'Pet Hygiene / Shampoo', val: '40%', color: C.amberInk },
                     { cat: 'Food / Cat Litter / Toys', val: '35%', color: '#1E40AF' },
-                    { cat: 'Not-For-Sale', val: '--', color: '#94A3B8' },
+                    { cat: 'Not-For-Sale', val: '--', color: C.faint },
                   ].map((r, i) => (
                     <div key={r.cat} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       padding: '6px 12px', borderRadius: '4px', fontSize: '12px',
-                      background: i % 2 === 0 ? '#F8FAFC' : 'white',
+                      background: i % 2 === 0 ? C.wash : 'white',
                     }}>
-                      <span style={{ fontWeight: 600, color: '#0F172A' }}>{r.cat}</span>
+                      <span style={{ fontWeight: 600, color: C.ink }}>{r.cat}</span>
                       <span style={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: r.color }}>{r.val}</span>
                     </div>
                   ))}
                 </div>
-                <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '6px' }}>
+                <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px' }}>
                   GP% = (Selling Price - Cost) / Selling Price x 100.
                   Any product priced below its category floor triggers a &quot;Below Margin&quot; flag in IMS.
                 </p>
@@ -734,9 +735,9 @@ function PlaybookPage() {
             {/* ═══════════════════ TECH TAB ═══════════════════ */}
             {activeTab === 'tech' && (
               <div>
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>For the development team</p>
-                <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>System architecture at a glance</h2>
-                <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '20px', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>For the development team</p>
+                <h2 style={{ fontSize: '16px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>System architecture at a glance</h2>
+                <p style={{ fontSize: '13px', color: C.muted, marginBottom: '20px', lineHeight: 1.6 }}>
                   Two services, one SQLite database, no external infrastructure beyond Google Drive and Claude API.
                   This is intentionally simple -- we are not building a platform.
                 </p>
@@ -744,29 +745,29 @@ function PlaybookPage() {
                 {/* Architecture diagram */}
                 <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '20px 24px', marginBottom: '20px' }}>
 
-                  <ArchLayer bg="#F8FAFC" border="#CBD5E1" labelColor="#64748B" label="Source Systems">
-                    <ArchBox border="#CBD5E1" color="#0F172A">DaySmart POS</ArchBox>
-                    <ArchBox border="#CBD5E1" color="#0F172A">Shopify</ArchBox>
-                    <ArchBox border="#CBD5E1" color="#0F172A">HKTVMall</ArchBox>
-                    <ArchBox border="#CBD5E1" color="#0F172A">Google Sheets SSOT</ArchBox>
+                  <ArchLayer bg={C.wash} border={C.knobOff} labelColor={C.muted} label="Source Systems">
+                    <ArchBox border={C.knobOff} color={C.ink}>DaySmart POS</ArchBox>
+                    <ArchBox border={C.knobOff} color={C.ink}>Shopify</ArchBox>
+                    <ArchBox border={C.knobOff} color={C.ink}>HKTVMall</ArchBox>
+                    <ArchBox border={C.knobOff} color={C.ink}>Google Sheets SSOT</ArchBox>
                   </ArchLayer>
 
-                  <div style={{ textAlign: 'center' as const, fontSize: '14px', color: '#94A3B8', padding: '4px 0' }}>&darr; Sheet sync + CSV imports (one-way)</div>
+                  <div style={{ textAlign: 'center' as const, fontSize: '14px', color: C.faint, padding: '4px 0' }}>&darr; Sheet sync + CSV imports (one-way)</div>
 
-                  <ArchLayer bg="#EEF2FF" border="#C7D2FE" labelColor="#4338CA" label="Backend -- FastAPI + SQLite (port 8001)">
-                    <ArchBox border="#C7D2FE" color="#3730A3">SKU Master (3,044 items)</ArchBox>
-                    <ArchBox border="#C7D2FE" color="#3730A3">Pricing Engine</ArchBox>
-                    <ArchBox border="#C7D2FE" color="#3730A3">OCR Extraction Service</ArchBox>
-                    <ArchBox border="#C7D2FE" color="#3730A3">Catalogue Matcher</ArchBox>
+                  <ArchLayer bg={C.primaryBg} border={C.indigoLine} labelColor={C.indigoInk} label="Backend -- FastAPI + SQLite (port 8001)">
+                    <ArchBox border={C.indigoLine} color="#3730A3">SKU Master (3,044 items)</ArchBox>
+                    <ArchBox border={C.indigoLine} color="#3730A3">Pricing Engine</ArchBox>
+                    <ArchBox border={C.indigoLine} color="#3730A3">OCR Extraction Service</ArchBox>
+                    <ArchBox border={C.indigoLine} color="#3730A3">Catalogue Matcher</ArchBox>
                   </ArchLayer>
 
-                  <div style={{ textAlign: 'center' as const, fontSize: '14px', color: '#94A3B8', padding: '4px 0' }}>&darr; REST API</div>
+                  <div style={{ textAlign: 'center' as const, fontSize: '14px', color: C.faint, padding: '4px 0' }}>&darr; REST API</div>
 
-                  <ArchLayer bg="#F0FDF4" border="#BBF7D0" labelColor="#166534" label="Frontend -- Next.js 16 + TypeScript (port 3001)">
-                    <ArchBox border="#BBF7D0" color="#166534">All Inventory</ArchBox>
-                    <ArchBox border="#BBF7D0" color="#166534">Catalogue Review</ArchBox>
-                    <ArchBox border="#BBF7D0" color="#166534">Data Review</ArchBox>
-                    <ArchBox border="#BBF7D0" color="#166534">This Page</ArchBox>
+                  <ArchLayer bg="#F0FDF4" border="#BBF7D0" labelColor={C.green} label="Frontend -- Next.js 16 + TypeScript (port 3001)">
+                    <ArchBox border="#BBF7D0" color={C.green}>All Inventory</ArchBox>
+                    <ArchBox border="#BBF7D0" color={C.green}>Catalogue Review</ArchBox>
+                    <ArchBox border="#BBF7D0" color={C.green}>Data Review</ArchBox>
+                    <ArchBox border="#BBF7D0" color={C.green}>This Page</ArchBox>
                   </ArchLayer>
                 </div>
 
@@ -774,7 +775,7 @@ function PlaybookPage() {
 
                   {/* Key endpoints */}
                   <div>
-                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Key API endpoints</p>
+                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Key API endpoints</p>
                     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 16px' }}>
                       <EndpointGrid>
                         <EndpointRow method="POST" path="/catalogues/import" desc="Upload PDF/Excel/CSV -- AI extraction -- items land in review queue" />
@@ -791,7 +792,7 @@ function PlaybookPage() {
 
                   {/* Database overview */}
                   <div>
-                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Database schema (SQLite)</p>
+                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Database schema (SQLite)</p>
                     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 16px' }}>
                       <EndpointGrid>
                         <EndpointRow method="" path="products" desc="SKU master -- costs, categories, suppliers, UOM" />
@@ -805,32 +806,32 @@ function PlaybookPage() {
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* OCR pipeline */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>OCR pipeline</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>OCR pipeline</p>
                 <StepList>
-                  <StepItem><strong style={{ color: '#0F172A' }}>Text extraction:</strong> pypdf extracts text from PDF pages. Scanned (image-only) PDFs fall through to Claude Vision.</StepItem>
-                  <StepItem><strong style={{ color: '#0F172A' }}>Chunking:</strong> Large documents split into 14K-character chunks with 500-char overlap. Chunk boundaries snap to newlines to avoid splitting line items.</StepItem>
-                  <StepItem><strong style={{ color: '#0F172A' }}>AI extraction:</strong> Each chunk sent to Claude Haiku with a structured extraction prompt. Output: JSON array of product objects.</StepItem>
-                  <StepItem><strong style={{ color: '#0F172A' }}>Dedup:</strong> Cross-chunk deduplication on (supplier_sku, description[:40]) to prevent double-counting at overlap boundaries.</StepItem>
-                  <StepItem><strong style={{ color: '#0F172A' }}>Review queue:</strong> Items inserted with review_status=&apos;pending&apos;. Sorted by confidence_score descending.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>Text extraction:</strong> pypdf extracts text from PDF pages. Scanned (image-only) PDFs fall through to Claude Vision.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>Chunking:</strong> Large documents split into 14K-character chunks with 500-char overlap. Chunk boundaries snap to newlines to avoid splitting line items.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>AI extraction:</strong> Each chunk sent to Claude Haiku with a structured extraction prompt. Output: JSON array of product objects.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>Dedup:</strong> Cross-chunk deduplication on (supplier_sku, description[:40]) to prevent double-counting at overlap boundaries.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>Review queue:</strong> Items inserted with review_status=&apos;pending&apos;. Sorted by confidence_score descending.</StepItem>
                 </StepList>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* Matching algorithm */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Matching algorithm (3-pass)</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Matching algorithm (3-pass)</p>
                 <StepList>
-                  <StepItem><strong style={{ color: '#0F172A' }}>Barcode exact match</strong> -- looks up barcode in product_suppliers. Confidence: 0.99.</StepItem>
-                  <StepItem><strong style={{ color: '#0F172A' }}>Supplier SKU exact match</strong> -- matches on (supplier_id, supplier_sku). Confidence: 0.95.</StepItem>
-                  <StepItem><strong style={{ color: '#0F172A' }}>Fuzzy name match</strong> -- word overlap (threshold 65%), boosted by +0.10 if units_per_pack matches and +0.10 if cost is within 15% of existing. Top 3 returned.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>Barcode exact match</strong> -- looks up barcode in product_suppliers. Confidence: 0.99.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>Supplier SKU exact match</strong> -- matches on (supplier_id, supplier_sku). Confidence: 0.95.</StepItem>
+                  <StepItem><strong style={{ color: C.ink }}>Fuzzy name match</strong> -- word overlap (threshold 65%), boosted by +0.10 if units_per_pack matches and +0.10 if cost is within 15% of existing. Top 3 returned.</StepItem>
                 </StepList>
 
-                <div style={{ height: '1px', background: '#E2E8F0', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: C.line, margin: '20px 0' }} />
 
                 {/* Integration points */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Integration points</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Integration points</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
                   <IntegrationCard title="Google Drive" desc="Supplier catalogues (43 PDFs). Delivery note scans. Service account planned." />
                   <IntegrationCard title="Claude API" desc="Haiku model for OCR extraction. ~$8 total across all catalogues." />
@@ -839,11 +840,11 @@ function PlaybookPage() {
                 </div>
 
                 {/* Data sources table from original page */}
-                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: '#94A3B8', marginBottom: '12px' }}>Data source map</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: C.faint, marginBottom: '12px' }}>Data source map</p>
                 <div style={{ border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden', marginBottom: '20px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 130px 110px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '8px 12px', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 130px 110px', background: C.wash, borderBottom: '1px solid #E2E8F0', padding: '8px 12px', gap: '12px' }}>
                     {['Data Point', 'Exact Source', 'How it Enters IMS', 'Location'].map(h => (
-                      <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</span>
+                      <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</span>
                     ))}
                   </div>
                   {[
@@ -867,21 +868,21 @@ function PlaybookPage() {
                       borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none',
                       background: i % 2 === 0 ? 'white' : '#FAFAFA',
                     }}>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#0F172A' }}>{row.field}</span>
-                      <span style={{ fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>
-                        {row.link ? <a href={row.link} target="_blank" rel="noreferrer" style={{ color: '#6366F1', fontWeight: 600, textDecoration: 'none', marginRight: '4px' }}>link</a> : null}
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: C.ink }}>{row.field}</span>
+                      <span style={{ fontSize: '11px', color: C.sub, lineHeight: 1.5 }}>
+                        {row.link ? <a href={row.link} target="_blank" rel="noreferrer" style={{ color: C.indigo, fontWeight: 600, textDecoration: 'none', marginRight: '4px' }}>link</a> : null}
                         {row.source}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#64748B' }}>{row.how}</span>
-                      <span style={{ fontSize: '11px', color: '#94A3B8' }}>{row.loc}</span>
+                      <span style={{ fontSize: '11px', color: C.muted }}>{row.how}</span>
+                      <span style={{ fontSize: '11px', color: C.faint }}>{row.loc}</span>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', textAlign: 'center' as const, padding: '14px' }}>
-                  <p style={{ fontSize: '12px', color: '#64748B' }}>
+                <div style={{ background: C.wash, border: '1px solid #E2E8F0', borderRadius: '8px', textAlign: 'center' as const, padding: '14px' }}>
+                  <p style={{ fontSize: '12px', color: C.muted }}>
                     Full architecture deep-dive with current vs target state diagrams &rarr;{' '}
-                    <Link to={"/architecture" as never} style={{ fontWeight: 700, color: '#6366F1', textDecoration: 'none' }}>Open Architecture Page</Link>
+                    <Link to={"/architecture" as never} style={{ fontWeight: 700, color: C.indigo, textDecoration: 'none' }}>Open Architecture Page</Link>
                   </p>
                 </div>
               </div>
@@ -889,8 +890,8 @@ function PlaybookPage() {
           </div>
 
           {/* ── Footer ────────────────────────────────────────── */}
-          <div style={{ textAlign: 'center' as const, fontSize: '11px', color: '#CBD5E1', padding: '24px 0 0' }}>
-            Last updated 26 May 2026 &middot; Edit at <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.85em', background: '#F1F5F9', padding: '1px 5px', borderRadius: '3px' }}>frontend/src/app/playbook/page.tsx</code>
+          <div style={{ textAlign: 'center' as const, fontSize: '11px', color: C.knobOff, padding: '24px 0 0' }}>
+            Last updated 26 May 2026 &middot; Edit at <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.85em', background: C.monoBg, padding: '1px 5px', borderRadius: '3px' }}>frontend/src/app/playbook/page.tsx</code>
           </div>
         </div>
       </div>
@@ -912,9 +913,9 @@ function Tag({ children, color, bg }: { children: React.ReactNode; color: string
 
 function StatusCard({ status, tag, title, children }: { status: 'live' | 'scoped' | 'planned'; tag: string; title: string; children: React.ReactNode }) {
   const styles = {
-    live:    { bg: '#F0FDF4', border: '#22C55E', h4: '#166534', p: '#15803D', tagBg: '#DCFCE7', tagColor: '#166534' },
+    live:    { bg: '#F0FDF4', border: '#22C55E', h4: C.green, p: C.ok, tagBg: C.greenBg, tagColor: C.green },
     scoped:  { bg: '#EFF6FF', border: '#3B82F6', h4: '#1E40AF', p: '#1D4ED8', tagBg: '#DBEAFE', tagColor: '#1E40AF' },
-    planned: { bg: '#F8FAFC', border: '#CBD5E1', h4: '#475569', p: '#64748B', tagBg: '#F1F5F9', tagColor: '#64748B' },
+    planned: { bg: C.wash, border: C.knobOff, h4: C.sub, p: C.muted, tagBg: C.monoBg, tagColor: C.muted },
   }[status]
 
   return (
@@ -931,19 +932,19 @@ function StatusCard({ status, tag, title, children }: { status: 'live' | 'scoped
 function NumberCard({ value, label }: { value: string; label: string }) {
   return (
     <div style={{
-      background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px',
+      background: C.wash, border: '1px solid #E2E8F0', borderRadius: '8px',
       padding: '16px', textAlign: 'center' as const,
     }}>
-      <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', letterSpacing: '-1px' }}>{value}</div>
-      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>{label}</div>
+      <div style={{ fontSize: '24px', fontWeight: 800, color: C.ink, letterSpacing: '-1px' }}>{value}</div>
+      <div style={{ fontSize: '11px', color: C.muted, marginTop: '4px' }}>{label}</div>
     </div>
   )
 }
 
 function FlowBox({ variant, children }: { variant: 'old' | 'new'; children: React.ReactNode }) {
   const s = variant === 'old'
-    ? { background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA', textDecoration: 'line-through' as const, opacity: 0.7 }
-    : { background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', textDecoration: 'none' as const, opacity: 1 }
+    ? { background: C.badBg, color: C.redInk, border: '1px solid #FECACA', textDecoration: 'line-through' as const, opacity: 0.7 }
+    : { background: '#F0FDF4', color: C.green, border: '1px solid #BBF7D0', textDecoration: 'none' as const, opacity: 1 }
   return (
     <div style={{
       padding: '8px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
@@ -969,13 +970,13 @@ function StepItem({ children }: { children: React.ReactNode }) {
     <li style={{
       display: 'flex', gap: '12px', alignItems: 'flex-start',
       padding: '10px 0', borderBottom: '1px solid #F1F5F9',
-      fontSize: '12.5px', color: '#475569', lineHeight: 1.6,
+      fontSize: '12.5px', color: C.sub, lineHeight: 1.6,
       counterIncrement: 'steps',
     }}>
       <span style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         width: '24px', height: '24px', minWidth: '24px', borderRadius: '50%',
-        background: '#EEF2FF', color: '#4338CA', fontSize: '11px', fontWeight: 700,
+        background: C.primaryBg, color: C.indigoInk, fontSize: '11px', fontWeight: 700,
         flexShrink: 0, marginTop: '1px',
       }}>
         {/* Counter handled via CSS; fallback handled by list order */}
@@ -1039,10 +1040,10 @@ function EndpointGrid({ children }: { children: React.ReactNode }) {
 function EndpointRow({ method, path, desc }: { method: string; path: string; desc: string }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '12px', fontSize: '11px' }}>
-      <dt style={{ fontWeight: 700, color: '#475569', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
+      <dt style={{ fontWeight: 700, color: C.sub, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
         {method ? `${method} ` : ''}{path}
       </dt>
-      <dd style={{ color: '#64748B', margin: 0 }}>{desc}</dd>
+      <dd style={{ color: C.muted, margin: 0 }}>{desc}</dd>
     </div>
   )
 }
@@ -1050,8 +1051,8 @@ function EndpointRow({ method, path, desc }: { method: string; path: string; des
 function IntegrationCard({ title, desc }: { title: string; desc: string }) {
   return (
     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', textAlign: 'center' as const, padding: '14px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{title}</p>
-      <p style={{ fontSize: '11px', color: '#64748B' }}>{desc}</p>
+      <p style={{ fontSize: '12px', fontWeight: 700, color: C.ink, marginBottom: '4px' }}>{title}</p>
+      <p style={{ fontSize: '11px', color: C.muted }}>{desc}</p>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { useState, useMemo, useEffect, useCallback, useRef, useSyncExternalStore, Suspense, type CSSProperties } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import type { Product, SummaryResponse, Supplier, SyncStatus } from '@/lib/types'
@@ -15,15 +16,15 @@ let _invCache: { items: Product[]; cursor: string | null } | null = null
 
 
 const CAT_STYLE: Record<string, { bg: string; color: string }> = {
-  'Medicine':     { bg: '#FEE2E2', color: '#991B1B' },
-  'Preventative': { bg: '#FEF3C7', color: '#92400E' },
+  'Medicine':     { bg: C.redBg, color: C.redInk },
+  'Preventative': { bg: C.warnBg, color: C.amberInk },
   'Supplement':   { bg: '#DBEAFE', color: '#1E40AF' },
-  'Food':         { bg: '#DCFCE7', color: '#166534' },
-  'Pet Hygiene':  { bg: '#F1F5F9', color: '#475569' },
+  'Food':         { bg: C.greenBg, color: C.green },
+  'Pet Hygiene':  { bg: C.monoBg, color: C.sub },
   'Shampoo':      { bg: '#E0E7FF', color: '#3730A3' },
   'Toys':         { bg: '#FDF4FF', color: '#7E22CE' },
   'Cat Litter':   { bg: '#FFF7ED', color: '#9A3412' },
-  'Not-For-Sale': { bg: '#F1F5F9', color: '#94A3B8' },
+  'Not-For-Sale': { bg: C.monoBg, color: C.faint },
 }
 
 // Where this SKU is listed: SP = Shopify, DS = DaySmart (clinic), HK = HKTV Mall.
@@ -43,8 +44,8 @@ function PlatformBadges({ item }: { item: Product }) {
         return (
           <span key={code} title={`${label}: ${status}`}
             style={{ fontSize: '8.5px', fontWeight: 800, letterSpacing: '0.04em', padding: '1px 4px', borderRadius: '3px',
-              background: live ? '#DCFCE7' : '#F1F5F9', color: live ? '#166534' : '#94A3B8',
-              border: `1px solid ${live ? '#BBF7D0' : '#E2E8F0'}` }}>
+              background: live ? C.greenBg : C.monoBg, color: live ? C.green : C.faint,
+              border: `1px solid ${live ? '#BBF7D0' : C.line}` }}>
             {code}
           </span>
         )
@@ -101,7 +102,7 @@ type MarginRow = { basic_cost: number | null; mbb_cost: number | null; cost_to_h
 const imsMoney = (n: number | null | undefined) => n == null ? '—' : `HK$${n < 100 ? n.toFixed(2) : Math.round(n).toLocaleString()}`
 const imsGpp   = (n: number) => `${(n * 100).toFixed(1)}%`
 const imsGpCls = (gp: number, floor: number) => gp >= floor ? 'good' : gp > 0 ? 'warn' : 'bad'
-const catColor = (cat: string) => CAT_STYLE[cat]?.color ?? '#94A3B8'
+const catColor = (cat: string) => CAT_STYLE[cat]?.color ?? C.faint
 
 const IMS_CSS = `
 @keyframes ims-bar { from { transform: translateX(-120%) } to { transform: translateX(320%) } }
@@ -471,7 +472,7 @@ const BULK_UPDATE_COLUMNS: ExportCol[] = [
 
 function InventoryPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '60px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: '60px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Loading…</div>}>
       <InventoryView />
     </Suspense>
   )
@@ -1001,7 +1002,7 @@ function InventoryView() {
     return <>
       <div className="pop-h">Weeks of cover</div>
       <div className="pop-b">
-        <div style={{ fontSize: '13px', marginBottom: rows.length ? '9px' : 0 }}>Currently {item.woc != null ? <b style={{ color: item.woc < 2 ? '#C0362C' : item.woc < 4 ? '#B45309' : '#15803D' }}>{item.woc.toFixed(1)} weeks</b> : <span style={{ color: '#8A93A2' }}>no demand signal</span>} · ~{Math.round(item.weekly_demand)}/wk</div>
+        <div style={{ fontSize: '13px', marginBottom: rows.length ? '9px' : 0 }}>Currently {item.woc != null ? <b style={{ color: item.woc < 2 ? '#C0362C' : item.woc < 4 ? C.amber : C.ok }}>{item.woc.toFixed(1)} weeks</b> : <span style={{ color: '#8A93A2' }}>no demand signal</span>} · ~{Math.round(item.weekly_demand)}/wk</div>
         {rows.length ? rows : <div style={{ fontSize: '11.5px', color: '#8A93A2' }}>Add pack size + demand to simulate top-ups.</div>}
       </div>
       <div className="pop-f">Clinic (DaySmart) vs warehouse (ShopToPlus) cover; target 4 weeks.</div>
@@ -1107,7 +1108,7 @@ function InventoryView() {
       case 'sell': {  const p = clinicSell(item); return p == null ? <span className="num zero">—</span> : <span className="num">{imsMoney(p)}</span> }
       case 'clinic': return <span className={`num ${item.clinic_qty === 0 ? 'zero' : ''}`}>{item.clinic_qty.toLocaleString()}</span>
       case 'whse':   return <span className={`num ${item.warehouse_qty === 0 ? 'zero' : ''}`}>{item.warehouse_qty.toLocaleString()}</span>
-      case 'woc': {   if (item.woc == null) return <span className="num zero">—</span>; const col = item.woc < 2 ? '#C0362C' : item.woc < 4 ? '#B45309' : '#15803D'; return <span className="woc" style={{ color: col }}><span className="wdot" style={{ background: col }} />{item.woc.toFixed(1)}w</span> }
+      case 'woc': {   if (item.woc == null) return <span className="num zero">—</span>; const col = item.woc < 2 ? '#C0362C' : item.woc < 4 ? C.amber : C.ok; return <span className="woc" style={{ color: col }}><span className="wdot" style={{ background: col }} />{item.woc.toFixed(1)}w</span> }
       case 'woctgt': return <span className="num" style={{ color: '#8A93A2' }} title="Category default healthy-cover target">4w</span>
       case 'mbb':    return item.mbb_unit_cost != null ? <span className="mbb">{imsMoney(item.mbb_unit_cost)}</span> : <span className="mbb none">—</span>
       case 'exp':    return <span className="num zero" title="Batch & expiry sync in Phase 3 (algo-dashboard commerce_inventory)">—</span>
@@ -1194,7 +1195,7 @@ function InventoryView() {
                 <button key={lbl} role="tab" aria-selected={marginMode === m} onClick={() => setMarginMode(m)}
                   title={m ? 'Show margin columns — net-after-fees per channel, MBB cost, cost-to-hit' : 'Show the standard inventory columns'}
                   style={{ border: 'none', padding: '7px 14px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
-                    background: marginMode === m ? '#4F46E5' : 'transparent', color: marginMode === m ? '#fff' : '#5B6472' }}>{lbl}</button>
+                    background: marginMode === m ? C.indigoStrong : 'transparent', color: marginMode === m ? '#fff' : '#5B6472' }}>{lbl}</button>
               ))}
             </div>
             {marginMode && <a className="btn" href={`${API}/products/export-margins.csv`} download title="Download every margin field as CSV (matches the verification sheet)">⤓ Margins CSV</a>}
@@ -1283,11 +1284,11 @@ function InventoryView() {
             <span className="count"><b>{sorted.length.toLocaleString()}</b> of {items.length.toLocaleString()} SKUs</span>
             {pinnedSkus.size > 0 && (
               <button onClick={() => setPinnedOnly(v => !v)} title={pinnedOnly ? 'Show all SKUs' : 'Show only the SKUs you selected'}
-                style={{ border: '1px solid', borderColor: pinnedOnly ? '#4F46E5' : '#E7EAEF', borderRadius: '99px', padding: '4px 11px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', background: pinnedOnly ? '#4F46E5' : '#fff', color: pinnedOnly ? '#fff' : '#5B6472' }}>
+                style={{ border: '1px solid', borderColor: pinnedOnly ? C.indigoStrong : '#E7EAEF', borderRadius: '99px', padding: '4px 11px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', background: pinnedOnly ? C.indigoStrong : '#fff', color: pinnedOnly ? '#fff' : '#5B6472' }}>
                 ★ Review ({pinnedSkus.size})
               </button>
             )}
-            {pinnedOnly && search.trim() && <span style={{ fontSize: '11px', color: '#B45309', whiteSpace: 'nowrap' }}>Searching all — pin ☆ to add</span>}
+            {pinnedOnly && search.trim() && <span style={{ fontSize: '11px', color: C.amber, whiteSpace: 'nowrap' }}>Searching all — pin ☆ to add</span>}
             {anyFilter && <button className="clear" onClick={clearAll}>Clear filters</button>}
           </div>
         </div>
@@ -1324,12 +1325,12 @@ function InventoryView() {
         {!loading && (
           <div className="tiles">
             <div className={`tile ${quickFilter === 'active' ? 'on' : ''}`} onClick={() => toggleQuickFilter('active')}><div className="lab">Active</div><div className="val">{clientCounts.active.toLocaleString()}</div></div>
-            <div className={`tile ${quickFilter === 'inactive' ? 'on' : ''}`} onClick={() => toggleQuickFilter('inactive')}><div className="lab">Inactive</div><div className="val" style={{ color: clientCounts.inactive > 0 ? '#B45309' : undefined }}>{clientCounts.inactive.toLocaleString()}</div></div>
+            <div className={`tile ${quickFilter === 'inactive' ? 'on' : ''}`} onClick={() => toggleQuickFilter('inactive')}><div className="lab">Inactive</div><div className="val" style={{ color: clientCounts.inactive > 0 ? C.amber : undefined }}>{clientCounts.inactive.toLocaleString()}</div></div>
             <div className={`tile ${quickFilter === 'low_stock' ? 'on' : ''}`} onClick={() => toggleQuickFilter('low_stock')}><div className="lab">Low stock · WOC&lt;2</div><div className="val" style={{ color: clientCounts.low_stock > 0 ? '#C0362C' : undefined }}>{clientCounts.low_stock.toLocaleString()}</div></div>
-            <div className={`tile ${quickFilter === 'below_margin' ? 'on' : ''}`} onClick={() => toggleQuickFilter('below_margin')}><div className="lab">Below margin</div><div className="val" style={{ color: clientCounts.below_margin > 0 ? '#B45309' : undefined }}>{clientCounts.below_margin.toLocaleString()}</div><div className="vsub">below GP floor</div></div>
+            <div className={`tile ${quickFilter === 'below_margin' ? 'on' : ''}`} onClick={() => toggleQuickFilter('below_margin')}><div className="lab">Below margin</div><div className="val" style={{ color: clientCounts.below_margin > 0 ? C.amber : undefined }}>{clientCounts.below_margin.toLocaleString()}</div><div className="vsub">below GP floor</div></div>
             <div className={`tile ${quickFilter === 'out_of_stock' ? 'on' : ''}`} onClick={() => toggleQuickFilter('out_of_stock')}><div className="lab">Out of stock</div><div className="val" style={{ color: clientCounts.out_of_stock > 0 ? '#C0362C' : undefined }}>{clientCounts.out_of_stock.toLocaleString()}</div><div className="vsub">zero on hand</div></div>
-            <div className={`tile ${quickFilter === 'supplier_oos' ? 'on' : ''}`} onClick={() => toggleQuickFilter('supplier_oos')}><div className="lab">Supplier OOS</div><div className="val" style={{ color: clientCounts.supplier_oos > 0 ? '#B45309' : undefined }}>{clientCounts.supplier_oos.toLocaleString()}</div><div className="vsub">a supplier is out</div></div>
-            <div className="tile" style={{ cursor: 'default' }}><div className="lab">Expiring &lt;90d</div><div className="val" style={{ color: (summary?.expiring_soon ?? 0) > 0 ? '#B45309' : undefined }}>{summary?.expiring_soon ?? '—'}</div></div>
+            <div className={`tile ${quickFilter === 'supplier_oos' ? 'on' : ''}`} onClick={() => toggleQuickFilter('supplier_oos')}><div className="lab">Supplier OOS</div><div className="val" style={{ color: clientCounts.supplier_oos > 0 ? C.amber : undefined }}>{clientCounts.supplier_oos.toLocaleString()}</div><div className="vsub">a supplier is out</div></div>
+            <div className="tile" style={{ cursor: 'default' }}><div className="lab">Expiring &lt;90d</div><div className="val" style={{ color: (summary?.expiring_soon ?? 0) > 0 ? C.amber : undefined }}>{summary?.expiring_soon ?? '—'}</div></div>
           </div>
         )}
 
@@ -1409,7 +1410,7 @@ function BatchUpdateModal({ onClose, onApplied }: { onClose: () => void; onAppli
   }
 
   const res = done ?? preview
-  const COL: Record<string, string> = { updated: '#16A34A', unchanged: '#94A3B8', not_found: '#B45309', error: '#DC2626', errors: '#DC2626' }
+  const COL: Record<string, string> = { updated: '#16A34A', unchanged: C.faint, not_found: C.amber, error: '#DC2626', errors: '#DC2626' }
   const upd = preview?.summary.updated ?? 0
   const ver = preview?.summary.verified ?? 0
   const applyDisabled = !preview || busy || !!done || (upd === 0 && ver === 0)
@@ -1424,20 +1425,20 @@ function BatchUpdateModal({ onClose, onApplied }: { onClose: () => void; onAppli
       <div onClick={e => e.stopPropagation()} style={card}>
         <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid #F1F5F9' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>Batch update from CSV</h2>
-            <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: '#94A3B8', cursor: 'pointer', lineHeight: 1 }}>×</button>
+            <h2 style={{ fontSize: '17px', fontWeight: 700, color: C.ink }}>Batch update from CSV</h2>
+            <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '22px', color: C.faint, cursor: 'pointer', lineHeight: 1 }}>×</button>
           </div>
-          <p style={{ fontSize: '12px', color: '#64748B', marginTop: '6px', lineHeight: 1.55 }}>
-            Upload a CSV keyed by <code style={{ background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px' }}>sku_code</code>. <b>Every editable column from Export round-trips here</b> — change any field and re-upload. Empty cells are left unchanged; read-only columns (quantities, GP%, prices, supplier, WOC) are ignored.
+          <p style={{ fontSize: '12px', color: C.muted, marginTop: '6px', lineHeight: 1.55 }}>
+            Upload a CSV keyed by <code style={{ background: C.monoBg, padding: '1px 5px', borderRadius: '4px' }}>sku_code</code>. <b>Every editable column from Export round-trips here</b> — change any field and re-upload. Empty cells are left unchanged; read-only columns (quantities, GP%, prices, supplier, WOC) are ignored.
           </p>
         </div>
 
         <div style={{ padding: '16px 22px', overflowY: 'auto' }}>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <input type="file" accept=".csv,text/csv" onChange={e => { setFile(e.target.files?.[0] ?? null); setPreview(null); setDone(null) }} style={{ fontSize: '13px' }} />
-            <button onClick={() => send(true)} disabled={!file || busy} style={{ padding: '7px 14px', fontSize: '12px', fontWeight: 600, color: '#6366F1', background: 'white', border: '1px solid #C7D2FE', borderRadius: '7px', cursor: (!file || busy) ? 'default' : 'pointer', opacity: (!file || busy) ? 0.6 : 1 }}>{busy && !done ? 'Checking…' : 'Preview changes'}</button>
+            <button onClick={() => send(true)} disabled={!file || busy} style={{ padding: '7px 14px', fontSize: '12px', fontWeight: 600, color: C.indigo, background: 'white', border: '1px solid #C7D2FE', borderRadius: '7px', cursor: (!file || busy) ? 'default' : 'pointer', opacity: (!file || busy) ? 0.6 : 1 }}>{busy && !done ? 'Checking…' : 'Preview changes'}</button>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#166534' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: C.green }}>
             <input type="checkbox" checked={markVerified} onChange={e => { setMarkVerified(e.target.checked); setPreview(null); setDone(null) }} />
             Mark all processed SKUs as HITL&#8209;Verified
           </label>
@@ -1446,35 +1447,35 @@ function BatchUpdateModal({ onClose, onApplied }: { onClose: () => void; onAppli
             <div style={{ marginTop: '16px' }}>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                 {(['updated', 'unchanged', 'not_found', 'errors'] as const).map(k => (
-                  <span key={k} style={{ fontSize: '12px', fontWeight: 600, color: COL[k], background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '7px', padding: '5px 10px' }}>
+                  <span key={k} style={{ fontSize: '12px', fontWeight: 600, color: COL[k], background: C.wash, border: '1px solid #E2E8F0', borderRadius: '7px', padding: '5px 10px' }}>
                     {({ updated: 'Will update', unchanged: 'No change', not_found: 'Not found', errors: 'Errors' } as const)[k]}: {res.summary[k]}
                   </span>
                 ))}
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748B', padding: '5px 4px' }}>· {res.summary.total} rows</span>
-                {res.summary.verified > 0 && <span style={{ fontSize: '12px', fontWeight: 600, color: '#166534', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '7px', padding: '5px 10px' }}>{done ? 'HITL-verified' : 'Will verify'}: {res.summary.verified}</span>}
+                <span style={{ fontSize: '12px', fontWeight: 600, color: C.muted, padding: '5px 4px' }}>· {res.summary.total} rows</span>
+                {res.summary.verified > 0 && <span style={{ fontSize: '12px', fontWeight: 600, color: C.green, background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '7px', padding: '5px 10px' }}>{done ? 'HITL-verified' : 'Will verify'}: {res.summary.verified}</span>}
               </div>
               <div style={{ border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
                 {res.rows.slice(0, 200).map((row, i) => (
                   <div key={i} style={{ display: 'flex', gap: '10px', padding: '7px 12px', borderTop: i ? '1px solid #F1F5F9' : 'none', fontSize: '12px', alignItems: 'baseline' }}>
-                    <span style={{ fontWeight: 600, color: '#0F172A', width: '130px', flexShrink: 0 }}>{row.sku_code}</span>
+                    <span style={{ fontWeight: 600, color: C.ink, width: '130px', flexShrink: 0 }}>{row.sku_code}</span>
                     <span style={{ color: COL[row.status], fontWeight: 600, width: '76px', flexShrink: 0 }}>{row.status}</span>
-                    <span style={{ color: '#64748B', flex: 1, wordBreak: 'break-word' }}>
+                    <span style={{ color: C.muted, flex: 1, wordBreak: 'break-word' }}>
                       {row.error ? row.error : row.changes ? Object.entries(row.changes).map(([fld, c]) => `${fld}: ${fmtVal(c.from)} → ${fmtVal(c.to)}`).join('   ·   ') : ''}
-                      {row.ignored && row.ignored.length > 0 && <span style={{ color: '#B45309' }}> (locked fields ignored: {row.ignored.join(', ')})</span>}
+                      {row.ignored && row.ignored.length > 0 && <span style={{ color: C.amber }}> (locked fields ignored: {row.ignored.join(', ')})</span>}
                     </span>
                   </div>
                 ))}
-                {res.rows.length > 200 && <div style={{ padding: '7px 12px', fontSize: '11px', color: '#94A3B8', borderTop: '1px solid #F1F5F9' }}>+ {res.rows.length - 200} more…</div>}
+                {res.rows.length > 200 && <div style={{ padding: '7px 12px', fontSize: '11px', color: C.faint, borderTop: '1px solid #F1F5F9' }}>+ {res.rows.length - 200} more…</div>}
               </div>
             </div>
           )}
         </div>
 
         <div style={{ padding: '14px 22px', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '12px', color: done ? '#16A34A' : '#94A3B8' }}>{done ? `✓ Applied — ${done.summary.updated} updated${done.summary.verified ? `, ${done.summary.verified} verified` : ''}` : preview ? `${preview.summary.updated} to update${preview.summary.verified ? ` · ${preview.summary.verified} to verify` : ''}` : ''}</span>
+          <span style={{ fontSize: '12px', color: done ? '#16A34A' : C.faint }}>{done ? `✓ Applied — ${done.summary.updated} updated${done.summary.verified ? `, ${done.summary.verified} verified` : ''}` : preview ? `${preview.summary.updated} to update${preview.summary.verified ? ` · ${preview.summary.verified} to verify` : ''}` : ''}</span>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={onClose} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 600, color: '#64748B', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>{done ? 'Close' : 'Cancel'}</button>
-            <button onClick={() => send(false)} disabled={applyDisabled} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: 'white', background: '#6366F1', border: 'none', borderRadius: '8px', cursor: applyDisabled ? 'default' : 'pointer', opacity: applyDisabled ? 0.5 : 1 }}>{applyLabel}</button>
+            <button onClick={onClose} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 600, color: C.muted, background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}>{done ? 'Close' : 'Cancel'}</button>
+            <button onClick={() => send(false)} disabled={applyDisabled} style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 600, color: 'white', background: C.indigo, border: 'none', borderRadius: '8px', cursor: applyDisabled ? 'default' : 'pointer', opacity: applyDisabled ? 0.5 : 1 }}>{applyLabel}</button>
           </div>
         </div>
       </div>
@@ -1505,7 +1506,7 @@ function useSelSize() { return useSyncExternalStore(selectionStore.subscribe, ()
 function SelCheckbox({ sku }: { sku: string }) {
   const checked = useSelHas(sku)
   return <input type="checkbox" checked={checked} onChange={() => selectionStore.toggle(sku)} onClick={e => e.stopPropagation()}
-    title="Select" style={{ cursor: 'pointer', accentColor: '#6366F1', width: '15px', height: '15px' }} />
+    title="Select" style={{ cursor: 'pointer', accentColor: C.indigo, width: '15px', height: '15px' }} />
 }
 function SelectAllBox({ skus }: { skus: string[] }) {
   useSelSize()  // re-render when selection changes
@@ -1513,19 +1514,19 @@ function SelectAllBox({ skus }: { skus: string[] }) {
   const some = !all && skus.some(s => selectionStore.has(s))
   return <input type="checkbox" checked={all} ref={el => { if (el) el.indeterminate = some }}
     onChange={() => selectionStore.setMany(skus, !all)} onClick={e => e.stopPropagation()}
-    title={all ? 'Clear all shown' : 'Select all shown'} style={{ cursor: 'pointer', accentColor: '#6366F1', width: '15px', height: '15px' }} />
+    title={all ? 'Clear all shown' : 'Select all shown'} style={{ cursor: 'pointer', accentColor: C.indigo, width: '15px', height: '15px' }} />
 }
 function BulkStatusBar({ applying, onApply }: { applying: boolean; onApply: (status: string) => void }) {
   const n = useSelSize()
   if (n === 0) return null
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap', margin: '0 0 11px', padding: '9px 13px', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '10px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap', margin: '0 0 11px', padding: '9px 13px', background: C.primaryBg, border: '1px solid #C7D2FE', borderRadius: '10px' }}>
       <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#3730A3' }}>{n} selected</span>
-      <span style={{ fontSize: '12px', color: '#6366F1' }}>· Set status</span>
+      <span style={{ fontSize: '12px', color: C.indigo }}>· Set status</span>
       <button className="btn" disabled={applying} onClick={() => onApply('ACTIVE')}>Active</button>
       <button className="btn" disabled={applying} onClick={() => onApply('INACTIVE')}>Inactive</button>
       <button className="btn" disabled={applying} onClick={() => onApply('DISCONTINUED')}>Discontinue</button>
-      {applying && <span style={{ fontSize: '12px', color: '#6366F1' }}>Applying…</span>}
+      {applying && <span style={{ fontSize: '12px', color: C.indigo }}>Applying…</span>}
       <button className="btn" disabled={applying} onClick={() => selectionStore.clear()} style={{ marginLeft: 'auto' }}>Clear</button>
     </div>
   )

@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { API_BASE } from '@/lib/config'
@@ -48,15 +49,15 @@ function LoginPage() {
   const ready = username.trim() && password && !loading
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.ink }}>
       <div style={{ background: 'white', borderRadius: '12px', padding: '40px', width: '360px', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
         {/* Logo */}
         <div style={{ marginBottom: '28px', textAlign: 'center' }}>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.5px' }}>
-            ros<span style={{ color: '#6366F1' }}>etta</span>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8', marginLeft: '6px' }}>IMS</span>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: C.ink, letterSpacing: '-0.5px' }}>
+            ros<span style={{ color: C.indigo }}>etta</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: C.faint, marginLeft: '6px' }}>IMS</span>
           </div>
-          <p style={{ fontSize: '13px', color: '#64748B', marginTop: '6px' }}>Inventory Management System</p>
+          <p style={{ fontSize: '13px', color: C.muted, marginTop: '6px' }}>Inventory Management System</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -74,7 +75,7 @@ function LoginPage() {
               style={{
                 width: '100%', padding: '10px 14px', fontSize: '14px',
                 border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none',
-                boxSizing: 'border-box', color: '#0F172A',
+                boxSizing: 'border-box', color: C.ink,
               }}
             />
           </div>
@@ -92,13 +93,13 @@ function LoginPage() {
               style={{
                 width: '100%', padding: '10px 14px', fontSize: '14px',
                 border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none',
-                boxSizing: 'border-box', color: '#0F172A',
+                boxSizing: 'border-box', color: C.ink,
               }}
             />
           </div>
 
           {error && (
-            <p style={{ fontSize: '12px', color: '#EF4444', marginBottom: '12px', padding: '8px 10px', background: '#FEF2F2', borderRadius: '6px' }}>
+            <p style={{ fontSize: '12px', color: '#EF4444', marginBottom: '12px', padding: '8px 10px', background: C.badBg, borderRadius: '6px' }}>
               {error}
             </p>
           )}
@@ -108,8 +109,8 @@ function LoginPage() {
             disabled={!ready}
             style={{
               width: '100%', padding: '11px', fontSize: '14px', fontWeight: 600,
-              background: ready ? '#6366F1' : '#E2E8F0',
-              color: ready ? 'white' : '#94A3B8',
+              background: ready ? C.indigo : C.line,
+              color: ready ? 'white' : C.faint,
               border: 'none', borderRadius: '8px', cursor: ready ? 'pointer' : 'default',
               transition: 'background 0.15s',
             }}
@@ -118,7 +119,7 @@ function LoginPage() {
           </button>
         </form>
 
-        <p style={{ fontSize: '11px', color: '#94A3B8', textAlign: 'center', marginTop: '20px' }}>
+        <p style={{ fontSize: '11px', color: C.faint, textAlign: 'center', marginTop: '20px' }}>
           Algo Group · Ohana Animal Hospital
         </p>
       </div>

@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { can } from '@/lib/auth'
@@ -6,7 +7,7 @@ import { confirmDialog } from '@/lib/confirm'
 import { getTransformations, getConfigVersions, editParameter, editFormula, editTable, validateConfigEdit, restoreConfigVersion } from '@/lib/api'
 import type { TransformationConfig, ConfigVersionInfo, ConfigTable } from '@/lib/types'
 
-const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px' }
+const CARD: React.CSSProperties = { background: C.panel, border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px' }
 const CAT_LABEL: Record<string, string> = { cost: 'Cost', margin: 'Margins', inventory: 'Inventory / WOC', classification: 'Classification' }
 const CAT_ORDER = ['cost', 'margin', 'inventory', 'classification']
 
@@ -40,9 +41,9 @@ const PARAM_RULES: Record<string, ParamRule> = {
 }
 
 const KIND_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
-  parameter: { label: 'value',   bg: '#EEF2FF', fg: '#3730A3' },
+  parameter: { label: 'value',   bg: C.primaryBg, fg: '#3730A3' },
   table:     { label: 'table',   bg: '#ECFEFF', fg: '#0E7490' },
-  formula:   { label: 'formula', bg: '#FEF3C7', fg: '#92400E' },
+  formula:   { label: 'formula', bg: C.warnBg, fg: C.amberInk },
 }
 
 /** Identifiers in a formula that aren't an allowed variable / function / keyword. */
@@ -254,25 +255,25 @@ function ConfigPage() {
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: '1160px' }}>
-      <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', margin: '0 0 2px' }}>Transformation Config</h1>
-      <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 20px', maxWidth: '760px', lineHeight: 1.5 }}>
+      <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink, margin: '0 0 2px' }}>Transformation Config</h1>
+      <p style={{ fontSize: '13px', color: C.muted, margin: '0 0 20px', maxWidth: '760px', lineHeight: 1.5 }}>
         {editable
           ? 'The formulas and values behind every margin, cost, and WOC number. Edit a value or formula and it takes effect immediately — every change is versioned, so you can roll back any time. Formulas may only use the predefined variables shown on each card.'
           : 'The formulas and values behind every margin, cost, and WOC number. Editing needs the config-admin role.'}
       </p>
 
-      {error && <div style={{ ...CARD, borderColor: '#FCA5A5', color: '#B91C1C', marginBottom: '16px' }}>{error}</div>}
+      {error && <div style={{ ...CARD, borderColor: '#FCA5A5', color: C.bad, marginBottom: '16px' }}>{error}</div>}
 
       {loading ? (
-        <div style={{ color: '#94A3B8', fontSize: '13px' }}>Loading…</div>
+        <div style={{ color: C.faint, fontSize: '13px' }}>Loading…</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '24px', alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {groups.map(({ cat, rows }) => (
               <div key={cat}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 10px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#64748B' }}>{CAT_LABEL[cat] ?? cat}</span>
-                  <span style={{ fontSize: '11px', color: '#CBD5E1' }}>{rows.length}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: C.muted }}>{CAT_LABEL[cat] ?? cat}</span>
+                  <span style={{ fontSize: '11px', color: C.knobOff }}>{rows.length}</span>
                   <span style={{ flex: 1, height: '1px', background: '#EEF1F5' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -281,12 +282,12 @@ function ConfigPage() {
                     return (
                       <div key={t.key} style={CARD}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#0F172A' }}>{t.name}</span>
+                          <span style={{ fontSize: '13.5px', fontWeight: 600, color: C.ink }}>{t.name}</span>
                           {badge && <span style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: badge.fg, background: badge.bg, padding: '1px 6px', borderRadius: '4px' }}>{badge.label}</span>}
                           <span style={{ flex: 1 }} />
-                          {t.output_field && <span style={{ fontSize: '10.5px', color: '#94A3B8', fontFamily: 'ui-monospace, Menlo, monospace' }}>→ {t.output_field}</span>}
+                          {t.output_field && <span style={{ fontSize: '10.5px', color: C.faint, fontFamily: 'ui-monospace, Menlo, monospace' }}>→ {t.output_field}</span>}
                         </div>
-                        {t.description && <div style={{ fontSize: '12px', color: '#64748B', margin: '5px 0 11px', lineHeight: 1.45 }}>{t.description}</div>}
+                        {t.description && <div style={{ fontSize: '12px', color: C.muted, margin: '5px 0 11px', lineHeight: 1.45 }}>{t.description}</div>}
 
                         {/* ── parameter ── */}
                         {t.kind === 'parameter' && (() => {
@@ -303,18 +304,18 @@ function ConfigPage() {
                                   value={raw}
                                   disabled={!editable || busy === t.key}
                                   onChange={e => setDrafts(d => ({ ...d, [t.key]: e.target.value }))}
-                                  style={{ border: `1px solid ${perr ? '#FCA5A5' : '#E2E8F0'}`, borderRadius: '5px', padding: '6px 9px', fontSize: '13px', width: '130px' }}
+                                  style={{ border: `1px solid ${perr ? '#FCA5A5' : C.line}`, borderRadius: '5px', padding: '6px 9px', fontSize: '13px', width: '130px' }}
                                 />
-                                {asPct && <span style={{ fontSize: '12px', color: '#64748B' }}>= {(Number(raw) * 100).toFixed(1)}%</span>}
+                                {asPct && <span style={{ fontSize: '12px', color: C.muted }}>= {(Number(raw) * 100).toFixed(1)}%</span>}
                                 {editable && (
                                   <button
                                     onClick={() => saveParam(t)}
                                     disabled={busy === t.key || !pDirty(t) || !!paramError(t.key, raw)}
-                                    style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: '5px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: (busy === t.key || !pDirty(t) || !!paramError(t.key, raw)) ? 0.5 : 1 }}
+                                    style={{ background: C.indigo, color: '#fff', border: 'none', borderRadius: '5px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: (busy === t.key || !pDirty(t) || !!paramError(t.key, raw)) ? 0.5 : 1 }}
                                   >{busy === t.key ? 'Saving…' : 'Save'}</button>
                                 )}
                               </div>
-                              <div style={{ fontSize: '11px', marginTop: '6px', color: perr ? '#B91C1C' : '#94A3B8' }}>
+                              <div style={{ fontSize: '11px', marginTop: '6px', color: perr ? C.bad : C.faint }}>
                                 {perr ? `✕ ${perr}` : (rule ? `Allowed: ${rule.hint}` : 'Any number')}
                               </div>
                             </div>
@@ -327,10 +328,10 @@ function ConfigPage() {
                             return (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11.5px', color: '#334155', fontVariantNumeric: 'tabular-nums' }}>
                                 {t.table!.tiers.map(([lim, val], i) => (
-                                  <span key={i} style={{ background: '#F8FAFC', border: '1px solid #EEF1F5', borderRadius: '4px', padding: '2px 7px' }}>≤ {lim} → <b>{val}</b></span>
+                                  <span key={i} style={{ background: C.wash, border: '1px solid #EEF1F5', borderRadius: '4px', padding: '2px 7px' }}>≤ {lim} → <b>{val}</b></span>
                                 ))}
-                                <span style={{ background: '#F8FAFC', border: '1px solid #EEF1F5', borderRadius: '4px', padding: '2px 7px' }}>over → <b>{t.table!.over}</b></span>
-                                <span style={{ background: '#F8FAFC', border: '1px solid #EEF1F5', borderRadius: '4px', padding: '2px 7px' }}>unknown → <b>{t.table!.unknown}</b></span>
+                                <span style={{ background: C.wash, border: '1px solid #EEF1F5', borderRadius: '4px', padding: '2px 7px' }}>over → <b>{t.table!.over}</b></span>
+                                <span style={{ background: C.wash, border: '1px solid #EEF1F5', borderRadius: '4px', padding: '2px 7px' }}>unknown → <b>{t.table!.unknown}</b></span>
                               </div>
                             )
                           }
@@ -341,7 +342,7 @@ function ConfigPage() {
                           const numIn: React.CSSProperties = { border: '1px solid #E2E8F0', borderRadius: '5px', padding: '5px 8px', fontSize: '12px', width: '108px' }
                           return (
                             <div>
-                              <div style={{ display: 'flex', gap: '8px', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '5px' }}>
+                              <div style={{ display: 'flex', gap: '8px', fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '5px' }}>
                                 <span style={{ width: '108px' }}>≤ weight (g)</span><span style={{ width: '108px' }}>cost (HK$)</span>
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -349,23 +350,23 @@ function ConfigPage() {
                                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <input type="number" value={tier[0]} disabled={busy === t.key} onChange={e => updTier(t, i, 0, e.target.value)} style={numIn} />
                                     <input type="number" value={tier[1]} disabled={busy === t.key} onChange={e => updTier(t, i, 1, e.target.value)} style={numIn} />
-                                    <button type="button" onClick={() => rmTier(t, i)} title="Remove tier" style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '16px', lineHeight: 1, padding: '0 4px' }}>×</button>
+                                    <button type="button" onClick={() => rmTier(t, i)} title="Remove tier" style={{ background: 'none', border: 'none', color: C.faint, cursor: 'pointer', fontSize: '16px', lineHeight: 1, padding: '0 4px' }}>×</button>
                                   </div>
                                 ))}
                               </div>
-                              <button type="button" onClick={() => addTier(t)} style={{ marginTop: '7px', background: 'none', border: '1px dashed #CBD5E1', borderRadius: '5px', padding: '4px 10px', fontSize: '11.5px', color: '#6366F1', cursor: 'pointer' }}>+ Add tier</button>
+                              <button type="button" onClick={() => addTier(t)} style={{ marginTop: '7px', background: 'none', border: '1px dashed #CBD5E1', borderRadius: '5px', padding: '4px 10px', fontSize: '11.5px', color: C.indigo, cursor: 'pointer' }}>+ Add tier</button>
                               <div style={{ display: 'flex', gap: '16px', marginTop: '11px', flexWrap: 'wrap' }}>
                                 <label style={{ fontSize: '12px', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>over (&gt; last tier): <input type="number" value={d.over} disabled={busy === t.key} onChange={e => setTable(t.key, { ...d, over: e.target.value })} style={{ ...numIn, width: '86px' }} /></label>
                                 <label style={{ fontSize: '12px', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>no weight: <input type="number" value={d.unknown} disabled={busy === t.key} onChange={e => setTable(t.key, { ...d, unknown: e.target.value })} style={{ ...numIn, width: '86px' }} /></label>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '11px' }}>
                                 <button onClick={() => saveTable(t)} disabled={busy === t.key || !!err || !changed}
-                                  style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: '5px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: (busy === t.key || !!err || !changed) ? 0.5 : 1 }}>
+                                  style={{ background: C.indigo, color: '#fff', border: 'none', borderRadius: '5px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: (busy === t.key || !!err || !changed) ? 0.5 : 1 }}>
                                   {busy === t.key ? 'Saving…' : 'Save'}</button>
-                                {err ? <span style={{ color: '#B91C1C', fontSize: '11.5px' }}>✕ {err}</span>
-                                     : changed ? <span style={{ color: '#64748B', fontSize: '11.5px' }}>unsaved changes</span> : null}
+                                {err ? <span style={{ color: C.bad, fontSize: '11.5px' }}>✕ {err}</span>
+                                     : changed ? <span style={{ color: C.muted, fontSize: '11.5px' }}>unsaved changes</span> : null}
                               </div>
-                              <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '9px', lineHeight: 1.5 }}>Lookup returns the first tier the weight does not exceed; <b>over</b> applies beyond the last tier, <b>no&nbsp;weight</b> when a SKU has no weight. Limits must strictly increase.</div>
+                              <div style={{ fontSize: '11px', color: C.faint, marginTop: '9px', lineHeight: 1.5 }}>Lookup returns the first tier the weight does not exceed; <b>over</b> applies beyond the last tier, <b>no&nbsp;weight</b> when a SKU has no weight. Limits must strictly increase.</div>
                             </div>
                           )
                         })()}
@@ -378,13 +379,13 @@ function ConfigPage() {
                             <div>
                               {editable ? (
                                 <>
-                                  <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '5px' }}>Variables — click to insert</div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 600, color: C.faint, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '5px' }}>Variables — click to insert</div>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '8px' }}>
                                     {t.inputs.map(v => (
                                       <button key={v} type="button" onClick={() => insertVar(t, v)} title={VARIABLE_CATALOG[v] ?? v}
-                                        style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '10.5px', color: '#3730A3', background: '#EEF2FF', border: '1px solid #E0E7FF', borderRadius: '4px', padding: '2px 7px', cursor: 'pointer' }}>{v}</button>
+                                        style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '10.5px', color: '#3730A3', background: C.primaryBg, border: '1px solid #E0E7FF', borderRadius: '4px', padding: '2px 7px', cursor: 'pointer' }}>{v}</button>
                                     ))}
-                                    {!t.inputs.length && <span style={{ fontSize: '11px', color: '#94A3B8' }}>no variables</span>}
+                                    {!t.inputs.length && <span style={{ fontSize: '11px', color: C.faint }}>no variables</span>}
                                   </div>
                                   <textarea
                                     ref={el => { taRefs.current[t.key] = el }}
@@ -393,31 +394,31 @@ function ConfigPage() {
                                     onChange={e => setFormula(t, e.target.value)}
                                     rows={3}
                                     spellCheck={false}
-                                    style={{ display: 'block', width: '100%', boxSizing: 'border-box', fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '11.5px', color: '#0F172A', background: '#F8FAFC', border: `1px solid ${unk.length ? '#FCA5A5' : '#E2E8F0'}`, borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
+                                    style={{ display: 'block', width: '100%', boxSizing: 'border-box', fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '11.5px', color: C.ink, background: C.wash, border: `1px solid ${unk.length ? '#FCA5A5' : C.line}`, borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
                                   />
                                   {unk.length > 0 && (
-                                    <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '5px' }}>✕ unknown variable(s): <b>{unk.join(', ')}</b> — use only the variables above</div>
+                                    <div style={{ fontSize: '11px', color: C.bad, marginTop: '5px' }}>✕ unknown variable(s): <b>{unk.join(', ')}</b> — use only the variables above</div>
                                   )}
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '7px' }}>
                                     <button onClick={() => validateFormula(t)} disabled={busy === `v:${t.key}` || !fDraft(t).trim()}
                                       style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: '5px', padding: '5px 11px', fontSize: '12px', color: '#334155', cursor: 'pointer' }}>
                                       {busy === `v:${t.key}` ? '…' : 'Validate'}</button>
                                     <button onClick={() => saveFormula(t)} disabled={busy === t.key || !fDirty(t) || unk.length > 0}
-                                      style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: '5px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: (busy === t.key || !fDirty(t) || unk.length > 0) ? 0.5 : 1 }}>
+                                      style={{ background: C.indigo, color: '#fff', border: 'none', borderRadius: '5px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: (busy === t.key || !fDirty(t) || unk.length > 0) ? 0.5 : 1 }}>
                                       {busy === t.key ? 'Saving…' : 'Save'}</button>
                                     {vr && (vr.ok
                                       ? <span style={{ color: '#059669', fontSize: '11.5px' }}>✓ valid</span>
-                                      : <span style={{ color: '#B91C1C', fontSize: '11.5px' }}>✕ {vr.error}</span>)}
+                                      : <span style={{ color: C.bad, fontSize: '11.5px' }}>✕ {vr.error}</span>)}
                                   </div>
                                 </>
                               ) : (
-                                <code style={{ display: 'block', fontSize: '11.5px', color: '#0F172A', background: '#F8FAFC', border: '1px solid #EEF1F5', borderRadius: '6px', padding: '8px 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{t.formula}</code>
+                                <code style={{ display: 'block', fontSize: '11.5px', color: C.ink, background: C.wash, border: '1px solid #EEF1F5', borderRadius: '6px', padding: '8px 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{t.formula}</code>
                               )}
                               {/* variable reference — what each predefined variable corresponds to */}
                               {t.inputs.length > 0 && (
-                                <div style={{ marginTop: '8px', fontSize: '11px', color: '#94A3B8', lineHeight: 1.55 }}>
+                                <div style={{ marginTop: '8px', fontSize: '11px', color: C.faint, lineHeight: 1.55 }}>
                                   {t.inputs.map(v => (
-                                    <div key={v}><code style={{ color: '#475569' }}>{v}</code> — {VARIABLE_CATALOG[v] ?? 'value'}</div>
+                                    <div key={v}><code style={{ color: C.sub }}>{v}</code> — {VARIABLE_CATALOG[v] ?? 'value'}</div>
                                   ))}
                                   <div style={{ marginTop: '2px' }}>functions: {ALLOWED_FUNCS.join(', ')}</div>
                                 </div>
@@ -434,24 +435,24 @@ function ConfigPage() {
           </div>
 
           <div style={{ ...CARD, position: 'sticky', top: '16px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#64748B', margin: '0 0 10px' }}>Version history</div>
+            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: C.muted, margin: '0 0 10px' }}>Version history</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '70vh', overflow: 'auto' }}>
               {versions.map(v => (
                 <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', fontSize: '12px' }}>
                   <div>
-                    <span style={{ fontWeight: 600, color: '#0F172A' }}>v{v.id}</span>
-                    {v.is_active && <span style={{ marginLeft: '6px', fontSize: '10px', color: '#059669', background: '#ECFDF5', padding: '1px 6px', borderRadius: '4px' }}>active</span>}
-                    <div style={{ color: '#94A3B8', fontSize: '11px' }}>{(v.created_at || '').slice(0, 10)} · {v.created_by || '—'}</div>
-                    {v.note && <div style={{ color: '#64748B', fontSize: '11px' }}>{v.note}</div>}
+                    <span style={{ fontWeight: 600, color: C.ink }}>v{v.id}</span>
+                    {v.is_active && <span style={{ marginLeft: '6px', fontSize: '10px', color: '#059669', background: C.okBg, padding: '1px 6px', borderRadius: '4px' }}>active</span>}
+                    <div style={{ color: C.faint, fontSize: '11px' }}>{(v.created_at || '').slice(0, 10)} · {v.created_by || '—'}</div>
+                    {v.note && <div style={{ color: C.muted, fontSize: '11px' }}>{v.note}</div>}
                   </div>
                   {editable && !v.is_active && (
                     <button onClick={() => restore(v)} disabled={busy === `v${v.id}`}
-                      style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: '5px', padding: '4px 9px', fontSize: '11px', color: '#6366F1', cursor: 'pointer', flex: 'none' }}>
+                      style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: '5px', padding: '4px 9px', fontSize: '11px', color: C.indigo, cursor: 'pointer', flex: 'none' }}>
                       {busy === `v${v.id}` ? '…' : 'Restore'}</button>
                   )}
                 </div>
               ))}
-              {!versions.length && <div style={{ color: '#94A3B8', fontSize: '12px' }}>No versions yet.</div>}
+              {!versions.length && <div style={{ color: C.faint, fontSize: '12px' }}>No versions yet.</div>}
             </div>
           </div>
         </div>

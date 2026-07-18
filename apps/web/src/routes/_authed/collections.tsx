@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { authHeaders, can } from '@/lib/auth'
@@ -87,47 +88,47 @@ function CollectionsPage() {
     <>
       <div style={{ maxWidth: '1000px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '6px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>Smart Collections</h1>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink }}>Smart Collections</h1>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {canEdit ? (
               <>
                 <button onClick={runSuggest} disabled={suggesting}
-                  style={{ background: '#EEF2FF', color: '#4338CA', border: '1px solid #C7D2FE', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ background: C.primaryBg, color: C.indigoInk, border: '1px solid #C7D2FE', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                   {suggesting ? 'Thinking…' : '✨ AI suggest'}
                 </button>
                 <button onClick={() => setEditing('new')}
-                  style={{ background: '#6366F1', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ background: C.indigo, color: 'white', border: 'none', borderRadius: '8px', padding: '8px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                   + New collection
                 </button>
               </>
-            ) : <span style={{ fontSize: '11px', color: '#94A3B8', background: '#F1F5F9', padding: '5px 10px', borderRadius: '6px' }}>View only · Admin to edit</span>}
+            ) : <span style={{ fontSize: '11px', color: C.faint, background: C.monoBg, padding: '5px 10px', borderRadius: '6px' }}>View only · Admin to edit</span>}
           </div>
         </div>
-        <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '20px' }}>
+        <p style={{ fontSize: '13px', color: C.muted, marginBottom: '20px' }}>
           Dynamic product groups defined by rules over tags, category, brand, cost and more. Membership updates automatically — like Shopify smart collections.
         </p>
 
         {loading ? (
-          <p style={{ color: '#94A3B8', fontSize: '13px' }}>Loading…</p>
+          <p style={{ color: C.faint, fontSize: '13px' }}>Loading…</p>
         ) : collections.length === 0 ? (
           <div style={{ background: 'white', border: '1px dashed #CBD5E1', borderRadius: '10px', padding: '40px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: '#475569', marginBottom: '6px', fontWeight: 600 }}>No collections yet</p>
-            <p style={{ fontSize: '13px', color: '#94A3B8' }}>Click <strong>AI suggest</strong> to generate a starter set from your tags, or build one from scratch.</p>
+            <p style={{ fontSize: '14px', color: C.sub, marginBottom: '6px', fontWeight: 600 }}>No collections yet</p>
+            <p style={{ fontSize: '13px', color: C.faint }}>Click <strong>AI suggest</strong> to generate a starter set from your tags, or build one from scratch.</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
             {collections.map(c => (
               <div key={c.id} style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{c.name}</span>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#4338CA', background: '#EEF2FF', borderRadius: '99px', padding: '2px 10px', whiteSpace: 'nowrap' }}>{c.count ?? 0} items</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: C.ink }}>{c.name}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: C.indigoInk, background: C.primaryBg, borderRadius: '99px', padding: '2px 10px', whiteSpace: 'nowrap' }}>{c.count ?? 0} items</span>
                 </div>
-                {c.description && <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>{c.description}</p>}
+                {c.description && <p style={{ fontSize: '12px', color: C.muted, margin: 0 }}>{c.description}</p>}
                 <RuleSummary rule={c.rule} />
                 <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                   <button onClick={() => viewMembers(c)} style={btnGhost}>View</button>
                   {canEdit && <button onClick={() => setEditing(c)} style={btnGhost}>Edit</button>}
-                  {canEdit && <button onClick={() => del(c.id)} style={{ ...btnGhost, color: '#991B1B', marginLeft: 'auto' }}>Delete</button>}
+                  {canEdit && <button onClick={() => del(c.id)} style={{ ...btnGhost, color: C.redInk, marginLeft: 'auto' }}>Delete</button>}
                 </div>
               </div>
             ))}
@@ -147,12 +148,12 @@ function CollectionsPage() {
       {drafts && (
         <Modal title="AI-suggested collections" onClose={() => setDrafts(null)}>
           {drafts.length === 0 ? (
-            <p style={{ fontSize: '13px', color: '#94A3B8', padding: '8px 0' }}>No suggestions — add more tags during onboarding first.</p>
+            <p style={{ fontSize: '13px', color: C.faint, padding: '8px 0' }}>No suggestions — add more tags during onboarding first.</p>
           ) : drafts.map((d, i) => (
             <div key={i} style={{ borderBottom: '1px solid #F1F5F9', padding: '12px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{d.name} <span style={{ fontWeight: 600, color: '#4338CA' }}>· {d.count}</span></div>
-                {d.description && <div style={{ fontSize: '12px', color: '#64748B' }}>{d.description}</div>}
+                <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>{d.name} <span style={{ fontWeight: 600, color: C.indigoInk }}>· {d.count}</span></div>
+                {d.description && <div style={{ fontSize: '12px', color: C.muted }}>{d.description}</div>}
                 <RuleSummary rule={d.rule} />
               </div>
               <button onClick={() => saveDraft(d)} style={{ background: '#22C55E', color: 'white', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Save</button>
@@ -164,14 +165,14 @@ function CollectionsPage() {
       {viewing && (
         <Modal title={`${viewing.col.name} · ${viewing.products.length} products`} onClose={() => setViewing(null)}>
           {viewing.products.length === 0 ? (
-            <p style={{ fontSize: '13px', color: '#94A3B8' }}>No products match this rule yet.</p>
+            <p style={{ fontSize: '13px', color: C.faint }}>No products match this rule yet.</p>
           ) : (
             <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
               {viewing.products.map((p: any) => (
                 <Link key={p.sku_code} to={`/items/${p.sku_code}` as never} style={{ display: 'flex', gap: '10px', padding: '8px 4px', borderBottom: '1px solid #F8FAFC', textDecoration: 'none', alignItems: 'baseline' }}>
-                  <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '12px', color: '#4338CA', width: '88px' }}>{p.sku_code}</span>
-                  <span style={{ flex: 1, fontSize: '13px', color: '#0F172A' }}>{p.name}</span>
-                  <span style={{ fontSize: '11px', color: '#94A3B8' }}>{p.category}</span>
+                  <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '12px', color: C.indigoInk, width: '88px' }}>{p.sku_code}</span>
+                  <span style={{ flex: 1, fontSize: '13px', color: C.ink }}>{p.name}</span>
+                  <span style={{ fontSize: '11px', color: C.faint }}>{p.category}</span>
                 </Link>
               ))}
             </div>
@@ -182,14 +183,14 @@ function CollectionsPage() {
   )
 }
 
-const btnGhost: React.CSSProperties = { background: 'none', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: '#475569', cursor: 'pointer' }
+const btnGhost: React.CSSProperties = { background: 'none', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: C.sub, cursor: 'pointer' }
 
 function RuleSummary({ rule }: { rule: Rule }) {
   const join = rule.match === 'any' ? ' OR ' : ' AND '
   const parts = (rule.conditions ?? []).map(c =>
     c.field === 'tag' ? `${c.op === 'not_has' ? 'not ' : ''}#${c.value}`
       : `${FIELD_LABEL[c.field] ?? c.field} ${OP_LABEL[c.op] ?? c.op} ${Array.isArray(c.value) ? (c.value as any).join('/') : c.value}`)
-  return <div style={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'ui-monospace, monospace' }}>{parts.join(join) || '—'}</div>
+  return <div style={{ fontSize: '11px', color: C.faint, fontFamily: 'ui-monospace, monospace' }}>{parts.join(join) || '—'}</div>
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -197,8 +198,8 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '12px', width: '100%', maxWidth: '600px', maxHeight: '86vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{title}</span>
-          <button onClick={onClose} style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer', color: '#64748B' }}>Close</button>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: C.ink }}>{title}</span>
+          <button onClick={onClose} style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer', color: C.muted }}>Close</button>
         </div>
         <div style={{ padding: '16px 20px', overflowY: 'auto' }}>{children}</div>
       </div>
@@ -281,10 +282,10 @@ function CollectionEditor({ initial, vocab, tags, onClose, onSaved }: {
       <input value={description} onChange={e => setDescription(e.target.value)} placeholder="optional" style={inp} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '14px 0 8px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Match</span>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: C.sub }}>Match</span>
         {(['all', 'any'] as const).map(m => (
           <button key={m} onClick={() => setMatch(m)} style={{
-            background: match === m ? '#0F172A' : '#F1F5F9', color: match === m ? 'white' : '#475569',
+            background: match === m ? C.ink : C.monoBg, color: match === m ? 'white' : C.sub,
             border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
           }}>{m === 'all' ? 'ALL conditions' : 'ANY condition'}</button>
         ))}
@@ -310,19 +311,19 @@ function CollectionEditor({ initial, vocab, tags, onClose, onSaved }: {
               style={{ ...inp, marginBottom: 0, flex: 1 }}
             />
             <button onClick={() => setConditions(prev => prev.filter((_, j) => j !== i))}
-              style={{ border: '1px solid #E2E8F0', background: 'none', borderRadius: '6px', width: '30px', height: '30px', cursor: 'pointer', color: '#991B1B', flex: '0 0 auto' }}>×</button>
+              style={{ border: '1px solid #E2E8F0', background: 'none', borderRadius: '6px', width: '30px', height: '30px', cursor: 'pointer', color: C.redInk, flex: '0 0 auto' }}>×</button>
           </div>
         )
       })}
       <button onClick={() => setConditions(prev => [...prev, { field: 'tag', op: 'has', value: '' }])}
         style={{ ...btnGhost, marginTop: '2px' }}>+ Add condition</button>
 
-      <div style={{ marginTop: '16px', padding: '12px 14px', background: '#F8FAFC', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '13px', color: '#475569' }}>
-          Matches <strong style={{ color: '#0F172A' }}>{preview?.count ?? '…'}</strong> products
+      <div style={{ marginTop: '16px', padding: '12px 14px', background: C.wash, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '13px', color: C.sub }}>
+          Matches <strong style={{ color: C.ink }}>{preview?.count ?? '…'}</strong> products
         </span>
         {preview?.sample?.length ? (
-          <span style={{ fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>
+          <span style={{ fontSize: '11px', color: C.faint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>
             {preview.sample.map(s => s.name).filter(Boolean).slice(0, 3).join(', ')}{preview.count > 3 ? '…' : ''}
           </span>
         ) : null}
@@ -331,7 +332,7 @@ function CollectionEditor({ initial, vocab, tags, onClose, onSaved }: {
       <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'flex-end' }}>
         <button onClick={onClose} style={btnGhost}>Cancel</button>
         <button onClick={save} disabled={saving}
-          style={{ background: '#6366F1', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+          style={{ background: C.indigo, color: 'white', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
           {saving ? 'Saving…' : initial ? 'Save changes' : 'Create collection'}
         </button>
       </div>
@@ -339,6 +340,6 @@ function CollectionEditor({ initial, vocab, tags, onClose, onSaved }: {
   )
 }
 
-const lbl: React.CSSProperties = { display: 'block', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', marginTop: '10px' }
+const lbl: React.CSSProperties = { display: 'block', fontSize: '11px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', marginTop: '10px' }
 const inp: React.CSSProperties = { width: '100%', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '7px 10px', fontSize: '13px', marginBottom: '4px' }
 const sel: React.CSSProperties = { border: '1px solid #E2E8F0', borderRadius: '6px', padding: '7px 6px', fontSize: '12px', background: 'white', flex: '0 0 auto' }

@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { authHeaders, getUser, can, ROLE_LABELS, type Role } from '@/lib/auth'
@@ -151,8 +152,8 @@ function UsersAdminPage() {
   if (!can('user_admin')) {
     return (
       <div style={{ padding: '40px', maxWidth: '560px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>Users</h1>
-        <div style={{ marginTop: '12px', padding: '14px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', color: '#991B1B', fontSize: '13px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink }}>Users</h1>
+        <div style={{ marginTop: '12px', padding: '14px 16px', background: C.badBg, border: '1px solid #FECACA', borderRadius: '8px', color: C.redInk, fontSize: '13px' }}>
           <strong>Admin access required.</strong> Your role ({ROLE_LABELS[me?.role ?? 'bizops']}) cannot manage user accounts.
         </div>
       </div>
@@ -160,25 +161,25 @@ function UsersAdminPage() {
   }
 
   const cell = { padding: '8px 12px', fontSize: '12px', color: '#334155', borderBottom: '1px solid #F1F5F9' } as const
-  const th = { padding: '8px 12px', fontSize: '10px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: '0.05em', textAlign: 'left' as const, borderBottom: '1px solid #E2E8F0' }
+  const th = { padding: '8px 12px', fontSize: '10px', fontWeight: 700, color: C.muted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', textAlign: 'left' as const, borderBottom: '1px solid #E2E8F0' }
   const input = { border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 10px', fontSize: '12px' }
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: '1080px' }}>
-      <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', margin: 0 }}>User accounts</h1>
-      <p style={{ fontSize: '12.5px', color: '#64748B', marginTop: '4px' }}>
-        Create accounts and assign roles. Every change is recorded in the <a href="/admin/audit" style={{ color: '#6366F1' }}>Audit Log</a>.
+      <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink, margin: 0 }}>User accounts</h1>
+      <p style={{ fontSize: '12.5px', color: C.muted, marginTop: '4px' }}>
+        Create accounts and assign roles. Every change is recorded in the <a href="/admin/audit" style={{ color: C.indigo }}>Audit Log</a>.
       </p>
 
       {/* Invite by email */}
       <div style={{ marginTop: '18px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>Invite by email</div>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>Invite by email</div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>Email</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: C.faint, fontWeight: 600 }}>Email</span>
             <input style={{ ...input, width: '230px' }} type="email" value={inv.email} onChange={e => setInv({ ...inv, email: e.target.value })} placeholder="jane@example.com" /></label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>Name (optional)</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: C.faint, fontWeight: 600 }}>Name (optional)</span>
             <input style={{ ...input, width: '160px' }} value={inv.display_name} onChange={e => setInv({ ...inv, display_name: e.target.value })} placeholder="Jane Doe" /></label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>Role</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: C.faint, fontWeight: 600 }}>Role</span>
             <select style={{ ...input, width: '130px', background: 'white' }} value={inv.role} onChange={e => setInv({ ...inv, role: e.target.value as Role })}>
               {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
             </select></label>
@@ -187,7 +188,7 @@ function UsersAdminPage() {
             {busy === 'invite' ? 'Sending…' : '✉ Send invite'}
           </button>
         </div>
-        <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px' }}>They’ll get an email with a link to set their own username, name, email and password ({ROLE_HINT[inv.role]}).</p>
+        <p style={{ fontSize: '11px', color: C.faint, marginTop: '8px' }}>They’ll get an email with a link to set their own username, name, email and password ({ROLE_HINT[inv.role]}).</p>
         {lastInvite && (
           <div style={{ marginTop: '10px', padding: '10px 12px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '8px' }}>
             <div style={{ fontSize: '12px', color: '#334155', marginBottom: '6px' }}>
@@ -196,7 +197,7 @@ function UsersAdminPage() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input readOnly value={lastInvite.url} style={{ ...input, flex: 1, fontFamily: 'monospace', fontSize: '11px', background: 'white' }} onFocus={e => e.currentTarget.select()} />
               <button onClick={() => { navigator.clipboard?.writeText(lastInvite.url); toast.success('Link copied') }}
-                style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: 'white', border: '1px solid #CBD5E1', borderRadius: '6px', cursor: 'pointer', color: '#475569' }}>Copy</button>
+                style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: 'white', border: '1px solid #CBD5E1', borderRadius: '6px', cursor: 'pointer', color: C.sub }}>Copy</button>
             </div>
           </div>
         )}
@@ -204,24 +205,24 @@ function UsersAdminPage() {
 
       {/* Create */}
       <div style={{ marginTop: '14px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>Or add a user directly</div>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>Or add a user directly</div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>Username</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: C.faint, fontWeight: 600 }}>Username</span>
             <input style={{ ...input, width: '150px' }} value={nu.username} onChange={e => setNu({ ...nu, username: e.target.value })} placeholder="jane" /></label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>Display name</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: C.faint, fontWeight: 600 }}>Display name</span>
             <input style={{ ...input, width: '170px' }} value={nu.display_name} onChange={e => setNu({ ...nu, display_name: e.target.value })} placeholder="Jane Doe" /></label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>Password</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: C.faint, fontWeight: 600 }}>Password</span>
             <input style={{ ...input, width: '150px' }} type="text" value={nu.password} onChange={e => setNu({ ...nu, password: e.target.value })} placeholder="min 6 chars" /></label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>Role</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}><span style={{ fontSize: '10px', color: C.faint, fontWeight: 600 }}>Role</span>
             <select style={{ ...input, width: '130px', background: 'white' }} value={nu.role} onChange={e => setNu({ ...nu, role: e.target.value as Role })}>
               {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
             </select></label>
           <button onClick={createUser} disabled={busy === 'new'}
-            style={{ padding: '7px 16px', fontSize: '12px', fontWeight: 600, background: '#6366F1', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', height: '32px' }}>
+            style={{ padding: '7px 16px', fontSize: '12px', fontWeight: 600, background: C.indigo, color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', height: '32px' }}>
             {busy === 'new' ? 'Creating…' : 'Create user'}
           </button>
         </div>
-        <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px' }}>{ROLE_HINT[nu.role]}</p>
+        <p style={{ fontSize: '11px', color: C.faint, marginTop: '8px' }}>{ROLE_HINT[nu.role]}</p>
       </div>
 
       {/* Table */}
@@ -236,11 +237,11 @@ function UsersAdminPage() {
             {!loading && users.map(u => (
               <tr key={u.id} style={{ opacity: u.is_active ? 1 : 0.55 }}>
                 <td style={cell}>
-                  <div style={{ fontWeight: 600, color: '#0F172A' }}>{u.display_name}</div>
-                  {u.email && <div style={{ color: '#64748B', fontSize: '11px' }}>{u.email}</div>}
-                  <div style={{ color: '#94A3B8', fontFamily: 'monospace', fontSize: '11px' }}>
+                  <div style={{ fontWeight: 600, color: C.ink }}>{u.display_name}</div>
+                  {u.email && <div style={{ color: C.muted, fontSize: '11px' }}>{u.email}</div>}
+                  <div style={{ color: C.faint, fontFamily: 'monospace', fontSize: '11px' }}>
                     {u.invite_status === 'invited'
-                      ? <em style={{ fontStyle: 'normal', color: '#92400E' }}>awaiting onboarding</em>
+                      ? <em style={{ fontStyle: 'normal', color: C.amberInk }}>awaiting onboarding</em>
                       : <>{u.username}{u.id === me?.id ? ' · you' : ''}</>}
                   </div>
                 </td>
@@ -252,9 +253,9 @@ function UsersAdminPage() {
                 </td>
                 <td style={cell}>
                   {u.invite_status === 'invited' ? (
-                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', background: '#FEF3C7', color: '#92400E' }}>Invited</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', background: C.warnBg, color: C.amberInk }}>Invited</span>
                   ) : (
-                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', background: u.is_active ? '#DCFCE7' : '#F1F5F9', color: u.is_active ? '#166534' : '#64748B' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', background: u.is_active ? C.greenBg : C.monoBg, color: u.is_active ? C.green : C.muted }}>
                       {u.is_active ? 'Active' : 'Inactive'}
                     </span>
                   )}
@@ -269,9 +270,9 @@ function UsersAdminPage() {
                     ) : (
                       <>
                         <button onClick={() => resetPassword(u)} disabled={busy === u.id}
-                          style={{ fontSize: '11px', padding: '3px 8px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '5px', cursor: 'pointer', color: '#475569' }}>Reset password</button>
+                          style={{ fontSize: '11px', padding: '3px 8px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '5px', cursor: 'pointer', color: C.sub }}>Reset password</button>
                         <button onClick={() => toggleActive(u)} disabled={busy === u.id || u.id === me?.id}
-                          style={{ fontSize: '11px', padding: '3px 8px', background: 'white', border: `1px solid ${u.is_active ? '#FECACA' : '#BBF7D0'}`, borderRadius: '5px', cursor: u.id === me?.id ? 'not-allowed' : 'pointer', color: u.is_active ? '#991B1B' : '#166534' }}>
+                          style={{ fontSize: '11px', padding: '3px 8px', background: 'white', border: `1px solid ${u.is_active ? '#FECACA' : '#BBF7D0'}`, borderRadius: '5px', cursor: u.id === me?.id ? 'not-allowed' : 'pointer', color: u.is_active ? C.redInk : C.green }}>
                           {u.is_active ? 'Deactivate' : 'Reactivate'}
                         </button>
                       </>

@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState, useCallback } from 'react'
 import { authHeaders } from '@/lib/auth'
@@ -37,7 +38,7 @@ function RecommendBlock({ customerId }: { customerId: string }) {
     fetch(`${API}/clients/${customerId}/recommend`, { headers: authHeaders() })
       .then(x => (x.ok ? x.json() : { recommend: [] })).then(d => setRec(d.recommend || [])).catch(() => setRec([]))
   }, [customerId])
-  if (rec === null) return <p style={{ fontSize: '11px', color: '#CBD5E1', margin: '6px 0' }}>Loading recommendations…</p>
+  if (rec === null) return <p style={{ fontSize: '11px', color: C.knobOff, margin: '6px 0' }}>Loading recommendations…</p>
   if (!rec.length) return null
   const byMain: Record<string, Rec[]> = {}
   rec.forEach(p => { (byMain[p.main] = byMain[p.main] || []).push(p) })
@@ -51,7 +52,7 @@ function RecommendBlock({ customerId }: { customerId: string }) {
         return (
           <div key={m} style={{ marginBottom: '4px', fontSize: '11px' }}>
             <span style={{ fontWeight: 700, color: fg }}>{m}: </span>
-            <span style={{ color: '#0F172A' }}>
+            <span style={{ color: C.ink }}>
               {prods.slice(0, 6).map((p, i) => <span key={i}>{i > 0 ? ' · ' : ''}{p.hero ? '★ ' : ''}{p.name.length > 46 ? p.name.slice(0, 46) + '…' : p.name}</span>)}
             </span>
           </div>
@@ -66,10 +67,10 @@ const SEGMENTS: Record<string, [string, string, string]> = {
   'new': ['🆕 New', '#0D9488', '#CCFBF1'],
   'legacy_active': ['🔄 Returned', '#3730A3', '#E0E7FF'],
   'legacy_dormant': ["💎 Dr Hugh's · dormant", '#6B21A8', '#F3E8FF'],
-  'registered': ['Registered', '#64748B', '#F1F5F9'],
+  'registered': ['Registered', C.muted, C.monoBg],
 }
 function SegmentBadge({ seg }: { seg?: string }) {
-  const [label, fg, bg] = SEGMENTS[seg || ''] ?? ['—', '#94A3B8', '#F1F5F9']
+  const [label, fg, bg] = SEGMENTS[seg || ''] ?? ['—', C.faint, C.monoBg]
   return <span style={{ fontSize: '9px', fontWeight: 700, color: fg, background: bg, padding: '1px 7px', borderRadius: '8px' }}>{label}</span>
 }
 
@@ -77,18 +78,18 @@ function SegmentBadge({ seg }: { seg?: string }) {
 const SRC_FULL: Record<string, [string, string, string]> = {
   'DaySmart': ['Clinic', '#0D9488', '#CCFBF1'],
   'CHS': ["Dr Hugh's", '#6B21A8', '#F3E8FF'],
-  'Shopify': ['Online', '#166534', '#DCFCE7'],
-  'Klaviyo': ['CRM', '#92400E', '#FEF3C7'],
+  'Shopify': ['Online', C.green, C.greenBg],
+  'Klaviyo': ['CRM', C.amberInk, C.warnBg],
 }
 function SourceTags({ sources }: { sources?: string[] }) {
   const s = sources || []
-  if (!s.length) return <span style={{ fontSize: '10px', color: '#CBD5E1' }}>—</span>
+  if (!s.length) return <span style={{ fontSize: '10px', color: C.knobOff }}>—</span>
   const overlap = s.length >= 2   // present in 2+ channels
   return (
     <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', marginTop: '3px', alignItems: 'center' }}>
-      {overlap && <span style={{ fontSize: '9px', fontWeight: 700, color: 'white', background: '#6366F1', padding: '1px 6px', borderRadius: '8px' }}>🔗 OVERLAP ×{s.length}</span>}
+      {overlap && <span style={{ fontSize: '9px', fontWeight: 700, color: 'white', background: C.indigo, padding: '1px 6px', borderRadius: '8px' }}>🔗 OVERLAP ×{s.length}</span>}
       {s.map(x => {
-        const [label, fg, bg] = SRC_FULL[x] ?? [x, '#475569', '#F1F5F9']
+        const [label, fg, bg] = SRC_FULL[x] ?? [x, C.sub, C.monoBg]
         return <span key={x} style={{ fontSize: '9px', fontWeight: 700, color: fg, background: bg, padding: '1px 6px', borderRadius: '8px' }}>{label}</span>
       })}
     </div>
@@ -101,13 +102,13 @@ const SRC: Record<string, [string, string]> = {
   'DaySmart': ['D', '#0D9488'], 'Shopify': ['S', '#16A34A'], 'CHS': ['C', '#6B21A8'], 'Klaviyo': ['K', '#D97706'],
 }
 const MAIN_COLORS: Record<string, [string, string]> = {
-  'Preventative': ['#DCFCE7', '#166534'], 'Skin & Coat': ['#FEE2E2', '#991B1B'], 'Digestive': ['#FEF3C7', '#92400E'],
+  'Preventative': [C.greenBg, C.green], 'Skin & Coat': [C.redBg, C.redInk], 'Digestive': [C.warnBg, C.amberInk],
   'Eyes & Ears': ['#DBEAFE', '#1E40AF'], 'Dental': ['#F3E8FF', '#6B21A8'], 'Respiratory': ['#CFFAFE', '#155E75'],
   'Urinary & Renal': ['#FCE7F3', '#9D174D'], 'Mobility': ['#FEF9C3', '#854D0E'], 'Heart': ['#FFE4E6', '#9F1239'],
   'Endocrine': ['#FAE8FF', '#86198F'], 'Neurological': ['#E0E7FF', '#3730A3'],
-  'Weight & Nutrition': ['#ECFCCB', '#3F6212'], 'Behaviour': ['#E0E7FF', '#3730A3'], 'Cat-specific': ['#F1F5F9', '#475569'],
+  'Weight & Nutrition': ['#ECFCCB', '#3F6212'], 'Behaviour': ['#E0E7FF', '#3730A3'], 'Cat-specific': [C.monoBg, C.sub],
 }
-const colorFor = (m: string): [string, string] => MAIN_COLORS[m] ?? ['#F1F5F9', '#475569']
+const colorFor = (m: string): [string, string] => MAIN_COLORS[m] ?? [C.monoBg, C.sub]
 
 function Chip({ tag }: { tag: Tag }) {
   const [bg, fg] = colorFor(tag.main)
@@ -120,7 +121,7 @@ function Chip({ tag }: { tag: Tag }) {
       {tag.sub}{tag.count > 1 ? ` ·${tag.count}` : ''}
       <span style={{ display: 'inline-flex', gap: '2px' }}>
         {(tag.sources || []).map(s => {
-          const [ltr, col] = SRC[s] ?? ['?', '#94A3B8']
+          const [ltr, col] = SRC[s] ?? ['?', C.faint]
           return <span key={s} title={s} style={{ fontSize: '8px', fontWeight: 700, color: 'white', background: col,
             borderRadius: '50%', width: '11px', height: '11px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{ltr}</span>
         })}
@@ -138,21 +139,21 @@ function PetBlock({ pet }: { pet: Pet }) {
   const sub = [pet.species, pet.breed].filter(Boolean).join(' · ')
   return (
     <div style={{ marginTop: '8px', paddingLeft: '10px', borderLeft: '2px solid #E2E8F0' }}>
-      <div style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A' }}>
-        🐾 {pet.name || '(unnamed)'}{sub ? <span style={{ color: '#94A3B8', fontWeight: 400 }}> · {sub}</span> : null}
+      <div style={{ fontSize: '12px', fontWeight: 600, color: C.ink }}>
+        🐾 {pet.name || '(unnamed)'}{sub ? <span style={{ color: C.faint, fontWeight: 400 }}> · {sub}</span> : null}
       </div>
-      {pet.summary && <div style={{ fontSize: '11px', color: '#3730A3', background: '#EEF2FF', borderRadius: '5px', padding: '5px 8px', marginTop: '4px' }}>{pet.summary}</div>}
-      {hist === null ? <p style={{ fontSize: '11px', color: '#CBD5E1', margin: '4px 0' }}>Loading timeline…</p>
+      {pet.summary && <div style={{ fontSize: '11px', color: '#3730A3', background: C.primaryBg, borderRadius: '5px', padding: '5px 8px', marginTop: '4px' }}>{pet.summary}</div>}
+      {hist === null ? <p style={{ fontSize: '11px', color: C.knobOff, margin: '4px 0' }}>Loading timeline…</p>
         : hist.length === 0 ? null
         : <div style={{ marginTop: '4px', maxHeight: '180px', overflowY: 'auto' }}>
             {hist.map((h, i) => {
-              const [ltr, col] = SRC[h.source] ?? ['?', '#94A3B8']
+              const [ltr, col] = SRC[h.source] ?? ['?', C.faint]
               return (
                 <div key={i} style={{ fontSize: '11px', marginBottom: '3px', lineHeight: 1.4 }}>
-                  <span style={{ fontVariantNumeric: 'tabular-nums', color: '#94A3B8' }}>{h.date || '—'}</span>{' '}
+                  <span style={{ fontVariantNumeric: 'tabular-nums', color: C.faint }}>{h.date || '—'}</span>{' '}
                   <span title={h.source} style={{ fontSize: '8px', fontWeight: 700, color: 'white', background: col, borderRadius: '3px', padding: '0 3px' }}>{ltr}</span>{' '}
-                  <span style={{ color: '#0F172A', fontWeight: 600 }}>{h.dx}</span>
-                  {h.note ? <span style={{ color: '#64748B' }}> — {h.note}</span> : null}
+                  <span style={{ color: C.ink, fontWeight: 600 }}>{h.dx}</span>
+                  {h.note ? <span style={{ color: C.muted }}> — {h.note}</span> : null}
                 </div>
               )
             })}
@@ -165,7 +166,7 @@ function Section({ label, tags }: { label: string; tags: Tag[] }) {
   if (!tags.length) return null
   return (
     <div style={{ marginTop: '8px' }}>
-      <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
+      <span style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>{tags.map((t, i) => <Chip key={i} tag={t} />)}</div>
     </div>
   )
@@ -176,22 +177,22 @@ function DetailPanel({ r }: { r: Row }) {
     .filter(t => /vip|appstle_active|active_subscriber|has active subscription|autoship/i.test(t))
   return (
     <div>
-      <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+      <div style={{ fontSize: '12px', color: C.muted, display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
         <span>{r.email ? `✉ ${r.email}` : ''} {r.phone ? `☎ ${r.phone}` : ''}</span>
         <span>{r.visit_count} clinic visits · last {r.last_visit || '—'}</span>
         <span style={{ color: '#0D9488', fontWeight: 600 }}>🏥 Clinic LTV HK${Math.round(r.clinic_ltv || 0).toLocaleString()}</span>
-        <span style={{ color: '#166534', fontWeight: 600 }}>🛒 Online LTV HK${Math.round(r.shopify_ltv || 0).toLocaleString()} · {r.order_count || 0} orders</span>
+        <span style={{ color: C.green, fontWeight: 600 }}>🛒 Online LTV HK${Math.round(r.shopify_ltv || 0).toLocaleString()} · {r.order_count || 0} orders</span>
       </div>
-      <div style={{ fontSize: '11px', color: '#64748B', display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
+      <div style={{ fontSize: '11px', color: C.muted, display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
         <span style={{ fontWeight: 600 }}>Reachable:</span>
-        <span style={{ color: r.reach?.email ? '#16A34A' : '#CBD5E1' }}>✉ Email {r.reach?.email ? '✓' : '✗'}</span>
-        <span style={{ color: r.reach?.whatsapp ? '#16A34A' : '#CBD5E1' }}>💬 WhatsApp {r.reach?.whatsapp ? '✓' : '✗'}</span>
-        <span style={{ color: r.reach?.meta ? '#16A34A' : '#CBD5E1' }}>📣 Meta {r.reach?.meta ? '✓' : '✗'}</span>
+        <span style={{ color: r.reach?.email ? '#16A34A' : C.knobOff }}>✉ Email {r.reach?.email ? '✓' : '✗'}</span>
+        <span style={{ color: r.reach?.whatsapp ? '#16A34A' : C.knobOff }}>💬 WhatsApp {r.reach?.whatsapp ? '✓' : '✗'}</span>
+        <span style={{ color: r.reach?.meta ? '#16A34A' : C.knobOff }}>📣 Meta {r.reach?.meta ? '✓' : '✗'}</span>
       </div>
       {flags.length ? <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '5px' }}>
-        {flags.map((f, i) => <span key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#92400E', background: '#FEF3C7', padding: '1px 6px', borderRadius: '8px' }}>{f}</span>)}
+        {flags.map((f, i) => <span key={i} style={{ fontSize: '9px', fontWeight: 700, color: C.amberInk, background: C.warnBg, padding: '1px 6px', borderRadius: '8px' }}>{f}</span>)}
       </div> : null}
-      {r.crm_lists && r.crm_lists.length ? <div style={{ marginTop: '6px', fontSize: '11px', color: '#92400E', background: '#FEF3C7', borderRadius: '5px', padding: '5px 8px' }}>
+      {r.crm_lists && r.crm_lists.length ? <div style={{ marginTop: '6px', fontSize: '11px', color: C.amberInk, background: C.warnBg, borderRadius: '5px', padding: '5px 8px' }}>
         📋 Joined CRM: {r.crm_lists.join(' · ')}
       </div> : null}
       {(r.crm?.last_email || r.crm?.last_whatsapp) ? <div style={{ marginTop: '5px', fontSize: '11px', color: '#0E7490' }}>
@@ -200,50 +201,50 @@ function DetailPanel({ r }: { r: Row }) {
       {r.crm?.flows && r.crm.flows.length ? <div style={{ marginTop: '6px', background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: '5px', padding: '5px 8px' }}>
         <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: '#7C3AED', marginBottom: '3px' }}>🔁 Klaviyo flows received (frequency)</div>
         {r.crm.flows.map((f, i) => (
-          <div key={i} style={{ fontSize: '11px', color: '#475569' }}>
-            <span style={{ color: '#94A3B8', fontVariantNumeric: 'tabular-nums' }}>{f.last}</span> · {f.flow} <span style={{ color: '#94A3B8' }}>({f.sends}×)</span>
+          <div key={i} style={{ fontSize: '11px', color: C.sub }}>
+            <span style={{ color: C.faint, fontVariantNumeric: 'tabular-nums' }}>{f.last}</span> · {f.flow} <span style={{ color: C.faint }}>({f.sends}×)</span>
           </div>
         ))}
       </div> : null}
-      {r.crm?.discounts && r.crm.discounts.length ? <div style={{ marginTop: '5px', fontSize: '11px', color: '#B45309' }}>
+      {r.crm?.discounts && r.crm.discounts.length ? <div style={{ marginTop: '5px', fontSize: '11px', color: C.amber }}>
         🎟 Claimed: {r.crm.discounts.map(d => `${d.code} (${d.last})`).join(' · ')}
       </div> : null}
       {(r.crm?.first_utm_campaign || r.crm?.first_landing_path || r.crm?.first_referral) ? <div style={{ marginTop: '5px', fontSize: '11px', color: '#0F766E' }}>
         🔗 First touch:
-        {r.crm?.first_utm_campaign ? <span> 🎯 <b>{r.crm.first_utm_campaign}</b>{r.crm.first_utm_source ? <span style={{ color: '#94A3B8' }}> ({r.crm.first_utm_source}/{r.crm.first_utm_medium})</span> : null}</span> : null}
-        {r.crm?.first_landing_path ? <span style={{ color: '#475569' }}> · landed {r.crm.first_landing_path}</span> : null}
+        {r.crm?.first_utm_campaign ? <span> 🎯 <b>{r.crm.first_utm_campaign}</b>{r.crm.first_utm_source ? <span style={{ color: C.faint }}> ({r.crm.first_utm_source}/{r.crm.first_utm_medium})</span> : null}</span> : null}
+        {r.crm?.first_landing_path ? <span style={{ color: C.sub }}> · landed {r.crm.first_landing_path}</span> : null}
         {r.crm?.first_referral ? <span> · via <b>{r.crm.first_referral}</b></span> : null}
       </div> : null}
       {r.cs_contact?.sentiment ? (() => {
         const s = r.cs_contact.sentiment
-        const col = s === 'poor' ? '#DC2626' : s === 'happy' ? '#16A34A' : '#64748B'
+        const col = s === 'poor' ? '#DC2626' : s === 'happy' ? '#16A34A' : C.muted
         const lbl = s === 'poor' ? 'Poor' : s === 'happy' ? 'Happy' : 'Fine'
         return (
-          <div style={{ marginTop: '6px', fontSize: '11px', background: s === 'poor' ? '#FEF2F2' : '#F8FAFC', border: `1px solid ${col}55`, borderRadius: '5px', padding: '5px 8px' }}>
+          <div style={{ marginTop: '6px', fontSize: '11px', background: s === 'poor' ? C.badBg : C.wash, border: `1px solid ${col}55`, borderRadius: '5px', padding: '5px 8px' }}>
             <span style={{ color: col, fontWeight: 700 }}>🎧 CS sentiment: {lbl}</span>
-            <span style={{ color: '#94A3B8' }}> · last WhatsApp {r.cs_contact.last_contact || '—'}</span>
-            {r.cs_contact.quote ? <div style={{ color: '#475569', fontStyle: 'italic', marginTop: '3px' }}>“{r.cs_contact.quote}”</div>
-              : <div style={{ color: '#CBD5E1', marginTop: '3px' }}>(re-run sentiment ingest to capture the triggering line)</div>}
+            <span style={{ color: C.faint }}> · last WhatsApp {r.cs_contact.last_contact || '—'}</span>
+            {r.cs_contact.quote ? <div style={{ color: C.sub, fontStyle: 'italic', marginTop: '3px' }}>“{r.cs_contact.quote}”</div>
+              : <div style={{ color: C.knobOff, marginTop: '3px' }}>(re-run sentiment ingest to capture the triggering line)</div>}
           </div>
         )
       })() : null}
       {(r.recent_clinic?.length || r.recent_online?.length) ? (
         <div style={{ marginTop: '10px' }}>
-          <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748B', marginBottom: '5px' }}>
+          <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.muted, marginBottom: '5px' }}>
             🧾 Purchase history · first {r.first_purchase || '—'} → last {r.last_purchase || '—'}{r.bought_rx ? ' · has bought Rx' : ''}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {[{ t: '🏥 Clinic (Dr Hugh + Ohana)', list: r.recent_clinic || [], bg: '#F0FDFA', bd: '#99F6E4' },
               { t: '🛒 Online (Shopify)', list: r.recent_online || [], bg: '#F0FDF4', bd: '#BBF7D0' }].map((col, ci) => (
               <div key={ci} style={{ background: col.bg, border: `1px solid ${col.bd}`, borderRadius: '6px', padding: '8px 10px' }}>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>{col.t}</div>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: C.sub, marginBottom: '4px' }}>{col.t}</div>
                 {col.list.length ? col.list.map((p, i) => (
                   <div key={i} style={{ fontSize: '11px', marginBottom: '2px' }}>
-                    <span style={{ color: '#94A3B8', fontVariantNumeric: 'tabular-nums' }}>{p.date}</span>{' · '}
-                    <span style={{ color: '#0F172A' }}>{p.product.length > 40 ? p.product.slice(0, 40) + '…' : p.product}</span>{' '}
-                    <span style={{ color: '#94A3B8' }}>({p.category}{p.on_shopify ? ' · 🛒' : ''})</span>
+                    <span style={{ color: C.faint, fontVariantNumeric: 'tabular-nums' }}>{p.date}</span>{' · '}
+                    <span style={{ color: C.ink }}>{p.product.length > 40 ? p.product.slice(0, 40) + '…' : p.product}</span>{' '}
+                    <span style={{ color: C.faint }}>({p.category}{p.on_shopify ? ' · 🛒' : ''})</span>
                   </div>
-                )) : <div style={{ fontSize: '11px', color: '#CBD5E1' }}>— none —</div>}
+                )) : <div style={{ fontSize: '11px', color: C.knobOff }}>— none —</div>}
               </div>
             ))}
           </div>
@@ -254,13 +255,13 @@ function DetailPanel({ r }: { r: Row }) {
       <Section label="Events" tags={r.events} />
       <Section label="Engagement / ops" tags={r.engagement} />
       {r.pets.length ? r.pets.map(p => <PetBlock key={p.pet_id} pet={p} />)
-        : <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px', fontStyle: 'italic' }}>No pet on file — online/transacted customer (still targetable for marketing).</p>}
+        : <p style={{ fontSize: '11px', color: C.faint, marginTop: '8px', fontStyle: 'italic' }}>No pet on file — online/transacted customer (still targetable for marketing).</p>}
     </div>
   )
 }
 
 const CATCOL: Record<string, [string, string]> = {
-  'Medicine': ['#FEE2E2', '#991B1B'], 'Preventative': ['#DCFCE7', '#166534'], 'Prescription Diet': ['#FEF3C7', '#92400E'],
+  'Medicine': [C.redBg, C.redInk], 'Preventative': [C.greenBg, C.green], 'Prescription Diet': [C.warnBg, C.amberInk],
   'Supplement': ['#EDE9FE', '#6D28D9'], 'Food': ['#E0F2FE', '#075985'], 'Pet Hygiene': ['#FCE7F3', '#9D174F'],
 }
 interface DemandProd { product: string; category: string; n: number; sku: string; clinic_clients: number; online_clients: number; clinic_units: number; online_units: number; clinic_ltv: number; online_ltv: number; autoship_clients: number; names: number }
@@ -275,8 +276,8 @@ function DemandPanel({ onProduct }: { onProduct: (p: string) => void }) {
     fetch(`${API}/clients/demand`, { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null)).then(setData).catch(() => setData(null))
   }, [])
-  if (!data) return <div style={{ padding: '40px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Counting product demand…</div>
-  const cc = (c: string): [string, string] => CATCOL[c] || ['#F1F5F9', '#475569']
+  if (!data) return <div style={{ padding: '40px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Counting product demand…</div>
+  const cc = (c: string): [string, string] => CATCOL[c] || [C.monoBg, C.sub]
   const CLINIC = '#0D9488', ONLINE = '#2563EB'
   const sort = (k: DKey) => { if (sk === k) setDir(d => d === 'desc' ? 'asc' : 'desc'); else { setSk(k); setDir('desc') } }
   const arrow = (k: DKey) => sk === k ? (dir === 'desc' ? ' ▼' : ' ▲') : ''
@@ -288,31 +289,31 @@ function DemandPanel({ onProduct }: { onProduct: (p: string) => void }) {
   })
   const money = (units: number, ltv: number) => ltv ? '$' + ltv.toLocaleString() : (units ? '—' : '')
   const cols = '2.3fr 0.85fr 1fr 0.62fr 0.95fr 0.95fr 0.7fr 0.72fr'
-  const th: React.CSSProperties = { fontSize: '10px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em', cursor: 'pointer', userSelect: 'none' }
-  const ar = (k: DKey): React.CSSProperties => ({ ...th, textAlign: 'right', color: sk === k ? '#6366F1' : '#64748B' })
+  const th: React.CSSProperties = { fontSize: '10px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.03em', cursor: 'pointer', userSelect: 'none' }
+  const ar = (k: DKey): React.CSSProperties => ({ ...th, textAlign: 'right', color: sk === k ? C.indigo : C.muted })
   return (
     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px 16px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>📊 Demand breakdown — every product transacted ({data.cohort_size.toLocaleString()} customers)
-        <span title="Products are rolled up by an interim name-matcher and clinic $ is indicative — the canonical SKU + cost + margin arrive with Rosetta IMS / OCR." style={{ fontSize: '10px', fontWeight: 700, color: '#92400E', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '8px', padding: '2px 8px' }}>⏳ interim — awaiting Rosetta IMS / OCR</span>
+      <div style={{ fontSize: '14px', fontWeight: 800, color: C.ink, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>📊 Demand breakdown — every product transacted ({data.cohort_size.toLocaleString()} customers)
+        <span title="Products are rolled up by an interim name-matcher and clinic $ is indicative — the canonical SKU + cost + margin arrive with Rosetta IMS / OCR." style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, background: C.warnBg, border: '1px solid #FDE68A', borderRadius: '8px', padding: '2px 8px' }}>⏳ interim — awaiting Rosetta IMS / OCR</span>
       </div>
-      <div style={{ fontSize: '11px', color: '#64748B', margin: '2px 0 10px' }}>
+      <div style={{ fontSize: '11px', color: C.muted, margin: '2px 0 10px' }}>
         Products ranked by clients & revenue, split <b style={{ color: CLINIC }}>🏥 clinic</b> vs <b style={{ color: ONLINE }}>🛒 online</b>. Click a column header to sort; click a product to see its buyers.
-        <span style={{ color: '#94A3B8' }}> “—” = price not captured (Dr Hugh legacy / pre-OCR). Margin lands with IMS/OCR cost data.</span>
+        <span style={{ color: C.faint }}> “—” = price not captured (Dr Hugh legacy / pre-OCR). Margin lands with IMS/OCR cost data.</span>
       </div>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-        <button onClick={() => setCatF('')} style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '13px', cursor: 'pointer', border: `1px solid ${!catF ? '#6366F1' : '#E2E8F0'}`, background: !catF ? '#6366F1' : 'white', color: !catF ? 'white' : '#475569' }}>All</button>
+        <button onClick={() => setCatF('')} style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '13px', cursor: 'pointer', border: `1px solid ${!catF ? C.indigo : C.line}`, background: !catF ? C.indigo : 'white', color: !catF ? 'white' : C.sub }}>All</button>
         {data.by_cat.map(c => {
           const [bg, fg] = cc(c.category); const on = catF === c.category
           return <button key={c.category} onClick={() => setCatF(on ? '' : c.category)}
-            style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '13px', cursor: 'pointer', border: `1px solid ${on ? fg : '#E2E8F0'}`, background: on ? fg : bg, color: on ? 'white' : fg }}>
+            style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '13px', cursor: 'pointer', border: `1px solid ${on ? fg : C.line}`, background: on ? fg : bg, color: on ? 'white' : fg }}>
             {c.category} · {c.n.toLocaleString()}{on ? ' ✓' : ''}
           </button>
         })}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '8px', padding: '6px 8px', borderBottom: '2px solid #E2E8F0' }}>
-        <div style={{ ...th, color: sk === 'product' ? '#6366F1' : '#64748B' }} onClick={() => sort('product')}>Product{arrow('product')}</div>
-        <div style={{ ...th, color: sk === 'sku' ? '#6366F1' : '#64748B' }} onClick={() => sort('sku')}>SKU{arrow('sku')}</div>
-        <div style={{ ...th, color: sk === 'category' ? '#6366F1' : '#64748B' }} onClick={() => sort('category')}>Category{arrow('category')}</div>
+        <div style={{ ...th, color: sk === 'product' ? C.indigo : C.muted }} onClick={() => sort('product')}>Product{arrow('product')}</div>
+        <div style={{ ...th, color: sk === 'sku' ? C.indigo : C.muted }} onClick={() => sort('sku')}>SKU{arrow('sku')}</div>
+        <div style={{ ...th, color: sk === 'category' ? C.indigo : C.muted }} onClick={() => sort('category')}>Category{arrow('category')}</div>
         <div style={ar('n')} onClick={() => sort('n')}>Clients{arrow('n')}</div>
         <div style={ar('clinic_ltv')} onClick={() => sort('clinic_ltv')}>🏥 Clinic ${arrow('clinic_ltv')}</div>
         <div style={ar('online_ltv')} onClick={() => sort('online_ltv')}>🛒 Online ${arrow('online_ltv')}</div>
@@ -325,14 +326,14 @@ function DemandPanel({ onProduct }: { onProduct: (p: string) => void }) {
           return (
             <div key={p.product} onClick={() => onProduct(p.product)} title="click to see buyers in the client list"
               style={{ display: 'grid', gridTemplateColumns: cols, gap: '8px', padding: '7px 8px', borderBottom: '1px solid #F1F5F9', alignItems: 'center', cursor: 'pointer' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.product}>{p.product}{p.names > 1 ? <span style={{ fontSize: '9px', color: '#94A3B8', fontWeight: 400 }} title="variants/sources rolled up"> · {p.names} variants</span> : null}</div>
-              <div style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.sku || '—'}</div>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.product}>{p.product}{p.names > 1 ? <span style={{ fontSize: '9px', color: C.faint, fontWeight: 400 }} title="variants/sources rolled up"> · {p.names} variants</span> : null}</div>
+              <div style={{ fontSize: '11px', color: C.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.sku || '—'}</div>
               <div><span style={{ fontSize: '10px', fontWeight: 700, color: fg, background: bg, padding: '1px 6px', borderRadius: '8px' }}>{p.category}</span></div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.n.toLocaleString()}</div>
-              <div style={{ fontSize: '12px', color: p.clinic_ltv ? CLINIC : '#CBD5E1', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{money(p.clinic_units, p.clinic_ltv)}<div style={{ fontSize: '9px', color: '#94A3B8' }}>{p.clinic_units ? `${p.clinic_units.toLocaleString()}u · ${p.clinic_clients}cl` : ''}</div></div>
-              <div style={{ fontSize: '12px', color: p.online_ltv ? ONLINE : '#CBD5E1', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{money(p.online_units, p.online_ltv)}<div style={{ fontSize: '9px', color: '#94A3B8' }}>{p.online_units ? `${p.online_units.toLocaleString()}u · ${p.online_clients}cl` : ''}</div></div>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: p.autoship_clients ? '#7C3AED' : '#CBD5E1', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.autoship_clients ? p.autoship_clients.toLocaleString() : '—'}</div>
-              <div style={{ fontSize: '11px', color: '#CBD5E1', textAlign: 'right' }}>—</div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.n.toLocaleString()}</div>
+              <div style={{ fontSize: '12px', color: p.clinic_ltv ? CLINIC : C.knobOff, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{money(p.clinic_units, p.clinic_ltv)}<div style={{ fontSize: '9px', color: C.faint }}>{p.clinic_units ? `${p.clinic_units.toLocaleString()}u · ${p.clinic_clients}cl` : ''}</div></div>
+              <div style={{ fontSize: '12px', color: p.online_ltv ? ONLINE : C.knobOff, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{money(p.online_units, p.online_ltv)}<div style={{ fontSize: '9px', color: C.faint }}>{p.online_units ? `${p.online_units.toLocaleString()}u · ${p.online_clients}cl` : ''}</div></div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: p.autoship_clients ? '#7C3AED' : C.knobOff, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.autoship_clients ? p.autoship_clients.toLocaleString() : '—'}</div>
+              <div style={{ fontSize: '11px', color: C.knobOff, textAlign: 'right' }}>—</div>
             </div>
           )
         })}
@@ -349,30 +350,30 @@ function FunnelBar({ qs, label, onExport }: { qs: string; label: string; onExpor
     fetch(`${API}/clients/funnel?${qs}`, { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null)).then(setD).catch(() => setD(null))
   }, [qs])
-  if (!d) return <div style={{ padding: '12px', color: '#94A3B8', fontSize: '13px' }}>Counting…</div>
+  if (!d) return <div style={{ padding: '12px', color: C.faint, fontSize: '13px' }}>Counting…</div>
   const pct = (n: number) => (d.cohort ? Math.round(100 * n / d.cohort) : 0)
   const cards = [
-    { icon: '✉', label: 'Email-reachable', sub: 'Klaviyo CRM', val: d.email, ch: 'email', color: '#92400E', bg: '#FEF3C7' },
-    { icon: '💬', label: 'WhatsApp-reachable', sub: 'ChatArchitect blast', val: d.whatsapp, ch: 'whatsapp', color: '#166534', bg: '#DCFCE7' },
+    { icon: '✉', label: 'Email-reachable', sub: 'Klaviyo CRM', val: d.email, ch: 'email', color: C.amberInk, bg: C.warnBg },
+    { icon: '💬', label: 'WhatsApp-reachable', sub: 'ChatArchitect blast', val: d.whatsapp, ch: 'whatsapp', color: C.green, bg: C.greenBg },
     { icon: '📣', label: 'Meta / Google audience', sub: 'has contact — ad targeting', val: d.meta, ch: 'meta', color: '#6D28D9', bg: '#EDE9FE' },
   ]
   return (
     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px', marginBottom: '14px' }}>
-      <div style={{ fontSize: '13px', color: '#0F172A', marginBottom: '10px' }}>
+      <div style={{ fontSize: '13px', color: C.ink, marginBottom: '10px' }}>
         👥 <b style={{ fontSize: '17px', fontVariantNumeric: 'tabular-nums' }}>{d.cohort.toLocaleString()}</b> customers match — <b>{label}</b>. Reach them via:
       </div>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         {cards.map(c => (
           <div key={c.ch} style={{ flex: '1 1 180px', border: `1px solid ${c.color}33`, background: c.bg, borderRadius: '8px', padding: '8px 10px' }}>
-            <div style={{ fontSize: '19px', fontWeight: 800, color: '#0F172A', fontVariantNumeric: 'tabular-nums' }}>{c.val.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 600, color: c.color }}>({pct(c.val)}%)</span></div>
+            <div style={{ fontSize: '19px', fontWeight: 800, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{c.val.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 600, color: c.color }}>({pct(c.val)}%)</span></div>
             <div style={{ fontSize: '11px', fontWeight: 700, color: c.color }}>{c.icon} {c.label}</div>
-            <div style={{ fontSize: '10px', color: '#64748B', marginBottom: '5px' }}>{c.sub}</div>
+            <div style={{ fontSize: '10px', color: C.muted, marginBottom: '5px' }}>{c.sub}</div>
             <button onClick={() => onExport(c.ch)} disabled={!c.val} style={{ fontSize: '10px', fontWeight: 700, color: 'white', background: c.color, border: 'none', borderRadius: '5px', padding: '3px 8px', cursor: c.val ? 'pointer' : 'default', opacity: c.val ? 1 : 0.4 }}>⬇ Export list</button>
           </div>
         ))}
       </div>
-      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '8px' }}>
-        Of these — behaviour: 🛒 <b style={{ color: '#0F172A' }}>{d.bought_online.toLocaleString()}</b> bought online · 🏥 <b style={{ color: '#0F172A' }}>{d.returned_clinic.toLocaleString()}</b> visited clinic
+      <div style={{ fontSize: '11px', color: C.muted, marginTop: '8px' }}>
+        Of these — behaviour: 🛒 <b style={{ color: C.ink }}>{d.bought_online.toLocaleString()}</b> bought online · 🏥 <b style={{ color: C.ink }}>{d.returned_clinic.toLocaleString()}</b> visited clinic
       </div>
     </div>
   )
@@ -389,7 +390,7 @@ function FilterDropdown({ trigger, color, bg, groups, selected, onToggle }: {
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button onClick={() => setOpen(o => !o)}
         style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '13px', cursor: 'pointer',
-          border: `${nSel ? 2 : 1}px solid ${nSel ? color : '#CBD5E1'}`, background: nSel ? color : bg, color: nSel ? 'white' : color }}>
+          border: `${nSel ? 2 : 1}px solid ${nSel ? color : C.knobOff}`, background: nSel ? color : bg, color: nSel ? 'white' : color }}>
         {trigger}{nSel ? ` · ${nSel}` : ''} ▾
       </button>
       {open && (
@@ -398,15 +399,15 @@ function FilterDropdown({ trigger, color, bg, groups, selected, onToggle }: {
           <div style={{ position: 'absolute', top: '30px', left: 0, zIndex: 31, background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', boxShadow: '0 8px 22px rgba(0,0,0,0.14)', padding: '5px', minWidth: '220px', maxHeight: '340px', overflowY: 'auto' }}>
             {groups.map((g, gi) => (
               <div key={gi}>
-                {g.header && <div style={{ fontSize: '9px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '6px 7px 2px' }}>{g.header}</div>}
+                {g.header && <div style={{ fontSize: '9px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '6px 7px 2px' }}>{g.header}</div>}
                 {g.options.map(o => {
                   const on = selected.includes(o.value)
                   return (
                     <div key={o.value} onClick={() => onToggle(o.value)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 7px', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', background: on ? '#EEF2FF' : 'transparent' }}>
-                      <span style={{ width: '13px', color: on ? color : '#CBD5E1' }}>{on ? '☑' : '☐'}</span>
-                      <span style={{ flex: 1, color: '#0F172A' }}>{o.label}</span>
-                      {o.n != null && <span style={{ color: '#94A3B8', fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>{o.n.toLocaleString()}</span>}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 7px', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', background: on ? C.primaryBg : 'transparent' }}>
+                      <span style={{ width: '13px', color: on ? color : C.knobOff }}>{on ? '☑' : '☐'}</span>
+                      <span style={{ flex: 1, color: C.ink }}>{o.label}</span>
+                      {o.n != null && <span style={{ color: C.faint, fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>{o.n.toLocaleString()}</span>}
                     </div>
                   )
                 })}
@@ -432,13 +433,13 @@ function ChipGroup({ label, options, selected, onToggle, counts, mode, onClear }
         return (
           <button key={v} onClick={() => onToggle(v)}
             style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '13px', cursor: 'pointer',
-              border: `1px solid ${on ? '#6366F1' : '#E2E8F0'}`, background: on ? '#6366F1' : 'white', color: on ? 'white' : '#475569' }}>
+              border: `1px solid ${on ? C.indigo : C.line}`, background: on ? C.indigo : 'white', color: on ? 'white' : C.sub }}>
             {disp}{n != null ? ` (${n.toLocaleString()})` : ''}{on ? ' ✓' : ''}
           </button>
         )
       })}
-      {selected.length > 1 && <span style={{ fontSize: '10px', color: '#6366F1', fontWeight: 600 }}>{mode === 'all' ? '= ALL of these' : '= ANY of these'}</span>}
-      {selected.length > 0 && <button onClick={onClear} style={{ fontSize: '10px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear</button>}
+      {selected.length > 1 && <span style={{ fontSize: '10px', color: C.indigo, fontWeight: 600 }}>{mode === 'all' ? '= ALL of these' : '= ANY of these'}</span>}
+      {selected.length > 0 && <button onClick={onClear} style={{ fontSize: '10px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear</button>}
     </div>
   )
 }
@@ -448,8 +449,8 @@ interface InitData { buckets: InitBucket[]; dr_hugh: { total: number; online: nu
 function InitiativesPanel({ onBuild }: { onBuild: (cat: string) => void }) {
   const [d, setD] = useState<InitData | null>(null)
   useEffect(() => { fetch(`${API}/clients/initiatives`, { headers: authHeaders() }).then(r => (r.ok ? r.json() : null)).then(setD).catch(() => setD(null)) }, [])
-  if (!d) return <div style={{ padding: '40px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Analysing demand → ranking campaign opportunities…</div>
-  const cc = (c: string): [string, string] => CATCOL[c] || ['#F1F5F9', '#475569']
+  if (!d) return <div style={{ padding: '40px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Analysing demand → ranking campaign opportunities…</div>
+  const cc = (c: string): [string, string] => CATCOL[c] || [C.monoBg, C.sub]
   const dh = d.dr_hugh
   const dhpct = dh.total ? Math.round(100 * dh.never_online / dh.total) : 0
   return (
@@ -469,32 +470,32 @@ function InitiativesPanel({ onBuild }: { onBuild: (cat: string) => void }) {
         return (
           <div key={b.category} style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: '#CBD5E1', width: '28px' }}>{i + 1}</div>
+              <div style={{ fontSize: '22px', fontWeight: 800, color: C.knobOff, width: '28px' }}>{i + 1}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: C.ink }}>
                   Move <span style={{ color: fg, background: bg, padding: '1px 8px', borderRadius: '8px' }}>{b.category}</span> demand online
                 </div>
                 <div style={{ fontSize: '13px', color: '#334155', margin: '6px 0' }}>
-                  <b style={{ fontSize: '20px', color: '#0F172A' }}>{b.gap.toLocaleString()}</b> clients buy {b.category.toLowerCase()} <b>in-clinic but never online</b> — the target pool.
+                  <b style={{ fontSize: '20px', color: C.ink }}>{b.gap.toLocaleString()}</b> clients buy {b.category.toLowerCase()} <b>in-clinic but never online</b> — the target pool.
                 </div>
-                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '11px', color: '#64748B', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '11px', color: C.muted, marginBottom: '8px' }}>
                   <span>🏥 {b.clinic_clients.toLocaleString()} clinic buyers</span>
                   <span>🛒 {b.online_clients.toLocaleString()} already online</span>
                   <span>🩺 {b.dr_hugh_clients.toLocaleString()} from Dr Hugh</span>
                   {b.autoship_clients > 0 && <span style={{ color: '#7C3AED' }}>🔁 {b.autoship_clients.toLocaleString()} on autoship</span>}
                   <span title="Ohana invoice revenue — indicative, pre-OCR cost/price unification">💰 ~${b.clinic_ltv.toLocaleString()} clinic ⏳</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#475569', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', color: C.sub, marginBottom: '8px' }}>
                   <b>Feature:</b> {hooks.map((h, j) => <span key={j} style={{ fontWeight: 700, color: fg, background: bg, padding: '1px 7px', borderRadius: '8px', marginRight: '5px' }}>{h}</span>)}
                 </div>
-                <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '10px' }}>
+                <div style={{ fontSize: '11px', color: C.muted, marginBottom: '10px' }}>
                   <b>Reach the {b.total_clients.toLocaleString()}:</b> ✉ {b.reach.email.toLocaleString()} email · 💬 {b.reach.whatsapp.toLocaleString()} WhatsApp · 📣 {b.reach.meta.toLocaleString()} Meta/Google
                 </div>
-                <div style={{ fontSize: '11px', color: '#15803D', background: '#F0FDF4', borderRadius: '6px', padding: '7px 10px', marginBottom: '10px' }}>
+                <div style={{ fontSize: '11px', color: C.ok, background: '#F0FDF4', borderRadius: '6px', padding: '7px 10px', marginBottom: '10px' }}>
                   💡 <b>Play:</b> {hooks[0] ? `“Your ${hooks[0]} — now HK$100 off online”` : 'Savings — HK$100 off online'}. Email-first via Klaviyo, WhatsApp blast to opted-in, Meta custom audience (exclude recent online buyers) for the rest.
                 </div>
                 <button onClick={() => onBuild(b.category)}
-                  style={{ fontSize: '12px', fontWeight: 700, color: 'white', background: '#6366F1', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer' }}>
+                  style={{ fontSize: '12px', fontWeight: 700, color: 'white', background: C.indigo, border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer' }}>
                   Build this audience →
                 </button>
               </div>
@@ -502,7 +503,7 @@ function InitiativesPanel({ onBuild }: { onBuild: (cat: string) => void }) {
           </div>
         )
       })}
-      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '6px' }}>
+      <div style={{ fontSize: '11px', color: C.faint, marginTop: '6px' }}>
         ⏳ = figure waiting on Rosetta IMS / OCR cost & product unification — counts are real; clinic $ is indicative.
       </div>
     </div>
@@ -514,15 +515,15 @@ interface PerfData { lists: PerfRow[]; flows: PerfRow[] }
 function PerformancePanel({ onList, onFlow }: { onList: (n: string) => void; onFlow: (n: string) => void }) {
   const [d, setD] = useState<PerfData | null>(null)
   useEffect(() => { fetch(`${API}/clients/performance`, { headers: authHeaders() }).then(r => (r.ok ? r.json() : null)).then(setD).catch(() => setD(null)) }, [])
-  if (!d) return <div style={{ padding: '40px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Measuring list &amp; flow performance…</div>
-  const th: React.CSSProperties = { fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right', padding: '6px 10px', whiteSpace: 'nowrap' }
+  if (!d) return <div style={{ padding: '40px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Measuring list &amp; flow performance…</div>
+  const th: React.CSSProperties = { fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right', padding: '6px 10px', whiteSpace: 'nowrap' }
   const td: React.CSSProperties = { fontSize: '12px', color: '#334155', textAlign: 'right', padding: '8px 10px', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }
   const maxLConv = Math.max(1, ...d.lists.map(x => x.conv)), maxFConv = Math.max(1, ...d.flows.map(x => x.conv))
   const Table = ({ rows, kind, sizeLbl, onClick, maxConv }: { rows: PerfRow[]; kind: string; sizeLbl: string; onClick: (n: string) => void; maxConv: number }) => (
     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden', marginBottom: '18px' }}>
       <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead><tr style={{ borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+        <thead><tr style={{ borderBottom: '1px solid #E2E8F0', background: C.wash }}>
           <th style={{ ...th, textAlign: 'left' }}>{kind}</th>
           <th style={th}>{sizeLbl}</th><th style={th}>Reachable</th><th style={th}>Purchasers</th>
           <th style={th}>Conv.</th><th style={th}>Revenue</th>
@@ -533,19 +534,19 @@ function PerformancePanel({ onList, onFlow }: { onList: (n: string) => void; onF
           {rows.map((r, i) => (
             <tr key={r.name} style={{ borderBottom: i < rows.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
               <td style={{ ...td, textAlign: 'left' }}>
-                <button onClick={() => onClick(r.name)} style={{ fontSize: '12px', fontWeight: 700, color: '#6366F1', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>{r.name}</button>
+                <button onClick={() => onClick(r.name)} style={{ fontSize: '12px', fontWeight: 700, color: C.indigo, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>{r.name}</button>
               </td>
               <td style={td}>{r.members.toLocaleString()}</td>
-              <td style={{ ...td, color: '#64748B' }}>{r.reachable.toLocaleString()}</td>
+              <td style={{ ...td, color: C.muted }}>{r.reachable.toLocaleString()}</td>
               <td style={td}>{r.purchasers.toLocaleString()}</td>
               <td style={td}>
                 <span style={{ display: 'inline-block', minWidth: '38px' }}>{r.conv}%</span>
-                <span style={{ display: 'inline-block', width: '40px', height: '5px', background: '#EEF2FF', borderRadius: '3px', verticalAlign: 'middle', marginLeft: '4px' }}>
-                  <span style={{ display: 'block', width: `${Math.round(100 * r.conv / maxConv)}%`, height: '5px', background: '#6366F1', borderRadius: '3px' }} /></span>
+                <span style={{ display: 'inline-block', width: '40px', height: '5px', background: C.primaryBg, borderRadius: '3px', verticalAlign: 'middle', marginLeft: '4px' }}>
+                  <span style={{ display: 'block', width: `${Math.round(100 * r.conv / maxConv)}%`, height: '5px', background: C.indigo, borderRadius: '3px' }} /></span>
               </td>
-              <td style={{ ...td, fontWeight: 700, color: '#0F172A' }}>${r.revenue.toLocaleString()}</td>
+              <td style={{ ...td, fontWeight: 700, color: C.ink }}>${r.revenue.toLocaleString()}</td>
               <td style={td}>{kind === 'List' ? `$${r.rev_per.toLocaleString()}` : (r.avg_sends ?? 0)}</td>
-              <td style={{ ...td, color: r.claimed ? '#B45309' : '#CBD5E1' }}>{r.claimed || '—'}</td>
+              <td style={{ ...td, color: r.claimed ? C.amber : C.knobOff }}>{r.claimed || '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -557,15 +558,15 @@ function PerformancePanel({ onList, onFlow }: { onList: (n: string) => void; onF
     <div>
       <div style={{ background: '#F5F7FF', border: '1px solid #C7D2FE', borderRadius: '10px', padding: '13px 16px', marginBottom: '16px' }}>
         <div style={{ fontSize: '14px', fontWeight: 800, color: '#3730A3' }}>📈 Which lists acquire best, and which flows convert best</div>
-        <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', lineHeight: 1.5 }}>
+        <div style={{ fontSize: '12px', color: C.sub, marginTop: '4px', lineHeight: 1.5 }}>
           The funnel per list/flow: <b>members → reachable → purchasers → conversion → revenue → claims</b>. A <b>list</b> is acquisition (top of funnel);
-          a <b>flow</b> is conversion. They share a <i>CHANNEL-CAMPAIGN</i> token, so <code style={{ background: '#EEF2FF', padding: '0 4px', borderRadius: '4px' }}>LIST - SITE - GIFT100</code> pairs with
-          <code style={{ background: '#EEF2FF', padding: '0 4px', borderRadius: '4px' }}>FLOW - SITE - GIFT100</code>. Click any name to see those customers. <span style={{ color: '#94A3B8' }}>Directional — “purchasers” = members who also bought (not strict last-click); autoship flows show ~100% because subscribers are buyers by definition. ⏳ revenue indicative pre-OCR.</span>
+          a <b>flow</b> is conversion. They share a <i>CHANNEL-CAMPAIGN</i> token, so <code style={{ background: C.primaryBg, padding: '0 4px', borderRadius: '4px' }}>LIST - SITE - GIFT100</code> pairs with
+          <code style={{ background: C.primaryBg, padding: '0 4px', borderRadius: '4px' }}>FLOW - SITE - GIFT100</code>. Click any name to see those customers. <span style={{ color: C.faint }}>Directional — “purchasers” = members who also bought (not strict last-click); autoship flows show ~100% because subscribers are buyers by definition. ⏳ revenue indicative pre-OCR.</span>
         </div>
       </div>
-      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', margin: '0 0 6px' }}>✉ Lists — acquisition ({d.lists.length})</div>
+      <div style={{ fontSize: '12px', fontWeight: 700, color: C.ink, margin: '0 0 6px' }}>✉ Lists — acquisition ({d.lists.length})</div>
       <Table rows={d.lists} kind="List" sizeLbl="Members" onClick={onList} maxConv={maxLConv} />
-      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', margin: '0 0 6px' }}>🔁 Flows — conversion ({d.flows.length})</div>
+      <div style={{ fontSize: '12px', fontWeight: 700, color: C.ink, margin: '0 0 6px' }}>🔁 Flows — conversion ({d.flows.length})</div>
       <Table rows={d.flows} kind="Flow" sizeLbl="Reached" onClick={onFlow} maxConv={maxFConv} />
     </div>
   )
@@ -720,22 +721,22 @@ function ClientbasePage() {
   useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t) }, [load])
 
   const cols = '1.4fr 0.95fr 0.7fr 1.5fr 0.9fr 0.95fr 1.0fr 28px'
-  const th: React.CSSProperties = { fontSize: '10px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase', padding: '0 4px' }
+  const th: React.CSSProperties = { fontSize: '10px', fontWeight: 700, color: C.faint, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '0 4px' }
 
   return (
       <div style={{ padding: '24px 28px', maxWidth: '1320px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '4px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Clientbase</h1>
-          <span style={{ fontSize: '12px', color: '#64748B' }}>Client SSOT · customer-first · clinic (DaySmart) + Dr Hugh’s (CHS)</span>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: C.ink, margin: 0 }}>Clientbase</h1>
+          <span style={{ fontSize: '12px', color: C.muted }}>Client SSOT · customer-first · clinic (DaySmart) + Dr Hugh’s (CHS)</span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '14px', whiteSpace: 'nowrap' }}>
             {view === 'list' && <button onClick={() => exportCohort()}
               style={{ fontSize: '12px', fontWeight: 700, padding: '7px 13px', borderRadius: '8px', cursor: 'pointer',
-                border: '1px solid #E2E8F0', background: 'white', color: '#475569' }}>
+                border: '1px solid #E2E8F0', background: 'white', color: C.sub }}>
               ⬇ Export cohort
             </button>}
             {view === 'list' && <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', fontVariantNumeric: 'tabular-nums' }}>{total.toLocaleString()}</span>
-              <span style={{ fontSize: '12px', color: (search.trim() || custSel.length) ? '#6366F1' : '#64748B', marginLeft: '6px', fontWeight: 600 }}>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{total.toLocaleString()}</span>
+              <span style={{ fontSize: '12px', color: (search.trim() || custSel.length) ? C.indigo : C.muted, marginLeft: '6px', fontWeight: 600 }}>
                 {(search.trim() || custSel.length) ? 'matching' : 'customers'}
               </span>
             </div>}
@@ -746,13 +747,13 @@ function ClientbasePage() {
           {([['list', '👥 Client Database'], ['demand', '📊 Demand Breakdown'], ['campaign', '📣 Marketing Initiatives'], ['performance', '📈 CRM Performance']] as const).map(([v, label]) => (
             <button key={v} onClick={() => setView(v)}
               style={{ fontSize: '13px', fontWeight: 700, padding: '8px 16px', cursor: 'pointer', background: 'none', border: 'none',
-                color: view === v ? '#6366F1' : '#64748B', borderBottom: `2px solid ${view === v ? '#6366F1' : 'transparent'}`, marginBottom: '-1px' }}>
+                color: view === v ? C.indigo : C.muted, borderBottom: `2px solid ${view === v ? C.indigo : 'transparent'}`, marginBottom: '-1px' }}>
               {label}
             </button>
           ))}
           <button onClick={() => setView('guide')}
             style={{ fontSize: '13px', fontWeight: 700, padding: '8px 16px', cursor: 'pointer', background: 'none', border: 'none',
-              color: view === 'guide' ? '#6366F1' : '#64748B', borderBottom: `2px solid ${view === 'guide' ? '#6366F1' : 'transparent'}`, marginBottom: '-1px', marginLeft: 'auto' }}>
+              color: view === 'guide' ? C.indigo : C.muted, borderBottom: `2px solid ${view === 'guide' ? C.indigo : 'transparent'}`, marginBottom: '-1px', marginLeft: 'auto' }}>
             📖 How to use
           </button>
         </div>
@@ -766,14 +767,14 @@ function ClientbasePage() {
         ) : view === 'performance' ? (
           <PerformancePanel onList={n => { setView('list'); setCrmSel([n]) }} onFlow={n => { setView('list'); setFlowSel([n]) }} />
         ) : (<>
-        <p style={{ fontSize: '12px', color: '#94A3B8', margin: '0 0 16px' }}>
+        <p style={{ fontSize: '12px', color: C.faint, margin: '0 0 16px' }}>
           {summary ? `${summary.customers.toLocaleString()} customers · ${summary.pets.toLocaleString()} pets — every customer shown, pets nested` : 'Loading…'}
         </p>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search owner, email or phone…"
             style={{ border: '1px solid #E2E8F0', borderRadius: '6px', padding: '8px 11px', fontSize: '13px', width: '300px', background: 'white' }} />
-          <label style={{ fontSize: '11px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+          <label style={{ fontSize: '11px', color: C.muted, display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
             <input type="checkbox" checked={includeLeads} onChange={e => setIncludeLeads(e.target.checked)} /> Include newsletter leads (non-buyers)
           </label>
         </div>
@@ -784,8 +785,8 @@ function ClientbasePage() {
             return (
               <div onClick={() => setFiltersOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: filtersOpen ? '10px' : 0 }}>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>🔍 Filters</span>
-                {nActive > 0 && <span style={{ fontSize: '10px', fontWeight: 700, color: 'white', background: '#6366F1', borderRadius: '10px', padding: '1px 8px' }}>{nActive} active — {cohortLabel}</span>}
-                <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#6366F1', fontWeight: 700 }}>{filtersOpen ? '▾ hide' : '▸ show'}</span>
+                {nActive > 0 && <span style={{ fontSize: '10px', fontWeight: 700, color: 'white', background: C.indigo, borderRadius: '10px', padding: '1px 8px' }}>{nActive} active — {cohortLabel}</span>}
+                <span style={{ marginLeft: 'auto', fontSize: '12px', color: C.indigo, fontWeight: 700 }}>{filtersOpen ? '▾ hide' : '▸ show'}</span>
               </div>
             )
           })()}
@@ -797,8 +798,8 @@ function ClientbasePage() {
               return (
                 <button key={v} onClick={() => tog(custSel, setCustSel, v)}
                   style={{ fontSize: big ? '12px' : '11px', fontWeight: big ? 800 : 500, padding: big ? '5px 13px' : '3px 9px',
-                    borderRadius: '13px', cursor: 'pointer', border: `${big ? 2 : 1}px solid ${on ? '#4338CA' : (big ? '#6366F1' : '#E2E8F0')}`,
-                    background: on ? '#6366F1' : (big ? '#EEF2FF' : 'white'), color: on ? 'white' : (big ? '#3730A3' : '#64748B') }}>
+                    borderRadius: '13px', cursor: 'pointer', border: `${big ? 2 : 1}px solid ${on ? C.indigoInk : (big ? C.indigo : C.line)}`,
+                    background: on ? C.indigo : (big ? C.primaryBg : 'white'), color: on ? 'white' : (big ? '#3730A3' : C.muted) }}>
                   {label}{n != null ? ` (${n.toLocaleString()})` : ''}{on ? ' ✓' : ''}
                 </button>
               )
@@ -810,7 +811,7 @@ function ClientbasePage() {
                 {chip('chs', '🩺 Dr Hugh', true)}
                 <FilterDropdown trigger={`🏥 Ohana (${(cc.ohana || 0).toLocaleString()})`} color="#0D9488" bg="#F0FDFA" selected={custSel} onToggle={onCust}
                   groups={[{ options: [{ value: 'ohana', label: 'All Ohana', n: cc.ohana }, { value: 'new_ohana', label: 'New to Ohana', n: cc.new_ohana }] }]} />
-                <FilterDropdown trigger={`🛒 Website (${(cc.online || 0).toLocaleString()})`} color="#166534" bg="#F0FDF4" selected={custSel} onToggle={onCust}
+                <FilterDropdown trigger={`🛒 Website (${(cc.online || 0).toLocaleString()})`} color={C.green} bg="#F0FDF4" selected={custSel} onToggle={onCust}
                   groups={[{ options: [
                     { value: 'online', label: 'All Website buyers', n: cc.online },
                     { value: 'onetime', label: 'One-time buyers', n: cc.onetime },
@@ -819,8 +820,8 @@ function ClientbasePage() {
                     { value: 'psg', label: 'PSG 2020-21 Rx audience', n: cc.psg },
                   ] }]} />
                 {chip('prospect', '📋 Prospects', true)}
-                {custSel.length > 1 && <span style={{ fontSize: '10px', color: '#6366F1', fontWeight: 700 }}>= in ALL {custSel.length} (overlap)</span>}
-                {custSel.length > 0 && <button onClick={() => setCustSel([])} style={{ fontSize: '10px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear</button>}
+                {custSel.length > 1 && <span style={{ fontSize: '10px', color: C.indigo, fontWeight: 700 }}>= in ALL {custSel.length} (overlap)</span>}
+                {custSel.length > 0 && <button onClick={() => setCustSel([])} style={{ fontSize: '10px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear</button>}
               </div>
             )
           })()}
@@ -836,8 +837,8 @@ function ClientbasePage() {
                   {prodResults.map(p => (
                     <div key={p.product} onClick={() => { if (!dprodSel.includes(p.product)) setDprodSel([...dprodSel, p.product]); setProdQ(''); setProdResults([]) }}
                       style={{ padding: '5px 9px', fontSize: '11px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9' }}>
-                      <div>{p.product} <span style={{ color: '#94A3B8' }}>({p.n.toLocaleString()})</span></div>
-                      <div style={{ fontSize: '9px', color: '#94A3B8' }}>{p.category}{p.sources ? ' · ' + p.sources : ''}</div>
+                      <div>{p.product} <span style={{ color: C.faint }}>({p.n.toLocaleString()})</span></div>
+                      <div style={{ fontSize: '9px', color: C.faint }}>{p.category}{p.sources ? ' · ' + p.sources : ''}</div>
                     </div>
                   ))}
                 </div>
@@ -845,7 +846,7 @@ function ClientbasePage() {
             </div>
             {dprodSel.map(p => (
               <button key={p} onClick={() => setDprodSel(dprodSel.filter(x => x !== p))}
-                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '13px', border: '1px solid #6366F1', background: '#6366F1', color: 'white', cursor: 'pointer' }}>
+                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '13px', border: '1px solid #6366F1', background: C.indigo, color: 'white', cursor: 'pointer' }}>
                 {p.length > 26 ? p.slice(0, 26) + '…' : p} ✕
               </button>
             ))}
@@ -866,7 +867,7 @@ function ClientbasePage() {
                   {collResults.map(c => (
                     <div key={c.collection} onClick={() => { if (!dcollSel.includes(c.collection)) setDcollSel([...dcollSel, c.collection]); setCollQ(''); setCollResults([]) }}
                       style={{ padding: '5px 9px', fontSize: '11px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9' }}>
-                      ⊞ {c.collection} <span style={{ color: '#94A3B8' }}>({c.n.toLocaleString()})</span>
+                      ⊞ {c.collection} <span style={{ color: C.faint }}>({c.n.toLocaleString()})</span>
                     </div>
                   ))}
                 </div>
@@ -874,13 +875,13 @@ function ClientbasePage() {
             </div>
             {dcollSel.map(c => (
               <button key={c} onClick={() => setDcollSel(dcollSel.filter(x => x !== c))}
-                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '13px', border: '1px solid #6366F1', background: '#6366F1', color: 'white', cursor: 'pointer' }}>
+                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '13px', border: '1px solid #6366F1', background: C.indigo, color: 'white', cursor: 'pointer' }}>
                 ⊞ {c.length > 24 ? c.slice(0, 24) + '…' : c} ✕
               </button>
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', flexWrap: 'wrap', marginBottom: '7px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#B91C1C', width: '108px', flexShrink: 0 }}>↳ but NOT</span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: C.bad, width: '108px', flexShrink: 0 }}>↳ but NOT</span>
             <div style={{ position: 'relative' }}>
               <input value={xprodQ} onChange={e => setXprodQ(e.target.value)} placeholder="− exclude buyers of (e.g. Heartgard)…"
                 style={{ border: '1px solid #FCA5A5', borderRadius: '13px', padding: '4px 10px', fontSize: '11px', width: '240px' }} />
@@ -889,7 +890,7 @@ function ClientbasePage() {
                   {xprodResults.map(p => (
                     <div key={p.product} onClick={() => { if (!xprodSel.includes(p.product)) setXprodSel([...xprodSel, p.product]); setXprodQ(''); setXprodResults([]) }}
                       style={{ padding: '5px 9px', fontSize: '11px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9' }}>
-                      {p.product} <span style={{ color: '#94A3B8' }}>({p.n.toLocaleString()})</span>
+                      {p.product} <span style={{ color: C.faint }}>({p.n.toLocaleString()})</span>
                     </div>
                   ))}
                 </div>
@@ -897,7 +898,7 @@ function ClientbasePage() {
             </div>
             {xprodSel.map(p => (
               <button key={p} onClick={() => setXprodSel(xprodSel.filter(x => x !== p))}
-                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '13px', border: '1px solid #DC2626', background: '#FEE2E2', color: '#B91C1C', cursor: 'pointer' }}>
+                style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '13px', border: '1px solid #DC2626', background: C.redBg, color: C.bad, cursor: 'pointer' }}>
                 ✕ {p.length > 26 ? p.slice(0, 26) + '…' : p}
               </button>
             ))}
@@ -931,9 +932,9 @@ function ClientbasePage() {
                   groups={[{ options: lists.map(l => ({ value: l.name, label: l.name, n: l.n })) }]} />
                 <FilterDropdown trigger="🔁 Got a flow" color="#7C3AED" bg="#F3E8FF" selected={flowSel} onToggle={v => tog(flowSel, setFlowSel, v)}
                   groups={flowGroups.length ? flowGroups : [{ options: [{ value: '', label: 'pulling Klaviyo flows…' }] }]} />
-                {cdisc.length > 0 && <FilterDropdown trigger="🎟 Claimed" color="#B45309" bg="#FEF3C7" selected={discountSel} onToggle={v => tog(discountSel, setDiscountSel, v)}
+                {cdisc.length > 0 && <FilterDropdown trigger="🎟 Claimed" color={C.amber} bg={C.warnBg} selected={discountSel} onToggle={v => tog(discountSel, setDiscountSel, v)}
                   groups={[{ options: cdisc.map(d => ({ value: d.code, label: d.code, n: d.n })) }]} />}
-                {(crmSel.length + flowSel.length + discountSel.length > 0) && <button onClick={() => { setCrmSel([]); setFlowSel([]); setDiscountSel([]) }} style={{ fontSize: '10px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear CRM</button>}
+                {(crmSel.length + flowSel.length + discountSel.length > 0) && <button onClick={() => { setCrmSel([]); setFlowSel([]); setDiscountSel([]) }} style={{ fontSize: '10px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear CRM</button>}
               </div>
             )
           })()}
@@ -941,17 +942,17 @@ function ClientbasePage() {
           {((summary?.utm_campaigns || []).length + (summary?.landing_pages || []).length + (summary?.referrals || []).length > 0) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '7px', paddingTop: '7px', borderTop: '1px solid #F1F5F9' }}>
               <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155', width: '108px', flexShrink: 0 }} title="Where they first landed online — from Shopify. Recent online buyers only (~online cohort); clinic-only customers have none.">First touch ⓘ</span>
-              {(summary?.utm_campaigns || []).length > 0 && <FilterDropdown trigger="🎯 Campaign / partner" color="#6366F1" bg="#EEF2FF" selected={campSel} onToggle={v => tog(campSel, setCampSel, v)}
+              {(summary?.utm_campaigns || []).length > 0 && <FilterDropdown trigger="🎯 Campaign / partner" color={C.indigo} bg={C.primaryBg} selected={campSel} onToggle={v => tog(campSel, setCampSel, v)}
                 groups={[{ options: (summary?.utm_campaigns || []).map(c => ({ value: c.campaign, label: `${c.campaign} · ${c.source}/${c.medium}`, n: c.n })) }]} />}
               {(summary?.landing_pages || []).length > 0 && <FilterDropdown trigger="🔗 Landing page" color="#0F766E" bg="#F0FDFA" selected={landSel} onToggle={v => tog(landSel, setLandSel, v)}
                 groups={[{ options: (summary?.landing_pages || []).map(l => ({ value: l.path, label: l.path, n: l.n })) }]} />}
-              {(summary?.referrals || []).length > 0 && <FilterDropdown trigger="↗ Referral" color="#B45309" bg="#FEF3C7" selected={refSel} onToggle={v => tog(refSel, setRefSel, v)}
+              {(summary?.referrals || []).length > 0 && <FilterDropdown trigger="↗ Referral" color={C.amber} bg={C.warnBg} selected={refSel} onToggle={v => tog(refSel, setRefSel, v)}
                 groups={[{ options: (summary?.referrals || []).map(r => ({ value: r.domain, label: r.domain, n: r.n })) }]} />}
-              {(campSel.length + landSel.length + refSel.length > 0) && <button onClick={() => { setCampSel([]); setLandSel([]); setRefSel([]) }} style={{ fontSize: '10px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear</button>}
-              <span style={{ fontSize: '10px', color: '#94A3B8' }}>recent online journeys</span>
+              {(campSel.length + landSel.length + refSel.length > 0) && <button onClick={() => { setCampSel([]); setLandSel([]); setRefSel([]) }} style={{ fontSize: '10px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>clear</button>}
+              <span style={{ fontSize: '10px', color: C.faint }}>recent online journeys</span>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', fontSize: '12px', color: '#64748B', marginTop: '4px', paddingTop: '7px', borderTop: '1px solid #F1F5F9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', fontSize: '12px', color: C.muted, marginTop: '4px', paddingTop: '7px', borderTop: '1px solid #F1F5F9' }}>
             <span style={{ fontWeight: 700, color: '#334155', width: '108px', flexShrink: 0 }}>Dates / Rx</span>
             <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }} title="Customers who made a purchase inside this window (any source)">Purchased
               <input type="date" value={pfrom} onChange={e => setPfrom(e.target.value)} style={{ border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }} />
@@ -973,19 +974,19 @@ function ClientbasePage() {
 
         <FunnelBar qs={filterQs} label={cohortLabel} onExport={exportCohort} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', fontSize: '11px', color: '#64748B' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', fontSize: '11px', color: C.muted }}>
           <span style={{ fontWeight: 600 }}>Source:</span>
           {Object.entries(SRC).map(([name, [ltr, col]]) => (
             <span key={name} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: '8px', fontWeight: 700, color: 'white', background: col, borderRadius: '50%', width: '13px', height: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{ltr}</span>{name}
             </span>
           ))}
-          <span style={{ marginLeft: '4px', color: '#94A3B8' }}>· ring = same care-type in &gt;1 source</span>
+          <span style={{ marginLeft: '4px', color: C.faint }}>· ring = same care-type in &gt;1 source</span>
         </div>
 
         <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '8px', padding: '10px 14px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-            {(() => { const sh: React.CSSProperties = { ...th, cursor: 'pointer', userSelect: 'none' }; const act = (k: string): React.CSSProperties => sort === k ? { ...sh, color: '#6366F1' } : sh; return (<>
+          <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '8px', padding: '10px 14px', borderBottom: '1px solid #E2E8F0', background: C.wash }}>
+            {(() => { const sh: React.CSSProperties = { ...th, cursor: 'pointer', userSelect: 'none' }; const act = (k: string): React.CSSProperties => sort === k ? { ...sh, color: C.indigo } : sh; return (<>
               <div style={act('owner')} onClick={() => sortBy('owner')}>Owner{sortArrow('owner')}</div>
               <div style={th}>CRM ✉/💬</div>
               <div style={act('last_buy')} onClick={() => sortBy('last_buy')}>Last buy{sortArrow('last_buy')}</div>
@@ -996,83 +997,83 @@ function ClientbasePage() {
               <div></div>
             </>) })()}
           </div>
-          {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Loading…</div>
-            : rows.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>No matches.</div>
+          {loading ? <div style={{ padding: '40px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Loading…</div>
+            : rows.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>No matches.</div>
             : rows.map(r => {
               const open = expanded === r.customer_id
               return (
                 <div key={r.customer_id}>
                   <div onClick={() => setExpanded(open ? null : r.customer_id)}
                     style={{ display: 'grid', gridTemplateColumns: cols, gap: '8px', padding: '10px 14px',
-                      borderBottom: open ? 'none' : '1px solid #F1F5F9', alignItems: 'center', background: open ? '#F8FAFC' : 'white', cursor: 'pointer' }}>
+                      borderBottom: open ? 'none' : '1px solid #F1F5F9', alignItems: 'center', background: open ? C.wash : 'white', cursor: 'pointer' }}>
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{r.owner || '—'}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: C.ink }}>{r.owner || '—'}</div>
                       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center', marginTop: '3px' }}>
                         <SegmentBadge seg={r.segment} />
-                        {r.bought_rx && <span title="Has bought prescription products" style={{ fontSize: '9px', fontWeight: 700, color: 'white', background: '#991B1B', padding: '1px 6px', borderRadius: '8px' }}>Rx</span>}
+                        {r.bought_rx && <span title="Has bought prescription products" style={{ fontSize: '9px', fontWeight: 700, color: 'white', background: C.redInk, padding: '1px 6px', borderRadius: '8px' }}>Rx</span>}
                         {r.cs_contact && <span title={`Last CS contact ${r.cs_contact.last_contact}`} style={{ fontSize: '9px', fontWeight: 700, color: 'white', background: '#DB2777', padding: '1px 6px', borderRadius: '8px' }}>🎧 {r.cs_contact.last_contact?.slice(5)}</span>}
                         <SourceTags sources={r.sources} />
                       </div>
                     </div>
                     <div style={{ fontSize: '10px', display: 'flex', flexDirection: 'column', gap: '2px', fontVariantNumeric: 'tabular-nums' }}>
-                      <span title="Last emailed (Klaviyo)" style={{ color: r.crm?.last_email ? '#92400E' : '#CBD5E1' }}>✉ {r.crm?.last_email ? r.crm.last_email.slice(2) : '—'}</span>
-                      <span title="Last WhatsApp contact" style={{ color: r.crm?.last_whatsapp ? '#166534' : '#CBD5E1' }}>💬 {r.crm?.last_whatsapp ? r.crm.last_whatsapp.slice(2) : '—'}</span>
+                      <span title="Last emailed (Klaviyo)" style={{ color: r.crm?.last_email ? C.amberInk : C.knobOff }}>✉ {r.crm?.last_email ? r.crm.last_email.slice(2) : '—'}</span>
+                      <span title="Last WhatsApp contact" style={{ color: r.crm?.last_whatsapp ? C.green : C.knobOff }}>💬 {r.crm?.last_whatsapp ? r.crm.last_whatsapp.slice(2) : '—'}</span>
                       {r.crm?.lists?.length ? <span title={r.crm.lists.join(', ')} style={{ color: '#0E7490', fontWeight: 600 }}>📋 {r.crm.lists.length} list{r.crm.lists.length > 1 ? 's' : ''}</span> : null}
                       {r.crm?.flows?.length ? <span title={r.crm.flows.map(f => `${f.flow} (${f.last})`).join('\n')} style={{ color: '#7C3AED', fontWeight: 600 }}>🔁 {r.crm.flows.length} flow{r.crm.flows.length > 1 ? 's' : ''}</span> : null}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#0F172A', fontVariantNumeric: 'tabular-nums' }}>{r.last_purchase || <span style={{ color: '#CBD5E1' }}>—</span>}</div>
+                    <div style={{ fontSize: '12px', color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{r.last_purchase || <span style={{ color: C.knobOff }}>—</span>}</div>
                     <div style={{ fontSize: '12px' }}>
                       {r.recent_purchases && r.recent_purchases.length ? (() => {
                         const p = r.recent_purchases[0]
-                        const sc = p.source === 'Shopify' ? '#166534' : p.source === 'Dr Hugh' ? '#6B21A8' : '#0D9488'
-                        const cm: Record<string, string[]> = { 'Preventative': ['#DCFCE7', '#166534'], 'Prescription Diet': ['#FEF3C7', '#92400E'], 'Medicine': ['#FEE2E2', '#991B1B'] }
-                        const [cbg, cfg] = cm[p.category] || ['#F1F5F9', '#475569']
+                        const sc = p.source === 'Shopify' ? C.green : p.source === 'Dr Hugh' ? '#6B21A8' : '#0D9488'
+                        const cm: Record<string, string[]> = { 'Preventative': [C.greenBg, C.green], 'Prescription Diet': [C.warnBg, C.amberInk], 'Medicine': [C.redBg, C.redInk] }
+                        const [cbg, cfg] = cm[p.category] || [C.monoBg, C.sub]
                         return (<>
                           <span style={{ fontSize: '11px', fontWeight: 700, color: cfg, background: cbg, padding: '1px 6px', borderRadius: '8px' }}>{p.category}</span>
                           {p.on_shopify ? <span style={{ fontSize: '10px', marginLeft: '4px' }}>🛒</span> : null}
-                          <div style={{ fontSize: '10px', color: '#64748B', marginTop: '3px' }}>
+                          <div style={{ fontSize: '10px', color: C.muted, marginTop: '3px' }}>
                             {p.product.length > 32 ? p.product.slice(0, 32) + '…' : p.product} <span style={{ color: sc, fontWeight: 700 }}>· {p.source}</span>
                           </div>
                         </>)
-                      })() : <span style={{ color: '#CBD5E1' }}>—</span>}
+                      })() : <span style={{ color: C.knobOff }}>—</span>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-start' }}>
                       {(r.purchase_cats || []).slice(0, 3).map((c, i) => {
-                        const m: Record<string, string[]> = { 'Preventative': ['#DCFCE7', '#166534'], 'Prescription Diet': ['#FEF3C7', '#92400E'], 'Medicine': ['#FEE2E2', '#991B1B'] }
-                        const [bg, fg] = m[c] || ['#F1F5F9', '#475569']
+                        const m: Record<string, string[]> = { 'Preventative': [C.greenBg, C.green], 'Prescription Diet': [C.warnBg, C.amberInk], 'Medicine': [C.redBg, C.redInk] }
+                        const [bg, fg] = m[c] || [C.monoBg, C.sub]
                         return <span key={i} style={{ fontSize: '9px', fontWeight: 700, color: fg, background: bg, padding: '1px 6px', borderRadius: '8px' }}>{c}</span>
                       })}
-                      {!(r.purchase_cats || []).length ? <span style={{ color: '#CBD5E1', fontSize: '11px' }}>—</span> : null}
+                      {!(r.purchase_cats || []).length ? <span style={{ color: C.knobOff, fontSize: '11px' }}>—</span> : null}
                     </div>
                     <div style={{ fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>
                       {(r.clinic_ltv || r.shopify_ltv) ? (<>
                         <div style={{ color: '#0D9488' }}>🏥 ${Math.round(r.clinic_ltv || 0).toLocaleString()}</div>
-                        <div style={{ color: '#166534' }}>🛒 ${Math.round(r.shopify_ltv || 0).toLocaleString()}</div>
-                      </>) : <span style={{ color: '#CBD5E1' }}>—</span>}
+                        <div style={{ color: C.green }}>🛒 ${Math.round(r.shopify_ltv || 0).toLocaleString()}</div>
+                      </>) : <span style={{ color: C.knobOff }}>—</span>}
                     </div>
                     <div style={{ fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       {r.cs_contact?.sentiment ? (() => {
                         const s = r.cs_contact.sentiment
-                        const col = s === 'poor' ? '#DC2626' : s === 'happy' ? '#16A34A' : '#94A3B8'
+                        const col = s === 'poor' ? '#DC2626' : s === 'happy' ? '#16A34A' : C.faint
                         const lbl = s === 'poor' ? 'Poor' : s === 'happy' ? 'Happy' : 'Fine'
                         return <span style={{ color: col, fontWeight: 700 }}>● {lbl}</span>
                       })() : null}
                       {r.unfulfilled ? (() => {
                         const days = Math.floor((Date.now() - Date.parse(r.unfulfilled.oldest)) / 86400000)
                         const urgent = days > 4
-                        return <span style={{ color: urgent ? '#B45309' : '#64748B', fontWeight: urgent ? 700 : 400 }}>📦 {r.unfulfilled.count} unfilled · {days}d{urgent ? ' ⚠' : ''}</span>
+                        return <span style={{ color: urgent ? C.amber : C.muted, fontWeight: urgent ? 700 : 400 }}>📦 {r.unfulfilled.count} unfilled · {days}d{urgent ? ' ⚠' : ''}</span>
                       })() : null}
                       {r.cs_contact && !r.cs_contact.sentiment ? <span style={{ color: '#DB2777' }}>🎧 in CS</span> : null}
-                      <span style={{ fontSize: '9px', color: '#94A3B8' }}>🏥 {r.last_clinic ? r.last_clinic.slice(2) : '—'} · 🛒 {r.last_shopify ? r.last_shopify.slice(2) : '—'}</span>
+                      <span style={{ fontSize: '9px', color: C.faint }}>🏥 {r.last_clinic ? r.last_clinic.slice(2) : '—'} · 🛒 {r.last_shopify ? r.last_shopify.slice(2) : '—'}</span>
                     </div>
-                    <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px' }}>{open ? '▾' : '▸'}</div>
+                    <div style={{ textAlign: 'center', color: C.faint, fontSize: '12px' }}>{open ? '▾' : '▸'}</div>
                   </div>
-                  {open && <div style={{ padding: '4px 14px 14px', borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}><DetailPanel r={r} /></div>}
+                  {open && <div style={{ padding: '4px 14px 14px', borderBottom: '1px solid #F1F5F9', background: C.wash }}><DetailPanel r={r} /></div>}
                 </div>
               )
             })}
         </div>
-        <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '10px' }}>
+        <p style={{ fontSize: '11px', color: C.faint, marginTop: '10px' }}>
           Showing {rows.length} of {total.toLocaleString()} customers{main ? ` with ${main}` : ''}. Care types are draft (v1) — refine as we go.
         </p>
         </>)}

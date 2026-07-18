@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { authHeaders, can } from '@/lib/auth'
@@ -21,9 +22,9 @@ interface Brand { normalized: string; name: string; is_fmcg: boolean | null; lin
 type Draft = Partial<Record<'code' | 'name' | 'segment' | 'contact_name' | 'contact_email' | 'contact_phone' | 'lead_time_days' | 'moq_value' | 'credit_term' | 'order_days' | 'cut_off_time' | 'delivery_days', string>>
 
 const inp: React.CSSProperties = { border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 9px', fontSize: '12px', background: 'white' }
-const lbl: React.CSSProperties = { fontSize: '10px', fontWeight: 600, color: '#94A3B8' }
+const lbl: React.CSSProperties = { fontSize: '10px', fontWeight: 600, color: C.faint }
 const btn = (bg: string, fg: string): React.CSSProperties => ({ padding: '6px 12px', fontSize: '12px', fontWeight: 600, background: bg, color: fg, border: 'none', borderRadius: '6px', cursor: 'pointer' })
-const ghost: React.CSSProperties = { padding: '5px 10px', fontSize: '11px', fontWeight: 600, background: 'white', color: '#475569', border: '1px solid #E2E8F0', borderRadius: '5px', cursor: 'pointer' }
+const ghost: React.CSSProperties = { padding: '5px 10px', fontSize: '11px', fontWeight: 600, background: 'white', color: C.sub, border: '1px solid #E2E8F0', borderRadius: '5px', cursor: 'pointer' }
 
 const FIELDS: Array<[keyof Draft, string, string]> = [
   ['name', 'Name', '220px'], ['segment', 'Segment (vet/non_vet)', '130px'],
@@ -140,17 +141,17 @@ function SuppliersPage() {
     return q ? brands.filter(b => b.name.toLowerCase().includes(q) || b.links.some(l => l.supplier_name.toLowerCase().includes(q))) : brands
   }, [brands, brandQ])
 
-  const th: React.CSSProperties = { padding: '8px 10px', fontSize: '10px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid #E2E8F0' }
+  const th: React.CSSProperties = { padding: '8px 10px', fontSize: '10px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid #E2E8F0' }
   const td: React.CSSProperties = { padding: '8px 10px', fontSize: '12px', color: '#334155', borderBottom: '1px solid #F1F5F9', verticalAlign: 'top' }
 
   return (
     <div style={{ maxWidth: '1180px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
         <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>Suppliers</h1>
-          <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '3px' }}>Supplier master + brand links. {isAdmin ? 'Changes are audited.' : 'View only · Admin to edit.'}</p>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink }}>Suppliers</h1>
+          <p style={{ fontSize: '12px', color: C.faint, marginTop: '3px' }}>Supplier master + brand links. {isAdmin ? 'Changes are audited.' : 'View only · Admin to edit.'}</p>
         </div>
-        {isAdmin && !adding && <button style={btn('#6366F1', 'white')} onClick={() => setAdding(true)}>+ Add supplier</button>}
+        {isAdmin && !adding && <button style={btn(C.indigo, 'white')} onClick={() => setAdding(true)}>+ Add supplier</button>}
       </div>
 
       {isAdmin && adding && (
@@ -163,7 +164,7 @@ function SuppliersPage() {
         </div>
       )}
 
-      {loading ? <p style={{ fontSize: '13px', color: '#94A3B8' }}>Loading…</p> : (
+      {loading ? <p style={{ fontSize: '13px', color: C.faint }}>Loading…</p> : (
         <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'auto', marginBottom: '24px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
@@ -175,17 +176,17 @@ function SuppliersPage() {
               {suppliers.map(s => (
                 editingId === s.id ? (
                   <tr key={s.id}><td style={td} colSpan={isAdmin ? 11 : 10}>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#4338CA', marginBottom: '8px' }}>Editing {s.code}</div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: C.indigoInk, marginBottom: '8px' }}>Editing {s.code}</div>
                     <DraftForm d={edit} set={setEdit} />
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                      <button style={btn('#6366F1', 'white')} disabled={busy} onClick={() => saveEdit(s)}>{busy ? 'Saving…' : 'Save'}</button>
+                      <button style={btn(C.indigo, 'white')} disabled={busy} onClick={() => saveEdit(s)}>{busy ? 'Saving…' : 'Save'}</button>
                       <button style={ghost} onClick={() => setEditingId(null)}>Cancel</button>
                     </div>
                   </td></tr>
                 ) : (
                   <tr key={s.id} style={{ opacity: s.is_active ? 1 : 0.5 }}>
                     <td style={{ ...td, fontFamily: 'monospace', fontWeight: 600 }}>{s.code}</td>
-                    <td style={{ ...td, fontWeight: 600, color: '#0F172A' }}>{s.name}{!s.is_active && <span style={{ marginLeft: '6px', fontSize: '9px', fontWeight: 700, color: '#64748B', background: '#F1F5F9', padding: '1px 6px', borderRadius: '99px' }}>INACTIVE</span>}</td>
+                    <td style={{ ...td, fontWeight: 600, color: C.ink }}>{s.name}{!s.is_active && <span style={{ marginLeft: '6px', fontSize: '9px', fontWeight: 700, color: C.muted, background: C.monoBg, padding: '1px 6px', borderRadius: '99px' }}>INACTIVE</span>}</td>
                     <td style={td}>{s.segment ?? '—'}</td>
                     <td style={td}>{[s.contact_name, s.contact_email].filter(Boolean).join(' · ') || '—'}</td>
                     <td style={td}>{s.lead_time_days ?? '—'}</td>
@@ -201,7 +202,7 @@ function SuppliersPage() {
                             setEditingId(s.id)
                             setEdit({ name: s.name, segment: s.segment ?? '', contact_name: s.contact_name ?? '', contact_email: s.contact_email ?? '', lead_time_days: s.lead_time_days != null ? String(s.lead_time_days) : '', moq_value: s.moq_value ?? '', credit_term: s.credit_term ?? '', order_days: s.order_days ?? '', cut_off_time: s.cut_off_time ?? '', delivery_days: s.delivery_days ?? '' })
                           }}>Edit</button>
-                          <button style={{ ...ghost, color: s.is_active ? '#991B1B' : '#166534', borderColor: s.is_active ? '#FECACA' : '#BBF7D0' }} onClick={() => toggleActive(s)}>
+                          <button style={{ ...ghost, color: s.is_active ? C.redInk : C.green, borderColor: s.is_active ? '#FECACA' : '#BBF7D0' }} onClick={() => toggleActive(s)}>
                             {s.is_active ? 'Deactivate' : 'Reactivate'}
                           </button>
                           <ReparseButton scope="supplier" refId={s.id} label="↻ Re-parse"
@@ -221,8 +222,8 @@ function SuppliersPage() {
       {isAdmin && (
         <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Brands</h2>
-            <span style={{ fontSize: '11px', color: '#94A3B8' }}>{brands.length} brands</span>
+            <h2 style={{ fontSize: '14px', fontWeight: 700, color: C.ink, margin: 0 }}>Brands</h2>
+            <span style={{ fontSize: '11px', color: C.faint }}>{brands.length} brands</span>
             <input style={{ ...inp, width: '200px' }} placeholder="Search brand or supplier…" value={brandQ} onChange={e => setBrandQ(e.target.value)} />
             <span style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center' }}>
               <input style={{ ...inp, width: '160px' }} placeholder="New brand name" value={newBrand.name} onChange={e => setNewBrand({ ...newBrand, name: e.target.value })} />
@@ -236,12 +237,12 @@ function SuppliersPage() {
           <div style={{ maxHeight: '420px', overflow: 'auto' }}>
             {shownBrands.map(b => (
               <div key={b.normalized} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 4px', borderBottom: '1px solid #F8FAFC', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A', minWidth: '180px' }}>{b.name}</span>
+                <span style={{ fontSize: '12.5px', fontWeight: 600, color: C.ink, minWidth: '180px' }}>{b.name}</span>
                 {b.links.map(l => (
-                  <span key={l.id} style={{ fontSize: '10.5px', fontWeight: 600, background: '#EEF2FF', color: '#4338CA', padding: '2px 8px', borderRadius: '99px', display: 'inline-flex', gap: '5px', alignItems: 'center' }}>
+                  <span key={l.id} style={{ fontSize: '10.5px', fontWeight: 600, background: C.primaryBg, color: C.indigoInk, padding: '2px 8px', borderRadius: '99px', display: 'inline-flex', gap: '5px', alignItems: 'center' }}>
                     {l.supplier_name}
                     <button title="Remove this supplier link" onClick={() => unlink(b, l)}
-                      style={{ background: 'none', border: 'none', color: '#6366F1', cursor: 'pointer', padding: 0, fontSize: '11px', lineHeight: 1 }}>×</button>
+                      style={{ background: 'none', border: 'none', color: C.indigo, cursor: 'pointer', padding: 0, fontSize: '11px', lineHeight: 1 }}>×</button>
                   </span>
                 ))}
                 <select style={{ ...inp, padding: '2px 6px', fontSize: '10.5px' }} value="" onChange={e => addLink(b, e.target.value)}>
@@ -251,7 +252,7 @@ function SuppliersPage() {
                 <button style={{ ...ghost, marginLeft: 'auto' }} onClick={() => renameBrand(b)}>Rename</button>
               </div>
             ))}
-            {shownBrands.length === 0 && <p style={{ fontSize: '12px', color: '#94A3B8', padding: '10px 4px' }}>No brands match.</p>}
+            {shownBrands.length === 0 && <p style={{ fontSize: '12px', color: C.faint, padding: '10px 4px' }}>No brands match.</p>}
           </div>
         </div>
       )}

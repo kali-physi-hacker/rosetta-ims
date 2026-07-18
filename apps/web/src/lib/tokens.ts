@@ -1,27 +1,34 @@
-// Canonical Command-Centre palette — the shared source of truth for colour tokens.
-//
-// The re-parse screens consume `C`; other screens migrate onto it incrementally
-// (see MIGRATION.md — a blind literal→token sweep is unsafe because some screens
-// build colours by string-concatenating an alpha suffix, e.g. `${color}33`).
-// The CSS-variable mirror for global/`<style>`-block use lives in styles/globals.css.
+// Canonical Command-Centre palette — shared source of truth for colour tokens (JS).
+// Screens reference C.<name>. Values are plain hex strings, so alpha concatenation
+// (`${C.indigo}33`) keeps working. CSS-variable mirror: styles/globals.css.
 export const C = {
   panel: '#FFFFFF',
   ink: '#0F172A',
   sub: '#475569',
+  muted: '#64748B',
   faint: '#94A3B8',
+  knobOff: '#CBD5E1',
   line: '#E2E8F0',
+  monoBg: '#F1F5F9',
+  wash: '#F8FAFC',
   indigo: '#6366F1',
-  indigoBg: '#EEF0FE',
+  indigoStrong: '#4F46E5',
   indigoInk: '#4338CA',
   indigoLine: '#C7D2FE',
+  indigoBg: '#EEF0FE',
+  primaryBg: '#EEF2FF',
   ok: '#15803D',
-  okBg: '#ECFDF5',
+  green: '#166534',
   okLine: '#A7F3D0',
+  okBg: '#ECFDF5',
+  greenBg: '#DCFCE7',
   bad: '#B91C1C',
+  redInk: '#991B1B',
   badBg: '#FEF2F2',
+  redBg: '#FEE2E2',
   amber: '#B45309',
-  amberBg: '#FEF6E7',
+  amberInk: '#92400E',
   amberLine: '#FCD9A6',
-  monoBg: '#F1F5F9',
-  knobOff: '#CBD5E1',
+  amberBg: '#FEF6E7',
+  warnBg: '#FEF3C7',
 } as const

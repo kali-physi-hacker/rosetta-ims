@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { useEffect, useState, useCallback } from 'react'
 import { subscribeConfirm, ConfirmRequest } from '@/lib/confirm'
 
@@ -40,20 +41,20 @@ export function ConfirmDialog() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: o.title ? '10px' : '0' }}>
               <span style={{
                 flex: '0 0 auto', width: '32px', height: '32px', borderRadius: '50%',
-                background: danger ? '#FEE2E2' : '#EEF2FF', color: danger ? '#DC2626' : '#4F46E5',
+                background: danger ? C.redBg : C.primaryBg, color: danger ? '#DC2626' : C.indigoStrong,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 800,
               }}>{danger ? '!' : '?'}</span>
-              {o.title && <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>{o.title}</h3>}
+              {o.title && <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.ink, margin: 0 }}>{o.title}</h3>}
             </div>
-            <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap', fontFamily: o.message.includes('  ') ? 'ui-monospace, monospace' : 'inherit' }}>
+            <p style={{ fontSize: '13px', color: C.sub, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap', fontFamily: o.message.includes('  ') ? 'ui-monospace, monospace' : 'inherit' }}>
               {o.message}
             </p>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '14px 22px', background: '#F8FAFC', borderTop: '1px solid #EEF2F7' }}>
-            <button onClick={() => close(false)} style={{ background: 'white', border: '1px solid #E2E8F0', color: '#475569', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '14px 22px', background: C.wash, borderTop: '1px solid #EEF2F7' }}>
+            <button onClick={() => close(false)} style={{ background: 'white', border: '1px solid #E2E8F0', color: C.sub, borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
               {o.cancelLabel ?? 'Cancel'}
             </button>
-            <button onClick={() => close(true)} autoFocus style={{ background: danger ? '#DC2626' : '#6366F1', border: 'none', color: 'white', borderRadius: '8px', padding: '8px 18px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={() => close(true)} autoFocus style={{ background: danger ? '#DC2626' : C.indigo, border: 'none', color: 'white', borderRadius: '8px', padding: '8px 18px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
               {o.confirmLabel ?? 'Confirm'}
             </button>
           </div>

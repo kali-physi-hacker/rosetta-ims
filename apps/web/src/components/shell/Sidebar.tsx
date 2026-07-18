@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getUser, logout, CAPABILITIES, ROLE_LABELS, type IMSUser } from '@/lib/auth'
@@ -59,7 +60,7 @@ const NAV_ADMIN_PANEL: NavItem[] = [
   { href: '/config',      label: 'Transform Config', icon: 'stack' },
 ]
 
-const ROLE_AVATAR_BG: Record<string, string> = { admin: '#6366F1', bizops: '#0891B2', data_entry: '#0D9488' }
+const ROLE_AVATAR_BG: Record<string, string> = { admin: C.indigo, bizops: '#0891B2', data_entry: '#0D9488' }
 function initials(name: string): string { return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) }
 
 function NavSection({ items, label, pathname }: { items: NavItem[]; label: string; pathname: string }) {

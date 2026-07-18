@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import {
@@ -14,10 +15,10 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1mSUiOCeliDpHlw-xQSJI5
 
 function StageHeader({ num, title, sub, tone = 'indigo' }: { num: number; title: string; sub?: string; tone?: 'indigo' | 'cyan' | 'amber' | 'emerald' | 'rose' }) {
   const TONES = {
-    indigo:  { bg: '#EEF2FF', color: '#4338CA', border: '#C7D2FE' },
+    indigo:  { bg: C.primaryBg, color: C.indigoInk, border: C.indigoLine },
     cyan:    { bg: '#CFFAFE', color: '#155E75', border: '#A5F3FC' },
-    amber:   { bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' },
-    emerald: { bg: '#DCFCE7', color: '#166534', border: '#BBF7D0' },
+    amber:   { bg: C.warnBg, color: C.amberInk, border: '#FDE68A' },
+    emerald: { bg: C.greenBg, color: C.green, border: '#BBF7D0' },
     rose:    { bg: '#FCE7F3', color: '#9D174D', border: '#FBCFE8' },
   }
   const t = TONES[tone]
@@ -29,8 +30,8 @@ function StageHeader({ num, title, sub, tone = 'indigo' }: { num: number; title:
       }}>
         Stage {num}
       </span>
-      <p style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginTop: '6px', lineHeight: 1.25 }}>{title}</p>
-      {sub && <p style={{ fontSize: '10.5px', color: '#64748B', marginTop: '2px', lineHeight: 1.4 }}>{sub}</p>}
+      <p style={{ fontSize: '13px', fontWeight: 700, color: C.ink, marginTop: '6px', lineHeight: 1.25 }}>{title}</p>
+      {sub && <p style={{ fontSize: '10.5px', color: C.muted, marginTop: '2px', lineHeight: 1.4 }}>{sub}</p>}
     </div>
   )
 }
@@ -39,7 +40,7 @@ function StageCard({ children, accent }: { children: React.ReactNode; accent?: s
   return (
     <div style={{
       flex: '1 1 0', minWidth: 0, background: 'white', border: '1px solid #E2E8F0',
-      borderTop: `3px solid ${accent ?? '#94A3B8'}`, borderRadius: '8px', padding: '14px',
+      borderTop: `3px solid ${accent ?? C.faint}`, borderRadius: '8px', padding: '14px',
       display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
     }}>
       {children}
@@ -50,7 +51,7 @@ function StageCard({ children, accent }: { children: React.ReactNode; accent?: s
 function FlowArrow() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 28px', padding: '60px 0 0 0' }}>
-      <span style={{ fontSize: '24px', color: '#94A3B8', fontWeight: 700 }}>→</span>
+      <span style={{ fontSize: '24px', color: C.faint, fontWeight: 700 }}>→</span>
     </div>
   )
 }
@@ -158,7 +159,7 @@ function MiniTable({ title, subtitle, cols, accent, badge, onColClick, dimIds }:
       <div style={{ padding: '4px' }}>
         {groups.map(([g, gcols]) => (
           <div key={g} style={{ marginBottom: '4px' }}>
-            <p style={{ fontSize: '8.5px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px' }}>
+            <p style={{ fontSize: '8.5px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px' }}>
               {g} <span style={{ opacity: 0.7 }}>· {gcols.length}</span>
             </p>
             {gcols.map(c => {
@@ -176,7 +177,7 @@ function MiniTable({ title, subtitle, cols, accent, badge, onColClick, dimIds }:
                   }}
                 >
                   <span style={{ fontSize: '13px', flexShrink: 0 }}>{SOURCES[c.source].icon}</span>
-                  <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#0F172A', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: C.ink, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.name}
                   </span>
                   <span style={{ background: lm.bg, color: lm.color, fontSize: '8.5px', fontWeight: 700, padding: '1px 4px', borderRadius: '3px', flexShrink: 0 }}>
@@ -205,25 +206,25 @@ function SourceDrawer({ src, onClose }: { src: SsotSource; onClose: () => void }
         boxShadow: '-4px 0 24px rgba(15,23,42,0.15)', padding: '20px', overflowY: 'auto', pointerEvents: 'auto',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: m.isRealSource ? '#6366F1' : '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: m.isRealSource ? C.indigo : C.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {m.isRealSource ? 'Source system' : 'System-generated (not a source)'}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', color: '#64748B', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', color: C.muted, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
           <span style={{ fontSize: '30px' }}>{m.icon}</span>
           <p style={{ fontSize: '22px', fontWeight: 700, color: m.color }}>{m.label}</p>
         </div>
-        <p style={{ fontSize: '12.5px', color: '#475569', lineHeight: 1.6, marginBottom: '14px' }}>{m.brief}</p>
+        <p style={{ fontSize: '12.5px', color: C.sub, lineHeight: 1.6, marginBottom: '14px' }}>{m.brief}</p>
 
         <Section label="🧑 Who provides this data">
-          <p style={{ fontSize: '12px', color: '#0F172A', background: m.bg, border: `1px solid ${m.color}33`, padding: '10px 12px', borderRadius: '6px', lineHeight: 1.55 }}>
+          <p style={{ fontSize: '12px', color: C.ink, background: m.bg, border: `1px solid ${m.color}33`, padding: '10px 12px', borderRadius: '6px', lineHeight: 1.55 }}>
             {m.providedBy}
           </p>
         </Section>
 
         <Section label="📥 How we pull from it">
-          <p style={{ fontSize: '11.5px', color: '#0F172A', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '8px 10px', borderRadius: '6px', lineHeight: 1.55 }}>
+          <p style={{ fontSize: '11.5px', color: C.ink, background: C.wash, border: '1px solid #E2E8F0', padding: '8px 10px', borderRadius: '6px', lineHeight: 1.55 }}>
             {m.pullMethod}
           </p>
         </Section>
@@ -231,9 +232,9 @@ function SourceDrawer({ src, onClose }: { src: SsotSource; onClose: () => void }
         <Section label={`📊 Columns this ${m.isRealSource ? 'source' : 'category'} feeds (${cols.length})`}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {cols.map(c => (
-              <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px', background: '#F8FAFC', borderRadius: '4px' }}>
-                <span style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {c.table === 'SUPPLIERS' ? <span style={{ color: '#0891B2', fontWeight: 700, fontSize: '9px' }}>SUP </span> : <span style={{ color: '#6366F1', fontWeight: 700, fontSize: '9px' }}>SKU </span>}
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px', background: C.wash, borderRadius: '4px' }}>
+                <span style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {c.table === 'SUPPLIERS' ? <span style={{ color: '#0891B2', fontWeight: 700, fontSize: '9px' }}>SUP </span> : <span style={{ color: C.indigo, fontWeight: 700, fontSize: '9px' }}>SKU </span>}
                   {c.name}
                 </span>
                 <span style={{ background: LADDER_META[c.ladder].bg, color: LADDER_META[c.ladder].color, fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '3px', flexShrink: 0, marginLeft: '6px' }}>
@@ -262,12 +263,12 @@ function ColumnDrawer({ col, onClose }: { col: SsotColumn; onClose: () => void }
         boxShadow: '-4px 0 24px rgba(15,23,42,0.15)', padding: '20px', overflowY: 'auto', pointerEvents: 'auto',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {col.table === 'SUPPLIERS' ? 'SUPPLIERS table' : 'SKU Operational Database'} · {col.group}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', color: '#64748B', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', color: C.muted, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
         </div>
-        <p style={{ fontSize: '20px', fontFamily: 'ui-monospace, monospace', color: '#0F172A', fontWeight: 700, marginBottom: '6px' }}>{col.name}</p>
+        <p style={{ fontSize: '20px', fontFamily: 'ui-monospace, monospace', color: C.ink, fontWeight: 700, marginBottom: '6px' }}>{col.name}</p>
         <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', flexWrap: 'wrap' }}>
           <span style={{ background: src.bg, color: src.color, fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px' }}>
             {src.icon} {src.label}
@@ -278,7 +279,7 @@ function ColumnDrawer({ col, onClose }: { col: SsotColumn; onClose: () => void }
         </div>
 
         <Section label="What it is">
-          <p style={{ fontSize: '12px', color: '#0F172A', lineHeight: 1.6 }}>{col.description}</p>
+          <p style={{ fontSize: '12px', color: C.ink, lineHeight: 1.6 }}>{col.description}</p>
         </Section>
 
         <Section label="Accuracy path">
@@ -289,7 +290,7 @@ function ColumnDrawer({ col, onClose }: { col: SsotColumn; onClose: () => void }
             </div>
             {tm && col.target !== col.ladder && (
               <>
-                <span style={{ textAlign: 'center', color: '#CBD5E1', fontSize: '14px' }}>↓</span>
+                <span style={{ textAlign: 'center', color: C.knobOff, fontSize: '14px' }}>↓</span>
                 <div style={{ background: 'white', border: `1px dashed ${tm.color}66`, padding: '6px 10px', borderRadius: '6px' }}>
                   <p style={{ fontSize: '9px', fontWeight: 700, color: tm.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Target</p>
                   <p style={{ fontSize: '11px', color: tm.color, marginTop: '2px' }}>{tm.icon} {tm.label} — {tm.brief}</p>
@@ -328,7 +329,7 @@ function ColumnDrawer({ col, onClose }: { col: SsotColumn; onClose: () => void }
         )}
         {col.notes && (
           <Section label="Notes">
-            <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.6, background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '8px 10px', borderRadius: '4px' }}>
+            <p style={{ fontSize: '11px', color: C.sub, lineHeight: 1.6, background: C.wash, border: '1px solid #E2E8F0', padding: '8px 10px', borderRadius: '4px' }}>
               {col.notes}
             </p>
           </Section>
@@ -341,7 +342,7 @@ function ColumnDrawer({ col, onClose }: { col: SsotColumn; onClose: () => void }
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '14px' }}>
-      <p style={{ fontSize: '9px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{label}</p>
+      <p style={{ fontSize: '9px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{label}</p>
       {children}
     </div>
   )
@@ -414,11 +415,11 @@ function SsotSpecPage() {
       {/* ─── Header ─── */}
       <div style={{ marginBottom: '14px', display: 'flex', alignItems: 'flex-end', gap: '14px', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
             Operational Database Spec
           </p>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>SSOT Database — Column Specification</h1>
-          <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.55, maxWidth: '820px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: C.ink, marginBottom: '6px' }}>SSOT Database — Column Specification</h1>
+          <p style={{ fontSize: '13px', color: C.sub, lineHeight: 1.55, maxWidth: '820px' }}>
             This page is a <strong>teaching artifact</strong>, not an audit. Its job: show the team how data flows, where each column comes from,
             and how it gets to 100% accurate via two stages: <strong>OCR + human review (~80% combined)</strong>, then{' '}
             <strong>3-way matching against accounting (100%)</strong>.
@@ -428,7 +429,7 @@ function SsotSpecPage() {
           href={SHEET_URL} target="_blank" rel="noreferrer"
           style={{
             display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px',
-            background: '#0F172A', color: 'white', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
+            background: C.ink, color: 'white', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
             textDecoration: 'none', flexShrink: 0,
           }}
         >
@@ -438,7 +439,7 @@ function SsotSpecPage() {
 
       {/* ─── Filters strip ─── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap', background: 'white', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748B' }}>Highlight columns by</p>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: C.muted }}>Highlight columns by</p>
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search name or description…"
@@ -459,13 +460,13 @@ function SsotSpecPage() {
           ...CONSUMER_INFO.map(c => ({ v: c.id, l: c.label })),
         ]} />
         {highlightIds && (
-          <span style={{ fontSize: '11px', color: '#6366F1', fontWeight: 600 }}>
+          <span style={{ fontSize: '11px', color: C.indigo, fontWeight: 600 }}>
             {highlightIds.size} of {ALL_COLS.length} matched
           </span>
         )}
         {(filterSource !== 'ALL' || filterLadder !== 'ALL' || filterConsumer !== 'ALL' || search) && (
           <button onClick={() => { setFilterSource('ALL'); setFilterLadder('ALL'); setFilterConsumer('ALL'); setSearch('') }}
-                  style={{ fontSize: '11px', color: '#6366F1', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  style={{ fontSize: '11px', color: C.indigo, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
             Clear
           </button>
         )}
@@ -475,9 +476,9 @@ function SsotSpecPage() {
       <div style={{ marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'stretch', gap: '0', minWidth: 0 }}>
           {/* STAGE 1 — Sources */}
-          <StageCard accent="#6366F1">
+          <StageCard accent={C.indigo}>
             <StageHeader num={1} title="Source Systems" sub="raw upstream data — where every value originally lives" tone="indigo" />
-            <p style={{ fontSize: '10px', color: '#6366F1', background: '#EEF2FF', border: '1px solid #C7D2FE', padding: '6px 8px', borderRadius: '6px', lineHeight: 1.4 }}>
+            <p style={{ fontSize: '10px', color: C.indigo, background: C.primaryBg, border: '1px solid #C7D2FE', padding: '6px 8px', borderRadius: '6px', lineHeight: 1.4 }}>
               <strong>↗ Click any source</strong> to see what it is, how data is pulled, and which team is responsible.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -486,12 +487,12 @@ function SsotSpecPage() {
               ))}
             </div>
             <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px dashed #E2E8F0' }}>
-              <p style={{ fontSize: '9px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>
+              <p style={{ fontSize: '9px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>
                 Plus system-generated fields (not sources)
               </p>
               <button
                 onClick={() => setOpenSrc('internal')}
-                style={{ background: '#E2E8F0', color: '#0F172A', fontSize: '10px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', marginRight: '4px' }}
+                style={{ background: C.line, color: C.ink, fontSize: '10px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', marginRight: '4px' }}
               >
                 📋 IMS-internal ({srcCounts.get('internal') || 0}) ↗
               </button>
@@ -513,11 +514,11 @@ function SsotSpecPage() {
               title="SUPPLIERS" subtitle="~46 rows" cols={SUPPLIERS_COLS} accent="#0891B2" badge="10"
               onColClick={setOpenCol} dimIds={highlightIds}
             />
-            <div style={{ textAlign: 'center', fontSize: '9px', color: '#94A3B8', fontWeight: 700, padding: '4px 0' }}>
+            <div style={{ textAlign: 'center', fontSize: '9px', color: C.faint, fontWeight: 700, padding: '4px 0' }}>
               ↕ FK · supplier_id
             </div>
             <MiniTable
-              title="SKU OPERATIONAL DATABASE" subtitle="~412 rows" cols={SKU_MASTER_COLS} accent="#6366F1" badge="55"
+              title="SKU OPERATIONAL DATABASE" subtitle="~412 rows" cols={SKU_MASTER_COLS} accent={C.indigo} badge="55"
               onColClick={setOpenCol} dimIds={highlightIds}
             />
           </StageCard>
@@ -536,9 +537,9 @@ function SsotSpecPage() {
                 <p style={{ fontSize: '10px', color: '#5B21B6', marginTop: '6px', fontWeight: 600 }}>Open → /</p>
               </div>
             </Link>
-            <div style={{ background: '#F8FAFC', border: '1px dashed #CBD5E1', padding: '10px', borderRadius: '6px' }}>
-              <p style={{ fontSize: '9px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>What you see here</p>
-              <ul style={{ paddingLeft: '14px', fontSize: '10px', color: '#475569', lineHeight: 1.6 }}>
+            <div style={{ background: C.wash, border: '1px dashed #CBD5E1', padding: '10px', borderRadius: '6px' }}>
+              <p style={{ fontSize: '9px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>What you see here</p>
+              <ul style={{ paddingLeft: '14px', fontSize: '10px', color: C.sub, lineHeight: 1.6 }}>
                 <li>Every SKU + its current data quality</li>
                 <li>Filter by data confidence (low cost trust = red flag)</li>
                 <li>Edit attribution: who changed what + when</li>
@@ -553,23 +554,23 @@ function SsotSpecPage() {
             <StageHeader num={4} title="Rosetta IMS — Data Review" sub="the accuracy ladder · OCR + Review = ~80% · 3-way match = 100%" tone="amber" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {/* OCR + HITL form one combined milestone */}
-              <div style={{ background: '#F8FAFC', border: '1px dashed #CBD5E1', padding: '6px 8px', borderRadius: '6px' }}>
-                <p style={{ fontSize: '9px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              <div style={{ background: C.wash, border: '1px dashed #CBD5E1', padding: '6px 8px', borderRadius: '6px' }}>
+                <p style={{ fontSize: '9px', fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                   Combined: ~80% accuracy
                 </p>
                 <LadderRung ladder="ocr"   count={ladderToday.get('ocr')   || 0} link={LADDER_META.ocr.link} />
-                <span style={{ display: 'block', textAlign: 'center', color: '#CBD5E1', fontSize: '12px', lineHeight: 1, margin: '2px 0' }}>+</span>
+                <span style={{ display: 'block', textAlign: 'center', color: C.knobOff, fontSize: '12px', lineHeight: 1, margin: '2px 0' }}>+</span>
                 <LadderRung ladder="hitl"  count={ladderToday.get('hitl')  || 0} link={LADDER_META.hitl.link} />
               </div>
-              <span style={{ textAlign: 'center', color: '#CBD5E1', fontSize: '14px', lineHeight: 1 }}>↓ remaining ~20% closed by</span>
+              <span style={{ textAlign: 'center', color: C.knobOff, fontSize: '14px', lineHeight: 1 }}>↓ remaining ~20% closed by</span>
               <LadderRung ladder="3way"  count={ladderToday.get('3way')  || 0} link={LADDER_META['3way'].link} />
             </div>
             <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', padding: '8px 10px', borderRadius: '6px', marginTop: '4px' }}>
-              <p style={{ fontSize: '9.5px', color: '#92400E', lineHeight: 1.5 }}>
+              <p style={{ fontSize: '9.5px', color: C.amberInk, lineHeight: 1.5 }}>
                 <strong>Target state →</strong> OCR: {ladderTarget.get('ocr') || 0} · HITL: {ladderTarget.get('hitl') || 0} · 3-way: {ladderTarget.get('3way') || 0}
               </p>
             </div>
-            <p style={{ fontSize: '9.5px', color: '#94A3B8', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '9.5px', color: C.faint, fontStyle: 'italic' }}>
               OCR alone is too noisy to trust. Combined with human review, ~80% — humans have their own error band. Only accounts get us to 100%.
             </p>
           </StageCard>
@@ -583,8 +584,8 @@ function SsotSpecPage() {
               <ConsumerCard id="SHOPIFY_OUT" sub="min qty + multiples per MPQ × Risk Acceptance" />
               <ConsumerCard id="DAYSMART_OUT" sub="cost overrides from verified catalogue & invoice" />
               <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '8px 10px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#166534' }}>→ QuickBooks</p>
-                <p style={{ fontSize: '9.5px', color: '#166534', opacity: 0.85, marginTop: '2px' }}>3-way matched cost feeds accounting</p>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: C.green }}>→ QuickBooks</p>
+                <p style={{ fontSize: '9.5px', color: C.green, opacity: 0.85, marginTop: '2px' }}>3-way matched cost feeds accounting</p>
               </div>
             </div>
           </StageCard>
@@ -596,15 +597,15 @@ function SsotSpecPage() {
           <div style={{ flex: '0 0 28px' }} />
           <div style={{ flex: '1 1 0', maxWidth: '320px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4px' }}>
-              <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748B', letterSpacing: '0.04em' }}>also reads from Stage 2</span>
-              <span style={{ color: '#94A3B8', fontSize: '18px' }}>↓</span>
+              <span style={{ fontSize: '9px', fontWeight: 700, color: C.muted, letterSpacing: '0.04em' }}>also reads from Stage 2</span>
+              <span style={{ color: C.faint, fontSize: '18px' }}>↓</span>
             </div>
             <div style={{ background: 'white', border: '1px solid #E2E8F0', borderTop: '3px solid #DC2626', borderRadius: '8px', padding: '12px' }}>
-              <p style={{ fontSize: '9px', fontWeight: 800, color: '#991B1B', background: '#FEE2E2', border: '1px solid #FECACA', padding: '2px 8px', borderRadius: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'inline-block' }}>
+              <p style={{ fontSize: '9px', fontWeight: 800, color: C.redInk, background: C.redBg, border: '1px solid #FECACA', padding: '2px 8px', borderRadius: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'inline-block' }}>
                 Parallel consumer
               </p>
-              <p style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginTop: '6px', lineHeight: 1.25 }}>Logic Layer (Sam's work)</p>
-              <p style={{ fontSize: '10.5px', color: '#64748B', marginTop: '2px', lineHeight: 1.4 }}>
+              <p style={{ fontSize: '13px', fontWeight: 700, color: C.ink, marginTop: '6px', lineHeight: 1.25 }}>Logic Layer (Sam's work)</p>
+              <p style={{ fontSize: '10.5px', color: C.muted, marginTop: '2px', lineHeight: 1.4 }}>
                 Decision layers that consume the SSOT to drive purchasing & sourcing.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
@@ -618,8 +619,8 @@ function SsotSpecPage() {
       </div>
 
       {/* ─── Tie-back footer ─── */}
-      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px', marginBottom: '14px' }}>
-        <p style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+      <div style={{ background: C.wash, border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px', marginBottom: '14px' }}>
+        <p style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
           The accuracy ladder is real software — open each step
         </p>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -632,12 +633,12 @@ function SsotSpecPage() {
       {/* ─── Column detail table ─── */}
       <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
-          <p style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Column Detail</p>
-          <span style={{ fontSize: '11px', color: '#64748B' }}>{filteredTable.length} of {ALL_COLS.length}</span>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>Column Detail</p>
+          <span style={{ fontSize: '11px', color: C.muted }}>{filteredTable.length} of {ALL_COLS.length}</span>
           <span style={{ flex: 1 }} />
-          <span style={{ fontSize: '10.5px', color: '#94A3B8' }}>Use the filter strip above. Click any row for the full drawer.</span>
+          <span style={{ fontSize: '10.5px', color: C.faint }}>Use the filter strip above. Click any row for the full drawer.</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '40px 200px 110px 60px 110px 1fr 150px', gap: '8px', fontSize: '9px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '6px 8px', borderBottom: '1px solid #E2E8F0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '40px 200px 110px 60px 110px 1fr 150px', gap: '8px', fontSize: '9px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '6px 8px', borderBottom: '1px solid #E2E8F0' }}>
           <span>Table</span><span>Column</span><span>Group</span><span>Source</span><span>Accuracy</span><span>Description</span><span>Used by</span>
         </div>
         {filteredTable.map(c => {
@@ -653,16 +654,16 @@ function SsotSpecPage() {
                 cursor: 'pointer', textAlign: 'left', width: '100%', alignItems: 'center',
               }}
             >
-              <span style={{ fontSize: '9px', color: c.table === 'SUPPLIERS' ? '#0891B2' : '#6366F1', fontWeight: 700 }}>
+              <span style={{ fontSize: '9px', color: c.table === 'SUPPLIERS' ? '#0891B2' : C.indigo, fontWeight: 700 }}>
                 {c.table === 'SUPPLIERS' ? 'SUP' : 'SKU'}
               </span>
-              <span style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-              <span style={{ fontSize: '10px', color: '#64748B' }}>{c.group}</span>
+              <span style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+              <span style={{ fontSize: '10px', color: C.muted }}>{c.group}</span>
               <span style={{ fontSize: '14px' }}>{SOURCES[c.source].icon}</span>
               <span style={{ background: lm.bg, color: lm.color, fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '3px', whiteSpace: 'nowrap', width: 'fit-content' }}>
                 {lm.icon} {lm.label}
               </span>
-              <span style={{ fontSize: '10.5px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.description}</span>
+              <span style={{ fontSize: '10.5px', color: C.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.description}</span>
               <span style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
                 {c.usedBy.map(u => (
                   <span key={u} style={{ fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', background: CONSUMERS[u].bg, color: CONSUMERS[u].color }}>
@@ -687,8 +688,8 @@ function TieBackLink({ href, label, desc, disabled }: { href: string; label: str
       background: 'white', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '8px 12px',
       flex: '1 1 240px', opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer',
     }}>
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>{label}{!disabled && <span style={{ marginLeft: '6px', fontSize: '10px', color: '#94A3B8' }}>↗</span>}</p>
-      <p style={{ fontSize: '10px', color: '#64748B', marginTop: '2px', lineHeight: 1.4 }}>{desc}</p>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: C.ink }}>{label}{!disabled && <span style={{ marginLeft: '6px', fontSize: '10px', color: C.faint }}>↗</span>}</p>
+      <p style={{ fontSize: '10px', color: C.muted, marginTop: '2px', lineHeight: 1.4 }}>{desc}</p>
     </div>
   )
   if (disabled) return content
@@ -700,7 +701,7 @@ function FilterSelect<T extends string>({ value, onChange, options }: { value: T
     <select
       value={value}
       onChange={e => onChange(e.target.value as T)}
-      style={{ fontSize: '11px', padding: '5px 8px', border: '1px solid #CBD5E1', borderRadius: '6px', background: 'white', color: '#0F172A' }}
+      style={{ fontSize: '11px', padding: '5px 8px', border: '1px solid #CBD5E1', borderRadius: '6px', background: 'white', color: C.ink }}
     >
       {options.map(o => (<option key={o.v} value={o.v}>{o.l}</option>))}
     </select>

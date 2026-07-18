@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect, useCallback, useRef, useMemo, type CSSProperties } from 'react'
 import { Spinner } from '@/components/Spinner'
@@ -37,10 +38,10 @@ interface AuditEvent {
   created_at: string
 }
 const ACTION_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  confirm_match:    { label: 'Matched',   bg: '#DCFCE7', color: '#166534' },
+  confirm_match:    { label: 'Matched',   bg: C.greenBg, color: C.green },
   assign_new:       { label: 'New SKU',   bg: '#DBEAFE', color: '#1E40AF' },
-  edit:             { label: 'Edited',    bg: '#FEF3C7', color: '#92400E' },
-  reject:           { label: 'Rejected',  bg: '#FEE2E2', color: '#991B1B' },
+  edit:             { label: 'Edited',    bg: C.warnBg, color: C.amberInk },
+  reject:           { label: 'Rejected',  bg: C.redBg, color: C.redInk },
   supplier_confirm: { label: 'Supplier',  bg: '#EDE9FE', color: '#5B21B6' },
   skip_verified:    { label: 'Already-verified', bg: '#FFEDD5', color: '#9A3412' },
 }
@@ -55,7 +56,7 @@ const gToUnit = (g: number, u: string | null) => +(g / (u === 'lb' ? LB_G : 1000
 const unitToG = (v: number, u: string | null) => Math.round(v * (u === 'lb' ? LB_G : 1000))
 const fmtWeight = (g: number | null | undefined, u: string | null) => g == null ? '' : `${gToUnit(g, u)} ${u || 'kg'}`
 // Shared cell styles for the compact Skipped / Confirmed tables.
-const thCell: CSSProperties = { padding: '9px 14px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#64748B' }
+const thCell: CSSProperties = { padding: '9px 14px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: C.muted }
 const tdCell: CSSProperties = { padding: '10px 14px', verticalAlign: 'top' }
 // Shared filter bar for the Skipped / Confirmed tables: free-text search + supplier + reviewer
 // dropdowns, driven by server-side facets so they cover the whole list, not just the loaded page.
@@ -69,15 +70,15 @@ function OnboardFilterBar(props: {
   suppliers: { id: number; name: string }[]
 }) {
   const { search, setSearch, supplier, setSupplier, supplierFacets, user, setUser, userFacets, userLabel, suppliers } = props
-  const sel: CSSProperties = { border: '1px solid #E2E8F0', borderRadius: '8px', padding: '8px 10px', fontSize: '12.5px', background: 'white', color: '#0F172A' }
+  const sel: CSSProperties = { border: '1px solid #E2E8F0', borderRadius: '8px', padding: '8px 10px', fontSize: '12.5px', background: 'white', color: C.ink }
   return (
     <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
       <div style={{ position: 'relative', flex: '1 1 220px', minWidth: '180px' }}>
-        <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94A3B8', pointerEvents: 'none' }}>🔍</span>
+        <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: C.faint, pointerEvents: 'none' }}>🔍</span>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search SKU, description, brand…"
-          style={{ width: '100%', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '8px 28px', fontSize: '12.5px', background: 'white', color: '#0F172A' }} />
+          style={{ width: '100%', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '8px 28px', fontSize: '12.5px', background: 'white', color: C.ink }} />
         {search && <button onClick={() => setSearch('')} title="Clear"
-          style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: '#F1F5F9', color: '#64748B', borderRadius: '50%', width: '18px', height: '18px', fontSize: '11px', cursor: 'pointer', lineHeight: 1 }}>×</button>}
+          style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: C.monoBg, color: C.muted, borderRadius: '50%', width: '18px', height: '18px', fontSize: '11px', cursor: 'pointer', lineHeight: 1 }}>×</button>}
       </div>
       <select value={supplier} onChange={e => setSupplier(e.target.value)} style={sel}>
         <option value="">All suppliers</option>
@@ -426,9 +427,9 @@ function seedEdit(item: QueueItem): EditDraft {
 }
 
 function MatchPill({ type }: { type: string }) {
-  const map: Record<string, string> = { barcode: '#6366F1', supplier_sku: '#8B5CF6', name_fuzzy: '#64748B' }
+  const map: Record<string, string> = { barcode: C.indigo, supplier_sku: '#8B5CF6', name_fuzzy: C.muted }
   const label: Record<string, string> = { barcode: 'barcode', supplier_sku: 'SKU', name_fuzzy: 'name' }
-  const color = map[type] ?? '#94A3B8'
+  const color = map[type] ?? C.faint
   return <span style={{ fontSize: '10px', color, fontWeight: 600 }}>{label[type] ?? type}</span>
 }
 
@@ -443,8 +444,8 @@ function Btn({ onClick, disabled, loading, bg, color, children, loadingLabel }: 
       disabled={off}
       aria-busy={loading || undefined}
       style={{
-        background: off ? '#F1F5F9' : bg,
-        color: off ? (loading ? '#64748B' : '#CBD5E1') : color,
+        background: off ? C.monoBg : bg,
+        color: off ? (loading ? C.muted : C.knobOff) : color,
         border: 'none', borderRadius: '5px', padding: '5px 12px',
         fontSize: '12px', fontWeight: 600,
         cursor: off ? 'default' : 'pointer',
@@ -453,7 +454,7 @@ function Btn({ onClick, disabled, loading, bg, color, children, loadingLabel }: 
         transition: 'background 0.12s, color 0.12s',
       }}
     >
-      {loading && <Spinner color="#64748B" />}
+      {loading && <Spinner color={C.muted} />}
       {loading ? (loadingLabel ?? children) : children}
     </button>
   )
@@ -461,7 +462,7 @@ function Btn({ onClick, disabled, loading, bg, color, children, loadingLabel }: 
 
 function Ghost({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} style={{ background: 'none', border: 'none', fontSize: '12px', color: '#94A3B8', cursor: 'pointer', padding: '5px 6px' }}>
+    <button onClick={onClick} style={{ background: 'none', border: 'none', fontSize: '12px', color: C.faint, cursor: 'pointer', padding: '5px 6px' }}>
       {children}
     </button>
   )
@@ -480,7 +481,7 @@ function EditField({ label, value, onChange, type = 'text', wide = false, list, 
   const inputStyle = { border: '1px solid #E2E8F0', borderRadius: '5px', padding: '5px 10px', fontSize: '12px', width: '100%', boxSizing: 'border-box' as const }
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: '3px', gridColumn: wide ? '1 / -1' : 'auto' }}>
-      <span style={{ fontSize: '10px', fontWeight: 600, color: '#94A3B8' }}>{label}</span>
+      <span style={{ fontSize: '10px', fontWeight: 600, color: C.faint }}>{label}</span>
       {options ? (
         <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle, background: 'white' }}>
           <option value="">—</option>
@@ -536,10 +537,10 @@ function matchSupplierId(folder: string, suppliers: Supplier[]): number | null {
 }
 
 const BATCH_BADGE: Record<BatchStatus, { bg: string; color: string; label: string }> = {
-  queued:    { bg: '#F1F5F9', color: '#64748B', label: 'Queued' },
+  queued:    { bg: C.monoBg, color: C.muted, label: 'Queued' },
   uploading: { bg: '#DBEAFE', color: '#1E40AF', label: 'Extracting…' },
-  done:      { bg: '#DCFCE7', color: '#166534', label: 'Done' },
-  error:     { bg: '#FEE2E2', color: '#991B1B', label: 'Failed' },
+  done:      { bg: C.greenBg, color: C.green, label: 'Done' },
+  error:     { bg: C.redBg, color: C.redInk, label: 'Failed' },
 }
 
 // ── Batch resume across refresh ────────────────────────────────────────────
@@ -1738,22 +1739,22 @@ function CataloguesPage() {
           }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>SKU history</div>
-                <div style={{ fontSize: '13px', color: '#4338CA', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>{skuHistory.key}</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>SKU history</div>
+                <div style={{ fontSize: '13px', color: C.indigoInk, fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>{skuHistory.key}</div>
               </div>
-              <button onClick={() => setSkuHistory(null)} style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer', color: '#64748B' }}>Close</button>
+              <button onClick={() => setSkuHistory(null)} style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer', color: C.muted }}>Close</button>
             </div>
             <div style={{ overflowY: 'auto', padding: '8px 0' }}>
               {skuHistory.events.length === 0 ? (
-                <p style={{ fontSize: '12px', color: '#94A3B8', padding: '16px 20px', margin: 0 }}>No history for this SKU.</p>
+                <p style={{ fontSize: '12px', color: C.faint, padding: '16px 20px', margin: 0 }}>No history for this SKU.</p>
               ) : skuHistory.events.map(e => {
-                const badge = ACTION_BADGE[e.action] ?? { label: e.action, bg: '#F1F5F9', color: '#475569' }
+                const badge = ACTION_BADGE[e.action] ?? { label: e.action, bg: C.monoBg, color: C.sub }
                 return (
                   <div key={e.id} style={{ padding: '10px 20px', borderBottom: '1px solid #F8FAFC', display: 'flex', gap: '10px', alignItems: 'baseline' }}>
                     <span style={{ fontSize: '10px', fontWeight: 700, background: badge.bg, color: badge.color, padding: '2px 7px', borderRadius: '99px', whiteSpace: 'nowrap' }}>{badge.label}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '12px', color: '#0F172A' }}>{auditSummary(e) || '—'}</div>
-                      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
+                      <div style={{ fontSize: '12px', color: C.ink }}>{auditSummary(e) || '—'}</div>
+                      <div style={{ fontSize: '11px', color: C.faint, marginTop: '2px' }}>
                         {e.display_name ?? 'Unknown'} · {fmtWhen(e.created_at)}
                       </div>
                     </div>
@@ -1770,15 +1771,15 @@ function CataloguesPage() {
         {/* Header */}
         <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>Catalogue Ingestion</h1>
-            <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink }}>Catalogue Ingestion</h1>
+            <p style={{ fontSize: '12px', color: C.faint, marginTop: '2px' }}>
               Upload supplier price lists · AI extracts products · Review and assign SKUs
             </p>
           </div>
           {imports.length > 0 && (pendingCount > 0 || can('catalogue_admin')) && (
             <div style={{ position: 'relative' }}>
               <button onClick={() => setManageOpen(o => !o)}
-                style={{ background: 'white', color: '#475569', border: '1px solid #E2E8F0', borderRadius: '7px', padding: '7px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                style={{ background: 'white', color: C.sub, border: '1px solid #E2E8F0', borderRadius: '7px', padding: '7px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                 ⋯ Manage
               </button>
               {manageOpen && (
@@ -1787,19 +1788,19 @@ function CataloguesPage() {
                   <div style={{ position: 'absolute', top: '38px', right: 0, zIndex: 31, background: 'white', border: '1px solid #E2E8F0', borderRadius: '9px', boxShadow: '0 8px 24px rgba(15,23,42,0.14)', minWidth: '230px', overflow: 'hidden', padding: '4px' }}>
                     {pendingCount > 0 && (
                       <button onClick={() => { setManageOpen(false); retagAll() }} disabled={retagging}
-                        style={{ display: 'flex', width: '100%', textAlign: 'left', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#4338CA', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer' }} className="ims-menu-item">
+                        style={{ display: 'flex', width: '100%', textAlign: 'left', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: C.indigoInk, background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer' }} className="ims-menu-item">
                         {retagging ? <><Spinner /> Tagging…</> : <>✨ Re-run AI tagging on {pendingCount} pending</>}
                       </button>
                     )}
                     {can('catalogue_admin') && pendingCount > 0 && (
                       <button onClick={() => { setManageOpen(false); removeQueuedItems() }} disabled={clearingPending}
-                        style={{ display: 'flex', width: '100%', textAlign: 'left', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#92400E', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer' }} className="ims-menu-item">
+                        style={{ display: 'flex', width: '100%', textAlign: 'left', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: C.amberInk, background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer' }} className="ims-menu-item">
                         {clearingPending ? <><Spinner /> Removing…</> : `🧹 Remove ${pendingCount} queued items`}
                       </button>
                     )}
                     {can('catalogue_admin') && (
                       <button onClick={() => { setManageOpen(false); deleteAllCatalogues() }} disabled={deletingCatalogues}
-                        style={{ display: 'flex', width: '100%', textAlign: 'left', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#991B1B', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer' }} className="ims-menu-item">
+                        style={{ display: 'flex', width: '100%', textAlign: 'left', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: C.redInk, background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer' }} className="ims-menu-item">
                         {deletingCatalogues ? <><Spinner /> Deleting…</> : '🗑 Delete all catalogues'}
                       </button>
                     )}
@@ -1814,12 +1815,12 @@ function CataloguesPage() {
         {/* ══ Unified upload — drop or pick (1+ files), supplier optional ════ */}
         <div style={{ background: 'white', border: '1px solid #E8EDF3', borderRadius: '12px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)', padding: '18px', marginBottom: '22px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Upload supplier catalogues</h2>
+            <h2 style={{ fontSize: '13px', fontWeight: 700, color: C.ink, margin: 0 }}>Upload supplier catalogues</h2>
             <select
               value={batchSupplierId ?? ''} disabled={batchRunning}
               onChange={e => setBatchSupplier(e.target.value ? Number(e.target.value) : null)}
               title="Apply one supplier to every uploaded file (otherwise matched by folder name)"
-              style={{ fontSize: '12px', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '7px 8px', background: 'white', color: batchSupplierId ? '#4338CA' : '#64748B', fontWeight: batchSupplierId ? 600 : 400, maxWidth: '220px' }}>
+              style={{ fontSize: '12px', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '7px 8px', background: 'white', color: batchSupplierId ? C.indigoInk : C.muted, fontWeight: batchSupplierId ? 600 : 400, maxWidth: '220px' }}>
               <option value="">Supplier: auto (by folder)</option>
               {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -1831,25 +1832,25 @@ function CataloguesPage() {
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             style={{
-              border: `2px dashed ${dragOver ? '#6366F1' : '#CBD5E1'}`, borderRadius: '10px',
-              background: dragOver ? '#EEF2FF' : '#F8FAFC', padding: '22px', textAlign: 'center',
+              border: `2px dashed ${dragOver ? C.indigo : C.knobOff}`, borderRadius: '10px',
+              background: dragOver ? C.primaryBg : C.wash, padding: '22px', textAlign: 'center',
               transition: 'all 0.12s',
             }}>
-            <p style={{ fontSize: '13px', color: '#475569', margin: '0 0 10px', fontWeight: 500 }}>
+            <p style={{ fontSize: '13px', color: C.sub, margin: '0 0 10px', fontWeight: 500 }}>
               {dragOver ? 'Drop to upload' : 'Drag files here, or'}
             </p>
             <div style={{ display: 'inline-flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: batchRunning ? '#CBD5E1' : 'white', background: batchRunning ? '#E2E8F0' : '#6366F1', borderRadius: '7px', padding: '8px 16px', cursor: batchRunning ? 'default' : 'pointer' }}>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: batchRunning ? C.knobOff : 'white', background: batchRunning ? C.line : C.indigo, borderRadius: '7px', padding: '8px 16px', cursor: batchRunning ? 'default' : 'pointer' }}>
                 📄 Choose files
                 <input ref={batchFilesInputRef} type="file" multiple disabled={batchRunning} onChange={handleBatchSelect} style={{ display: 'none' }} />
               </label>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: batchRunning ? '#CBD5E1' : '#4338CA', background: batchRunning ? '#F1F5F9' : 'white', border: '1px solid #C7D2FE', borderRadius: '7px', padding: '8px 16px', cursor: batchRunning ? 'default' : 'pointer' }}
+              <label style={{ fontSize: '12px', fontWeight: 600, color: batchRunning ? C.knobOff : C.indigoInk, background: batchRunning ? C.monoBg : 'white', border: '1px solid #C7D2FE', borderRadius: '7px', padding: '8px 16px', cursor: batchRunning ? 'default' : 'pointer' }}
                 title="Pick a whole Region/Supplier folder. Your browser shows its own 'Upload N files?' prompt for folders.">
                 📁 Choose folder
                 <input ref={batchInputRef} type="file" multiple disabled={batchRunning} onChange={handleBatchSelect} style={{ display: 'none' }} />
               </label>
             </div>
-            <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '10px' }}>
+            <p style={{ fontSize: '11px', color: C.faint, marginTop: '10px' }}>
               PDF · Excel · CSV · JPG · PNG. Handles one file or a whole batch — files extract via AI 3 at a time while you keep reviewing.
             </p>
           </div>
@@ -1859,7 +1860,7 @@ function CataloguesPage() {
             <div style={{ marginTop: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                 {!batchRunning && batchStats.queued > 0 && (
-                  <button onClick={runBatch} style={{ background: '#6366F1', color: 'white', border: 'none', borderRadius: '6px', padding: '7px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                  <button onClick={runBatch} style={{ background: C.indigo, color: 'white', border: 'none', borderRadius: '6px', padding: '7px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                     ▶ Start ({batchStats.queued}{batchStats.error > 0 ? ` + ${batchStats.error} retry` : ''})
                   </button>
                 )}
@@ -1869,34 +1870,34 @@ function CataloguesPage() {
                   </button>
                 )}
                 {batchRunning && (
-                  <button onClick={cancelBatch} style={{ background: '#FEE2E2', color: '#991B1B', border: 'none', borderRadius: '6px', padding: '7px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>■ Cancel</button>
+                  <button onClick={cancelBatch} style={{ background: C.redBg, color: C.redInk, border: 'none', borderRadius: '6px', padding: '7px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>■ Cancel</button>
                 )}
                 {!batchRunning && <Ghost onClick={clearBatch}>Clear</Ghost>}
-                <span style={{ fontSize: '12px', color: '#64748B', marginLeft: 'auto', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', color: C.muted, marginLeft: 'auto', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   <span><strong>{batchStats.total}</strong> files</span>
                   <span style={{ color: '#16A34A' }}>{batchStats.done} done</span>
                   {batchStats.uploading > 0 && <span style={{ color: '#1E40AF' }}>{batchStats.uploading} extracting</span>}
                   {batchStats.queued > 0 && <span>{batchStats.queued} queued</span>}
-                  {batchStats.error > 0 && <span style={{ color: '#991B1B' }}>{batchStats.error} failed</span>}
-                  <span style={{ color: '#0F172A' }}><strong>{batchStats.items}</strong> items</span>
+                  {batchStats.error > 0 && <span style={{ color: C.redInk }}>{batchStats.error} failed</span>}
+                  <span style={{ color: C.ink }}><strong>{batchStats.items}</strong> items</span>
                 </span>
               </div>
-              <div style={{ height: '6px', background: '#F1F5F9', borderRadius: '99px', overflow: 'hidden', marginBottom: '12px' }}>
-                <div style={{ height: '100%', width: `${batchStats.total ? Math.round((batchStats.done + batchStats.error) / batchStats.total * 100) : 0}%`, background: '#6366F1', transition: 'width 0.3s' }} />
+              <div style={{ height: '6px', background: C.monoBg, borderRadius: '99px', overflow: 'hidden', marginBottom: '12px' }}>
+                <div style={{ height: '100%', width: `${batchStats.total ? Math.round((batchStats.done + batchStats.error) / batchStats.total * 100) : 0}%`, background: C.indigo, transition: 'width 0.3s' }} />
               </div>
               <div style={{ maxHeight: '360px', overflowY: 'auto', border: '1px solid #F1F5F9', borderRadius: '6px' }}>
                 {batchGroups.map(g => (
                   <div key={g.folder}>
-                    <div style={{ position: 'sticky', top: 0, zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 12px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #F1F5F9', fontSize: '12px', fontWeight: 600, color: '#0F172A' }}>
+                    <div style={{ position: 'sticky', top: 0, zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 12px', background: C.wash, borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #F1F5F9', fontSize: '12px', fontWeight: 600, color: C.ink }}>
                       <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={g.folder}>
-                        {g.folder}{!g.matched && <span style={{ color: '#CBD5E1', fontWeight: 400 }}> · no supplier match</span>}
+                        {g.folder}{!g.matched && <span style={{ color: C.knobOff, fontWeight: 400 }}> · no supplier match</span>}
                       </span>
-                      <span style={{ fontWeight: 400, color: '#64748B' }}>
+                      <span style={{ fontWeight: 400, color: C.muted }}>
                         {g.done}/{g.total} done{g.items ? ` · ${g.items} items` : ''}{g.error ? ` · ` : ''}
-                        {g.error > 0 && <span style={{ color: '#991B1B', fontWeight: 600 }}>{g.error} failed</span>}
+                        {g.error > 0 && <span style={{ color: C.redInk, fontWeight: 600 }}>{g.error} failed</span>}
                       </span>
                       {g.error > 0 && !batchRunning && (
-                        <button onClick={() => retrySupplier(g.folder)} style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A', borderRadius: '5px', padding: '3px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>↻ Retry {g.error}</button>
+                        <button onClick={() => retrySupplier(g.folder)} style={{ background: C.warnBg, color: C.amberInk, border: '1px solid #FDE68A', borderRadius: '5px', padding: '3px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>↻ Retry {g.error}</button>
                       )}
                     </div>
                     {g.files.map(b => {
@@ -1916,16 +1917,16 @@ function CataloguesPage() {
                             {b.status === 'uploading' ? '◷ extracting' : badge.label}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.name}>{b.name}</div>
+                            <div style={{ color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.name}>{b.name}</div>
                             {meta.length > 0 && (
-                              <div style={{ fontSize: '10.5px', color: b.status === 'uploading' ? '#1E40AF' : '#94A3B8', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={meta.join(' · ')}>{meta.join(' · ')}</div>
+                              <div style={{ fontSize: '10.5px', color: b.status === 'uploading' ? '#1E40AF' : C.faint, marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={meta.join(' · ')}>{meta.join(' · ')}</div>
                             )}
                           </div>
-                          <span style={{ flex: '0 0 auto', color: b.status === 'error' ? '#991B1B' : '#16A34A', fontWeight: 600, maxWidth: '160px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }} title={b.error ?? ''}>
+                          <span style={{ flex: '0 0 auto', color: b.status === 'error' ? C.redInk : '#16A34A', fontWeight: 600, maxWidth: '160px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }} title={b.error ?? ''}>
                             {b.status === 'done' ? `${b.itemCount} items` : b.status === 'error' ? (b.error ?? 'error') : ''}
                           </span>
                           {!batchRunning && (b.status === 'error' || b.status === 'done') && (
-                            <button onClick={() => redoFile(b.key)} style={{ flex: '0 0 auto', background: 'none', border: '1px solid #E2E8F0', borderRadius: '5px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: b.status === 'error' ? '#92400E' : '#64748B', cursor: 'pointer', marginTop: '1px' }} title={b.status === 'error' ? 'Retry this file' : 'Re-extract this file (creates a new import)'}>
+                            <button onClick={() => redoFile(b.key)} style={{ flex: '0 0 auto', background: 'none', border: '1px solid #E2E8F0', borderRadius: '5px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: b.status === 'error' ? C.amberInk : C.muted, cursor: 'pointer', marginTop: '1px' }} title={b.status === 'error' ? 'Retry this file' : 'Re-extract this file (creates a new import)'}>
                               ↻ {b.status === 'error' ? 'Retry' : 'Redo'}
                             </button>
                           )}
@@ -1947,7 +1948,7 @@ function CataloguesPage() {
             <div style={{ background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '12px', padding: '14px 18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '20px' }}>⏸</span>
               <div style={{ flex: 1, minWidth: '240px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#92400E' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: C.amberInk }}>
                   Unfinished batch from {new Date(resumeSnap.savedAt).toLocaleString()}
                 </div>
                 <div style={{ fontSize: '12px', color: '#78350F', marginTop: '2px' }}>
@@ -1955,12 +1956,12 @@ function CataloguesPage() {
                   Re-pick the same files/folder to continue — already-scanned files are skipped automatically.
                 </div>
               </div>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#4338CA', background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '7px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: C.indigoInk, background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '7px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 📄 Re-pick files
                 <input type="file" multiple onChange={handleBatchSelect} style={{ display: 'none' }} />
               </label>
               <button onClick={discardResume}
-                style={{ fontSize: '12px', fontWeight: 600, color: '#92400E', background: 'none', border: '1px solid #FDE68A', borderRadius: '6px', padding: '7px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                style={{ fontSize: '12px', fontWeight: 600, color: C.amberInk, background: 'none', border: '1px solid #FDE68A', borderRadius: '6px', padding: '7px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 Discard
               </button>
             </div>
@@ -1970,18 +1971,18 @@ function CataloguesPage() {
         {/* Review queue — Xero-style reconciliation list */}
         <div style={{ marginBottom: '28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', margin: 0 }}>Reconcile Catalogue → IMS</h2>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, color: C.ink, margin: 0 }}>Reconcile Catalogue → IMS</h2>
             {/* Active review queue · Skipped bucket · Confirmed list */}
-            <div style={{ display: 'inline-flex', background: '#F1F5F9', borderRadius: '7px', padding: '2px' }}>
+            <div style={{ display: 'inline-flex', background: C.monoBg, borderRadius: '7px', padding: '2px' }}>
               {([
-                ['review',    '📋 Review',    pendingCount,   '#0F172A'],
-                ['skipped',   '⏭ Skipped',   skippedCount,   '#92400E'],
-                ['confirmed', '✓ Confirmed', confirmedCount, '#166534'],
+                ['review',    '📋 Review',    pendingCount,   C.ink],
+                ['skipped',   '⏭ Skipped',   skippedCount,   C.amberInk],
+                ['confirmed', '✓ Confirmed', confirmedCount, C.green],
               ] as const).map(([k, lbl, count, activeColor]) => {
                 const active = view === k
                 return (
                   <button key={k} onClick={() => setView(k)}
-                    style={{ padding: '4px 11px', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '5px', cursor: 'pointer', whiteSpace: 'nowrap', background: active ? 'white' : 'transparent', color: active ? activeColor : '#64748B', boxShadow: active ? '0 1px 2px rgba(0,0,0,0.08)' : 'none' }}>
+                    style={{ padding: '4px 11px', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '5px', cursor: 'pointer', whiteSpace: 'nowrap', background: active ? 'white' : 'transparent', color: active ? activeColor : C.muted, boxShadow: active ? '0 1px 2px rgba(0,0,0,0.08)' : 'none' }}>
                     {lbl} {count ? `(${count})` : ''}
                   </button>
                 )
@@ -1991,20 +1992,20 @@ function CataloguesPage() {
             {imports.length > 1 && (
               <select value={selectedImportId ?? ''} onChange={e => setSelectedImportId(e.target.value ? Number(e.target.value) : null)}
                 title="Scope the queue to one scanned file (loads all of its items)"
-                style={{ border: '1px solid #E2E8F0', borderRadius: '7px', padding: '5px 10px', fontSize: '12px', background: 'white', color: selectedImportId != null ? '#4338CA' : '#475569', fontWeight: selectedImportId != null ? 600 : 400, maxWidth: '260px' }}>
+                style={{ border: '1px solid #E2E8F0', borderRadius: '7px', padding: '5px 10px', fontSize: '12px', background: 'white', color: selectedImportId != null ? C.indigoInk : C.sub, fontWeight: selectedImportId != null ? 600 : 400, maxWidth: '260px' }}>
                 <option value="">All imports ({queue.length})</option>
                 {imports.filter(i => i.counts.pending > 0).map(imp => (
                   <option key={imp.id} value={imp.id}>{imp.supplier_name ?? imp.filename.slice(0, 36)} ({imp.counts.pending})</option>
                 ))}
               </select>
             )}
-            <span style={{ fontSize: '12px', color: '#94A3B8', marginLeft: 'auto' }}>
+            <span style={{ fontSize: '12px', color: C.faint, marginLeft: 'auto' }}>
               {view === 'confirmed' ? `${confirmed.length} item${confirmed.length === 1 ? '' : 's'}` : (
                 <>
                   {visibleItems.length === itemsWithTier.length ? `${itemsWithTier.length} items` : `${visibleItems.length} of ${itemsWithTier.length} items`}
                   {selectedImportId == null && queueTotal > queue.length && (
                     <> · <button onClick={() => fetchQueue(queue.length + QUEUE_PAGE)}
-                      style={{ background: 'none', border: 'none', color: '#6366F1', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                      style={{ background: 'none', border: 'none', color: C.indigo, fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
                       load {Math.min(QUEUE_PAGE, queueTotal - queue.length)} more of {queueTotal}</button></>
                   )}
                 </>
@@ -2038,20 +2039,20 @@ function CataloguesPage() {
                   <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
                     {alreadyVerified.items.map((it) => (
                       <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 18px', borderTop: '1px solid #F1F5F9', fontSize: '12.5px' }}>
-                        <span style={{ flex: 1, minWidth: 0, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.raw_description || '—'}</span>
-                        <span style={{ color: '#94A3B8', flexShrink: 0 }}>→</span>
+                        <span style={{ flex: 1, minWidth: 0, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.raw_description || '—'}</span>
+                        <span style={{ color: C.faint, flexShrink: 0 }}>→</span>
                         <a href={`/items/${skuToPath(it.matched_sku)}`} target="_blank" rel="noopener noreferrer"
                           title={it.matched_name || ''}
-                          style={{ color: '#6366F1', fontWeight: 600, textDecoration: 'none', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{it.matched_sku} ↗</a>
-                        <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, padding: '1px 7px', borderRadius: '999px', background: '#DCFCE7', color: '#166534', fontVariantNumeric: 'tabular-nums' }}>{Math.round(it.confidence * 100)}%</span>
-                        <span style={{ flexShrink: 0, fontSize: '10px', color: '#94A3B8' }}>{it.match_type}</span>
+                          style={{ color: C.indigo, fontWeight: 600, textDecoration: 'none', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{it.matched_sku} ↗</a>
+                        <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, padding: '1px 7px', borderRadius: '999px', background: C.greenBg, color: C.green, fontVariantNumeric: 'tabular-nums' }}>{Math.round(it.confidence * 100)}%</span>
+                        <span style={{ flexShrink: 0, fontSize: '10px', color: C.faint }}>{it.match_type}</span>
                       </div>
                     ))}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '12px 18px', borderTop: '1px solid #FDBA74', background: '#FFF7ED' }}>
                     <span style={{ fontSize: '11.5px', color: '#9A3412' }}>Reversible — undo any from the Confirmed list.</span>
                     <button onClick={doSkipAlreadyVerified} disabled={skippingVerified}
-                      style={{ flexShrink: 0, padding: '9px 18px', fontSize: '13px', fontWeight: 700, background: skippingVerified ? '#CBD5E1' : '#EA580C', color: 'white', border: 'none', borderRadius: '8px', cursor: skippingVerified ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '7px' }}>
+                      style={{ flexShrink: 0, padding: '9px 18px', fontSize: '13px', fontWeight: 700, background: skippingVerified ? C.knobOff : '#EA580C', color: 'white', border: 'none', borderRadius: '8px', cursor: skippingVerified ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '7px' }}>
                       {skippingVerified ? <><Spinner /> Skipping…</> : `✓ Skip all ${alreadyVerified.count} as already-verified`}
                     </button>
                   </div>
@@ -2063,7 +2064,7 @@ function CataloguesPage() {
           {/* Search scanned products */}
           {(itemsWithTier.length > 0 || anyQueueFilter) && (
             <div style={{ position: 'relative', marginBottom: '12px' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#94A3B8', pointerEvents: 'none' }}>🔍</span>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: C.faint, pointerEvents: 'none' }}>🔍</span>
               <input
                 value={itemSearch}
                 onChange={e => setItemSearch(e.target.value)}
@@ -2072,7 +2073,7 @@ function CataloguesPage() {
               />
               {itemSearch && (
                 <button onClick={() => setItemSearch('')} title="Clear"
-                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: '#F1F5F9', color: '#64748B', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', cursor: 'pointer', lineHeight: 1 }}>×</button>
+                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: C.monoBg, color: C.muted, borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', cursor: 'pointer', lineHeight: 1 }}>×</button>
               )}
             </div>
           )}
@@ -2084,9 +2085,9 @@ function CataloguesPage() {
           )}
 
           {!loading && itemsWithTier.length === 0 && (
-            <div style={{ background: 'white', border: '1px solid #E8EDF3', borderRadius: '12px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)', padding: '36px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+            <div style={{ background: 'white', border: '1px solid #E8EDF3', borderRadius: '12px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)', padding: '36px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>
               {anyQueueFilter
-                ? <>No items match your search or filters. <button onClick={() => { setItemSearch(''); setSupplierFilter(''); setBrandFilter(''); setFilter('all') }} style={{ border: 'none', background: 'none', color: '#6366F1', fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: '13px' }}>Clear all</button> to see the queue.</>
+                ? <>No items match your search or filters. <button onClick={() => { setItemSearch(''); setSupplierFilter(''); setBrandFilter(''); setFilter('all') }} style={{ border: 'none', background: 'none', color: C.indigo, fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: '13px' }}>Clear all</button> to see the queue.</>
                 : 'No items pending review. Upload a supplier catalogue above to get started.'}
             </div>
           )}
@@ -2103,16 +2104,16 @@ function CataloguesPage() {
                 borderRadius: '8px', padding: '14px 18px', marginBottom: '14px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: isConfirmed ? '#166534' : '#92400E' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: isConfirmed ? C.green : C.amberInk }}>
                     {isConfirmed ? '✓ Supplier confirmed' : '① Confirm the supplier for this catalogue'}
                   </span>
                   {selectedImport.detected_supplier_name && (
-                    <span style={{ fontSize: '11.5px', color: '#475569' }}>
+                    <span style={{ fontSize: '11.5px', color: C.sub }}>
                       AI detected: <strong>{selectedImport.detected_supplier_name}</strong>{confPct != null ? ` (${confPct}%)` : ''}
                     </span>
                   )}
                   {selectedImport.detected_brands && (
-                    <span style={{ fontSize: '11px', color: '#64748B' }}>brands: {selectedImport.detected_brands}</span>
+                    <span style={{ fontSize: '11px', color: C.muted }}>brands: {selectedImport.detected_brands}</span>
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
@@ -2130,7 +2131,7 @@ function CataloguesPage() {
                     onClick={() => supplierChoice && confirmSupplier(selectedImport.id, Number(supplierChoice))}
                     disabled={!supplierChoice || confirmingSupplier || (isConfirmed && supplierChoice === selectedImport.supplier_id)}
                     style={{
-                      background: (!supplierChoice || confirmingSupplier || (isConfirmed && supplierChoice === selectedImport.supplier_id)) ? '#CBD5E1' : '#16A34A',
+                      background: (!supplierChoice || confirmingSupplier || (isConfirmed && supplierChoice === selectedImport.supplier_id)) ? C.knobOff : '#16A34A',
                       color: 'white', border: 'none', borderRadius: '6px', padding: '7px 16px',
                       fontSize: '13px', fontWeight: 700,
                       cursor: (!supplierChoice || confirmingSupplier) ? 'default' : 'pointer',
@@ -2140,14 +2141,14 @@ function CataloguesPage() {
                     {confirmingSupplier ? <><Spinner /> Saving…</> : isConfirmed ? 'Update supplier' : '✓ Confirm supplier'}
                   </button>
                   {selectedImport.supplier_name && (
-                    <span style={{ fontSize: '11.5px', color: isConfirmed ? '#166534' : '#92400E' }}>
+                    <span style={{ fontSize: '11.5px', color: isConfirmed ? C.green : C.amberInk }}>
                       Current: <strong>{selectedImport.supplier_name}</strong>
                       {selectedImport.supplier_segment ? ` · ${selectedImport.supplier_segment}` : ''}
                     </span>
                   )}
                 </div>
                 {needsSupplierConfirm && (
-                  <p style={{ fontSize: '11.5px', color: '#92400E', margin: '10px 0 0' }}>
+                  <p style={{ fontSize: '11.5px', color: C.amberInk, margin: '10px 0 0' }}>
                     SKU review is locked until you confirm the supplier — every item in this file is assigned to it.
                   </p>
                 )}
@@ -2171,11 +2172,11 @@ function CataloguesPage() {
             const pct = totals.total > 0 ? Math.round(reviewed / totals.total * 100) : 0
             return (
               <div style={{
-                background: '#0F172A', color: '#E2E8F0', borderRadius: '10px',
+                background: C.ink, color: C.line, borderRadius: '10px',
                 padding: '12px 16px', marginBottom: '16px',
                 display: 'flex', alignItems: 'center', gap: '14px', fontSize: '12px', flexWrap: 'wrap',
               }}>
-                <strong style={{ color: '#F8FAFC', fontSize: '13px' }}>Queue progress</strong>
+                <strong style={{ color: C.wash, fontSize: '13px' }}>Queue progress</strong>
                 <span style={{ background: '#14532D', border: '1px solid #166534', color: '#86EFAC', padding: '3px 9px', borderRadius: '99px', fontWeight: 600 }}>
                   {totals.matched} matched
                 </span>
@@ -2185,7 +2186,7 @@ function CataloguesPage() {
                 <span style={{ background: '#450A0A', border: '1px solid #7F1D1D', color: '#FCA5A5', padding: '3px 9px', borderRadius: '99px', fontWeight: 600 }}>
                   {totals.rejected} rejected
                 </span>
-                <span style={{ background: '#1E293B', border: '1px solid #334155', color: '#CBD5E1', padding: '3px 9px', borderRadius: '99px', fontWeight: 600 }}>
+                <span style={{ background: '#1E293B', border: '1px solid #334155', color: C.knobOff, padding: '3px 9px', borderRadius: '99px', fontWeight: 600 }}>
                   {totals.pending} pending
                 </span>
                 <div style={{ flex: 1, minWidth: '200px', height: '8px', background: '#1E293B', borderRadius: '99px', overflow: 'hidden' }}>
@@ -2195,7 +2196,7 @@ function CataloguesPage() {
                     background: 'linear-gradient(to right, #6366F1, #818CF8)',
                   }} />
                 </div>
-                <span style={{ color: '#94A3B8', fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ color: C.faint, fontVariantNumeric: 'tabular-nums' }}>
                   {reviewed} of {totals.total} reviewed ({pct}%)
                 </span>
               </div>
@@ -2214,15 +2215,15 @@ function CataloguesPage() {
               flexWrap: 'wrap',
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: '#166534', margin: 0 }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: C.green, margin: 0 }}>
                   ✨ {tierCounts.t1a + tierCounts.t1b} item{(tierCounts.t1a + tierCounts.t1b) === 1 ? '' : 's'} ready to reconcile ({tierCounts.t1a} at 99%+, {tierCounts.t1b} at 95-98%)
                 </p>
-                <p style={{ fontSize: '11.5px', color: '#15803D', marginTop: '3px' }}>
+                <p style={{ fontSize: '11.5px', color: C.ok, marginTop: '3px' }}>
                   These matched at 95%+ confidence — same SKU, name + cost agree. Equivalent to <code>OK</code> on a Xero bank statement line.
                 </p>
                 <p style={{ fontSize: '11px', color: '#16A34A', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ fontWeight: 700, color: '#4338CA' }}>✨ AI tags</span>
-                  <span style={{ color: '#64748B' }}>
+                  <span style={{ fontWeight: 700, color: C.indigoInk }}>✨ AI tags</span>
+                  <span style={{ color: C.muted }}>
                     confirmed per item below are applied on reconcile ({t1ItemsInScope.reduce((n, i) => n + effectiveTags(getAction(i.id), i).length, 0)} tags across {t1ItemsInScope.length} items)
                   </span>
                 </p>
@@ -2231,7 +2232,7 @@ function CataloguesPage() {
                 <button
                   onClick={() => setFilter('t1')}
                   style={{
-                    background: 'white', color: '#166534', border: '1px solid #86EFAC',
+                    background: 'white', color: C.green, border: '1px solid #86EFAC',
                     borderRadius: '6px', padding: '7px 14px',
                     fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                   }}
@@ -2260,30 +2261,30 @@ function CataloguesPage() {
             <div style={{ background: 'white', border: '1px solid #E8EDF3', borderRadius: '12px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)', padding: '10px 14px', marginBottom: '10px' }}>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                 {([
-                  ['all', `All (${itemsWithTier.length})`, '#475569'],
+                  ['all', `All (${itemsWithTier.length})`, C.sub],
                   ['t1',  `Strong ≥95% (${tierCounts.t1a + tierCounts.t1b})`, '#16A34A'],
                   ['t2',  `Needs review (${tierCounts.t2a + tierCounts.t2b})`, '#2563EB'],
                   ['t4',  `No match · carried (${tierCounts.t4})`, '#9333EA'],
                   ['t3',  `Likely reject (${tierCounts.t3})`, '#DC2626'],
                 ] as const).map(([key, label, color]) => (
                   <button key={key} onClick={() => { setFilter(key); clearSelection() }}
-                    style={{ background: filter === key ? color : '#F1F5F9', color: filter === key ? 'white' : '#475569', border: 'none', borderRadius: '99px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    style={{ background: filter === key ? color : C.monoBg, color: filter === key ? 'white' : C.sub, border: 'none', borderRadius: '99px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     {label}
                   </button>
                 ))}
 
                 {/* Active brand/supplier filter shown as a removable chip */}
                 {(brandFilter || supplierFilter) && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, background: '#EEF2FF', color: '#4338CA', borderRadius: '99px', padding: '3px 6px 3px 10px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, background: C.primaryBg, color: C.indigoInk, borderRadius: '99px', padding: '3px 6px 3px 10px' }}>
                     {brandFilter || suppliers.find(s => String(s.id) === supplierFilter)?.name}
-                    <button onClick={() => { setBrandFilter(''); setSupplierFilter('') }} style={{ border: 'none', background: 'none', color: '#6366F1', cursor: 'pointer', fontSize: '13px', lineHeight: 1 }}>×</button>
+                    <button onClick={() => { setBrandFilter(''); setSupplierFilter('') }} style={{ border: 'none', background: 'none', color: C.indigo, cursor: 'pointer', fontSize: '13px', lineHeight: 1 }}>×</button>
                   </span>
                 )}
 
                 <div style={{ marginLeft: 'auto', position: 'relative', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  {includeInactive && <span style={{ fontSize: '10.5px', color: '#92400E' }}>incl. inactive SKUs</span>}
+                  {includeInactive && <span style={{ fontSize: '10.5px', color: C.amberInk }}>incl. inactive SKUs</span>}
                   <button onClick={() => setAdvancedOpen(o => !o)}
-                    style={{ background: advancedOpen ? '#EEF2FF' : 'white', color: '#475569', border: '1px solid #E2E8F0', borderRadius: '7px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    style={{ background: advancedOpen ? C.primaryBg : 'white', color: C.sub, border: '1px solid #E2E8F0', borderRadius: '7px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     ⚙ More
                   </button>
                   {advancedOpen && (
@@ -2291,7 +2292,7 @@ function CataloguesPage() {
                       <div onClick={() => setAdvancedOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
                       <div style={{ position: 'absolute', top: '34px', right: 0, zIndex: 21, background: 'white', border: '1px solid #E2E8F0', borderRadius: '9px', boxShadow: '0 8px 24px rgba(15,23,42,0.14)', padding: '12px', width: '260px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Brand</span>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Brand</span>
                           <select value={brandFilter} onChange={e => { setBrandFilter(e.target.value); clearSelection() }} style={{ border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 8px', fontSize: '12px', background: 'white' }}>
                             <option value="">All brands</option>
                             {allBrandsInQueue.map(b => {
@@ -2302,19 +2303,19 @@ function CataloguesPage() {
                         </label>
                         {brandFilter && (
                           <button onClick={() => { doRejectBrand(brandFilter); setAdvancedOpen(false) }} disabled={bulkBusy === 'reject-brand'}
-                            style={{ background: '#FEE2E2', color: '#991B1B', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '11.5px', fontWeight: 600, cursor: 'pointer' }}>
+                            style={{ background: C.redBg, color: C.redInk, border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '11.5px', fontWeight: 600, cursor: 'pointer' }}>
                             {bulkBusy === 'reject-brand' ? 'Rejecting…' : `✗ Reject all unmatched “${brandFilter}”`}
                           </button>
                         )}
                         <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Supplier</span>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Supplier</span>
                           <select value={supplierFilter} onChange={e => { setSupplierFilter(e.target.value); clearSelection() }} style={{ border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 8px', fontSize: '12px', background: 'white' }}>
                             <option value="">All suppliers</option>
                             {supplierFacets.filter(f => f.supplier_id != null).map(f =>
                               <option key={f.supplier_id} value={String(f.supplier_id)}>{suppliers.find(s => s.id === f.supplier_id)?.name ?? `#${f.supplier_id}`} ({f.count})</option>)}
                           </select>
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: C.sub, cursor: 'pointer' }}
                           title="Also match against INACTIVE / DISCONTINUED SKUs — matching one revives it instead of creating a duplicate.">
                           <input type="checkbox" checked={includeInactive} onChange={e => { setIncludeInactive(e.target.checked); clearSelection() }} />
                           Match against inactive SKUs
@@ -2331,7 +2332,7 @@ function CataloguesPage() {
           {selectedIds.size > 0 && (
             <div style={{
               position: 'sticky', top: '12px', zIndex: 5,
-              background: '#0F172A', color: 'white',
+              background: C.ink, color: 'white',
               borderRadius: '8px', padding: '10px 16px',
               display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px',
               boxShadow: '0 4px 14px rgba(15,23,42,0.18)',
@@ -2345,12 +2346,12 @@ function CataloguesPage() {
               >
                 {bulkBusy === 'match' ? <><Spinner size={11} color="white" /> Matching…</> : '✓ Match to suggested SKU'}
               </button>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', background: '#EEF2FF', borderRadius: '99px', padding: '2px 8px' }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, background: C.primaryBg, borderRadius: '99px', padding: '2px 8px' }}>
                 ✨ + AI tags
               </span>
               <select value={bulkRejectReason} onChange={e => setBulkRejectReason(e.target.value)} disabled={!!bulkBusy}
                 title="Reason applied to the rejected items"
-                style={{ background: '#1E293B', color: '#E2E8F0', border: '1px solid #334155', borderRadius: '5px', padding: '5px 8px', fontSize: '11px', fontWeight: 600 }}>
+                style={{ background: '#1E293B', color: C.line, border: '1px solid #334155', borderRadius: '5px', padding: '5px 8px', fontSize: '11px', fontWeight: 600 }}>
                 <option value="clinical_consumable">Clinical consumable</option>
                 <option value="duplicate">Duplicate</option>
                 <option value="out_of_scope">Out of scope</option>
@@ -2366,7 +2367,7 @@ function CataloguesPage() {
               <span style={{ marginLeft: 'auto' }}>
                 <button
                   onClick={clearSelection}
-                  style={{ background: 'transparent', color: '#94A3B8', border: 'none', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ background: 'transparent', color: C.faint, border: 'none', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Clear
                 </button>
@@ -2378,8 +2379,8 @@ function CataloguesPage() {
           {visibleItems.length > 0 && (
             <>
               {/* Legend strip */}
-              <div style={{ marginBottom: '10px', padding: '8px 12px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '11px', color: '#475569', display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Legend</span>
+              <div style={{ marginBottom: '10px', padding: '8px 12px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '11px', color: C.sub, display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Legend</span>
                 <span><span style={{ display: 'inline-block', width: '10px', height: '10px', background: '#22C55E', borderRadius: '2px', verticalAlign: 'middle', marginRight: '5px' }}></span>all fields agree</span>
                 <span><span style={{ display: 'inline-block', width: '10px', height: '10px', background: '#FCA5A5', borderRadius: '2px', verticalAlign: 'middle', marginRight: '5px' }}></span>field differs</span>
                 <span><span style={{ display: 'inline-block', width: '10px', height: '10px', background: '#FDE68A', borderRadius: '2px', verticalAlign: 'middle', marginRight: '5px' }}></span>no match — context shown</span>
@@ -2390,16 +2391,16 @@ function CataloguesPage() {
                       checked={visibleItems.length > 0 && visibleItems.every(i => selectedIds.has(i.id))}
                       onChange={e => e.target.checked ? selectAll(visibleItems.map(i => i.id)) : clearSelection()}
                     />
-                    <span style={{ fontSize: '11px', color: '#475569', fontWeight: 600 }}>Select all visible</span>
+                    <span style={{ fontSize: '11px', color: C.sub, fontWeight: 600 }}>Select all visible</span>
                   </label>
                 </span>
               </div>
 
               {visibleItems.length === 0 && (
-                <div className="ims-card ims-fade-in" style={{ padding: '30px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
-                  No scanned products match {itemSearch ? <strong style={{ color: '#475569' }}>“{itemSearch}”</strong> : 'these filters'}.
+                <div className="ims-card ims-fade-in" style={{ padding: '30px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>
+                  No scanned products match {itemSearch ? <strong style={{ color: C.sub }}>“{itemSearch}”</strong> : 'these filters'}.
                   <button onClick={() => { setItemSearch(''); setFilter('all'); setBrandFilter(''); setSupplierFilter('') }}
-                    style={{ marginLeft: '10px', border: '1px solid #E2E8F0', background: 'white', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: '#475569', cursor: 'pointer' }}>
+                    style={{ marginLeft: '10px', border: '1px solid #E2E8F0', background: 'white', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: C.sub, cursor: 'pointer' }}>
                     Clear search &amp; filters
                   </button>
                 </div>
@@ -2422,11 +2423,11 @@ function CataloguesPage() {
                 const stripBg =
                   !top ? '#FFFBEB' :
                   diff?.match_grade === 'perfect' ? '#F0FDF4' :
-                  diff?.match_grade === 'partial' ? '#FFF7ED' : '#FEF2F2'
+                  diff?.match_grade === 'partial' ? '#FFF7ED' : C.badBg
                 const stripText =
-                  !top ? '#92400E' :
-                  diff?.match_grade === 'perfect' ? '#15803D' :
-                  diff?.match_grade === 'partial' ? '#9A3412' : '#991B1B'
+                  !top ? C.amberInk :
+                  diff?.match_grade === 'perfect' ? C.ok :
+                  diff?.match_grade === 'partial' ? '#9A3412' : C.redInk
 
                 // No-match context label
                 const noMatchLabel =
@@ -2439,7 +2440,7 @@ function CataloguesPage() {
                     position: 'relative',
                     marginBottom: '14px',
                     background: 'white',
-                    border: `${top && diff?.match_grade === 'perfect' ? '2px' : '1px'} solid ${isSelected ? '#6366F1' : frameColor}`,
+                    border: `${top && diff?.match_grade === 'perfect' ? '2px' : '1px'} solid ${isSelected ? C.indigo : frameColor}`,
                     borderRadius: '12px',
                     overflow: 'hidden',
                     boxShadow: '0 1px 2px rgba(15,23,42,0.04), 0 2px 8px rgba(15,23,42,0.03)',
@@ -2449,8 +2450,8 @@ function CataloguesPage() {
 
                     {/* Indeterminate progress bar while a blocking action runs on this item */}
                     {busy && (
-                      <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: '#E2E8F0', overflow: 'hidden', zIndex: 3 }}>
-                        <div style={{ position: 'absolute', top: 0, height: '100%', width: '40%', background: '#6366F1', borderRadius: '2px', animation: 'ims-bar 1.1s ease-in-out infinite' }} />
+                      <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: C.line, overflow: 'hidden', zIndex: 3 }}>
+                        <div style={{ position: 'absolute', top: 0, height: '100%', width: '40%', background: C.indigo, borderRadius: '2px', animation: 'ims-bar 1.1s ease-in-out infinite' }} />
                       </div>
                     )}
 
@@ -2476,10 +2477,10 @@ function CataloguesPage() {
                         </span>
                         {diff && (
                           <>
-                            <span style={{ color: '#475569' }}>name <b style={{ color: diff.fields.name.ok ? '#15803D' : '#B91C1C' }}>{diff.fields.name.label}</b></span>
-                            <span style={{ color: '#475569' }}>brand <span style={{ color: diff.fields.brand.ok ? '#15803D' : '#B91C1C', fontWeight: 600 }}>{diff.fields.brand.ok ? '✓' : '×'} {diff.fields.brand.label}</span></span>
-                            <span style={{ color: '#475569' }}>pack <span style={{ color: diff.fields.pack.ok ? '#15803D' : '#B91C1C', fontWeight: 600 }}>{diff.fields.pack.ok ? '✓' : '×'} {diff.fields.pack.label}</span></span>
-                            <span style={{ color: '#475569' }}>cost <span style={{ color: diff.fields.cost.ok ? '#15803D' : '#B91C1C', fontWeight: 600 }}>{diff.fields.cost.ok ? '✓' : '×'} {diff.fields.cost.label}</span></span>
+                            <span style={{ color: C.sub }}>name <b style={{ color: diff.fields.name.ok ? C.ok : C.bad }}>{diff.fields.name.label}</b></span>
+                            <span style={{ color: C.sub }}>brand <span style={{ color: diff.fields.brand.ok ? C.ok : C.bad, fontWeight: 600 }}>{diff.fields.brand.ok ? '✓' : '×'} {diff.fields.brand.label}</span></span>
+                            <span style={{ color: C.sub }}>pack <span style={{ color: diff.fields.pack.ok ? C.ok : C.bad, fontWeight: 600 }}>{diff.fields.pack.ok ? '✓' : '×'} {diff.fields.pack.label}</span></span>
+                            <span style={{ color: C.sub }}>cost <span style={{ color: diff.fields.cost.ok ? C.ok : C.bad, fontWeight: 600 }}>{diff.fields.cost.ok ? '✓' : '×'} {diff.fields.cost.label}</span></span>
                           </>
                         )}
                       </div>
@@ -2496,78 +2497,78 @@ function CataloguesPage() {
 
                       {/* LEFT: extracted from PDF */}
                       <div style={{ padding: '12px 16px' }}>
-                        <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: '#94A3B8', fontWeight: 600, marginBottom: '6px' }}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: C.faint, fontWeight: 600, marginBottom: '6px' }}>
                           EXTRACTED FROM{' '}
                           {item.import_filename
-                            ? <span style={{ color: '#6366F1', fontWeight: 700 }} title={item.import_filename}>{item.import_filename.length > 50 ? item.import_filename.slice(0, 47) + '...' : item.import_filename}</span>
+                            ? <span style={{ color: C.indigo, fontWeight: 700 }} title={item.import_filename}>{item.import_filename.length > 50 ? item.import_filename.slice(0, 47) + '...' : item.import_filename}</span>
                             : 'PDF'}
                         </div>
-                        <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', marginBottom: item.original_description ? '2px' : '8px', lineHeight: 1.35 }}>
-                          {item.raw_description ?? <em style={{ color: '#94A3B8' }}>No description</em>}
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: C.ink, marginBottom: item.original_description ? '2px' : '8px', lineHeight: 1.35 }}>
+                          {item.raw_description ?? <em style={{ color: C.faint }}>No description</em>}
                         </div>
                         {item.original_description && (
-                          <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <span style={{ fontSize: '9px', fontWeight: 700, background: '#F1F5F9', color: '#64748B', padding: '1px 5px', borderRadius: '99px' }}>↳ EN</span>
+                          <div style={{ fontSize: '11px', color: C.faint, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{ fontSize: '9px', fontWeight: 700, background: C.monoBg, color: C.muted, padding: '1px 5px', borderRadius: '99px' }}>↳ EN</span>
                             <span title="Original text as printed on the catalogue">{item.original_description}</span>
                           </div>
                         )}
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '2px 0', color: '#94A3B8', width: '78px' }}>supplier</td>
+                              <td style={{ padding: '2px 0', color: C.faint, width: '78px' }}>supplier</td>
                               <td>
                                 <select
                                   value={item.supplier_id ?? ''}
                                   onChange={e => changeItemSupplier(item, e.target.value ? Number(e.target.value) : null)}
                                   disabled={busy}
                                   title="Supplier this line belongs to — cost & supplier SKU are written here on confirm"
-                                  style={{ border: '1px solid #E2E8F0', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', color: item.supplier_id ? '#475569' : '#B45309', background: 'white', maxWidth: '190px' }}>
+                                  style={{ border: '1px solid #E2E8F0', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', color: item.supplier_id ? C.sub : C.amber, background: 'white', maxWidth: '190px' }}>
                                   <option value="">— pick supplier —</option>
                                   {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                               </td>
                             </tr>
-                            <tr><td style={{ padding: '2px 0', color: '#94A3B8', width: '78px' }}>brand</td><td style={{ color: '#64748B' }}>{item.brand ?? '—'}</td></tr>
-                            {item.variant && <tr><td style={{ padding: '2px 0', color: '#94A3B8', width: '78px' }}>variant</td><td><span style={{ fontSize: '10.5px', fontWeight: 700, background: '#EDE9FE', color: '#5B21B6', padding: '1px 7px', borderRadius: '99px' }}>{item.variant}</span></td></tr>}
-                            {item.supplier_sku && (<tr><td style={{ padding: '2px 0', color: '#94A3B8' }}>SKU</td><td style={{ color: '#64748B', fontFamily: 'monospace' }}>{item.supplier_sku}</td></tr>)}
-                            <tr style={diff && !diff.fields.pack.ok ? { background: '#FEE2E2' } : {}}>
-                              <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? '#B91C1C' : '#94A3B8', fontWeight: diff && !diff.fields.pack.ok ? 600 : 400 }}>pack</td>
-                              <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? '#B91C1C' : '#64748B', fontWeight: diff && !diff.fields.pack.ok ? 700 : 400 }}>
+                            <tr><td style={{ padding: '2px 0', color: C.faint, width: '78px' }}>brand</td><td style={{ color: C.muted }}>{item.brand ?? '—'}</td></tr>
+                            {item.variant && <tr><td style={{ padding: '2px 0', color: C.faint, width: '78px' }}>variant</td><td><span style={{ fontSize: '10.5px', fontWeight: 700, background: '#EDE9FE', color: '#5B21B6', padding: '1px 7px', borderRadius: '99px' }}>{item.variant}</span></td></tr>}
+                            {item.supplier_sku && (<tr><td style={{ padding: '2px 0', color: C.faint }}>SKU</td><td style={{ color: C.muted, fontFamily: 'monospace' }}>{item.supplier_sku}</td></tr>)}
+                            <tr style={diff && !diff.fields.pack.ok ? { background: C.redBg } : {}}>
+                              <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? C.bad : C.faint, fontWeight: diff && !diff.fields.pack.ok ? 600 : 400 }}>pack</td>
+                              <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? C.bad : C.muted, fontWeight: diff && !diff.fields.pack.ok ? 700 : 400 }}>
                                 {item.units_per_pack != null ? `${item.units_per_pack} × ${item.uom ?? 'unit'}` : (item.pack_size ?? '—')}
                               </td>
                             </tr>
-                            <tr><td style={{ padding: '2px 0', color: '#94A3B8' }} title="Smallest quantity you sell at a time">min sell</td><td style={{ color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>{(item.min_sellable_qty ?? 1)} × {item.uom ?? 'unit'}</td></tr>
-                            <tr style={diff && !diff.fields.cost.ok ? { background: '#FEE2E2' } : {}}>
-                              <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? '#B91C1C' : '#94A3B8', fontWeight: diff && !diff.fields.cost.ok ? 600 : 400 }}>cost</td>
-                              <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? '#B91C1C' : '#64748B', fontWeight: diff && !diff.fields.cost.ok ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                            <tr><td style={{ padding: '2px 0', color: C.faint }} title="Smallest quantity you sell at a time">min sell</td><td style={{ color: C.muted, fontVariantNumeric: 'tabular-nums' }}>{(item.min_sellable_qty ?? 1)} × {item.uom ?? 'unit'}</td></tr>
+                            <tr style={diff && !diff.fields.cost.ok ? { background: C.redBg } : {}}>
+                              <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? C.bad : C.faint, fontWeight: diff && !diff.fields.cost.ok ? 600 : 400 }}>cost</td>
+                              <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? C.bad : C.muted, fontWeight: diff && !diff.fields.cost.ok ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
                                 {item.cost_price != null ? `HK$${item.cost_price.toFixed(0)}` : '—'}
                               </td>
                             </tr>
                             {item.max_bulk_buy_cost != null && (
                               <tr>
-                                <td style={{ padding: '2px 0', color: '#94A3B8' }}>MBB</td>
+                                <td style={{ padding: '2px 0', color: C.faint }}>MBB</td>
                                 <td style={{ color: '#0EA5E9', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                                   HK${item.max_bulk_buy_cost.toFixed(0)}{item.max_bulk_buy_min_qty ? ` × ${item.max_bulk_buy_min_qty}` : ''}
                                 </td>
                               </tr>
                             )}
-                            {item.rrp != null && (<tr><td style={{ padding: '2px 0', color: '#94A3B8' }}>RRP</td><td style={{ color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>HK${item.rrp.toFixed(0)}</td></tr>)}
+                            {item.rrp != null && (<tr><td style={{ padding: '2px 0', color: C.faint }}>RRP</td><td style={{ color: C.muted, fontVariantNumeric: 'tabular-nums' }}>HK${item.rrp.toFixed(0)}</td></tr>)}
                             <tr>
-                              <td style={{ padding: '2px 0', color: '#94A3B8' }}>species</td>
+                              <td style={{ padding: '2px 0', color: C.faint }}>species</td>
                               <td>
-                                <span style={{ color: item.species ? '#64748B' : '#CBD5E1', textTransform: 'capitalize' }}>{item.species ?? '—'}</span>
+                                <span style={{ color: item.species ? C.muted : C.knobOff, textTransform: 'capitalize' }}>{item.species ?? '—'}</span>
                                 <button
                                   onClick={() => detectSpecies(item)}
                                   disabled={speciesBusy.has(item.id)}
                                   title="Identify the target species with Claude + web search (researches the brand/product)"
-                                  style={{ marginLeft: '8px', border: '1px solid #E2E8F0', background: 'white', color: '#4338CA', fontSize: '10px', fontWeight: 600, borderRadius: '5px', padding: '1px 6px', cursor: speciesBusy.has(item.id) ? 'default' : 'pointer', opacity: speciesBusy.has(item.id) ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  style={{ marginLeft: '8px', border: '1px solid #E2E8F0', background: 'white', color: C.indigoInk, fontSize: '10px', fontWeight: 600, borderRadius: '5px', padding: '1px 6px', cursor: speciesBusy.has(item.id) ? 'default' : 'pointer', opacity: speciesBusy.has(item.id) ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
                                   {speciesBusy.has(item.id) ? <><Spinner size={9} /> searching…</> : '🔍 web'}
                                 </button>
                               </td>
                             </tr>
-                            {item.weight_grams != null && (<tr><td style={{ padding: '2px 0', color: '#94A3B8' }}>weight</td><td style={{ color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>{fmtWeight(item.weight_grams, item.weight_unit)}</td></tr>)}
-                            {item.min_purchase_qty != null && (<tr><td style={{ padding: '2px 0', color: '#94A3B8' }} title="Supplier minimum order quantity (in packs)">supplier MOQ</td><td style={{ color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>{item.min_purchase_qty}</td></tr>)}
+                            {item.weight_grams != null && (<tr><td style={{ padding: '2px 0', color: C.faint }}>weight</td><td style={{ color: C.muted, fontVariantNumeric: 'tabular-nums' }}>{fmtWeight(item.weight_grams, item.weight_unit)}</td></tr>)}
+                            {item.min_purchase_qty != null && (<tr><td style={{ padding: '2px 0', color: C.faint }} title="Supplier minimum order quantity (in packs)">supplier MOQ</td><td style={{ color: C.muted, fontVariantNumeric: 'tabular-nums' }}>{item.min_purchase_qty}</td></tr>)}
                           </tbody>
                         </table>
 
@@ -2584,7 +2585,7 @@ function CataloguesPage() {
                           }
                           return (
                             <div style={{ marginTop: '10px' }}>
-                              <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                              <div style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                                 Category
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
@@ -2597,10 +2598,10 @@ function CataloguesPage() {
                                   {categoryNames.map(c => <option key={c}>{c}</option>)}
                                 </select>
                                 {catIsAi
-                                  ? <span title="AI-suggested category" style={{ fontSize: '10px', fontWeight: 700, color: '#4338CA', background: '#EEF2FF', borderRadius: '99px', padding: '2px 7px' }}>✨ AI</span>
-                                  : <span title="Overridden by reviewer" style={{ fontSize: '10px', fontWeight: 700, color: '#92400E', background: '#FEF3C7', borderRadius: '99px', padding: '2px 7px' }}>edited</span>}
+                                  ? <span title="AI-suggested category" style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, background: C.primaryBg, borderRadius: '99px', padding: '2px 7px' }}>✨ AI</span>
+                                  : <span title="Overridden by reviewer" style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, background: C.warnBg, borderRadius: '99px', padding: '2px 7px' }}>edited</span>}
                               </div>
-                              <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                              <div style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                                 Subcategory <span style={{ fontWeight: 400, textTransform: 'none' }}>(functional / clinical class — controlled list)</span>
                               </div>
                               {(() => {
@@ -2618,13 +2619,13 @@ function CataloguesPage() {
                                   </select>
                                 )
                               })()}
-                              <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                              <div style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                                 Tags
                               </div>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', alignItems: 'center' }}>
-                                {tags.length === 0 && <span style={{ fontSize: '11px', color: '#CBD5E1' }}>none</span>}
+                                {tags.length === 0 && <span style={{ fontSize: '11px', color: C.knobOff }}>none</span>}
                                 {tags.map(t => (
-                                  <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, background: '#EEF2FF', color: '#4338CA', padding: '2px 4px 2px 8px', borderRadius: '99px' }}>
+                                  <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, background: C.primaryBg, color: C.indigoInk, padding: '2px 4px 2px 8px', borderRadius: '99px' }}>
                                     {t}
                                     <button onClick={() => patchAction(item.id, { tags: tags.filter(x => x !== t) })}
                                       title="Remove tag"
@@ -2648,22 +2649,22 @@ function CataloguesPage() {
                       {/* center divider + arrow */}
                       <div style={{
                         borderLeft: '1px dashed #CBD5E1', borderRight: '1px dashed #CBD5E1',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.wash,
                       }}>
-                        <div style={{ fontSize: '18px', color: top ? (diff?.match_grade === 'perfect' ? '#22C55E' : '#94A3B8') : '#CBD5E1' }}>⇔</div>
+                        <div style={{ fontSize: '18px', color: top ? (diff?.match_grade === 'perfect' ? '#22C55E' : C.faint) : C.knobOff }}>⇔</div>
                       </div>
 
                       {/* RIGHT: IMS match OR context */}
                       <div style={{ padding: '12px 16px' }}>
                         {top ? (
                           <>
-                            <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: '#94A3B8', fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                              <span>{a.pickedMatch ? 'SELECTED' : 'IMS MATCH'} · <span style={{ color: '#6366F1' }}>{top.sku_code}</span></span>
+                            <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: C.faint, fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span>{a.pickedMatch ? 'SELECTED' : 'IMS MATCH'} · <span style={{ color: C.indigo }}>{top.sku_code}</span></span>
                               {a.pickedMatch
                                 ? <span style={{ letterSpacing: 'normal', background: '#EDE9FE', color: '#5B21B6', padding: '1px 6px', borderRadius: '99px', fontSize: '9px', fontWeight: 700 }}>✋ manually selected · confirm to apply</span>
                                 : <MatchPill type={top.match_type} />}
                               {top.status && top.status !== 'ACTIVE' && (
-                                <span style={{ letterSpacing: 'normal', background: '#FEF3C7', color: '#92400E', padding: '1px 6px', borderRadius: '99px', fontSize: '9px', fontWeight: 700 }}
+                                <span style={{ letterSpacing: 'normal', background: C.warnBg, color: C.amberInk, padding: '1px 6px', borderRadius: '99px', fontSize: '9px', fontWeight: 700 }}
                                   title="This SKU is not active — matching it will reactivate it.">
                                   {top.status}
                                 </span>
@@ -2674,30 +2675,30 @@ function CataloguesPage() {
                               value={a.matchName || top.name}
                               onChange={e => patchAction(item.id, { matchName: e.target.value })}
                               title="SKU title — edit to rename this product when you confirm the match"
-                              style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', marginBottom: '2px', lineHeight: 1.35, width: '100%', boxSizing: 'border-box', border: '1px dashed #E2E8F0', borderRadius: '5px', padding: '3px 7px', background: a.matchName && a.matchName !== top.name ? '#FFFBEB' : 'white' }}
+                              style={{ fontSize: '14px', fontWeight: 600, color: C.ink, marginBottom: '2px', lineHeight: 1.35, width: '100%', boxSizing: 'border-box', border: '1px dashed #E2E8F0', borderRadius: '5px', padding: '3px 7px', background: a.matchName && a.matchName !== top.name ? '#FFFBEB' : 'white' }}
                             />
-                            <p style={{ fontSize: '10px', color: a.matchName && a.matchName !== top.name ? '#92400E' : '#CBD5E1', margin: '0 0 8px' }}>
+                            <p style={{ fontSize: '10px', color: a.matchName && a.matchName !== top.name ? C.amberInk : C.knobOff, margin: '0 0 8px' }}>
                               {a.matchName && a.matchName !== top.name ? '✎ SKU title will be renamed on confirm' : 'editable — type to rename the SKU title on confirm'}
                             </p>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                               <tbody>
-                                <tr><td style={{ padding: '2px 0', color: '#94A3B8', width: '78px' }}>brand</td><td style={{ color: '#64748B' }}>{top.brand ?? '—'}</td></tr>
-                                <tr style={diff && !diff.fields.pack.ok ? { background: '#FEE2E2' } : {}}>
-                                  <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? '#B91C1C' : '#94A3B8', fontWeight: diff && !diff.fields.pack.ok ? 600 : 400 }}>pack</td>
-                                  <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? '#B91C1C' : '#64748B', fontWeight: diff && !diff.fields.pack.ok ? 700 : 400 }}>
+                                <tr><td style={{ padding: '2px 0', color: C.faint, width: '78px' }}>brand</td><td style={{ color: C.muted }}>{top.brand ?? '—'}</td></tr>
+                                <tr style={diff && !diff.fields.pack.ok ? { background: C.redBg } : {}}>
+                                  <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? C.bad : C.faint, fontWeight: diff && !diff.fields.pack.ok ? 600 : 400 }}>pack</td>
+                                  <td style={{ padding: diff && !diff.fields.pack.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.pack.ok ? C.bad : C.muted, fontWeight: diff && !diff.fields.pack.ok ? 700 : 400 }}>
                                     {top.units_per_pack != null ? `${top.units_per_pack} × ${top.uom ?? 'unit'}` : '—'}
                                   </td>
                                 </tr>
-                                <tr style={diff && !diff.fields.cost.ok ? { background: '#FEE2E2' } : {}}>
-                                  <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? '#B91C1C' : '#94A3B8', fontWeight: diff && !diff.fields.cost.ok ? 600 : 400 }}>cost</td>
-                                  <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? '#B91C1C' : '#64748B', fontWeight: diff && !diff.fields.cost.ok ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                                <tr style={diff && !diff.fields.cost.ok ? { background: C.redBg } : {}}>
+                                  <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? C.bad : C.faint, fontWeight: diff && !diff.fields.cost.ok ? 600 : 400 }}>cost</td>
+                                  <td style={{ padding: diff && !diff.fields.cost.ok ? '3px 6px' : '2px 0', color: diff && !diff.fields.cost.ok ? C.bad : C.muted, fontWeight: diff && !diff.fields.cost.ok ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
                                     {top.basic_cost != null ? `HK$${top.basic_cost.toFixed(0)}` : '— no IMS cost'}
                                   </td>
                                 </tr>
                               </tbody>
                             </table>
                             {item.suggested_matches.length > 1 && (
-                              <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '8px', fontStyle: 'italic' }}>
+                              <p style={{ fontSize: '10px', color: C.faint, marginTop: '8px', fontStyle: 'italic' }}>
                                 +{item.suggested_matches.length - 1} other suggestion{item.suggested_matches.length > 2 ? 's' : ''} available
                               </p>
                             )}
@@ -2705,14 +2706,14 @@ function CataloguesPage() {
                         ) : (
                           // No match — context panel
                           <>
-                            <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: '#94A3B8', fontWeight: 600, marginBottom: '6px' }}>NO IMS MATCH — CONTEXT</div>
+                            <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: C.faint, fontWeight: 600, marginBottom: '6px' }}>NO IMS MATCH — CONTEXT</div>
                             {item.tier === 't3' ? (
                               <>
-                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#991B1B', marginBottom: '8px' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: C.redInk, marginBottom: '8px' }}>
                                   Brand <strong>{item.brand}</strong> has 0 SKUs in your IMS
                                 </div>
-                                <p style={{ fontSize: '11.5px', color: '#475569', lineHeight: 1.55 }}>
-                                  You likely don&apos;t carry this brand. Recommended: <strong style={{ color: '#991B1B' }}>✗ Reject</strong>.
+                                <p style={{ fontSize: '11.5px', color: C.sub, lineHeight: 1.55 }}>
+                                  You likely don&apos;t carry this brand. Recommended: <strong style={{ color: C.redInk }}>✗ Reject</strong>.
                                   Use + New SKU only if you want to start carrying it.
                                 </p>
                               </>
@@ -2721,13 +2722,13 @@ function CataloguesPage() {
                                 <div style={{ fontSize: '13px', fontWeight: 600, color: '#6B21A8', marginBottom: '8px' }}>
                                   Brand <strong>{item.brand}</strong> is in your IMS, but no exact match
                                 </div>
-                                <p style={{ fontSize: '11.5px', color: '#475569', lineHeight: 1.55 }}>
+                                <p style={{ fontSize: '11.5px', color: C.sub, lineHeight: 1.55 }}>
                                   Could be a variant the matcher missed, or a SKU you don&apos;t stock yet.
-                                  Recommended: <strong style={{ color: '#6B21A8' }}>🔍 Find &amp; Match</strong> first; if no luck, <strong style={{ color: '#166534' }}>+ New SKU</strong>.
+                                  Recommended: <strong style={{ color: '#6B21A8' }}>🔍 Find &amp; Match</strong> first; if no luck, <strong style={{ color: C.green }}>+ New SKU</strong>.
                                 </p>
                               </>
                             ) : (
-                              <p style={{ fontSize: '12px', color: '#94A3B8', fontStyle: 'italic' }}>
+                              <p style={{ fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
                                 No suggested match. Use Find &amp; Match or + New SKU.
                               </p>
                             )}
@@ -2737,7 +2738,7 @@ function CataloguesPage() {
                     </div>
 
                     {/* Actions row */}
-                    <div style={{ display: 'flex', gap: '8px', padding: '10px 14px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', padding: '10px 14px', background: C.wash, borderTop: '1px solid #E2E8F0', alignItems: 'center', flexWrap: 'wrap' }}>
                       {a.mode === 'idle' && (
                         <>
                           {top && (
@@ -2747,41 +2748,41 @@ function CataloguesPage() {
                               aria-busy={busyKind(item.id) === 'match' || undefined}
                               style={{
                                 padding: '6px 14px', fontSize: '12px', fontWeight: 600,
-                                background: busy ? '#F1F5F9' : (diff?.match_grade === 'perfect' ? '#22C55E' : (diff?.match_grade === 'partial' ? '#F59E0B' : '#FFFFFF')),
-                                color: busy ? '#64748B' : (diff?.match_grade === 'weak' ? '#475569' : 'white'),
+                                background: busy ? C.monoBg : (diff?.match_grade === 'perfect' ? '#22C55E' : (diff?.match_grade === 'partial' ? '#F59E0B' : C.panel)),
+                                color: busy ? C.muted : (diff?.match_grade === 'weak' ? C.sub : 'white'),
                                 border: (busy || diff?.match_grade === 'weak') ? '1px solid #CBD5E1' : 'none',
                                 borderRadius: '5px', cursor: busy ? 'default' : 'pointer',
                                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                               }}
                             >
                               {busyKind(item.id) === 'match'
-                                ? <><Spinner color="#64748B" /> Confirming…</>
+                                ? <><Spinner color={C.muted} /> Confirming…</>
                                 : (a.pickedMatch ? '✓ Confirm selected SKU' : '✓ Confirm match')}
                             </button>
                           )}
                           {a.pickedMatch && (
                             <button onClick={() => patchAction(item.id, { pickedMatch: null })} disabled={busy}
                               title="Discard the SKU you picked and go back to the suggested match"
-                              style={{ padding: '6px 12px', fontSize: '12px', background: 'white', color: '#92400E', border: '1px solid #FDE68A', borderRadius: '5px', cursor: 'pointer' }}>
+                              style={{ padding: '6px 12px', fontSize: '12px', background: 'white', color: C.amberInk, border: '1px solid #FDE68A', borderRadius: '5px', cursor: 'pointer' }}>
                               ↩ Undo pick
                             </button>
                           )}
-                          <button onClick={() => { patchAction(item.id, { mode: 'match_manual', manualSku: '' }); setSkuResults(p => ({ ...p, [item.id]: [] })) }} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: '#475569', border: '1px solid #CBD5E1', borderRadius: '5px', cursor: 'pointer' }}
+                          <button onClick={() => { patchAction(item.id, { mode: 'match_manual', manualSku: '' }); setSkuResults(p => ({ ...p, [item.id]: [] })) }} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: C.sub, border: '1px solid #CBD5E1', borderRadius: '5px', cursor: 'pointer' }}
                             title={top ? 'Replace the suggested match with a different inventory item' : 'Search inventory and match to a SKU'}>
                             {top ? '🔁 Match a different SKU' : '🔍 Find & Match'}
                           </button>
-                          <button onClick={() => patchAction(item.id, { mode: 'new_sku' })} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: '#166534', border: '1px solid #BBF7D0', borderRadius: '5px', cursor: 'pointer' }}>
+                          <button onClick={() => patchAction(item.id, { mode: 'new_sku' })} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: C.green, border: '1px solid #BBF7D0', borderRadius: '5px', cursor: 'pointer' }}>
                             + New SKU
                           </button>
-                          <button onClick={() => patchAction(item.id, { mode: 'reject' })} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: '#991B1B', border: '1px solid #FECACA', borderRadius: '5px', cursor: 'pointer' }}>
+                          <button onClick={() => patchAction(item.id, { mode: 'reject' })} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: C.redInk, border: '1px solid #FECACA', borderRadius: '5px', cursor: 'pointer' }}>
                             ✗ Reject
                           </button>
-                          <button onClick={() => patchAction(item.id, { mode: 'edit', edit: seedEdit(item) })} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: '#475569', border: '1px solid #E2E8F0', borderRadius: '5px', cursor: 'pointer' }}>
+                          <button onClick={() => patchAction(item.id, { mode: 'edit', edit: seedEdit(item) })} disabled={busy} style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: C.sub, border: '1px solid #E2E8F0', borderRadius: '5px', cursor: 'pointer' }}>
                             ✎ Edit
                           </button>
                           {item.skipped
                             ? <button onClick={() => doUnskip(item)} disabled={busy} title="Return this item to the active review queue" style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: '#0369A1', border: '1px solid #BAE6FD', borderRadius: '5px', cursor: 'pointer' }}>↩ Un-skip</button>
-                            : <button onClick={() => doSkip(item)} disabled={busy} title="Set aside for later — moves to the Skipped bucket" style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: '#92400E', border: '1px solid #FDE68A', borderRadius: '5px', cursor: 'pointer' }}>⏭ Skip</button>}
+                            : <button onClick={() => doSkip(item)} disabled={busy} title="Set aside for later — moves to the Skipped bucket" style={{ padding: '6px 14px', fontSize: '12px', background: 'white', color: C.amberInk, border: '1px solid #FDE68A', borderRadius: '5px', cursor: 'pointer' }}>⏭ Skip</button>}
                         </>
                       )}
                           {a.mode === 'match_manual' && (
@@ -2795,7 +2796,7 @@ function CataloguesPage() {
                                 style={{ border: '1px solid #E2E8F0', borderRadius: '5px', padding: '5px 10px', fontSize: '12px', width: '300px' }}
                                 autoFocus
                               />
-                              {skuSearching[item.id] && <Spinner color="#94A3B8" />}
+                              {skuSearching[item.id] && <Spinner color={C.faint} />}
                               <Ghost onClick={() => patchAction(item.id, { mode: 'idle' })}>Back</Ghost>
                               {/* Search results — click a row to (re)match this scan to that inventory SKU. */}
                               {(skuResults[item.id]?.length ?? 0) > 0 && (
@@ -2803,18 +2804,18 @@ function CataloguesPage() {
                                   {skuResults[item.id].map(r => (
                                     <button key={r.sku_code} type="button" onClick={() => pickMatch(item, r)} disabled={busy}
                                       title="Select this SKU as the match — you'll confirm it next"
-                                      style={{ display: 'flex', width: '100%', textAlign: 'left', gap: '8px', alignItems: 'center', padding: '6px 10px', border: 'none', borderBottom: '1px solid #F1F5F9', background: top?.sku_code === r.sku_code ? '#EEF2FF' : 'white', cursor: busy ? 'default' : 'pointer', fontSize: '12px' }}>
-                                      <code style={{ color: '#4338CA', fontFamily: 'monospace' }}>{r.sku_code}</code>
-                                      <span style={{ fontWeight: 600, color: '#0F172A', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
-                                      {r.brand && <span style={{ color: '#64748B', whiteSpace: 'nowrap' }}>{r.brand}</span>}
-                                      {(r.basic_cost ?? r.primary_cost) != null && <span style={{ color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>HK${((r.basic_cost ?? r.primary_cost) as number).toFixed(0)}</span>}
-                                      {r.status && r.status !== 'ACTIVE' && <span style={{ fontSize: '9px', fontWeight: 700, color: '#92400E', background: '#FEF3C7', padding: '1px 5px', borderRadius: '99px' }}>{r.status}</span>}
+                                      style={{ display: 'flex', width: '100%', textAlign: 'left', gap: '8px', alignItems: 'center', padding: '6px 10px', border: 'none', borderBottom: '1px solid #F1F5F9', background: top?.sku_code === r.sku_code ? C.primaryBg : 'white', cursor: busy ? 'default' : 'pointer', fontSize: '12px' }}>
+                                      <code style={{ color: C.indigoInk, fontFamily: 'monospace' }}>{r.sku_code}</code>
+                                      <span style={{ fontWeight: 600, color: C.ink, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+                                      {r.brand && <span style={{ color: C.muted, whiteSpace: 'nowrap' }}>{r.brand}</span>}
+                                      {(r.basic_cost ?? r.primary_cost) != null && <span style={{ color: C.muted, fontVariantNumeric: 'tabular-nums' }}>HK${((r.basic_cost ?? r.primary_cost) as number).toFixed(0)}</span>}
+                                      {r.status && r.status !== 'ACTIVE' && <span style={{ fontSize: '9px', fontWeight: 700, color: C.amberInk, background: C.warnBg, padding: '1px 5px', borderRadius: '99px' }}>{r.status}</span>}
                                     </button>
                                   ))}
                                 </div>
                               )}
                               {a.manualSku.trim().length >= 2 && !skuSearching[item.id] && (skuResults[item.id]?.length ?? 0) === 0 && (
-                                <span style={{ flexBasis: '100%', fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
+                                <span style={{ flexBasis: '100%', fontSize: '11px', color: C.faint, marginTop: '4px' }}>
                                   No inventory items match “{a.manualSku.trim()}”. Refine your search to pick a SKU.
                                 </span>
                               )}
@@ -2822,11 +2823,11 @@ function CataloguesPage() {
                           )}
                           {a.mode === 'new_sku' && (
                             <>
-                              <span style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap' }}
+                              <span style={{ fontSize: '11px', color: C.muted, whiteSpace: 'nowrap' }}
                                 title="Confirm the category in the panel above">
                                 {effectiveCategory(a, item)}
                               </span>
-                              <span style={{ fontSize: '12px', fontFamily: 'ui-monospace, monospace', color: '#0F172A', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: '5px', padding: '4px 8px', whiteSpace: 'nowrap' }}
+                              <span style={{ fontSize: '12px', fontFamily: 'ui-monospace, monospace', color: C.ink, background: C.monoBg, border: '1px solid #E2E8F0', borderRadius: '5px', padding: '4px 8px', whiteSpace: 'nowrap' }}
                                 title="Internal SKU that will be generated on confirm">
                                 → {(categoryDigit[effectiveCategory(a, item)] ?? '?')}{nextSuffix ?? '·······'}
                               </span>
@@ -2852,7 +2853,7 @@ function CataloguesPage() {
                                 return known
                                   ? <span title="Brand is in the list" style={{ fontSize: '11px', fontWeight: 700, color: '#16A34A' }}>✓ in list</span>
                                   : <button onClick={() => addBrand(b, item.supplier_id)} title="Add this brand to the list"
-                                      style={{ fontSize: '11px', fontWeight: 700, color: '#92400E', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '5px', padding: '4px 8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ add brand</button>
+                                      style={{ fontSize: '11px', fontWeight: 700, color: C.amberInk, background: C.warnBg, border: '1px solid #FDE68A', borderRadius: '5px', padding: '4px 8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ add brand</button>
                               })()}
                               <Btn onClick={() => doAssignNew(item)} disabled={busy}
                                    loading={busyKind(item.id) === 'assign'} loadingLabel="Creating SKU…" bg="#22C55E" color="white">
@@ -2874,7 +2875,7 @@ function CataloguesPage() {
                                 <option value="discontinued">Discontinued</option>
                               </select>
                               <Btn onClick={() => doReject(item)} disabled={busy}
-                                   loading={busyKind(item.id) === 'reject'} loadingLabel="Rejecting…" bg="#FEE2E2" color="#991B1B">
+                                   loading={busyKind(item.id) === 'reject'} loadingLabel="Rejecting…" bg={C.redBg} color={C.redInk}>
                                 Confirm reject
                               </Btn>
                               <Ghost onClick={() => patchAction(item.id, { mode: 'idle' })}>Back</Ghost>
@@ -2882,7 +2883,7 @@ function CataloguesPage() {
                           )}
                           {a.mode === 'edit' && a.edit && (
                             <div style={{ flexBasis: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>
+                              <p style={{ fontSize: '11px', color: C.muted, margin: 0 }}>
                                 Correct any mis-scanned field, then save — match suggestions re-rank automatically.
                               </p>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
@@ -2904,7 +2905,7 @@ function CataloguesPage() {
                                 <EditField label="MBB cost (HK$)" value={a.edit.max_bulk_buy_cost} onChange={v => patchEdit(item.id, { max_bulk_buy_cost: v })} type="number" />
                                 <EditField label="MBB min qty"   value={a.edit.max_bulk_buy_min_qty} onChange={v => patchEdit(item.id, { max_bulk_buy_min_qty: v })} type="number" />
                                 <label style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#94A3B8' }}>Supplier</span>
+                                  <span style={{ fontSize: '10px', fontWeight: 600, color: C.faint }}>Supplier</span>
                                   <select value={a.edit.supplier_id} onChange={e => patchEdit(item.id, { supplier_id: e.target.value })}
                                     style={{ border: '1px solid #E2E8F0', borderRadius: '5px', padding: '5px 10px', fontSize: '12px', width: '100%', boxSizing: 'border-box', background: 'white' }}>
                                     <option value="">—</option>
@@ -2915,7 +2916,7 @@ function CataloguesPage() {
                               </div>
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <Btn onClick={() => doEdit(item)} disabled={busy}
-                                     loading={busyKind(item.id) === 'edit'} loadingLabel="Saving…" bg="#6366F1" color="white">Save changes</Btn>
+                                     loading={busyKind(item.id) === 'edit'} loadingLabel="Saving…" bg={C.indigo} color="white">Save changes</Btn>
                                 <Ghost onClick={() => patchAction(item.id, { mode: 'idle', edit: null })}>Cancel</Ghost>
                               </div>
                             </div>
@@ -2927,7 +2928,7 @@ function CataloguesPage() {
               {visibleItems.length > shownItems.length && (
                 <div style={{ textAlign: 'center', padding: '14px' }}>
                   <button onClick={() => setRenderCount(c => c + 50)}
-                    style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '7px', padding: '8px 18px', fontSize: '12px', fontWeight: 600, color: '#6366F1', cursor: 'pointer' }}>
+                    style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '7px', padding: '8px 18px', fontSize: '12px', fontWeight: 600, color: C.indigo, cursor: 'pointer' }}>
                     Show 50 more ({visibleItems.length - shownItems.length} not rendered)
                   </button>
                 </div>
@@ -2946,13 +2947,13 @@ function CataloguesPage() {
               userLabel="All who skipped" suppliers={suppliers} />
             <div style={{ background: 'white', border: '1px solid #E8EDF3', borderRadius: '12px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)', overflow: 'hidden' }}>
               {queue.length === 0 ? (
-                <div style={{ padding: '36px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+                <div style={{ padding: '36px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>
                   Nothing skipped. Items you set aside for later land here — un-skip to return them to the review queue.
                 </div>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
                   <thead>
-                    <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
+                    <tr style={{ background: C.wash, textAlign: 'left' }}>
                       <th style={thCell}>Item</th>
                       <th style={thCell}>Supplier</th>
                       <th style={{ ...thCell, textAlign: 'right' }}>Action</th>
@@ -2965,13 +2966,13 @@ function CataloguesPage() {
                       return (
                         <tr key={it.id} style={{ borderTop: idx ? '1px solid #F1F5F9' : 'none' }}>
                           <td style={tdCell}>
-                            <div style={{ color: '#0F172A', fontWeight: 500 }}>{it.raw_description || '—'}</div>
-                            {it.brand && <div style={{ color: '#94A3B8', fontSize: '11px' }}>{it.brand}</div>}
+                            <div style={{ color: C.ink, fontWeight: 500 }}>{it.raw_description || '—'}</div>
+                            {it.brand && <div style={{ color: C.faint, fontSize: '11px' }}>{it.brand}</div>}
                           </td>
-                          <td style={{ ...tdCell, color: '#64748B', whiteSpace: 'nowrap' }}>{sup || '—'}</td>
+                          <td style={{ ...tdCell, color: C.muted, whiteSpace: 'nowrap' }}>{sup || '—'}</td>
                           <td style={{ ...tdCell, textAlign: 'right', whiteSpace: 'nowrap' }}>
                             <button onClick={() => doUnskip(it)} disabled={busy}
-                              style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 600, background: 'white', color: '#92400E', border: '1px solid #FDE68A', borderRadius: '6px', cursor: busy ? 'default' : 'pointer' }}>
+                              style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 600, background: 'white', color: C.amberInk, border: '1px solid #FDE68A', borderRadius: '6px', cursor: busy ? 'default' : 'pointer' }}>
                               {busy ? '…' : '↩ Un-skip'}
                             </button>
                           </td>
@@ -2992,15 +2993,15 @@ function CataloguesPage() {
               userLabel="All reviewers" suppliers={suppliers} />
             <div style={{ background: 'white', border: '1px solid #E8EDF3', borderRadius: '12px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)', overflow: 'hidden' }}>
               {confirmedLoading && confirmed.length === 0 ? (
-                <div style={{ padding: '36px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>Loading…</div>
+                <div style={{ padding: '36px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>Loading…</div>
               ) : confirmed.length === 0 ? (
-                <div style={{ padding: '36px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+                <div style={{ padding: '36px', textAlign: 'center', color: C.faint, fontSize: '13px' }}>
                   No confirmed items yet. Items you match to a SKU or assign a new one appear here.
                 </div>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
                   <thead>
-                    <tr style={{ background: '#F8FAFC', textAlign: 'left' }}>
+                    <tr style={{ background: C.wash, textAlign: 'left' }}>
                       <th style={thCell}>Item</th>
                       <th style={thCell}>Outcome</th>
                       <th style={thCell}>SKU</th>
@@ -3016,34 +3017,34 @@ function CataloguesPage() {
                       return (
                         <tr key={it.id} style={{ borderTop: idx ? '1px solid #F1F5F9' : 'none' }}>
                           <td style={tdCell}>
-                            <div style={{ color: '#0F172A', fontWeight: 500 }}>{it.product_name || it.raw_description || '—'}</div>
+                            <div style={{ color: C.ink, fontWeight: 500 }}>{it.product_name || it.raw_description || '—'}</div>
                             {it.product_name && it.raw_description && it.raw_description !== it.product_name &&
-                              <div style={{ color: '#94A3B8', fontSize: '11px' }}>{it.raw_description}</div>}
-                            {it.supplier_name && <div style={{ color: '#CBD5E1', fontSize: '11px' }}>{it.supplier_name}</div>}
+                              <div style={{ color: C.faint, fontSize: '11px' }}>{it.raw_description}</div>}
+                            {it.supplier_name && <div style={{ color: C.knobOff, fontSize: '11px' }}>{it.supplier_name}</div>}
                           </td>
                           <td style={tdCell}>
-                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, background: isNew ? '#DCFCE7' : '#DBEAFE', color: isNew ? '#166534' : '#1E40AF' }}>
+                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, background: isNew ? C.greenBg : '#DBEAFE', color: isNew ? C.green : '#1E40AF' }}>
                               {isNew ? 'New SKU' : 'Matched'}
                             </span>
                           </td>
                           <td style={tdCell}>
                             {skuHref
                               ? <a href={skuHref} target="_blank" rel="noopener noreferrer"
-                                  style={{ color: '#6366F1', fontWeight: 600, textDecoration: 'none', fontVariantNumeric: 'tabular-nums' }}>{it.sku} ↗</a>
-                              : <span style={{ color: '#CBD5E1' }}>—</span>}
+                                  style={{ color: C.indigo, fontWeight: 600, textDecoration: 'none', fontVariantNumeric: 'tabular-nums' }}>{it.sku} ↗</a>
+                              : <span style={{ color: C.knobOff }}>—</span>}
                           </td>
-                          <td style={{ ...tdCell, color: '#64748B', whiteSpace: 'nowrap' }}>
+                          <td style={{ ...tdCell, color: C.muted, whiteSpace: 'nowrap' }}>
                             {it.reviewed_by || '—'}
-                            {it.reviewed_at && <div style={{ color: '#94A3B8', fontSize: '11px' }}>{fmtWhen(it.reviewed_at)}</div>}
+                            {it.reviewed_at && <div style={{ color: C.faint, fontSize: '11px' }}>{fmtWhen(it.reviewed_at)}</div>}
                           </td>
                           <td style={{ ...tdCell, textAlign: 'right', whiteSpace: 'nowrap' }}>
                             {skuHref && (
                               <a href={skuHref} target="_blank" rel="noopener noreferrer"
-                                style={{ padding: '5px 10px', fontSize: '12px', fontWeight: 600, background: 'white', color: '#4338CA', border: '1px solid #E0E7FF', borderRadius: '6px', textDecoration: 'none', marginRight: '6px' }}>View</a>
+                                style={{ padding: '5px 10px', fontSize: '12px', fontWeight: 600, background: 'white', color: C.indigoInk, border: '1px solid #E0E7FF', borderRadius: '6px', textDecoration: 'none', marginRight: '6px' }}>View</a>
                             )}
                             {can('catalogue_onboard') && (
                               <button onClick={() => doUnconfirm(it)} disabled={busy}
-                                style={{ padding: '5px 10px', fontSize: '12px', fontWeight: 600, background: 'white', color: '#B91C1C', border: '1px solid #FECACA', borderRadius: '6px', cursor: busy ? 'default' : 'pointer' }}>
+                                style={{ padding: '5px 10px', fontSize: '12px', fontWeight: 600, background: 'white', color: C.bad, border: '1px solid #FECACA', borderRadius: '6px', cursor: busy ? 'default' : 'pointer' }}>
                                 {busy ? '…' : '↩ Unconfirm'}
                               </button>
                             )}
@@ -3063,21 +3064,21 @@ function CataloguesPage() {
         {imports.length > 0 && (
           <div style={{ background: 'white', border: '1px solid #E8EDF3', borderRadius: '12px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)', overflow: 'hidden', marginTop: '8px' }}>
             <button onClick={() => setShowHistory(h => !h)}
-              style={{ width: '100%', border: 'none', background: '#F8FAFC', cursor: 'pointer', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: showHistory ? '1px solid #E2E8F0' : 'none' }}>
+              style={{ width: '100%', border: 'none', background: C.wash, cursor: 'pointer', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: showHistory ? '1px solid #E2E8F0' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>History &amp; activity</span>
-                <span style={{ fontSize: '12px', color: '#94A3B8' }}>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: C.ink }}>History &amp; activity</span>
+                <span style={{ fontSize: '12px', color: C.faint }}>
                   {imports.length} imports{scanLog ? ` · ${scanLog.total_items.toLocaleString()} items scanned` : ''}{scanLog?.failed ? ` · ${scanLog.failed} failed` : ''}{daily && daily.totals.processed > 0 ? ` · ${daily.totals.processed.toLocaleString()} processed (30d)` : ''}
                 </span>
-                {batchRunning && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#15803D' }}><span className="ims-live-dot" /> live</span>}
+                {batchRunning && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: C.ok }}><span className="ims-live-dot" /> live</span>}
               </div>
-              <span style={{ fontSize: '12px', color: '#94A3B8' }}>{showHistory ? 'Hide' : 'Show'}</span>
+              <span style={{ fontSize: '12px', color: C.faint }}>{showHistory ? 'Hide' : 'Show'}</span>
             </button>
             {showHistory && (
               <div>
                 <div style={{ display: 'flex', gap: '4px', padding: '10px 14px', borderBottom: '1px solid #F1F5F9' }}>
                   {([['daily', '📅 Daily report'], ['imports', `Imports (${imports.length})`], ['scans', `Scan log${scanLog ? ` (${scanLog.successful})` : ''}`], ['activity', `Activity (${audit.length})`]] as const).map(([k, lbl]) => (
-                    <button key={k} onClick={() => setHistTab(k)} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '6px', cursor: 'pointer', background: histTab === k ? '#EEF2FF' : 'transparent', color: histTab === k ? '#4338CA' : '#64748B' }}>{lbl}</button>
+                    <button key={k} onClick={() => setHistTab(k)} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '6px', cursor: 'pointer', background: histTab === k ? C.primaryBg : 'transparent', color: histTab === k ? C.indigoInk : C.muted }}>{lbl}</button>
                   ))}
                 </div>
 
@@ -3090,19 +3091,19 @@ function CataloguesPage() {
                         {/* 30-day summary strip */}
                         <div style={{ display: 'flex', gap: '22px', flexWrap: 'wrap', alignItems: 'flex-end', padding: '14px 18px', borderBottom: '1px solid #F1F5F9', background: '#FBFCFE' }}>
                           {([
-                            ['Processed', daily.totals.processed, '#0F172A'],
+                            ['Processed', daily.totals.processed, C.ink],
                             ['Matched', daily.totals.matched, '#1E40AF'],
-                            ['New SKU', daily.totals.new_sku, '#166534'],
-                            ['Rejected', daily.totals.rejected, '#64748B'],
-                            ['Skipped', daily.totals.skipped, '#B45309'],
-                            ['Active days', daily.totals.active_days, '#4338CA'],
+                            ['New SKU', daily.totals.new_sku, C.green],
+                            ['Rejected', daily.totals.rejected, C.muted],
+                            ['Skipped', daily.totals.skipped, C.amber],
+                            ['Active days', daily.totals.active_days, C.indigoInk],
                           ] as const).map(([lbl, val, color]) => (
                             <div key={lbl}>
                               <div style={{ fontSize: '20px', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{val.toLocaleString()}</div>
-                              <div style={{ fontSize: '10px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '3px' }}>{lbl}</div>
+                              <div style={{ fontSize: '10px', fontWeight: 600, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '3px' }}>{lbl}</div>
                             </div>
                           ))}
-                          <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#94A3B8' }}>
+                          <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.faint }}>
                             since {daily.from}{dailyLoading ? ' · refreshing…' : ''}
                           </span>
                         </div>
@@ -3112,7 +3113,7 @@ function CataloguesPage() {
                             const segs = [
                               { v: r.matched,  c: '#3B82F6', label: 'matched' },
                               { v: r.new_sku,  c: '#22C55E', label: 'new SKU' },
-                              { v: r.rejected, c: '#94A3B8', label: 'rejected' },
+                              { v: r.rejected, c: C.faint, label: 'rejected' },
                               { v: r.skipped,  c: '#F59E0B', label: 'skipped' },
                             ].filter(s => s.v > 0)
                             const dt = new Date(r.date + 'T00:00:00')
@@ -3120,20 +3121,20 @@ function CataloguesPage() {
                               <div key={r.date} style={{ padding: '10px 18px', borderBottom: idx < daily.days.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                   <div style={{ width: '92px', flexShrink: 0 }}>
-                                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A' }}>{dt.toLocaleDateString('en-HK', { day: 'numeric', month: 'short' })}</span>
-                                    <span style={{ fontSize: '10px', color: '#94A3B8', marginLeft: '6px' }}>{dt.toLocaleDateString('en-HK', { weekday: 'short' })}</span>
+                                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: C.ink }}>{dt.toLocaleDateString('en-HK', { day: 'numeric', month: 'short' })}</span>
+                                    <span style={{ fontSize: '10px', color: C.faint, marginLeft: '6px' }}>{dt.toLocaleDateString('en-HK', { weekday: 'short' })}</span>
                                   </div>
-                                  <div title={`${r.total} total`} style={{ flex: 1, minWidth: 0, height: '18px', display: 'flex', borderRadius: '4px', overflow: 'hidden', background: '#F1F5F9' }}>
+                                  <div title={`${r.total} total`} style={{ flex: 1, minWidth: 0, height: '18px', display: 'flex', borderRadius: '4px', overflow: 'hidden', background: C.monoBg }}>
                                     {segs.map((s, i) => <div key={i} title={`${s.v} ${s.label}`} style={{ width: `${(s.v / maxTotal) * 100}%`, background: s.c }} />)}
                                   </div>
-                                  <span style={{ width: '44px', textAlign: 'right', flexShrink: 0, fontSize: '14px', fontWeight: 700, color: '#0F172A', fontVariantNumeric: 'tabular-nums' }}>{r.processed}</span>
+                                  <span style={{ width: '44px', textAlign: 'right', flexShrink: 0, fontSize: '14px', fontWeight: 700, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{r.processed}</span>
                                 </div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '5px', marginLeft: '104px', fontSize: '11px', fontVariantNumeric: 'tabular-nums', alignItems: 'baseline' }}>
                                   {r.matched  > 0 && <span style={{ color: '#1E40AF' }}>● {r.matched} matched</span>}
-                                  {r.new_sku  > 0 && <span style={{ color: '#166534' }}>● {r.new_sku} new SKU</span>}
-                                  {r.rejected > 0 && <span style={{ color: '#64748B' }}>● {r.rejected} rejected</span>}
-                                  {r.skipped  > 0 && <span style={{ color: '#B45309' }}>● {r.skipped} skipped</span>}
-                                  {r.reviewers.length > 0 && <span style={{ color: '#94A3B8', marginLeft: '2px' }}>· {r.reviewers.join(', ')}</span>}
+                                  {r.new_sku  > 0 && <span style={{ color: C.green }}>● {r.new_sku} new SKU</span>}
+                                  {r.rejected > 0 && <span style={{ color: C.muted }}>● {r.rejected} rejected</span>}
+                                  {r.skipped  > 0 && <span style={{ color: C.amber }}>● {r.skipped} skipped</span>}
+                                  {r.reviewers.length > 0 && <span style={{ color: C.faint, marginLeft: '2px' }}>· {r.reviewers.join(', ')}</span>}
                                 </div>
                               </div>
                             )
@@ -3141,7 +3142,7 @@ function CataloguesPage() {
                         </div>
                       </div>
                     )
-                  })() : <p style={{ fontSize: '12px', color: '#94A3B8', padding: '16px 18px', margin: 0 }}>{daily ? 'No onboarding activity in the last 30 days.' : 'Loading daily report…'}</p>
+                  })() : <p style={{ fontSize: '12px', color: C.faint, padding: '16px 18px', margin: 0 }}>{daily ? 'No onboarding activity in the last 30 days.' : 'Loading daily report…'}</p>
                 )}
 
                 {/* Imports tab */}
@@ -3150,28 +3151,28 @@ function CataloguesPage() {
                     {imports.map((imp, idx) => (
                       <div key={imp.id} style={{ padding: '12px 16px', borderBottom: idx < imports.length - 1 ? '1px solid #F1F5F9' : 'none', display: 'flex', alignItems: 'center', gap: '14px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '13px', fontWeight: 500, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{imp.filename}</div>
-                          <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
+                          <div style={{ fontSize: '13px', fontWeight: 500, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{imp.filename}</div>
+                          <div style={{ fontSize: '11px', color: C.faint, marginTop: '2px' }}>
                             {imp.supplier_name ?? 'Unknown supplier'} · {imp.format.toUpperCase()} · {new Date(imp.imported_at + 'Z').toLocaleDateString('en-HK', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '6px', flexShrink: 0, alignItems: 'center' }}>
-                          {imp.counts.pending  > 0 && <Pill bg="#FEF3C7" color="#92400E">{imp.counts.pending} pending</Pill>}
+                          {imp.counts.pending  > 0 && <Pill bg={C.warnBg} color={C.amberInk}>{imp.counts.pending} pending</Pill>}
                           {imp.counts.matched  > 0 && <Pill bg="#DBEAFE" color="#1E40AF">{imp.counts.matched} matched</Pill>}
-                          {imp.counts.new_sku  > 0 && <Pill bg="#DCFCE7" color="#166534">{imp.counts.new_sku} new SKU</Pill>}
-                          {imp.counts.rejected > 0 && <Pill bg="#F1F5F9" color="#64748B">{imp.counts.rejected} rejected</Pill>}
-                          {imp.item_count === 0 && <span style={{ fontSize: '11px', color: '#CBD5E1' }}>0 items</span>}
+                          {imp.counts.new_sku  > 0 && <Pill bg={C.greenBg} color={C.green}>{imp.counts.new_sku} new SKU</Pill>}
+                          {imp.counts.rejected > 0 && <Pill bg={C.monoBg} color={C.muted}>{imp.counts.rejected} rejected</Pill>}
+                          {imp.item_count === 0 && <span style={{ fontSize: '11px', color: C.knobOff }}>0 items</span>}
                           {imp.counts.pending > 0 && (
                             <button onClick={() => doTranslateImport(imp.id)} disabled={translatingImport === imp.id}
                               title="Translate this scan's pending items to English (already-English items are left as-is)"
-                              style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'white', color: '#4338CA', border: '1px solid #C7D2FE', borderRadius: '5px', cursor: translatingImport === imp.id ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                              style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'white', color: C.indigoInk, border: '1px solid #C7D2FE', borderRadius: '5px', cursor: translatingImport === imp.id ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                               {translatingImport === imp.id ? <><Spinner size={10} /> Translating…</> : '🌐 Translate'}
                             </button>
                           )}
                           {imp.item_count > 0 && can('catalogue_onboard') && (
                             <ReparseButton scope="import" refId={imp.id} label="↻ Re-parse"
                               title={`Re-parse every line from ${imp.filename} and review the diff`}
-                              style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'white', color: '#4338CA', border: '1px solid #C7D2FE', borderRadius: '5px' }} />
+                              style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'white', color: C.indigoInk, border: '1px solid #C7D2FE', borderRadius: '5px' }} />
                           )}
                         </div>
                       </div>
@@ -3182,25 +3183,25 @@ function CataloguesPage() {
                 {/* Scan log tab */}
                 {histTab === 'scans' && (scanLog ? (
                   <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '32px 200px 1fr 80px 80px 80px', gap: '10px', padding: '8px 18px', background: '#FAFAFA', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '32px 200px 1fr 80px 80px 80px', gap: '10px', padding: '8px 18px', background: '#FAFAFA', fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0 }}>
                       <span>#</span><span>Supplier</span><span>Source file</span><span style={{ textAlign: 'right' }}>Items</span><span style={{ textAlign: 'right' }}>Errors</span><span style={{ textAlign: 'center' }}>Status</span>
                     </div>
                     {scanLog.log.map((entry, i) => (
-                      <div key={entry.import_id} style={{ display: 'grid', gridTemplateColumns: '32px 200px 1fr 80px 80px 80px', gap: '10px', padding: '8px 18px', fontSize: '12px', borderBottom: i < scanLog.log.length - 1 ? '1px solid #F1F5F9' : 'none', background: entry.status === 'ok' ? 'white' : (entry.status === 'error' ? '#FEF2F2' : '#FAFAFA') }}>
-                        <span style={{ color: '#94A3B8', fontVariantNumeric: 'tabular-nums' }}>{entry.import_id}</span>
-                        <span style={{ color: '#0F172A', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.supplier_name ?? <em style={{ color: '#94A3B8' }}>unlinked</em>}</span>
-                        <span style={{ color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '11px' }} title={entry.filename}>{entry.filename}</span>
-                        <span style={{ textAlign: 'right', fontWeight: 600, color: entry.real_items > 0 ? '#166534' : '#CBD5E1', fontVariantNumeric: 'tabular-nums' }}>{entry.real_items > 0 ? entry.real_items : '—'}</span>
-                        <span style={{ textAlign: 'right', color: entry.error_items > 0 ? '#991B1B' : '#CBD5E1', fontVariantNumeric: 'tabular-nums' }}>{entry.error_items > 0 ? entry.error_items : '—'}</span>
+                      <div key={entry.import_id} style={{ display: 'grid', gridTemplateColumns: '32px 200px 1fr 80px 80px 80px', gap: '10px', padding: '8px 18px', fontSize: '12px', borderBottom: i < scanLog.log.length - 1 ? '1px solid #F1F5F9' : 'none', background: entry.status === 'ok' ? 'white' : (entry.status === 'error' ? C.badBg : '#FAFAFA') }}>
+                        <span style={{ color: C.faint, fontVariantNumeric: 'tabular-nums' }}>{entry.import_id}</span>
+                        <span style={{ color: C.ink, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.supplier_name ?? <em style={{ color: C.faint }}>unlinked</em>}</span>
+                        <span style={{ color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '11px' }} title={entry.filename}>{entry.filename}</span>
+                        <span style={{ textAlign: 'right', fontWeight: 600, color: entry.real_items > 0 ? C.green : C.knobOff, fontVariantNumeric: 'tabular-nums' }}>{entry.real_items > 0 ? entry.real_items : '—'}</span>
+                        <span style={{ textAlign: 'right', color: entry.error_items > 0 ? C.redInk : C.knobOff, fontVariantNumeric: 'tabular-nums' }}>{entry.error_items > 0 ? entry.error_items : '—'}</span>
                         <span style={{ textAlign: 'center' }}>
-                          {entry.status === 'ok' && <span style={{ fontSize: '10px', fontWeight: 700, color: '#166534', background: '#DCFCE7', padding: '2px 8px', borderRadius: '4px' }}>OK</span>}
-                          {entry.status === 'error' && <span style={{ fontSize: '10px', fontWeight: 700, color: '#991B1B', background: '#FEE2E2', padding: '2px 8px', borderRadius: '4px' }}>ERROR</span>}
-                          {entry.status === 'empty' && <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', background: '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>EMPTY</span>}
+                          {entry.status === 'ok' && <span style={{ fontSize: '10px', fontWeight: 700, color: C.green, background: C.greenBg, padding: '2px 8px', borderRadius: '4px' }}>OK</span>}
+                          {entry.status === 'error' && <span style={{ fontSize: '10px', fontWeight: 700, color: C.redInk, background: C.redBg, padding: '2px 8px', borderRadius: '4px' }}>ERROR</span>}
+                          {entry.status === 'empty' && <span style={{ fontSize: '10px', fontWeight: 700, color: C.faint, background: C.monoBg, padding: '2px 8px', borderRadius: '4px' }}>EMPTY</span>}
                         </span>
                       </div>
                     ))}
                   </div>
-                ) : <p style={{ fontSize: '12px', color: '#94A3B8', padding: '16px 18px', margin: 0 }}>No scans yet.</p>)}
+                ) : <p style={{ fontSize: '12px', color: C.faint, padding: '16px 18px', margin: 0 }}>No scans yet.</p>)}
 
                 {/* Activity tab */}
                 {histTab === 'activity' && (
@@ -3210,20 +3211,20 @@ function CataloguesPage() {
                         style={{ width: '100%', maxWidth: '420px', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '6px 10px', fontSize: '12px' }} />
                     </div>
                     {auditFiltered.length === 0 ? (
-                      <p style={{ fontSize: '12px', color: '#94A3B8', padding: '16px 18px', margin: 0 }}>{audit.length === 0 ? 'No onboarding actions recorded yet.' : 'No actions match that filter.'}</p>
+                      <p style={{ fontSize: '12px', color: C.faint, padding: '16px 18px', margin: 0 }}>{audit.length === 0 ? 'No onboarding actions recorded yet.' : 'No actions match that filter.'}</p>
                     ) : (
                       <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '150px 90px 110px 1fr 130px', gap: '10px', padding: '8px 18px', background: '#FAFAFA', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '150px 90px 110px 1fr 130px', gap: '10px', padding: '8px 18px', background: '#FAFAFA', fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0 }}>
                           <span>When</span><span>Action</span><span>SKU</span><span>Detail</span><span>By</span>
                         </div>
                         {auditFiltered.map(e => {
-                          const badge = ACTION_BADGE[e.action] ?? { label: e.action, bg: '#F1F5F9', color: '#475569' }
+                          const badge = ACTION_BADGE[e.action] ?? { label: e.action, bg: C.monoBg, color: C.sub }
                           return (
                             <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '150px 90px 110px 1fr 130px', gap: '10px', padding: '8px 18px', borderBottom: '1px solid #F8FAFC', fontSize: '12px', alignItems: 'center' }}>
-                              <span style={{ color: '#64748B', whiteSpace: 'nowrap' }}>{fmtWhen(e.created_at)}</span>
+                              <span style={{ color: C.muted, whiteSpace: 'nowrap' }}>{fmtWhen(e.created_at)}</span>
                               <span><span style={{ fontSize: '10px', fontWeight: 700, background: badge.bg, color: badge.color, padding: '2px 7px', borderRadius: '99px' }}>{badge.label}</span></span>
-                              <span>{e.sku_code ? <button onClick={() => openSkuHistory(e.sku_code!)} title="View full history for this SKU" style={{ background: 'none', border: 'none', padding: 0, color: '#4338CA', fontWeight: 600, cursor: 'pointer', fontFamily: 'ui-monospace, monospace', fontSize: '12px' }}>{e.sku_code}</button> : <span style={{ color: '#CBD5E1' }}>—</span>}</span>
-                              <span style={{ color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={auditSummary(e)}>{auditSummary(e)}</span>
+                              <span>{e.sku_code ? <button onClick={() => openSkuHistory(e.sku_code!)} title="View full history for this SKU" style={{ background: 'none', border: 'none', padding: 0, color: C.indigoInk, fontWeight: 600, cursor: 'pointer', fontFamily: 'ui-monospace, monospace', fontSize: '12px' }}>{e.sku_code}</button> : <span style={{ color: C.knobOff }}>—</span>}</span>
+                              <span style={{ color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={auditSummary(e)}>{auditSummary(e)}</span>
                               <span style={{ color: '#334155', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.display_name ?? ''}>{e.display_name ?? 'Unknown'}</span>
                             </div>
                           )

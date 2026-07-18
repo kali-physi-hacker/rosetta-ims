@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { API_BASE } from '@/lib/config'
@@ -20,16 +21,16 @@ const card: React.CSSProperties = {
 }
 const field: React.CSSProperties = {
   width: '100%', padding: '10px 14px', fontSize: '14px', border: '1px solid #E2E8F0',
-  borderRadius: '8px', outline: 'none', boxSizing: 'border-box', color: '#0F172A',
+  borderRadius: '8px', outline: 'none', boxSizing: 'border-box', color: C.ink,
 }
 const label: React.CSSProperties = { display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }
 
 function Logo() {
   return (
     <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-      <div style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.5px' }}>
-        ros<span style={{ color: '#6366F1' }}>etta</span>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8', marginLeft: '6px' }}>IMS</span>
+      <div style={{ fontSize: '22px', fontWeight: 700, color: C.ink, letterSpacing: '-0.5px' }}>
+        ros<span style={{ color: C.indigo }}>etta</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: C.faint, marginLeft: '6px' }}>IMS</span>
       </div>
     </div>
   )
@@ -89,25 +90,25 @@ function OnboardPage() {
   }
 
   const wrap = (children: React.ReactNode) => (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.ink }}>
       <div style={card}><Logo />{children}</div>
     </div>
   )
 
-  if (loading) return wrap(<p style={{ fontSize: '13px', color: '#64748B', textAlign: 'center' }}>Checking your invite…</p>)
+  if (loading) return wrap(<p style={{ fontSize: '13px', color: C.muted, textAlign: 'center' }}>Checking your invite…</p>)
 
   if (loadErr || !invite) return wrap(
     <div style={{ textAlign: 'center' }}>
-      <p style={{ fontSize: '14px', fontWeight: 600, color: '#991B1B' }}>Invite unavailable</p>
-      <p style={{ fontSize: '13px', color: '#64748B', marginTop: '8px' }}>{loadErr || 'This invite link is invalid or has already been used.'}</p>
-      <a href="/login" style={{ fontSize: '13px', color: '#6366F1', display: 'inline-block', marginTop: '16px' }}>Go to sign in</a>
+      <p style={{ fontSize: '14px', fontWeight: 600, color: C.redInk }}>Invite unavailable</p>
+      <p style={{ fontSize: '13px', color: C.muted, marginTop: '8px' }}>{loadErr || 'This invite link is invalid or has already been used.'}</p>
+      <a href="/login" style={{ fontSize: '13px', color: C.indigo, display: 'inline-block', marginTop: '16px' }}>Go to sign in</a>
     </div>
   )
 
   if (invite.expired) return wrap(
     <div style={{ textAlign: 'center' }}>
-      <p style={{ fontSize: '14px', fontWeight: 600, color: '#92400E' }}>This invite has expired</p>
-      <p style={{ fontSize: '13px', color: '#64748B', marginTop: '8px' }}>Ask an admin to resend your invite, then use the new link.</p>
+      <p style={{ fontSize: '14px', fontWeight: 600, color: C.amberInk }}>This invite has expired</p>
+      <p style={{ fontSize: '13px', color: C.muted, marginTop: '8px' }}>Ask an admin to resend your invite, then use the new link.</p>
     </div>
   )
 
@@ -115,11 +116,11 @@ function OnboardPage() {
 
   return wrap(
     <>
-      <p style={{ fontSize: '13px', color: '#64748B', textAlign: 'center', marginBottom: '4px' }}>
+      <p style={{ fontSize: '13px', color: C.muted, textAlign: 'center', marginBottom: '4px' }}>
         {invite.invited_by ? <>{invite.invited_by} invited you</> : 'You’ve been invited'} as a{' '}
-        <span style={{ background: '#EEF2FF', color: '#4338CA', fontWeight: 600, padding: '1px 8px', borderRadius: '99px' }}>{invite.role_label}</span> user.
+        <span style={{ background: C.primaryBg, color: C.indigoInk, fontWeight: 600, padding: '1px 8px', borderRadius: '99px' }}>{invite.role_label}</span> user.
       </p>
-      <p style={{ fontSize: '12px', color: '#94A3B8', textAlign: 'center', marginBottom: '20px' }}>Set up your account to continue.</p>
+      <p style={{ fontSize: '12px', color: C.faint, textAlign: 'center', marginBottom: '20px' }}>Set up your account to continue.</p>
       <form onSubmit={submit}>
         <div style={{ marginBottom: '11px' }}>
           <label style={label}>Username</label>
@@ -141,9 +142,9 @@ function OnboardPage() {
           <label style={label}>Confirm password</label>
           <input style={field} type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="re-enter password" autoComplete="new-password" />
         </div>
-        {error && <p style={{ fontSize: '12px', color: '#EF4444', marginBottom: '12px', padding: '8px 10px', background: '#FEF2F2', borderRadius: '6px' }}>{error}</p>}
+        {error && <p style={{ fontSize: '12px', color: '#EF4444', marginBottom: '12px', padding: '8px 10px', background: C.badBg, borderRadius: '6px' }}>{error}</p>}
         <button type="submit" disabled={!ready}
-          style={{ width: '100%', padding: '11px', fontSize: '14px', fontWeight: 600, background: ready ? '#6366F1' : '#E2E8F0', color: ready ? 'white' : '#94A3B8', border: 'none', borderRadius: '8px', cursor: ready ? 'pointer' : 'default' }}>
+          style={{ width: '100%', padding: '11px', fontSize: '14px', fontWeight: 600, background: ready ? C.indigo : C.line, color: ready ? 'white' : C.faint, border: 'none', borderRadius: '8px', cursor: ready ? 'pointer' : 'default' }}>
           {submitting ? 'Creating account…' : 'Create account & sign in'}
         </button>
       </form>

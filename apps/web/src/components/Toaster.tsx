@@ -1,10 +1,11 @@
+import { C } from '@/lib/tokens'
 import { useEffect, useState, useCallback } from 'react'
 import { subscribeToasts, ToastItem, ToastType } from '@/lib/toast'
 
 const STYLE: Record<ToastType, { bg: string; border: string; bar: string; icon: string; iconColor: string }> = {
-  success: { bg: '#FFFFFF', border: '#BBF7D0', bar: '#22C55E', icon: '✓', iconColor: '#16A34A' },
-  error:   { bg: '#FFFFFF', border: '#FECACA', bar: '#EF4444', icon: '!', iconColor: '#DC2626' },
-  info:    { bg: '#FFFFFF', border: '#E2E8F0', bar: '#6366F1', icon: 'i', iconColor: '#4F46E5' },
+  success: { bg: C.panel, border: '#BBF7D0', bar: '#22C55E', icon: '✓', iconColor: '#16A34A' },
+  error:   { bg: C.panel, border: '#FECACA', bar: '#EF4444', icon: '!', iconColor: '#DC2626' },
+  info:    { bg: C.panel, border: C.line, bar: C.indigo, icon: 'i', iconColor: C.indigoStrong },
 }
 const TTL: Record<ToastType, number> = { success: 3500, error: 6500, info: 4000 }
 
@@ -46,8 +47,8 @@ export function Toaster() {
                 background: s.bar + '22', color: s.iconColor, fontWeight: 800, fontSize: '12px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '1px',
               }}>{s.icon}</span>
-              <span style={{ flex: 1, fontSize: '13px', lineHeight: 1.4, color: '#0F172A', wordBreak: 'break-word' }}>{t.message}</span>
-              <span style={{ flex: '0 0 auto', color: '#94A3B8', fontSize: '15px', lineHeight: 1, marginTop: '1px' }}>×</span>
+              <span style={{ flex: 1, fontSize: '13px', lineHeight: 1.4, color: C.ink, wordBreak: 'break-word' }}>{t.message}</span>
+              <span style={{ flex: '0 0 auto', color: C.faint, fontSize: '15px', lineHeight: 1, marginTop: '1px' }}>×</span>
             </div>
           )
         })}

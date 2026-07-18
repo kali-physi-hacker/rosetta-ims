@@ -1,3 +1,4 @@
+import { C } from '@/lib/tokens'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
 import { authHeaders } from '@/lib/auth'
@@ -37,10 +38,10 @@ function CoverageBar({ count, total, label }: { count: number; total: number; la
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
-        <span style={{ color: '#64748B', fontWeight: 600 }}>{label}</span>
+        <span style={{ color: C.muted, fontWeight: 600 }}>{label}</span>
         <span style={{ color, fontWeight: 700 }}>{count} / {total} ({pct}%)</span>
       </div>
-      <div style={{ height: '6px', background: '#F1F5F9', borderRadius: '99px', overflow: 'hidden' }}>
+      <div style={{ height: '6px', background: C.monoBg, borderRadius: '99px', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '99px', transition: 'width 0.4s' }} />
       </div>
     </div>
@@ -85,19 +86,19 @@ function UploadCard({ title, subtitle, location, statusCount, totalProducts, lat
     }
   }
 
-  const accentColor = location === 'clinic' ? '#6366F1' : '#0EA5E9'
-  const accentBg    = location === 'clinic' ? '#EEF2FF' : '#E0F2FE'
+  const accentColor = location === 'clinic' ? C.indigo : '#0EA5E9'
+  const accentBg    = location === 'clinic' ? C.primaryBg : '#E0F2FE'
 
   return (
     <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '20px', flex: 1 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{title}</div>
-          <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>{subtitle}</div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: C.ink }}>{title}</div>
+          <div style={{ fontSize: '11px', color: C.faint, marginTop: '2px' }}>{subtitle}</div>
         </div>
         {latestAsOf && (
-          <span style={{ fontSize: '11px', background: '#F1F5F9', color: '#64748B', padding: '3px 8px', borderRadius: '4px' }}>
+          <span style={{ fontSize: '11px', background: C.monoBg, color: C.muted, padding: '3px 8px', borderRadius: '4px' }}>
             Last: {latestAsOf}
           </span>
         )}
@@ -111,7 +112,7 @@ function UploadCard({ title, subtitle, location, statusCount, totalProducts, lat
       {/* Upload form */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div>
-          <p style={{ fontSize: '11px', color: '#64748B', fontWeight: 500, marginBottom: '5px' }}>
+          <p style={{ fontSize: '11px', color: C.muted, fontWeight: 500, marginBottom: '5px' }}>
             File (CSV or Excel)
           </p>
           <input
@@ -119,19 +120,19 @@ function UploadCard({ title, subtitle, location, statusCount, totalProducts, lat
             type="file"
             accept=".csv,.xlsx,.xls"
             onChange={e => patch({ file: e.target.files?.[0] ?? null, result: null, error: null })}
-            style={{ fontSize: '12px', color: '#0F172A' }}
+            style={{ fontSize: '12px', color: C.ink }}
           />
         </div>
 
         <div>
-          <p style={{ fontSize: '11px', color: '#64748B', fontWeight: 500, marginBottom: '5px' }}>
+          <p style={{ fontSize: '11px', color: C.muted, fontWeight: 500, marginBottom: '5px' }}>
             Export date
           </p>
           <input
             type="date"
             value={state.date}
             onChange={e => patch({ date: e.target.value })}
-            style={{ border: '1px solid #E2E8F0', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#0F172A' }}
+            style={{ border: '1px solid #E2E8F0', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: C.ink }}
           />
         </div>
 
@@ -139,8 +140,8 @@ function UploadCard({ title, subtitle, location, statusCount, totalProducts, lat
           onClick={handleUpload}
           disabled={!state.file || state.uploading}
           style={{
-            background: state.file && !state.uploading ? accentColor : '#E2E8F0',
-            color: state.file && !state.uploading ? 'white' : '#94A3B8',
+            background: state.file && !state.uploading ? accentColor : C.line,
+            color: state.file && !state.uploading ? 'white' : C.faint,
             border: 'none', borderRadius: '6px', padding: '8px 0',
             fontSize: '13px', fontWeight: 600,
             cursor: state.file && !state.uploading ? 'pointer' : 'default',
@@ -153,7 +154,7 @@ function UploadCard({ title, subtitle, location, statusCount, totalProducts, lat
 
       {/* Error */}
       {state.error && (
-        <div style={{ marginTop: '12px', fontSize: '12px', background: '#FEE2E2', color: '#991B1B', borderRadius: '6px', padding: '8px 12px' }}>
+        <div style={{ marginTop: '12px', fontSize: '12px', background: C.redBg, color: C.redInk, borderRadius: '6px', padding: '8px 12px' }}>
           {state.error}
         </div>
       )}
@@ -161,7 +162,7 @@ function UploadCard({ title, subtitle, location, statusCount, totalProducts, lat
       {/* Result */}
       {state.result && (
         <div style={{ marginTop: '14px' }}>
-          <div style={{ fontSize: '12px', background: accentBg, color: accentColor === '#6366F1' ? '#4338CA' : '#0369A1', borderRadius: '6px', padding: '10px 12px', fontWeight: 500 }}>
+          <div style={{ fontSize: '12px', background: accentBg, color: accentColor === C.indigo ? C.indigoInk : '#0369A1', borderRadius: '6px', padding: '10px 12px', fontWeight: 500 }}>
             Updated <strong>{state.result.updated}</strong> products from {state.result.rows_parsed} rows
             {state.result.unmatched_count > 0 && (
               <> · <span style={{ color: '#F59E0B', fontWeight: 700 }}>{state.result.unmatched_count} unmatched</span></>
@@ -170,19 +171,19 @@ function UploadCard({ title, subtitle, location, statusCount, totalProducts, lat
 
           {state.result.unmatched.length > 0 && (
             <div style={{ marginTop: '10px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '6px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: C.muted, marginBottom: '6px' }}>
                 Unmatched rows (first {state.result.unmatched.length})
               </p>
               <div style={{ border: '1px solid #E2E8F0', borderRadius: '6px', overflow: 'hidden' }}>
                 {state.result.unmatched.map((row, i) => (
                   <div key={i} style={{ padding: '6px 10px', borderBottom: i < state.result!.unmatched.length - 1 ? '1px solid #F1F5F9' : 'none', fontSize: '11px', display: 'flex', gap: '10px' }}>
-                    {row.raw_id && <span style={{ fontFamily: 'monospace', color: '#94A3B8' }}>{row.raw_id}</span>}
-                    <span style={{ color: '#475569', flex: 1 }}>{row.raw_name ?? '—'}</span>
-                    <span style={{ color: '#0F172A', fontWeight: 600 }}>{row.qty}</span>
+                    {row.raw_id && <span style={{ fontFamily: 'monospace', color: C.faint }}>{row.raw_id}</span>}
+                    <span style={{ color: C.sub, flex: 1 }}>{row.raw_name ?? '—'}</span>
+                    <span style={{ color: C.ink, fontWeight: 600 }}>{row.qty}</span>
                   </div>
                 ))}
               </div>
-              <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '6px' }}>
+              <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px' }}>
                 These items were not matched to any internal SKU. Add them via Catalogue Ingestion or check column names in your export.
               </p>
             </div>
@@ -214,8 +215,8 @@ function StockImportPage() {
 
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>Stock Import</h1>
-        <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: C.ink }}>Stock Import</h1>
+        <p style={{ fontSize: '12px', color: C.faint, marginTop: '2px' }}>
           Upload daily exports from DaySmart (clinic) and Warehouse to update stock levels and WOC
         </p>
       </div>
@@ -224,17 +225,17 @@ function StockImportPage() {
       {status && (
         <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px 20px', marginBottom: '24px', display: 'flex', gap: '32px' }}>
           <div>
-            <p style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Active Products</p>
-            <p style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginTop: '2px' }}>{total.toLocaleString()}</p>
+            <p style={{ fontSize: '11px', color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Active Products</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: C.ink, marginTop: '2px' }}>{total.toLocaleString()}</p>
           </div>
           <div>
-            <p style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Clinic Coverage</p>
-            <p style={{ fontSize: '24px', fontWeight: 700, color: '#6366F1', marginTop: '2px' }}>
+            <p style={{ fontSize: '11px', color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Clinic Coverage</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: C.indigo, marginTop: '2px' }}>
               {total > 0 ? Math.round((status.clinic.count / total) * 100) : 0}%
             </p>
           </div>
           <div>
-            <p style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Warehouse Coverage</p>
+            <p style={{ fontSize: '11px', color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Warehouse Coverage</p>
             <p style={{ fontSize: '24px', fontWeight: 700, color: '#0EA5E9', marginTop: '2px' }}>
               {total > 0 ? Math.round((status.warehouse.count / total) * 100) : 0}%
             </p>
@@ -266,20 +267,20 @@ function StockImportPage() {
 
       {/* Format hints */}
       <div style={{ marginTop: '24px', background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px 20px' }}>
-        <h3 style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', marginBottom: '10px' }}>How column auto-detection works</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', fontSize: '12px', color: '#64748B' }}>
+        <h3 style={{ fontSize: '12px', fontWeight: 600, color: C.ink, marginBottom: '10px' }}>How column auto-detection works</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', fontSize: '12px', color: C.muted }}>
           <div>
-            <p style={{ fontWeight: 600, color: '#475569', marginBottom: '4px' }}>SKU / Item Code column</p>
+            <p style={{ fontWeight: 600, color: C.sub, marginBottom: '4px' }}>SKU / Item Code column</p>
             <p>Detected if header contains: <code>sku</code>, <code>code</code>, <code>item id</code>, <code>item no</code>, <code>ref</code></p>
             <p style={{ marginTop: '4px' }}>Matched first to internal SKU, then to supplier SKU in IMS.</p>
           </div>
           <div>
-            <p style={{ fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Quantity column</p>
+            <p style={{ fontWeight: 600, color: C.sub, marginBottom: '4px' }}>Quantity column</p>
             <p>Detected if header contains: <code>qty</code>, <code>quantity</code>, <code>on hand</code>, <code>available</code>, <code>soh</code>, <code>stock</code></p>
             <p style={{ marginTop: '4px' }}>Commas and spaces are stripped before parsing.</p>
           </div>
         </div>
-        <p style={{ fontSize: '11px', color: '#CBD5E1', marginTop: '12px' }}>
+        <p style={{ fontSize: '11px', color: C.knobOff, marginTop: '12px' }}>
           If your export has different column names, rename the headers in the file or let us know and we will add it to the auto-detection list.
         </p>
       </div>
