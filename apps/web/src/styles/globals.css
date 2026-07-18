@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  background: #F9FAFB;
+  color: #0F172A;
+}
+
+/* Loading affordances — used across blocking actions (catalogue onboarding etc.) */
+@keyframes ims-spin { to { transform: rotate(360deg); } }
+@keyframes ims-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes ims-bar { 0% { left: -40%; } 100% { left: 100%; } }

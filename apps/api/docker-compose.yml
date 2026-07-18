@@ -1,0 +1,89 @@
+# Rosetta IMS API — DigitalOcean droplet deployment.
+#
+#   api    : the FastAPI app (uvicorn), internal only — never exposed directly.
+#   caddy  : reverse proxy that terminates HTTPS with an automatic Let's Encrypt
+#            certificate for $API_DOMAIN, and proxies to the api container.
+#
+# Compose auto-loads ./.env for ${VAR} substitution AND injects it into `api`.
+# Copy .env.example -> .env and fill it in before `docker compose up -d --build`.
+
+services:
+  # IMS Postgres (option B — dedicated container). Data lives in the pgdata volume.
+  # DORMANT by default: it sits under the "postgres" profile, so a normal `docker compose up`
+  # / `up api` never starts it and the deploy needs NO Postgres config. Only the cutover
+  # (`docker compose --profile postgres up -d postgres`) starts it, with the real creds from
+  # .env. The defaults below just satisfy interpolation — no container ever runs with them
+  # until you set real POSTGRES_* at cutover.
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ims}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-set_real_password_in_env_at_cutover}
+      POSTGRES_DB: ${POSTGRES_DB:-ims}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"                       # internal only — reached by api as host "postgres"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api:
+    build: .
+    image: rosetta-ims-api:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Cutover switch: unset (or a sqlite:// value) runs on SQLite; set DATABASE_URL in .env
+      # to postgresql+psycopg2://USER:PW@postgres:5432/DB to run on Postgres. Reversible —
+      # flip .env and `docker compose up -d api`.
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/ims.db}
+      GOOGLE_SA_KEY_PATH: /secrets/google-sa.json
+    volumes:
+      - ./data:/data                 # SQLite DB, backups + migration source live here
+      - ./secrets:/secrets:ro        # mount the Google service-account JSON read-only
+    expose:
+      - "8080"                       # visible to caddy only, not published to the host
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      default:                       # reached by caddy (unchanged)
+      edge:                          # reach the algo-dashboard Postgres (algo-dashboard-db-1) for POST /sync/algo
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"                      # required for the ACME HTTP challenge + HTTP->HTTPS redirect
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data             # stores issued certificates (keep this volume!)
+      - caddy_config:/config
+    networks:
+      default:                       # reaches the `api` container
+      edge:                          # reaches the algo-dashboard `web` container (dashboard-web)
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pgdata:
+
+# Shared with the algo-dashboard compose so this Caddy can reverse-proxy the dashboard.
+# Created once with:  docker network create edge
+networks:
+  edge:
+    external: true

@@ -1,0 +1,11 @@
+# Caddy automatically obtains + renews a Let's Encrypt certificate for $API_DOMAIN
+# (requires the domain's DNS A record to point at this droplet and ports 80/443 open),
+# then reverse-proxies HTTPS traffic to the FastAPI container on its internal port.
+#
+# CORS is handled by the app itself (FastAPI CORSMiddleware), so Caddy just forwards.
+
+{$API_DOMAIN} {
+	# zstd first (faster + smaller on modern browsers), gzip fallback for the rest.
+	encode zstd gzip
+	reverse_proxy api:8080
+}

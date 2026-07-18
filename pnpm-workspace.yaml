@@ -1,0 +1,4 @@
+# Only apps/web is a JS package. apps/api is a Python (FastAPI) service and is
+# intentionally not part of the pnpm workspace — see README.md.
+packages:
+  - apps/web

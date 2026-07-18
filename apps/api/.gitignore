@@ -1,0 +1,11 @@
+
+# SQLite WAL sidecar files
+ims.db-wal
+ims.db-shm
+
+# Docker deployment — secrets & runtime data (never commit)
+.env
+.env.*
+!.env.example
+secrets/
+data/

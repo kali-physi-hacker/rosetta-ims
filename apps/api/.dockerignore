@@ -1,0 +1,30 @@
+# Keep the image small and free of host/dev artifacts.
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Never bake local data, secrets, or env into the image
+ims.db
+ims.db-wal
+ims.db-shm
+data/
+secrets/
+.env
+.env.*
+!.env.example
+
+# Repo / deploy meta — not needed at runtime
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+Caddyfile
+DEPLOY.md
+*.md
+*.log

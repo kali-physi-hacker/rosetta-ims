@@ -1,0 +1,14 @@
+{
+  "name": "rosetta-ims",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.15.1",
+  "description": "Rosetta IMS monorepo — React (Vite) web app + FastAPI backend.",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "typecheck": "pnpm --filter web typecheck",
+    "lint": "pnpm --filter web lint",
+    "types": "pnpm --filter web types"
+  }
+}

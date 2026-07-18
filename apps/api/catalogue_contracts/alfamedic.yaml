@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Catalogue data contract — Alfamedic (歐亞動物醫藥)
+# Source: "alfamedic HK pricelist edition 28" (Effective 01 Mar 2026)
+# Status: DRAFT for review. ⚑ = a decision that needs your call.
+# ─────────────────────────────────────────────────────────────────────────────
+supplier: "Alfamedic"
+supplier_id: 1
+format: pdf_table            # organised by therapeutic class; explicit column headers
+match_by: supplier_sku       # "Order Code" is the stable key
+
+# ── Non-column facts ────────────────────────────────────────────────────────
+document:
+  species:
+    from: product_name       # "(Canine)", "(Feline/Equine)" in the name
+    default: both            # most vet supplies aren't species-specific
+  segment: { const: vet }
+  category:                  # ⚑ confirm mapping to IMS categories (Medicine / Supplement / …)
+    from: section_header     # therapeutic class: Anaesthetics, Anti-infectives/Antibiotics, Cardiovascular, …
+    default: Medicine        # most therapeutic classes → Medicine; Nutraceuticals → Supplement, etc.
+
+# ── Column → canonical field ────────────────────────────────────────────────
+columns:
+  supplier_sku:  "Order Code"      # "901-100" | "GE227972" | "Pro-Vet HE" | "292400" (alphanumeric)
+  description:   "Product Name"     # (+ method / sample-type / volume descriptor sub-columns when present)
+  brand:         "Brand"            # Skyla | KRUUSE | Littmann | HugeMed | VetCare Pro | Génia | …
+  pack_size:     "Packing / Unit"   # "10 pcs/box" | "500pcs/bag" | "20 tests/box" | "1 pc" | "1 unit" | "1 plate"
+
+# ── Pricing model ───────────────────────────────────────────────────────────
+pricing:
+  basis: per_unit                   # ✔ CONFIRMED — "Price/Unit (HKD)" is per individual sellable PIECE
+  basic_cost:  "Price/ Unit (HKD)"   #   e.g. 820 / cartridge ; "By Quote" → leave null
+  units_per_pack: { const: 1 }      #   price is per unit → effective unit cost = basic_cost (NOT divided)
+  rrp: none                          # this catalogue has no RRP column
+
+# ── Ordering terms (the pack IS the order quantity — you buy N pieces at a time) ──
+ordering:
+  order_increment_qty:              # ✔ CONFIRMED — the "N pcs/box" is the order multiple, not the cost divisor
+    parse: "Packing / Unit"          #   leading N: "10 pcs/box"→10, "500pcs/bag"→500, "1 pc"→1, "1 unit"→1
+  order_increment_uom: { from: sell_unit }   # cartridge | pc | test | plate
+  # "Order Units" ("1 box") corroborates: 1 box = N pieces
+  bulk_tiers: multi_row              # a product with 2+ price rows = tiers (e.g. 1 pc @166, 6 pcs @149)
+
+# ── Normalisation ───────────────────────────────────────────────────────────
+normalize:
+  by_quote: { basic_cost: null }     # "By Quote" price text → cost null (flag: needs a manual quote)
+
+# ── Row validation ─────────────────────────────────────────────────────────
+validate:
+  - "cost_price > 0"                                 # By-Quote rows have null cost → skipped, not flagged
+  - "order_increment_qty >= 1"

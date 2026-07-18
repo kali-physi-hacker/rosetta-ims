@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
+apps/api/venv/
+apps/api/.venv/
+*.egg-info/
+.pytest_cache/
+
+# Local SQLite database + runtime artifacts (never commit prod/local data)
+apps/api/*.db
+apps/api/*.db-*
+apps/api/openapi.json
+apps/api/last_sync.json
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+secrets/
+Keys.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

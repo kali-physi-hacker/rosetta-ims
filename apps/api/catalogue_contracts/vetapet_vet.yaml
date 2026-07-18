@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Catalogue data contract — Vetapet (Vet)   ⚑ DRAFT for review
+# Distributor: C. VETAPET & COMPANY / 施惠德洋行 (also distributes Alfamedic).
+# Vet brand sections: IVD (B5), Dermoscent (B2), Chung-Li / Li-Saint DermCare (B6), …
+# Every price row: CODE NO · PRODUCT NAME · [SIZE] · WHOLESALE PRICE · RETAIL/SUGGESTED RETAIL · [TERMS]
+# ⚑ = a decision that needs your call.
+# ─────────────────────────────────────────────────────────────────────────────
+supplier: "Vetapet Vet"
+supplier_id: 91            # ⚑ confirm — vet catalogue uploads land under 91 (Vetapet Vet); 90 = Non-Vet
+format: pdf_table          # one product per row; a price table embedded per brand section (EN / 中文)
+match_by: supplier_sku     # "CODE NO" (LS02, FP10027, 401) — the stable key across editions
+
+# ── Non-column facts ────────────────────────────────────────────────────────
+document:
+  species:
+    from: product_name     # "Canine"/"Dog" → dog · "Feline"/"Cat" → cat
+    default: both
+  segment: { const: vet }               # ⚑ vet catalogues (IVD / Dermoscent / Chung-Li)
+  category: { from: section_header }     # ⚑ varies by brand — Medicine / Supplement / Food / Pet Hygiene; else AI
+
+# ── Column → canonical field ────────────────────────────────────────────────
+columns:
+  supplier_sku:  "CODE NO / 編號"                 # LS02 | FP10027 | 401
+  description:   "PRODUCT NAME / 產品名稱"          # size/variant often embedded (- 15mL, Mauve 5 lbs)
+  pack_size:     "SIZE / PACK / 重量"              # 1.5 KG | 3 tubes / pack | 15mL  (descriptive — never a cost divisor)
+
+# ── Pricing model ───────────────────────────────────────────────────────────
+pricing:
+  basis: per_unit                                 # EVERY price is per sellable unit / pack
+  units_per_pack: { const: 1 }                    #   → effective unit cost = basic_cost / 1 (never divide it)
+  autoswap_cost_rrp: true                         # wholesale is ALWAYS below retail → auto-fix a swapped extraction
+  basic_cost:
+    from: "WHOLESALE PRICE / 批發價"                # ✔ our cost basis — strip the HK$ prefix (HK$128.0 → 128.0)
+  rrp:  "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價"   # HK$205.0 → 205.0
+
+# ── Net weight (per sellable unit) ──────────────────────────────────────────
+weight:
+  parse_from: pack_size      # "1.5 KG" → 1500 g; left null when the size is volume/count (15mL, 3 tubes)
+
+# ── Row validation (flag at ingestion) ─────────────────────────────────────
+validate:
+  - "cost_price < rrp"       # a wholesale/retail swap trips this
+  - "cost_price > 0"
