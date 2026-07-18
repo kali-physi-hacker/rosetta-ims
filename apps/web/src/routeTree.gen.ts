@@ -31,7 +31,9 @@ import { Route as AuthedAdminAuditRouteImport } from './routes/_authed/admin/aud
 import { Route as AuthedAdminReportRouteImport } from './routes/_authed/admin/report'
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
 import { Route as AuthedCataloguesIndexRouteImport } from './routes/_authed/catalogues/index'
+import { Route as AuthedClientsIndexRouteImport } from './routes/_authed/clients/index'
 import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients/guide'
+import { Route as AuthedItemsSplatRouteImport } from './routes/_authed/items/$'
 import { Route as AuthedCataloguesReparseIndexRouteImport } from './routes/_authed/catalogues/reparse/index'
 import { Route as AuthedCataloguesReparseBatchIdRouteImport } from './routes/_authed/catalogues/reparse/$batchId'
 
@@ -144,9 +146,19 @@ const AuthedCataloguesIndexRoute = AuthedCataloguesIndexRouteImport.update({
   path: '/catalogues/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedClientsIndexRoute = AuthedClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedClientsGuideRoute = AuthedClientsGuideRouteImport.update({
   id: '/clients/guide',
   path: '/clients/guide',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedItemsSplatRoute = AuthedItemsSplatRouteImport.update({
+  id: '/items/$',
+  path: '/items/$',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedCataloguesReparseIndexRoute =
@@ -184,7 +196,9 @@ export interface FileRoutesByFullPath {
   '/admin/report': typeof AuthedAdminReportRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
+  '/items/$': typeof AuthedItemsSplatRoute
   '/catalogues/': typeof AuthedCataloguesIndexRoute
+  '/clients/': typeof AuthedClientsIndexRoute
   '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
   '/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
 }
@@ -210,7 +224,9 @@ export interface FileRoutesByTo {
   '/admin/report': typeof AuthedAdminReportRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
+  '/items/$': typeof AuthedItemsSplatRoute
   '/catalogues': typeof AuthedCataloguesIndexRoute
+  '/clients': typeof AuthedClientsIndexRoute
   '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
   '/catalogues/reparse': typeof AuthedCataloguesReparseIndexRoute
 }
@@ -238,7 +254,9 @@ export interface FileRoutesById {
   '/_authed/admin/report': typeof AuthedAdminReportRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/clients/guide': typeof AuthedClientsGuideRoute
+  '/_authed/items/$': typeof AuthedItemsSplatRoute
   '/_authed/catalogues/': typeof AuthedCataloguesIndexRoute
+  '/_authed/clients/': typeof AuthedClientsIndexRoute
   '/_authed/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
   '/_authed/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
 }
@@ -266,7 +284,9 @@ export interface FileRouteTypes {
     | '/admin/report'
     | '/admin/users'
     | '/clients/guide'
+    | '/items/$'
     | '/catalogues/'
+    | '/clients/'
     | '/catalogues/reparse/$batchId'
     | '/catalogues/reparse/'
   fileRoutesByTo: FileRoutesByTo
@@ -292,7 +312,9 @@ export interface FileRouteTypes {
     | '/admin/report'
     | '/admin/users'
     | '/clients/guide'
+    | '/items/$'
     | '/catalogues'
+    | '/clients'
     | '/catalogues/reparse/$batchId'
     | '/catalogues/reparse'
   id:
@@ -319,7 +341,9 @@ export interface FileRouteTypes {
     | '/_authed/admin/report'
     | '/_authed/admin/users'
     | '/_authed/clients/guide'
+    | '/_authed/items/$'
     | '/_authed/catalogues/'
+    | '/_authed/clients/'
     | '/_authed/catalogues/reparse/$batchId'
     | '/_authed/catalogues/reparse/'
   fileRoutesById: FileRoutesById
@@ -488,11 +512,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCataloguesIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/clients/': {
+      id: '/_authed/clients/'
+      path: '/clients'
+      fullPath: '/clients/'
+      preLoaderRoute: typeof AuthedClientsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/clients/guide': {
       id: '/_authed/clients/guide'
       path: '/clients/guide'
       fullPath: '/clients/guide'
       preLoaderRoute: typeof AuthedClientsGuideRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/items/$': {
+      id: '/_authed/items/$'
+      path: '/items/$'
+      fullPath: '/items/$'
+      preLoaderRoute: typeof AuthedItemsSplatRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/catalogues/reparse/': {
@@ -530,7 +568,9 @@ interface AuthedRouteChildren {
   AuthedAdminReportRoute: typeof AuthedAdminReportRoute
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedClientsGuideRoute: typeof AuthedClientsGuideRoute
+  AuthedItemsSplatRoute: typeof AuthedItemsSplatRoute
   AuthedCataloguesIndexRoute: typeof AuthedCataloguesIndexRoute
+  AuthedClientsIndexRoute: typeof AuthedClientsIndexRoute
   AuthedCataloguesReparseBatchIdRoute: typeof AuthedCataloguesReparseBatchIdRoute
   AuthedCataloguesReparseIndexRoute: typeof AuthedCataloguesReparseIndexRoute
 }
@@ -553,7 +593,9 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdminReportRoute: AuthedAdminReportRoute,
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedClientsGuideRoute: AuthedClientsGuideRoute,
+  AuthedItemsSplatRoute: AuthedItemsSplatRoute,
   AuthedCataloguesIndexRoute: AuthedCataloguesIndexRoute,
+  AuthedClientsIndexRoute: AuthedClientsIndexRoute,
   AuthedCataloguesReparseBatchIdRoute: AuthedCataloguesReparseBatchIdRoute,
   AuthedCataloguesReparseIndexRoute: AuthedCataloguesReparseIndexRoute,
 }
