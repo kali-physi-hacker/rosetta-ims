@@ -11,8 +11,17 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardRouteImport } from './routes/onboard'
+import { Route as PitchRouteImport } from './routes/pitch'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedAmWalkthroughRouteImport } from './routes/_authed/am-walkthrough'
+import { Route as AuthedArchitectureRouteImport } from './routes/_authed/architecture'
 import { Route as AuthedCategoriesRouteImport } from './routes/_authed/categories'
+import { Route as AuthedLogicRouteImport } from './routes/_authed/logic'
+import { Route as AuthedSsotSpecRouteImport } from './routes/_authed/ssot-spec'
+import { Route as AuthedTechStackRouteImport } from './routes/_authed/tech-stack'
+import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients/guide'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -23,9 +32,34 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardRoute = OnboardRouteImport.update({
+  id: '/onboard',
+  path: '/onboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PitchRoute = PitchRouteImport.update({
+  id: '/pitch',
+  path: '/pitch',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedIndexRoute = AuthedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAmWalkthroughRoute = AuthedAmWalkthroughRouteImport.update({
+  id: '/am-walkthrough',
+  path: '/am-walkthrough',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedArchitectureRoute = AuthedArchitectureRouteImport.update({
+  id: '/architecture',
+  path: '/architecture',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedCategoriesRoute = AuthedCategoriesRouteImport.update({
@@ -33,35 +67,123 @@ const AuthedCategoriesRoute = AuthedCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedLogicRoute = AuthedLogicRouteImport.update({
+  id: '/logic',
+  path: '/logic',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSsotSpecRoute = AuthedSsotSpecRouteImport.update({
+  id: '/ssot-spec',
+  path: '/ssot-spec',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedTechStackRoute = AuthedTechStackRouteImport.update({
+  id: '/tech-stack',
+  path: '/tech-stack',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedClientsGuideRoute = AuthedClientsGuideRouteImport.update({
+  id: '/clients/guide',
+  path: '/clients/guide',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
+  '/onboard': typeof OnboardRoute
+  '/pitch': typeof PitchRoute
+  '/pricing': typeof PricingRoute
+  '/am-walkthrough': typeof AuthedAmWalkthroughRoute
+  '/architecture': typeof AuthedArchitectureRoute
   '/categories': typeof AuthedCategoriesRoute
+  '/logic': typeof AuthedLogicRoute
+  '/ssot-spec': typeof AuthedSsotSpecRoute
+  '/tech-stack': typeof AuthedTechStackRoute
+  '/clients/guide': typeof AuthedClientsGuideRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/onboard': typeof OnboardRoute
+  '/pitch': typeof PitchRoute
+  '/pricing': typeof PricingRoute
+  '/am-walkthrough': typeof AuthedAmWalkthroughRoute
+  '/architecture': typeof AuthedArchitectureRoute
   '/categories': typeof AuthedCategoriesRoute
+  '/logic': typeof AuthedLogicRoute
+  '/ssot-spec': typeof AuthedSsotSpecRoute
+  '/tech-stack': typeof AuthedTechStackRoute
   '/': typeof AuthedIndexRoute
+  '/clients/guide': typeof AuthedClientsGuideRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
+  '/onboard': typeof OnboardRoute
+  '/pitch': typeof PitchRoute
+  '/pricing': typeof PricingRoute
+  '/_authed/am-walkthrough': typeof AuthedAmWalkthroughRoute
+  '/_authed/architecture': typeof AuthedArchitectureRoute
   '/_authed/categories': typeof AuthedCategoriesRoute
+  '/_authed/logic': typeof AuthedLogicRoute
+  '/_authed/ssot-spec': typeof AuthedSsotSpecRoute
+  '/_authed/tech-stack': typeof AuthedTechStackRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/clients/guide': typeof AuthedClientsGuideRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/categories'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/onboard'
+    | '/pitch'
+    | '/pricing'
+    | '/am-walkthrough'
+    | '/architecture'
+    | '/categories'
+    | '/logic'
+    | '/ssot-spec'
+    | '/tech-stack'
+    | '/clients/guide'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/categories' | '/'
-  id: '__root__' | '/_authed' | '/login' | '/_authed/categories' | '/_authed/'
+  to:
+    | '/login'
+    | '/onboard'
+    | '/pitch'
+    | '/pricing'
+    | '/am-walkthrough'
+    | '/architecture'
+    | '/categories'
+    | '/logic'
+    | '/ssot-spec'
+    | '/tech-stack'
+    | '/'
+    | '/clients/guide'
+  id:
+    | '__root__'
+    | '/_authed'
+    | '/login'
+    | '/onboard'
+    | '/pitch'
+    | '/pricing'
+    | '/_authed/am-walkthrough'
+    | '/_authed/architecture'
+    | '/_authed/categories'
+    | '/_authed/logic'
+    | '/_authed/ssot-spec'
+    | '/_authed/tech-stack'
+    | '/_authed/'
+    | '/_authed/clients/guide'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OnboardRoute: typeof OnboardRoute
+  PitchRoute: typeof PitchRoute
+  PricingRoute: typeof PricingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -80,11 +202,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboard': {
+      id: '/onboard'
+      path: '/onboard'
+      fullPath: '/onboard'
+      preLoaderRoute: typeof OnboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pitch': {
+      id: '/pitch'
+      path: '/pitch'
+      fullPath: '/pitch'
+      preLoaderRoute: typeof PitchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/': {
       id: '/_authed/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthedIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/am-walkthrough': {
+      id: '/_authed/am-walkthrough'
+      path: '/am-walkthrough'
+      fullPath: '/am-walkthrough'
+      preLoaderRoute: typeof AuthedAmWalkthroughRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/architecture': {
+      id: '/_authed/architecture'
+      path: '/architecture'
+      fullPath: '/architecture'
+      preLoaderRoute: typeof AuthedArchitectureRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/categories': {
@@ -94,17 +251,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCategoriesRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/logic': {
+      id: '/_authed/logic'
+      path: '/logic'
+      fullPath: '/logic'
+      preLoaderRoute: typeof AuthedLogicRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/ssot-spec': {
+      id: '/_authed/ssot-spec'
+      path: '/ssot-spec'
+      fullPath: '/ssot-spec'
+      preLoaderRoute: typeof AuthedSsotSpecRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/tech-stack': {
+      id: '/_authed/tech-stack'
+      path: '/tech-stack'
+      fullPath: '/tech-stack'
+      preLoaderRoute: typeof AuthedTechStackRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/clients/guide': {
+      id: '/_authed/clients/guide'
+      path: '/clients/guide'
+      fullPath: '/clients/guide'
+      preLoaderRoute: typeof AuthedClientsGuideRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
+  AuthedAmWalkthroughRoute: typeof AuthedAmWalkthroughRoute
+  AuthedArchitectureRoute: typeof AuthedArchitectureRoute
   AuthedCategoriesRoute: typeof AuthedCategoriesRoute
+  AuthedLogicRoute: typeof AuthedLogicRoute
+  AuthedSsotSpecRoute: typeof AuthedSsotSpecRoute
+  AuthedTechStackRoute: typeof AuthedTechStackRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedClientsGuideRoute: typeof AuthedClientsGuideRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAmWalkthroughRoute: AuthedAmWalkthroughRoute,
+  AuthedArchitectureRoute: AuthedArchitectureRoute,
   AuthedCategoriesRoute: AuthedCategoriesRoute,
+  AuthedLogicRoute: AuthedLogicRoute,
+  AuthedSsotSpecRoute: AuthedSsotSpecRoute,
+  AuthedTechStackRoute: AuthedTechStackRoute,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedClientsGuideRoute: AuthedClientsGuideRoute,
 }
 
 const AuthedRouteWithChildren =
@@ -113,6 +310,9 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
+  OnboardRoute: OnboardRoute,
+  PitchRoute: PitchRoute,
+  PricingRoute: PricingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

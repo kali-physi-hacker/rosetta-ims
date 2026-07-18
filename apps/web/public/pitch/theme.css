@@ -1,0 +1,32 @@
+/* Vetra reveal.js theme */
+:root{--navy:#0F172A;--indigo:#6366F1;--slate:#475569;--slate2:#64748B;--grey:#94A3B8;
+  --lgrey:#E2E8F0;--bg:#F9FAFB;--green:#16A34A;--amber:#D97706;}
+.reveal{font-family:-apple-system,"Segoe UI",Roboto,Inter,sans-serif;color:var(--navy);font-size:30px;}
+.reveal .slides{text-align:left;}
+.reveal section{background:#fff;}
+.reveal .title{text-align:center;}
+.title .wordmark{color:#fff;font-size:120px;font-weight:800;letter-spacing:2px;margin:0;}
+.title .tagline{color:#fff;font-size:30px;font-weight:400;margin:10px 0 0;opacity:.95;}
+.title .sub{color:#94A3B8;font-size:17px;margin-top:26px;}
+.eyebrow{display:flex;justify-content:space-between;align-items:center;color:var(--indigo);
+  font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+.eyebrow .dur{color:var(--grey);}
+.reveal h2{font-size:34px;font-weight:800;color:var(--navy);margin:.15em 0 .1em;}
+.key{color:var(--slate2);font-size:17px;font-style:italic;margin:0 0 14px;}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:start;}
+.col-script{max-height:430px;overflow:auto;padding-right:10px;}
+.col-script .script{font-size:18px;line-height:1.5;margin:0 0 12px;color:#1f2937;}
+.col-script .tablenote{color:var(--slate2);font-style:italic;font-size:15px;}
+.col-script .muted{color:var(--grey);}
+.col-visual{position:sticky;top:0;}
+.col-visual img{width:100%;border:1px solid var(--lgrey);border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,.10);margin-bottom:12px;display:block;}
+.placeholder{border:2px dashed #C7D2FE;border-radius:14px;padding:46px 20px;text-align:center;
+  color:var(--indigo);font-weight:700;font-size:18px;background:#EEF2FF;}
+.placeholder span{display:block;color:var(--slate2);font-weight:500;font-size:14px;margin-top:8px;}
+.foot{position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:space-between;
+  color:var(--grey);font-size:13px;padding:0 6px;}
+.foot .wc{color:var(--indigo);font-weight:700;}
+#timer{position:fixed;left:14px;bottom:12px;z-index:50;background:#0F172A;color:#fff;
+  font-family:-apple-system,sans-serif;font-size:13px;padding:8px 14px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+#timer.ok b{color:#4ADE80;} #timer.over b{color:#FBBF24;}
+.col-script::-webkit-scrollbar{width:8px;} .col-script::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:8px;}
