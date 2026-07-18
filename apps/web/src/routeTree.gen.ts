@@ -20,6 +20,7 @@ import { Route as AuthedArchitectureRouteImport } from './routes/_authed/archite
 import { Route as AuthedCategoriesRouteImport } from './routes/_authed/categories'
 import { Route as AuthedCollectionsRouteImport } from './routes/_authed/collections'
 import { Route as AuthedConfigRouteImport } from './routes/_authed/config'
+import { Route as AuthedDataReviewRouteImport } from './routes/_authed/data-review'
 import { Route as AuthedLogicRouteImport } from './routes/_authed/logic'
 import { Route as AuthedPlaybookRouteImport } from './routes/_authed/playbook'
 import { Route as AuthedSsotSpecRouteImport } from './routes/_authed/ssot-spec'
@@ -31,6 +32,8 @@ import { Route as AuthedAdminReportRouteImport } from './routes/_authed/admin/re
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
 import { Route as AuthedCataloguesIndexRouteImport } from './routes/_authed/catalogues/index'
 import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients/guide'
+import { Route as AuthedCataloguesReparseIndexRouteImport } from './routes/_authed/catalogues/reparse/index'
+import { Route as AuthedCataloguesReparseBatchIdRouteImport } from './routes/_authed/catalogues/reparse/$batchId'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -84,6 +87,11 @@ const AuthedCollectionsRoute = AuthedCollectionsRouteImport.update({
 const AuthedConfigRoute = AuthedConfigRouteImport.update({
   id: '/config',
   path: '/config',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDataReviewRoute = AuthedDataReviewRouteImport.update({
+  id: '/data-review',
+  path: '/data-review',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedLogicRoute = AuthedLogicRouteImport.update({
@@ -141,6 +149,18 @@ const AuthedClientsGuideRoute = AuthedClientsGuideRouteImport.update({
   path: '/clients/guide',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedCataloguesReparseIndexRoute =
+  AuthedCataloguesReparseIndexRouteImport.update({
+    id: '/catalogues/reparse/',
+    path: '/catalogues/reparse/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedCataloguesReparseBatchIdRoute =
+  AuthedCataloguesReparseBatchIdRouteImport.update({
+    id: '/catalogues/reparse/$batchId',
+    path: '/catalogues/reparse/$batchId',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -153,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/categories': typeof AuthedCategoriesRoute
   '/collections': typeof AuthedCollectionsRoute
   '/config': typeof AuthedConfigRoute
+  '/data-review': typeof AuthedDataReviewRoute
   '/logic': typeof AuthedLogicRoute
   '/playbook': typeof AuthedPlaybookRoute
   '/ssot-spec': typeof AuthedSsotSpecRoute
@@ -164,6 +185,8 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
   '/catalogues/': typeof AuthedCataloguesIndexRoute
+  '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
+  '/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -175,6 +198,7 @@ export interface FileRoutesByTo {
   '/categories': typeof AuthedCategoriesRoute
   '/collections': typeof AuthedCollectionsRoute
   '/config': typeof AuthedConfigRoute
+  '/data-review': typeof AuthedDataReviewRoute
   '/logic': typeof AuthedLogicRoute
   '/playbook': typeof AuthedPlaybookRoute
   '/ssot-spec': typeof AuthedSsotSpecRoute
@@ -187,6 +211,8 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
   '/catalogues': typeof AuthedCataloguesIndexRoute
+  '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
+  '/catalogues/reparse': typeof AuthedCataloguesReparseIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -200,6 +226,7 @@ export interface FileRoutesById {
   '/_authed/categories': typeof AuthedCategoriesRoute
   '/_authed/collections': typeof AuthedCollectionsRoute
   '/_authed/config': typeof AuthedConfigRoute
+  '/_authed/data-review': typeof AuthedDataReviewRoute
   '/_authed/logic': typeof AuthedLogicRoute
   '/_authed/playbook': typeof AuthedPlaybookRoute
   '/_authed/ssot-spec': typeof AuthedSsotSpecRoute
@@ -212,6 +239,8 @@ export interface FileRoutesById {
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/clients/guide': typeof AuthedClientsGuideRoute
   '/_authed/catalogues/': typeof AuthedCataloguesIndexRoute
+  '/_authed/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
+  '/_authed/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -226,6 +255,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/collections'
     | '/config'
+    | '/data-review'
     | '/logic'
     | '/playbook'
     | '/ssot-spec'
@@ -237,6 +267,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/clients/guide'
     | '/catalogues/'
+    | '/catalogues/reparse/$batchId'
+    | '/catalogues/reparse/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -248,6 +280,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/collections'
     | '/config'
+    | '/data-review'
     | '/logic'
     | '/playbook'
     | '/ssot-spec'
@@ -260,6 +293,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/clients/guide'
     | '/catalogues'
+    | '/catalogues/reparse/$batchId'
+    | '/catalogues/reparse'
   id:
     | '__root__'
     | '/_authed'
@@ -272,6 +307,7 @@ export interface FileRouteTypes {
     | '/_authed/categories'
     | '/_authed/collections'
     | '/_authed/config'
+    | '/_authed/data-review'
     | '/_authed/logic'
     | '/_authed/playbook'
     | '/_authed/ssot-spec'
@@ -284,6 +320,8 @@ export interface FileRouteTypes {
     | '/_authed/admin/users'
     | '/_authed/clients/guide'
     | '/_authed/catalogues/'
+    | '/_authed/catalogues/reparse/$batchId'
+    | '/_authed/catalogues/reparse/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -373,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedConfigRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/data-review': {
+      id: '/_authed/data-review'
+      path: '/data-review'
+      fullPath: '/data-review'
+      preLoaderRoute: typeof AuthedDataReviewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/logic': {
       id: '/_authed/logic'
       path: '/logic'
@@ -450,6 +495,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedClientsGuideRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/catalogues/reparse/': {
+      id: '/_authed/catalogues/reparse/'
+      path: '/catalogues/reparse'
+      fullPath: '/catalogues/reparse/'
+      preLoaderRoute: typeof AuthedCataloguesReparseIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/catalogues/reparse/$batchId': {
+      id: '/_authed/catalogues/reparse/$batchId'
+      path: '/catalogues/reparse/$batchId'
+      fullPath: '/catalogues/reparse/$batchId'
+      preLoaderRoute: typeof AuthedCataloguesReparseBatchIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
@@ -459,6 +518,7 @@ interface AuthedRouteChildren {
   AuthedCategoriesRoute: typeof AuthedCategoriesRoute
   AuthedCollectionsRoute: typeof AuthedCollectionsRoute
   AuthedConfigRoute: typeof AuthedConfigRoute
+  AuthedDataReviewRoute: typeof AuthedDataReviewRoute
   AuthedLogicRoute: typeof AuthedLogicRoute
   AuthedPlaybookRoute: typeof AuthedPlaybookRoute
   AuthedSsotSpecRoute: typeof AuthedSsotSpecRoute
@@ -471,6 +531,8 @@ interface AuthedRouteChildren {
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedClientsGuideRoute: typeof AuthedClientsGuideRoute
   AuthedCataloguesIndexRoute: typeof AuthedCataloguesIndexRoute
+  AuthedCataloguesReparseBatchIdRoute: typeof AuthedCataloguesReparseBatchIdRoute
+  AuthedCataloguesReparseIndexRoute: typeof AuthedCataloguesReparseIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
@@ -479,6 +541,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCategoriesRoute: AuthedCategoriesRoute,
   AuthedCollectionsRoute: AuthedCollectionsRoute,
   AuthedConfigRoute: AuthedConfigRoute,
+  AuthedDataReviewRoute: AuthedDataReviewRoute,
   AuthedLogicRoute: AuthedLogicRoute,
   AuthedPlaybookRoute: AuthedPlaybookRoute,
   AuthedSsotSpecRoute: AuthedSsotSpecRoute,
@@ -491,6 +554,8 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedClientsGuideRoute: AuthedClientsGuideRoute,
   AuthedCataloguesIndexRoute: AuthedCataloguesIndexRoute,
+  AuthedCataloguesReparseBatchIdRoute: AuthedCataloguesReparseBatchIdRoute,
+  AuthedCataloguesReparseIndexRoute: AuthedCataloguesReparseIndexRoute,
 }
 
 const AuthedRouteWithChildren =
