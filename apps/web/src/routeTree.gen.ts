@@ -18,9 +18,15 @@ import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedAmWalkthroughRouteImport } from './routes/_authed/am-walkthrough'
 import { Route as AuthedArchitectureRouteImport } from './routes/_authed/architecture'
 import { Route as AuthedCategoriesRouteImport } from './routes/_authed/categories'
+import { Route as AuthedCollectionsRouteImport } from './routes/_authed/collections'
 import { Route as AuthedLogicRouteImport } from './routes/_authed/logic'
+import { Route as AuthedPlaybookRouteImport } from './routes/_authed/playbook'
 import { Route as AuthedSsotSpecRouteImport } from './routes/_authed/ssot-spec'
+import { Route as AuthedStockRouteImport } from './routes/_authed/stock'
+import { Route as AuthedSuppliersRouteImport } from './routes/_authed/suppliers'
 import { Route as AuthedTechStackRouteImport } from './routes/_authed/tech-stack'
+import { Route as AuthedAdminAuditRouteImport } from './routes/_authed/admin/audit'
+import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
 import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients/guide'
 
 const AuthedRoute = AuthedRouteImport.update({
@@ -67,9 +73,19 @@ const AuthedCategoriesRoute = AuthedCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedCollectionsRoute = AuthedCollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedLogicRoute = AuthedLogicRouteImport.update({
   id: '/logic',
   path: '/logic',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedPlaybookRoute = AuthedPlaybookRouteImport.update({
+  id: '/playbook',
+  path: '/playbook',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedSsotSpecRoute = AuthedSsotSpecRouteImport.update({
@@ -77,9 +93,29 @@ const AuthedSsotSpecRoute = AuthedSsotSpecRouteImport.update({
   path: '/ssot-spec',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedStockRoute = AuthedStockRouteImport.update({
+  id: '/stock',
+  path: '/stock',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSuppliersRoute = AuthedSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedTechStackRoute = AuthedTechStackRouteImport.update({
   id: '/tech-stack',
   path: '/tech-stack',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAdminAuditRoute = AuthedAdminAuditRouteImport.update({
+  id: '/admin/audit',
+  path: '/admin/audit',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedClientsGuideRoute = AuthedClientsGuideRouteImport.update({
@@ -97,9 +133,15 @@ export interface FileRoutesByFullPath {
   '/am-walkthrough': typeof AuthedAmWalkthroughRoute
   '/architecture': typeof AuthedArchitectureRoute
   '/categories': typeof AuthedCategoriesRoute
+  '/collections': typeof AuthedCollectionsRoute
   '/logic': typeof AuthedLogicRoute
+  '/playbook': typeof AuthedPlaybookRoute
   '/ssot-spec': typeof AuthedSsotSpecRoute
+  '/stock': typeof AuthedStockRoute
+  '/suppliers': typeof AuthedSuppliersRoute
   '/tech-stack': typeof AuthedTechStackRoute
+  '/admin/audit': typeof AuthedAdminAuditRoute
+  '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
 }
 export interface FileRoutesByTo {
@@ -110,10 +152,16 @@ export interface FileRoutesByTo {
   '/am-walkthrough': typeof AuthedAmWalkthroughRoute
   '/architecture': typeof AuthedArchitectureRoute
   '/categories': typeof AuthedCategoriesRoute
+  '/collections': typeof AuthedCollectionsRoute
   '/logic': typeof AuthedLogicRoute
+  '/playbook': typeof AuthedPlaybookRoute
   '/ssot-spec': typeof AuthedSsotSpecRoute
+  '/stock': typeof AuthedStockRoute
+  '/suppliers': typeof AuthedSuppliersRoute
   '/tech-stack': typeof AuthedTechStackRoute
   '/': typeof AuthedIndexRoute
+  '/admin/audit': typeof AuthedAdminAuditRoute
+  '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
 }
 export interface FileRoutesById {
@@ -126,10 +174,16 @@ export interface FileRoutesById {
   '/_authed/am-walkthrough': typeof AuthedAmWalkthroughRoute
   '/_authed/architecture': typeof AuthedArchitectureRoute
   '/_authed/categories': typeof AuthedCategoriesRoute
+  '/_authed/collections': typeof AuthedCollectionsRoute
   '/_authed/logic': typeof AuthedLogicRoute
+  '/_authed/playbook': typeof AuthedPlaybookRoute
   '/_authed/ssot-spec': typeof AuthedSsotSpecRoute
+  '/_authed/stock': typeof AuthedStockRoute
+  '/_authed/suppliers': typeof AuthedSuppliersRoute
   '/_authed/tech-stack': typeof AuthedTechStackRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/admin/audit': typeof AuthedAdminAuditRoute
+  '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/clients/guide': typeof AuthedClientsGuideRoute
 }
 export interface FileRouteTypes {
@@ -143,9 +197,15 @@ export interface FileRouteTypes {
     | '/am-walkthrough'
     | '/architecture'
     | '/categories'
+    | '/collections'
     | '/logic'
+    | '/playbook'
     | '/ssot-spec'
+    | '/stock'
+    | '/suppliers'
     | '/tech-stack'
+    | '/admin/audit'
+    | '/admin/users'
     | '/clients/guide'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -156,10 +216,16 @@ export interface FileRouteTypes {
     | '/am-walkthrough'
     | '/architecture'
     | '/categories'
+    | '/collections'
     | '/logic'
+    | '/playbook'
     | '/ssot-spec'
+    | '/stock'
+    | '/suppliers'
     | '/tech-stack'
     | '/'
+    | '/admin/audit'
+    | '/admin/users'
     | '/clients/guide'
   id:
     | '__root__'
@@ -171,10 +237,16 @@ export interface FileRouteTypes {
     | '/_authed/am-walkthrough'
     | '/_authed/architecture'
     | '/_authed/categories'
+    | '/_authed/collections'
     | '/_authed/logic'
+    | '/_authed/playbook'
     | '/_authed/ssot-spec'
+    | '/_authed/stock'
+    | '/_authed/suppliers'
     | '/_authed/tech-stack'
     | '/_authed/'
+    | '/_authed/admin/audit'
+    | '/_authed/admin/users'
     | '/_authed/clients/guide'
   fileRoutesById: FileRoutesById
 }
@@ -251,11 +323,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCategoriesRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/collections': {
+      id: '/_authed/collections'
+      path: '/collections'
+      fullPath: '/collections'
+      preLoaderRoute: typeof AuthedCollectionsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/logic': {
       id: '/_authed/logic'
       path: '/logic'
       fullPath: '/logic'
       preLoaderRoute: typeof AuthedLogicRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/playbook': {
+      id: '/_authed/playbook'
+      path: '/playbook'
+      fullPath: '/playbook'
+      preLoaderRoute: typeof AuthedPlaybookRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/ssot-spec': {
@@ -265,11 +351,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSsotSpecRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/stock': {
+      id: '/_authed/stock'
+      path: '/stock'
+      fullPath: '/stock'
+      preLoaderRoute: typeof AuthedStockRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/suppliers': {
+      id: '/_authed/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AuthedSuppliersRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/tech-stack': {
       id: '/_authed/tech-stack'
       path: '/tech-stack'
       fullPath: '/tech-stack'
       preLoaderRoute: typeof AuthedTechStackRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/admin/audit': {
+      id: '/_authed/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthedAdminAuditRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/admin/users': {
+      id: '/_authed/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthedAdminUsersRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/clients/guide': {
@@ -286,10 +400,16 @@ interface AuthedRouteChildren {
   AuthedAmWalkthroughRoute: typeof AuthedAmWalkthroughRoute
   AuthedArchitectureRoute: typeof AuthedArchitectureRoute
   AuthedCategoriesRoute: typeof AuthedCategoriesRoute
+  AuthedCollectionsRoute: typeof AuthedCollectionsRoute
   AuthedLogicRoute: typeof AuthedLogicRoute
+  AuthedPlaybookRoute: typeof AuthedPlaybookRoute
   AuthedSsotSpecRoute: typeof AuthedSsotSpecRoute
+  AuthedStockRoute: typeof AuthedStockRoute
+  AuthedSuppliersRoute: typeof AuthedSuppliersRoute
   AuthedTechStackRoute: typeof AuthedTechStackRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedAdminAuditRoute: typeof AuthedAdminAuditRoute
+  AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedClientsGuideRoute: typeof AuthedClientsGuideRoute
 }
 
@@ -297,10 +417,16 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAmWalkthroughRoute: AuthedAmWalkthroughRoute,
   AuthedArchitectureRoute: AuthedArchitectureRoute,
   AuthedCategoriesRoute: AuthedCategoriesRoute,
+  AuthedCollectionsRoute: AuthedCollectionsRoute,
   AuthedLogicRoute: AuthedLogicRoute,
+  AuthedPlaybookRoute: AuthedPlaybookRoute,
   AuthedSsotSpecRoute: AuthedSsotSpecRoute,
+  AuthedStockRoute: AuthedStockRoute,
+  AuthedSuppliersRoute: AuthedSuppliersRoute,
   AuthedTechStackRoute: AuthedTechStackRoute,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedAdminAuditRoute: AuthedAdminAuditRoute,
+  AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedClientsGuideRoute: AuthedClientsGuideRoute,
 }
 
