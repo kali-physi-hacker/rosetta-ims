@@ -95,7 +95,6 @@ function SourceTags({ sources }: { sources?: string[] }) {
   )
 }
 interface Summary { customers: number; pets: number; by_main: Record<string, number>; by_segment?: Record<string, number>; reco_products?: { main: string; product: string; n: number }[]; ops_counts?: Record<string, number>; by_purchase_cat?: Record<string, number>; top_vet_products?: { product: string; n: number }[]; filters?: { cust?: Record<string, number>; consents?: Record<string, number>; ops?: Record<string, number> }; crm_lists?: { name: string; n: number }[]; crm_flows?: { name: string; n: number }[]; crm_discounts?: { code: string; n: number }[]; utm_campaigns?: { campaign: string; source: string; medium: string; n: number }[]; landing_pages?: { path: string; n: number }[]; referrals?: { domain: string; n: number }[] }
-const segCount = (s: Summary | null, k: string) => (s?.by_segment?.[k] != null ? ` (${s.by_segment[k].toLocaleString()})` : '')
 
 // source -> [letter, colour]
 const SRC: Record<string, [string, string]> = {
@@ -256,81 +255,6 @@ function DetailPanel({ r }: { r: Row }) {
       <Section label="Engagement / ops" tags={r.engagement} />
       {r.pets.length ? r.pets.map(p => <PetBlock key={p.pet_id} pet={p} />)
         : <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px', fontStyle: 'italic' }}>No pet on file — online/transacted customer (still targetable for marketing).</p>}
-    </div>
-  )
-}
-
-interface FeatProd { name: string; n: number }
-interface Winner { name: string; clinic_n: number; online_n: number }
-interface Theme {
-  main: string; need: number; converted_online: number; gap: number; pct: number
-  subs: { sub: string; n: number }[]; winners: Winner[]; clinic_products: FeatProd[]; online_products: FeatProd[]
-}
-function CampaignPanel({ qs }: { qs: string }) {
-  const [data, setData] = useState<{ cohort_size: number; themes: Theme[] } | null>(null)
-  useEffect(() => {
-    setData(null)
-    fetch(`${API}/clients/campaign?${qs}`, { headers: authHeaders() })
-      .then(r => (r.ok ? r.json() : null)).then(setData).catch(() => setData(null))
-  }, [qs])
-  if (!data) return <div style={{ padding: '20px', color: '#94A3B8', fontSize: '13px' }}>Building campaign plan…</div>
-  const top = data.themes.filter(t => t.gap > 0).slice(0, 10)
-  const maxGap = Math.max(1, ...top.map(t => t.gap))
-  return (
-    <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-      <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>
-        📣 Campaign Planner — {data.cohort_size.toLocaleString()} customers in this cohort
-      </div>
-      <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '12px' }}>
-        Top care themes to feature, ranked by <b>opportunity</b> (customers who need it minus those who already bought it online). Pick your 5–10 creatives from the top of this list.
-      </div>
-      {top.map(t => {
-        const [bg, fg] = colorFor(t.main)
-        return (
-          <div key={t.main} style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '12px', padding: '8px 0', borderTop: '1px solid #F1F5F9', alignItems: 'start' }}>
-            <div>
-              <span style={{ background: bg, color: fg, fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>{t.main}</span>
-              <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px', fontVariantNumeric: 'tabular-nums' }}>
-                <b style={{ color: '#0F172A', fontSize: '13px' }}>{t.need.toLocaleString()}</b> need · {t.converted_online} bought online · <b style={{ color: '#16A34A' }}>{t.gap.toLocaleString()} gap</b> ({t.pct}%)
-              </div>
-              <div style={{ height: '5px', background: '#F1F5F9', borderRadius: '3px', marginTop: '4px' }}>
-                <div style={{ height: '5px', width: `${Math.round(100 * t.gap / maxGap)}%`, background: fg, borderRadius: '3px' }} />
-              </div>
-            </div>
-            <div style={{ fontSize: '11px' }}>
-              {t.winners.length > 0 && (
-                <div style={{ background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: '6px', padding: '6px 9px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#854D0E' }}>⭐ FEATURE THIS: </span>
-                  {t.winners.slice(0, 3).map((w, i) => (
-                    <span key={i} style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>
-                      {i > 0 ? ' · ' : ''}{w.name}
-                    </span>
-                  ))}
-                  <div style={{ fontSize: '10px', color: '#854D0E', marginTop: '2px' }}>
-                    proven — prescribed at the clinic <b>and</b> already selling online
-                  </div>
-                </div>
-              )}
-              <div style={{ marginBottom: '4px' }}>
-                <span style={{ color: '#94A3B8' }}>Sub-themes: </span>
-                {t.subs.map((s, i) => <span key={i} style={{ color: '#0F172A' }}>{i > 0 ? ' · ' : ''}{s.sub} <span style={{ color: '#94A3B8' }}>({s.n.toLocaleString()})</span></span>)}
-              </div>
-              {t.clinic_products.length > 0 && (
-                <div style={{ marginBottom: '2px' }}>
-                  <span style={{ color: '#6B21A8', fontWeight: 700 }}>💊 Was prescribed at clinic: </span>
-                  {t.clinic_products.map((p, i) => <span key={i} style={{ color: '#0F172A' }}>{i > 0 ? ' · ' : ''}{p.name} <span style={{ color: '#94A3B8' }}>({p.n.toLocaleString()})</span></span>)}
-                </div>
-              )}
-              {t.online_products.length > 0 && (
-                <div>
-                  <span style={{ color: '#166534', fontWeight: 700 }}>🛒 Sells online now: </span>
-                  {t.online_products.map((p, i) => <span key={i} style={{ color: '#0F172A' }}>{i > 0 ? ' · ' : ''}{p.name.length > 36 ? p.name.slice(0, 36) + '…' : p.name} <span style={{ color: '#94A3B8' }}>({p.n.toLocaleString()})</span></span>)}
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -1076,7 +1000,6 @@ function ClientbasePage() {
             : rows.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>No matches.</div>
             : rows.map(r => {
               const open = expanded === r.customer_id
-              const petNames = r.pets.map(p => p.name).filter(Boolean).join(', ')
               return (
                 <div key={r.customer_id}>
                   <div onClick={() => setExpanded(open ? null : r.customer_id)}

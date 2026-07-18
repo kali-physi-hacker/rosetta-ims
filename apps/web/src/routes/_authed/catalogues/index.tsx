@@ -291,7 +291,6 @@ interface SkuResult {
 //   t3  = no match, brand NOT in IMS (likely reject)
 //   t4  = no match, brand IS in IMS (find & match or new SKU)
 type TierId = 't1a' | 't1b' | 't2a' | 't2b' | 't3' | 't4'
-type ViewMode = 'landing' | TierId
 
 function classifyTier(item: QueueItem, brandsInDb: Set<string>): TierId {
   const topMatch = item.suggested_matches?.[0]
@@ -424,17 +423,6 @@ function seedEdit(item: QueueItem): EditDraft {
     max_bulk_buy_min_qty: item.max_bulk_buy_min_qty != null ? String(item.max_bulk_buy_min_qty) : '',
     supplier_id:    item.supplier_id != null ? String(item.supplier_id) : '',
   }
-}
-
-function ConfidenceBadge({ score }: { score: number }) {
-  const pct = Math.round(score * 100)
-  const bg    = score >= 0.8 ? '#DCFCE7' : score >= 0.5 ? '#FEF3C7' : '#FEE2E2'
-  const color = score >= 0.8 ? '#166534' : score >= 0.5 ? '#92400E' : '#991B1B'
-  return (
-    <span style={{ background: bg, color, fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px', whiteSpace: 'nowrap' }}>
-      {pct}%
-    </span>
-  )
 }
 
 function MatchPill({ type }: { type: string }) {
@@ -578,7 +566,7 @@ export const Route = createFileRoute('/_authed/catalogues/')({ component: Catalo
 
 function CataloguesPage() {
   const [scanLog, setScanLog]           = useState<ScanLogData | null>(null)
-  const [showScanLog, setShowScanLog]   = useState(false)
+  const [, setShowScanLog]   = useState(false)
   const [suppliers, setSuppliers]       = useState<Supplier[]>([])
   const [imports, setImports]           = useState<CatalogueImport[]>([])
   const [queue, setQueue]               = useState<QueueItem[]>([])
@@ -609,13 +597,8 @@ function CataloguesPage() {
   const [confUserFacets, setConfUserFacets] = useState<{ user: string; count: number }[]>([])
   const [includeInactive, setIncludeInactive]   = useState(false)        // match against inactive SKUs too
   const [selectedIds, setSelectedIds]           = useState<Set<number>>(new Set())
-  const [expandedId, setExpandedId]             = useState<number | null>(null)
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [supplierId, setSupplierId]     = useState('')
-  const [uploading, setUploading]       = useState(false)
-  const [uploadMsg, setUploadMsg]       = useState<{ text: string; ok: boolean } | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading] = useState(false)
 
   // Live preview of the next global SKU suffix (7 digits, category-independent).
   const [nextSuffix, setNextSuffix] = useState<string | null>(null)
@@ -668,7 +651,6 @@ function CataloguesPage() {
 
   // Onboarding audit trail (who confirmed/edited/new/rejected which item).
   const [audit, setAudit] = useState<AuditEvent[]>([])
-  const [showAudit, setShowAudit] = useState(false)
   const [auditQuery, setAuditQuery] = useState('')
   const [skuHistory, setSkuHistory] = useState<{ key: string; events: AuditEvent[] } | null>(null)
   const fetchAudit = useCallback(async () => {
@@ -787,7 +769,7 @@ function CataloguesPage() {
   // Batch (whole-folder) upload state
   const [batchFiles, setBatchFiles]   = useState<BatchFile[]>([])
   const [batchRunning, setBatchRunning] = useState(false)
-  const [batchSkipped, setBatchSkipped] = useState(0)
+  const [, setBatchSkipped] = useState(0)
   const [batchSupplierId, setBatchSupplierId] = useState<number | null>(null)  // override supplier for all batch files
   const batchInputRef = useRef<HTMLInputElement>(null)        // folder picker (webkitdirectory → browser upload prompt)
   const batchFilesInputRef = useRef<HTMLInputElement>(null)   // plain multi-file picker (no browser prompt)
@@ -1108,31 +1090,6 @@ function CataloguesPage() {
       document.removeEventListener('visibilitychange', refresh)
     }
   }, [fetchAll, fetchAudit])
-
-  async function handleUpload() {
-    if (!selectedFile || uploading) return
-    setUploading(true)
-    setUploadMsg(null)
-    try {
-      const fd = new FormData()
-      fd.append('file', selectedFile)
-      if (supplierId) fd.append('supplier_id', supplierId)
-      const res = await fetch(`${API}/catalogues/import`, { method: 'POST', body: fd, headers: authHeaders() })
-      const data = await res.json()
-      if (res.ok) {
-        setUploadMsg({ text: data.message, ok: true })
-        setSelectedFile(null)
-        if (fileRef.current) fileRef.current.value = ''
-        fetchAll()
-      } else {
-        setUploadMsg({ text: data.detail ?? 'Upload failed', ok: false })
-      }
-    } catch {
-      setUploadMsg({ text: 'Network error — is the backend running?', ok: false })
-    } finally {
-      setUploading(false)
-    }
-  }
 
   // ── Batch upload ──────────────────────────────────────────────────────────
   // Enable folder selection on the hidden input (non-standard attrs, set via ref).
@@ -2079,7 +2036,7 @@ function CataloguesPage() {
               {showAlreadyVerified && (
                 <div style={{ background: 'white' }}>
                   <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
-                    {alreadyVerified.items.map((it, idx) => (
+                    {alreadyVerified.items.map((it) => (
                       <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 18px', borderTop: '1px solid #F1F5F9', fontSize: '12.5px' }}>
                         <span style={{ flex: 1, minWidth: 0, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.raw_description || '—'}</span>
                         <span style={{ color: '#94A3B8', flexShrink: 0 }}>→</span>

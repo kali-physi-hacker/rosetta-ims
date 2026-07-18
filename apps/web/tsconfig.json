@@ -8,10 +8,8 @@
     "types": ["node", "vite/client"],
 
     "strict": true,
-    // Temporarily off: the verbatim screen ports inherit some unused vars from the
-    // original app. Re-enable after the dead-code sweep (see MIGRATION.md).
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
     "esModuleInterop": true,
