@@ -29,6 +29,7 @@ import { Route as AuthedTechStackRouteImport } from './routes/_authed/tech-stack
 import { Route as AuthedAdminAuditRouteImport } from './routes/_authed/admin/audit'
 import { Route as AuthedAdminReportRouteImport } from './routes/_authed/admin/report'
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
+import { Route as AuthedCataloguesIndexRouteImport } from './routes/_authed/catalogues/index'
 import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients/guide'
 
 const AuthedRoute = AuthedRouteImport.update({
@@ -130,6 +131,11 @@ const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedCataloguesIndexRoute = AuthedCataloguesIndexRouteImport.update({
+  id: '/catalogues/',
+  path: '/catalogues/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedClientsGuideRoute = AuthedClientsGuideRouteImport.update({
   id: '/clients/guide',
   path: '/clients/guide',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/admin/report': typeof AuthedAdminReportRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
+  '/catalogues/': typeof AuthedCataloguesIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/admin/report': typeof AuthedAdminReportRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
+  '/catalogues': typeof AuthedCataloguesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/_authed/admin/report': typeof AuthedAdminReportRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/clients/guide': typeof AuthedClientsGuideRoute
+  '/_authed/catalogues/': typeof AuthedCataloguesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/admin/report'
     | '/admin/users'
     | '/clients/guide'
+    | '/catalogues/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/report'
     | '/admin/users'
     | '/clients/guide'
+    | '/catalogues'
   id:
     | '__root__'
     | '/_authed'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/_authed/admin/report'
     | '/_authed/admin/users'
     | '/_authed/clients/guide'
+    | '/_authed/catalogues/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -424,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminUsersRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/catalogues/': {
+      id: '/_authed/catalogues/'
+      path: '/catalogues'
+      fullPath: '/catalogues/'
+      preLoaderRoute: typeof AuthedCataloguesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/clients/guide': {
       id: '/_authed/clients/guide'
       path: '/clients/guide'
@@ -451,6 +470,7 @@ interface AuthedRouteChildren {
   AuthedAdminReportRoute: typeof AuthedAdminReportRoute
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedClientsGuideRoute: typeof AuthedClientsGuideRoute
+  AuthedCataloguesIndexRoute: typeof AuthedCataloguesIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
@@ -470,6 +490,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdminReportRoute: AuthedAdminReportRoute,
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedClientsGuideRoute: AuthedClientsGuideRoute,
+  AuthedCataloguesIndexRoute: AuthedCataloguesIndexRoute,
 }
 
 const AuthedRouteWithChildren =
