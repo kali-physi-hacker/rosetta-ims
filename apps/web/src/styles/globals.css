@@ -1,10 +1,35 @@
 @import "tailwindcss";
 
+/* ── Command-Centre design tokens (canonical palette) ─────────────────────────
+   Single source of truth for the app's colours; the JS mirror is src/lib/tokens.ts.
+   Screens migrate onto var(--ims-*) incrementally (see MIGRATION.md). */
+:root {
+  --ims-sidebar: #0F172A;
+  --ims-sidebar-hover: #1E293B;
+  --ims-sidebar-active: #1E3A5F;
+  --ims-sidebar-active-text: #93C5FD;
+  --ims-bg-body: #F9FAFB;
+  --ims-bg-content: #F6F7F9;
+  --ims-card: #FFFFFF;
+  --ims-border: #E2E8F0;
+  --ims-ink: #0F172A;
+  --ims-text-secondary: #475569;
+  --ims-text-muted: #64748B;
+  --ims-text-faint: #94A3B8;
+  --ims-primary: #6366F1;
+  --ims-primary-strong: #4F46E5;
+  --ims-primary-ink: #4338CA;
+  --ims-primary-bg: #EEF2FF;
+  --ims-ok: #166534;
+  --ims-warn: #92400E;
+  --ims-bad: #991B1B;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, 'Inter', system-ui, sans-serif;
-  background: #F9FAFB;
-  color: #0F172A;
+  background: var(--ims-bg-body);
+  color: var(--ims-ink);
 }
 
 /* Loading affordances — used across blocking actions (catalogue onboarding etc.) */

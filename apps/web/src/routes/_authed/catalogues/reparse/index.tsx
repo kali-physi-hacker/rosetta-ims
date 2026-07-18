@@ -11,14 +11,10 @@ import { getOpenReparses, startReparse, getSupplierImports,
   type OpenReparse, type ReparseHit, type ReparseScope, type CatalogueFile } from '@/lib/reparse'
 import { getSuppliers, getProducts } from '@/lib/api'
 import type { Supplier, Product } from '@/lib/types'
+import { C } from '@/lib/tokens'
 
 export const Route = createFileRoute('/_authed/catalogues/reparse/')({ component: ReparseHubPage })
 
-const C = {
-  panel: '#FFFFFF', ink: '#0F172A', sub: '#475569', faint: '#94A3B8', line: '#E2E8F0',
-  indigo: '#6366F1', indigoBg: '#EEF0FE', indigoInk: '#4338CA', indigoLine: '#C7D2FE',
-  amber: '#B45309', amberBg: '#FEF6E7', amberLine: '#FCD9A6', monoBg: '#F1F5F9',
-}
 const MONO = 'ui-monospace, "SF Mono", Menlo, monospace'
 const SCOPE_KIND: Record<ReparseScope, string> = { supplier: 'Supplier', import: 'Import', item: 'SKU' }
 

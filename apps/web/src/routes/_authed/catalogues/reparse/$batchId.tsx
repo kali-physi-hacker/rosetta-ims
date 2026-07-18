@@ -12,16 +12,10 @@ import {
   getReparseBatch, confirmReparse, discardReparse, editReparseField,
   type ReparseBatch, type ReparseItem, type ReparseField,
 } from '@/lib/reparse'
+import { C } from '@/lib/tokens'
 
 export const Route = createFileRoute('/_authed/catalogues/reparse/$batchId')({ component: ReparseReviewPage })
 
-// Command-Centre palette (exact hex, matching the mock).
-const C = {
-  panel: '#FFFFFF', ink: '#0F172A', sub: '#475569', faint: '#94A3B8', line: '#E2E8F0',
-  indigo: '#6366F1', indigoBg: '#EEF0FE', indigoInk: '#4338CA', indigoLine: '#C7D2FE',
-  ok: '#15803D', okBg: '#ECFDF5', okLine: '#A7F3D0', bad: '#B91C1C', badBg: '#FEF2F2',
-  amber: '#B45309', amberBg: '#FEF6E7', amberLine: '#FCD9A6', monoBg: '#F1F5F9', knobOff: '#CBD5E1',
-}
 const MONO = 'ui-monospace, "SF Mono", Menlo, monospace'
 
 // A confirmed item's changed fields render as done and are not actionable again; a locally
