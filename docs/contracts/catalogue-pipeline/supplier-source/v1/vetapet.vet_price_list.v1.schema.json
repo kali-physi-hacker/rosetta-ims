@@ -1,0 +1,1163 @@
+{
+  "$defs": {
+    "AmbiguityRule": {
+      "additionalProperties": false,
+      "description": "A known ambiguity that must not be guessed by a parser.",
+      "properties": {
+        "blocks_supported_status": {
+          "default": false,
+          "description": "Whether this open ambiguity prevents setting the contract to SUPPORTED.",
+          "title": "Blocks Supported Status",
+          "type": "boolean"
+        },
+        "condition": {
+          "description": "Business-readable ambiguity condition.",
+          "minLength": 1,
+          "title": "Condition",
+          "type": "string"
+        },
+        "issue_code": {
+          "description": "Stable issue code to create when ambiguity is encountered.",
+          "minLength": 1,
+          "title": "Issue Code",
+          "type": "string"
+        },
+        "review_guidance": {
+          "description": "Decision needed from BizOps/HITL.",
+          "minLength": 1,
+          "title": "Review Guidance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "issue_code",
+        "condition",
+        "review_guidance"
+      ],
+      "title": "AmbiguityRule",
+      "type": "object"
+    },
+    "EvidenceReference": {
+      "additionalProperties": false,
+      "description": "A concrete source of evidence for a supplier-source declaration.",
+      "properties": {
+        "evidence_type": {
+          "$ref": "#/$defs/SupplierSourceEvidenceType",
+          "description": "Kind of evidence available."
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Concise explanation of what this evidence proves or does not prove.",
+          "title": "Note"
+        },
+        "reference": {
+          "description": "Repository path, test name, document, or source citation.",
+          "minLength": 1,
+          "title": "Reference",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_type",
+        "reference"
+      ],
+      "title": "EvidenceReference",
+      "type": "object"
+    },
+    "IssueSeverity": {
+      "enum": [
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "BLOCKING"
+      ],
+      "title": "IssueSeverity",
+      "type": "string"
+    },
+    "MbbScope": {
+      "enum": [
+        "SUPPLIER_SKU",
+        "PRODUCT_GROUP",
+        "SUPPLIER_ORDER"
+      ],
+      "title": "MbbScope",
+      "type": "string"
+    },
+    "MbbSourceSemantics": {
+      "additionalProperties": false,
+      "description": "Supplier-format rules for MBB, discounts, tiers, or free-goods notation.",
+      "properties": {
+        "benefit_patterns": {
+          "description": "Known benefit notations.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Benefit Patterns",
+          "type": "array"
+        },
+        "condition_patterns": {
+          "description": "Known condition notations.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Condition Patterns",
+          "type": "array"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MBB interpretation notes.",
+          "title": "Notes"
+        },
+        "requires_validation_issue_when": {
+          "description": "Ambiguity cases that require ValidationIssueV1 instead of normalization.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Requires Validation Issue When",
+          "type": "array"
+        },
+        "source_fields": {
+          "description": "Field keys containing MBB or promotion text.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Fields",
+          "type": "array"
+        },
+        "supported_scopes": {
+          "description": "MBB scopes this format can express.",
+          "items": {
+            "$ref": "#/$defs/MbbScope"
+          },
+          "title": "Supported Scopes",
+          "type": "array"
+        }
+      },
+      "title": "MbbSourceSemantics",
+      "type": "object"
+    },
+    "PackagingSourceSemantics": {
+      "additionalProperties": false,
+      "description": "Supplier-format rules for packaging, content, and ordering semantics.",
+      "properties": {
+        "break_pack_allowed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether break-pack purchasing is known from the source.",
+          "title": "Break Pack Allowed"
+        },
+        "content_measure_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key proving content amount/UOM.",
+          "title": "Content Measure Source Field"
+        },
+        "content_measure_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Content-measure UOM when fixed by the format."
+        },
+        "interpretation_rules": {
+          "description": "Supplier-specific packaging interpretation rules.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Interpretation Rules",
+          "type": "array"
+        },
+        "minimum_order_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key proving minimum order quantity.",
+          "title": "Minimum Order Source Field"
+        },
+        "order_increment_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key proving supplier order multiple.",
+          "title": "Order Increment Source Field"
+        },
+        "packaging_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key containing printed packaging text.",
+          "title": "Packaging Source Field"
+        },
+        "price_basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Price basis repeated for packaging cross-checks."
+        },
+        "purchase_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Purchase unit when explicitly known."
+        },
+        "sellable_unit_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sellable-unit UOM when explicitly known."
+        },
+        "sellable_units_per_purchase_unit_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key proving sellable units per purchase unit, when known.",
+          "title": "Sellable Units Per Purchase Unit Source Field"
+        },
+        "unresolved_semantics": {
+          "description": "Unknown semantics that must remain null.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Unresolved Semantics",
+          "type": "array"
+        }
+      },
+      "title": "PackagingSourceSemantics",
+      "type": "object"
+    },
+    "PipelineContractMapping": {
+      "additionalProperties": false,
+      "description": "Mapping from a supplier-source contract into shared pipeline payloads.",
+      "properties": {
+        "raw_observation_contract_id": {
+          "const": "catalogue.raw_observation.v1",
+          "default": "catalogue.raw_observation.v1",
+          "description": "Shared Raw Observation contract produced from source evidence.",
+          "enum": [
+            "catalogue.raw_observation.v1"
+          ],
+          "title": "Raw Observation Contract Id",
+          "type": "string"
+        },
+        "raw_observation_fields": {
+          "description": "Source field keys preserved as raw evidence.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Raw Observation Fields",
+          "type": "array"
+        },
+        "staging_item_contract_id": {
+          "const": "catalogue.staging_item.v1",
+          "default": "catalogue.staging_item.v1",
+          "description": "Shared Staging Catalogue Item contract receiving proposed interpretations.",
+          "enum": [
+            "catalogue.staging_item.v1"
+          ],
+          "title": "Staging Item Contract Id",
+          "type": "string"
+        },
+        "staging_proposed_field_keys": {
+          "description": "Source field keys interpreted into staging.proposed_fields.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Staging Proposed Field Keys",
+          "type": "array"
+        },
+        "staging_raw_field_keys": {
+          "description": "Source field keys copied to staging.raw_fields.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Staging Raw Field Keys",
+          "type": "array"
+        }
+      },
+      "required": [
+        "raw_observation_fields",
+        "staging_raw_field_keys",
+        "staging_proposed_field_keys"
+      ],
+      "title": "PipelineContractMapping",
+      "type": "object"
+    },
+    "PricingSourceSemantics": {
+      "additionalProperties": false,
+      "description": "Supplier-format rules for interpreting source price fields.",
+      "properties": {
+        "autoswap_cost_rrp_allowed": {
+          "default": false,
+          "description": "Whether swapped cost/RRP may be deterministically corrected.",
+          "title": "Autoswap Cost Rrp Allowed",
+          "type": "boolean"
+        },
+        "cost_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key containing supplier cost.",
+          "title": "Cost Source Field"
+        },
+        "currency": {
+          "const": "HKD",
+          "default": "HKD",
+          "description": "v1 source contracts accept HKD only.",
+          "enum": [
+            "HKD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Business-readable price semantics.",
+          "title": "Notes"
+        },
+        "null_cost_markers": {
+          "description": "Source values that mean cost is unavailable.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Null Cost Markers",
+          "type": "array"
+        },
+        "price_basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Unit basis that the supplier cost prices, when established."
+        },
+        "price_basis_status": {
+          "$ref": "#/$defs/SemanticResolutionStatus",
+          "description": "Evidence status for the price basis."
+        },
+        "rrp_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key containing retail/RRP price, if present.",
+          "title": "Rrp Source Field"
+        }
+      },
+      "required": [
+        "price_basis_status"
+      ],
+      "title": "PricingSourceSemantics",
+      "type": "object"
+    },
+    "SemanticResolutionStatus": {
+      "description": "How strongly a source-format semantic has been established.",
+      "enum": [
+        "VERIFIED",
+        "PARTIALLY_VERIFIED",
+        "UNVERIFIED",
+        "UNRESOLVED"
+      ],
+      "title": "SemanticResolutionStatus",
+      "type": "string"
+    },
+    "SourceFieldContract": {
+      "additionalProperties": false,
+      "description": "A source field and its supplier-format-specific semantic role.",
+      "properties": {
+        "aliases": {
+          "description": "Observed header aliases justified by evidence.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Aliases",
+          "type": "array"
+        },
+        "composed_from": {
+          "description": "Source columns joined to form this field.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Composed From",
+          "type": "array"
+        },
+        "constant_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier-format constant value, if not printed per row.",
+          "title": "Constant Value"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Readable explanation of the mapping.",
+          "title": "Description"
+        },
+        "evidence": {
+          "description": "Evidence supporting this field mapping.",
+          "items": {
+            "$ref": "#/$defs/EvidenceReference"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "field_key": {
+          "description": "Stable key used inside this supplier contract.",
+          "minLength": 1,
+          "title": "Field Key",
+          "type": "string"
+        },
+        "requirement": {
+          "$ref": "#/$defs/SourceFieldRequirement",
+          "description": "Whether the field is required in the source."
+        },
+        "role": {
+          "$ref": "#/$defs/SourceFieldRole",
+          "description": "Business role of this source field."
+        },
+        "source_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Exact source column/header when tabular.",
+          "title": "Source Column"
+        },
+        "source_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Section, banner, or document path when not a table column.",
+          "title": "Source Path"
+        }
+      },
+      "required": [
+        "field_key",
+        "role",
+        "requirement"
+      ],
+      "title": "SourceFieldContract",
+      "type": "object"
+    },
+    "SourceFieldRequirement": {
+      "description": "Whether a source field is required for the format.",
+      "enum": [
+        "REQUIRED",
+        "OPTIONAL",
+        "CONDITIONALLY_REQUIRED"
+      ],
+      "title": "SourceFieldRequirement",
+      "type": "string"
+    },
+    "SourceFieldRole": {
+      "description": "Semantic role played by a source field in a supplier document.",
+      "enum": [
+        "SUPPLIER_SKU",
+        "PRODUCT_NAME",
+        "BRAND",
+        "CATEGORY",
+        "SOURCE_PRICE",
+        "RRP",
+        "PACKAGING",
+        "MBB_TEXT",
+        "BARCODE",
+        "VARIANT",
+        "SPECIES",
+        "SEGMENT",
+        "EFFECTIVE_DATE",
+        "ORDER_INCREMENT",
+        "CONTENT_MEASURE",
+        "ROW_ELIGIBILITY",
+        "OTHER"
+      ],
+      "title": "SourceFieldRole",
+      "type": "string"
+    },
+    "SourceFormat": {
+      "enum": [
+        "PDF",
+        "PDF_TABLE",
+        "SPREADSHEET",
+        "CSV",
+        "IMAGE",
+        "TEXT",
+        "OTHER"
+      ],
+      "title": "SourceFormat",
+      "type": "string"
+    },
+    "SourceStructure": {
+      "additionalProperties": false,
+      "description": "Expected physical structure for a supplier catalogue format.",
+      "properties": {
+        "expected_sections": {
+          "description": "Expected PDF/document sections, if known.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Expected Sections",
+          "type": "array"
+        },
+        "expected_sheet_names": {
+          "description": "Expected spreadsheet sheets, if any.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Expected Sheet Names",
+          "type": "array"
+        },
+        "optional_headers": {
+          "description": "Headers that may be present.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Optional Headers",
+          "type": "array"
+        },
+        "required_headers": {
+          "description": "Headers required before interpretation.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Headers",
+          "type": "array"
+        },
+        "row_eligibility_rules": {
+          "description": "Rules for deciding whether a source row is a catalogue item.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Row Eligibility Rules",
+          "type": "array"
+        },
+        "skip_rules": {
+          "description": "Rows or sections intentionally skipped.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skip Rules",
+          "type": "array"
+        },
+        "source_format": {
+          "$ref": "#/$defs/SourceFormat",
+          "description": "Physical source format."
+        },
+        "source_location_expectations": {
+          "description": "Expected source locations needed by Raw Observation, for example page and row.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Location Expectations",
+          "type": "array"
+        },
+        "table_regions": {
+          "description": "Expected source table regions.",
+          "items": {
+            "$ref": "#/$defs/SourceTableRegion"
+          },
+          "title": "Table Regions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_format"
+      ],
+      "title": "SourceStructure",
+      "type": "object"
+    },
+    "SourceTableRegion": {
+      "additionalProperties": false,
+      "description": "Expected table or section region within a supplier source document.",
+      "properties": {
+        "header_row": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expected 1-based header row when known.",
+          "title": "Header Row"
+        },
+        "name": {
+          "description": "Region name used by operators and tests.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Business-readable location notes.",
+          "title": "Notes"
+        },
+        "selector": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sheet name, section heading, page cue, or other locator.",
+          "title": "Selector"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "SourceTableRegion",
+      "type": "object"
+    },
+    "SupplierContractSupportStatus": {
+      "description": "Lifecycle state for supplier-format contract declarations.",
+      "enum": [
+        "SUPPORTED",
+        "PARTIALLY_VERIFIED",
+        "UNVERIFIED",
+        "DEPRECATED"
+      ],
+      "title": "SupplierContractSupportStatus",
+      "type": "string"
+    },
+    "SupplierDocumentType": {
+      "description": "Known supplier document types.",
+      "enum": [
+        "PRICE_LIST",
+        "PROMOTION_SHEET",
+        "PRODUCT_LIST",
+        "CATALOGUE",
+        "OTHER"
+      ],
+      "title": "SupplierDocumentType",
+      "type": "string"
+    },
+    "SupplierReference": {
+      "additionalProperties": false,
+      "description": "Reference compatible with the repository's current integer supplier IDs.",
+      "properties": {
+        "supplier_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional short supplier code when known.",
+          "title": "Supplier Code"
+        },
+        "supplier_id": {
+          "description": "Current Rosetta numeric supplier ID.",
+          "exclusiveMinimum": 0,
+          "title": "Supplier Id",
+          "type": "integer"
+        },
+        "supplier_name": {
+          "description": "Human-readable supplier name.",
+          "minLength": 1,
+          "title": "Supplier Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "supplier_id",
+        "supplier_name"
+      ],
+      "title": "SupplierReference",
+      "type": "object"
+    },
+    "SupplierSourceEvidenceType": {
+      "description": "Evidence classes used to justify supplier-source declarations.",
+      "enum": [
+        "REAL_SOURCE_CATALOGUE_SAMPLE",
+        "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+        "PARSER_BEHAVIOR",
+        "BUSINESS_DOMAIN_DOCUMENTATION",
+        "LEGACY_YAML_ONLY",
+        "MISSING"
+      ],
+      "title": "SupplierSourceEvidenceType",
+      "type": "string"
+    },
+    "SupplierValidationRule": {
+      "additionalProperties": false,
+      "description": "A supplier-specific validation rule declaration.",
+      "properties": {
+        "description": {
+          "description": "Business-readable rule description.",
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "evidence": {
+          "description": "Evidence supporting this validation rule.",
+          "items": {
+            "$ref": "#/$defs/EvidenceReference"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "issue_code": {
+          "description": "Stable ValidationIssueV1 issue code.",
+          "minLength": 1,
+          "title": "Issue Code",
+          "type": "string"
+        },
+        "review_guidance": {
+          "description": "Instruction a business operator can act on.",
+          "minLength": 1,
+          "title": "Review Guidance",
+          "type": "string"
+        },
+        "rule_id": {
+          "description": "Stable rule identifier.",
+          "minLength": 1,
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/IssueSeverity",
+          "description": "ValidationIssueV1 severity to use when this rule fails."
+        },
+        "source_expression": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Legacy expression or executable rule name.",
+          "title": "Source Expression"
+        }
+      },
+      "required": [
+        "rule_id",
+        "description",
+        "severity",
+        "issue_code",
+        "review_guidance"
+      ],
+      "title": "SupplierValidationRule",
+      "type": "object"
+    },
+    "UnitCode": {
+      "enum": [
+        "PIECE",
+        "UNIT",
+        "PACK",
+        "BOX",
+        "CASE",
+        "CARTON",
+        "BOTTLE",
+        "BAG",
+        "CAN",
+        "POUCH",
+        "SACHET",
+        "TABLET",
+        "CAPSULE",
+        "VIAL",
+        "TUBE",
+        "TEST",
+        "STRIP",
+        "KG",
+        "G",
+        "L",
+        "ML",
+        "OTHER",
+        "UNKNOWN"
+      ],
+      "title": "UnitCode",
+      "type": "string"
+    },
+    "UnitOfMeasure": {
+      "additionalProperties": false,
+      "description": "Controlled unit code plus optional label for deliberate OTHER classifications.",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Controlled UOM code. Null means not determined."
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required only when code is OTHER.",
+          "title": "Label"
+        }
+      },
+      "title": "UnitOfMeasure",
+      "type": "object"
+    }
+  },
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/supplier-source/v1/vetapet.vet_price_list.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "JSON Schema derived from the authoritative SupplierSourceContractV1 Pydantic model for vetapet.vet_price_list.v1@v1.",
+  "properties": {
+    "contract_id": {
+      "const": "vetapet.vet_price_list.v1",
+      "description": "Stable supplier-format contract identity.",
+      "title": "Contract Id",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "v1",
+      "description": "Supplier-format major version.",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "created_at": {
+      "description": "Timezone-aware declaration creation timestamp.",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_by": {
+      "description": "Declaration author.",
+      "minLength": 1,
+      "title": "Created By",
+      "type": "string"
+    },
+    "document_type": {
+      "$ref": "#/$defs/SupplierDocumentType",
+      "description": "Supplier document type."
+    },
+    "effective_from": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Supplier-format effective date when source verified.",
+      "title": "Effective From"
+    },
+    "effective_to": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Supplier-format retirement/effective-to date when known.",
+      "title": "Effective To"
+    },
+    "evidence": {
+      "description": "Evidence used to justify this declaration.",
+      "items": {
+        "$ref": "#/$defs/EvidenceReference"
+      },
+      "minItems": 1,
+      "title": "Evidence",
+      "type": "array"
+    },
+    "fields": {
+      "description": "Source field declarations.",
+      "items": {
+        "$ref": "#/$defs/SourceFieldContract"
+      },
+      "minItems": 1,
+      "title": "Fields",
+      "type": "array"
+    },
+    "format_name": {
+      "description": "Human-readable source format name.",
+      "minLength": 1,
+      "title": "Format Name",
+      "type": "string"
+    },
+    "known_ambiguities": {
+      "description": "Known source-format ambiguities.",
+      "items": {
+        "$ref": "#/$defs/AmbiguityRule"
+      },
+      "title": "Known Ambiguities",
+      "type": "array"
+    },
+    "legacy_yaml_reference": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Legacy extraction configuration path, if one exists.",
+      "title": "Legacy Yaml Reference"
+    },
+    "mbb": {
+      "$ref": "#/$defs/MbbSourceSemantics",
+      "description": "MBB or promotion source semantics."
+    },
+    "metadata": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Explicit extension point for non-contract metadata.",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "packaging": {
+      "$ref": "#/$defs/PackagingSourceSemantics",
+      "description": "Packaging and ordering source semantics."
+    },
+    "pipeline_mapping": {
+      "$ref": "#/$defs/PipelineContractMapping",
+      "description": "How this source contract maps into shared contracts."
+    },
+    "pricing": {
+      "$ref": "#/$defs/PricingSourceSemantics",
+      "description": "Supplier price source semantics."
+    },
+    "schema_version": {
+      "const": "catalogue.supplier_source_contract.v1",
+      "description": "Exact Pydantic schema version for supplier-source contract declarations.",
+      "enum": [
+        "catalogue.supplier_source_contract.v1"
+      ],
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_format": {
+      "$ref": "#/$defs/SourceFormat",
+      "description": "Physical source format."
+    },
+    "source_structure": {
+      "$ref": "#/$defs/SourceStructure",
+      "description": "Expected source structure."
+    },
+    "supplier": {
+      "$ref": "#/$defs/SupplierReference",
+      "description": "Supplier this source format belongs to."
+    },
+    "support_status": {
+      "$ref": "#/$defs/SupplierContractSupportStatus",
+      "description": "Lifecycle/support state."
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Timezone-aware declaration update timestamp.",
+      "title": "Updated At"
+    },
+    "updated_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Declaration updater.",
+      "title": "Updated By"
+    },
+    "validation_rules": {
+      "description": "Supplier-specific validation rules that map to ValidationIssueV1.",
+      "items": {
+        "$ref": "#/$defs/SupplierValidationRule"
+      },
+      "title": "Validation Rules",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "contract_id",
+    "contract_version",
+    "supplier",
+    "document_type",
+    "format_name",
+    "source_format",
+    "support_status",
+    "evidence",
+    "source_structure",
+    "fields",
+    "pricing",
+    "packaging",
+    "pipeline_mapping",
+    "created_at",
+    "created_by"
+  ],
+  "title": "vetapet.vet_price_list.v1 Supplier Source Contract",
+  "type": "object"
+}

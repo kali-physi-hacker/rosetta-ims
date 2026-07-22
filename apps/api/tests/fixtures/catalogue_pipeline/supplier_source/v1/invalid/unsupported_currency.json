@@ -1,0 +1,575 @@
+{
+  "contract_id": "hills.price_list.v1",
+  "contract_version": "v1",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
+  "document_type": "PRICE_LIST",
+  "effective_from": null,
+  "effective_to": null,
+  "evidence": [
+    {
+      "evidence_type": "LEGACY_YAML_ONLY",
+      "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+      "reference": "apps/api/catalogue_contracts/hills.yaml"
+    },
+    {
+      "evidence_type": "PARSER_BEHAVIOR",
+      "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+      "reference": "apps/api/services/catalogue_contract.py"
+    },
+    {
+      "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+      "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+      "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+    },
+    {
+      "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+      "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+      "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+    }
+  ],
+  "fields": [
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Stable Hill's product code.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "supplier_sku",
+      "requirement": "REQUIRED",
+      "role": "SUPPLIER_SKU",
+      "source_column": "Product Code / 產品編號",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [
+        "Product Range / 產品系列",
+        "Life Stage / 生命階段",
+        "Product Description / 產品名稱"
+      ],
+      "constant_value": null,
+      "description": "Joined product range, life stage, and product description.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "description",
+      "requirement": "REQUIRED",
+      "role": "PRODUCT_NAME",
+      "source_column": null,
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Raw size/content string; may contain content measure or a case-prefix plus content measure.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "pack_size",
+      "requirement": "REQUIRED",
+      "role": "PACKAGING",
+      "source_column": "Size / 重量",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Supplier cost source field used by the legacy parser.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "cost",
+      "requirement": "REQUIRED",
+      "role": "SOURCE_PRICE",
+      "source_column": "Gross Wholesale Price / 每箱·罐",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Recommended retail price when present.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "rrp",
+      "requirement": "OPTIONAL",
+      "role": "RRP",
+      "source_column": "Recommended Retail Selling Price / 建議零售價",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Order multiple; never proof for price divisor.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "order_multiple",
+      "requirement": "REQUIRED",
+      "role": "ORDER_INCREMENT",
+      "source_column": "Order Multiple / 訂貨單位",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": "Hill's",
+      "description": "Single-brand catalogue constant.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "brand",
+      "requirement": "OPTIONAL",
+      "role": "BRAND",
+      "source_column": null,
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Feline/Canine section banners map to cat/dog.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "species",
+      "requirement": "OPTIONAL",
+      "role": "SPECIES",
+      "source_column": null,
+      "source_path": "section_header"
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Prescription Diet vs Science Diet segment cue from the product range.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "segment",
+      "requirement": "OPTIONAL",
+      "role": "SEGMENT",
+      "source_column": null,
+      "source_path": "product_range"
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": "Food",
+      "description": "Current parser treats Hill's price-list rows as Food.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "field_key": "category",
+      "requirement": "OPTIONAL",
+      "role": "CATEGORY",
+      "source_column": null,
+      "source_path": null
+    }
+  ],
+  "format_name": "Hill's Science Diet PDF price list",
+  "known_ambiguities": [
+    {
+      "blocks_supported_status": true,
+      "condition": "The repository contains parser fixtures but not the source PDF sample.",
+      "issue_code": "HILLS_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
+      "review_guidance": "Attach the real Hill's source catalogue and confirm headers before promoting to SUPPORTED."
+    }
+  ],
+  "legacy_yaml_reference": "apps/api/catalogue_contracts/hills.yaml",
+  "mbb": {
+    "benefit_patterns": [],
+    "condition_patterns": [],
+    "notes": null,
+    "requires_validation_issue_when": [],
+    "source_fields": [],
+    "supported_scopes": []
+  },
+  "metadata": {},
+  "packaging": {
+    "break_pack_allowed": null,
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "interpretation_rules": [
+      "Treat Size / 重量 as content measure for one sellable unit when a weight/volume unit is printed.",
+      "Ignore a leading case prefix such as 24/ when deriving sellable-unit content measure.",
+      "Order Multiple / 訂貨單位 is ordering semantics, not cost divisor evidence."
+    ],
+    "minimum_order_source_field": null,
+    "order_increment_source_field": "order_multiple",
+    "packaging_source_field": "pack_size",
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
+    "purchase_uom": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
+    "unresolved_semantics": [
+      "Purchase UOM varies by row and is not fixed by the format declaration.",
+      "Break-pack purchasing is not proven by the checked-in evidence."
+    ]
+  },
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.raw_observation.v1",
+    "raw_observation_fields": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "order_multiple",
+      "brand",
+      "species",
+      "segment",
+      "category"
+    ],
+    "staging_item_contract_id": "catalogue.staging_item.v1",
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "order_multiple",
+      "brand",
+      "species",
+      "segment",
+      "category"
+    ],
+    "staging_raw_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "order_multiple",
+      "brand",
+      "species",
+      "segment",
+      "category"
+    ]
+  },
+  "pricing": {
+    "autoswap_cost_rrp_allowed": false,
+    "cost_source_field": "cost",
+    "currency": "USD",
+    "notes": "Parser tests establish per-sellable-unit behavior, but no raw source sample is committed.",
+    "null_cost_markers": [],
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
+    "price_basis_status": "PARTIALLY_VERIFIED",
+    "rrp_source_field": "rrp"
+  },
+  "schema_version": "catalogue.supplier_source_contract.v1",
+  "source_format": "PDF_TABLE",
+  "source_structure": {
+    "expected_sections": [
+      "Feline",
+      "Canine",
+      "Prescription Diet",
+      "Science Diet"
+    ],
+    "expected_sheet_names": [],
+    "optional_headers": [
+      "Recommended Retail Selling Price / 建議零售價",
+      "Regular Retail Price / 正價"
+    ],
+    "required_headers": [
+      "Product Code / 產品編號",
+      "Product Range / 產品系列",
+      "Life Stage / 生命階段",
+      "Product Description / 產品名稱",
+      "Size / 重量",
+      "Gross Wholesale Price / 每箱·罐",
+      "Order Multiple / 訂貨單位"
+    ],
+    "row_eligibility_rules": [
+      "One product variant per price-table row."
+    ],
+    "skip_rules": [],
+    "source_format": "PDF_TABLE",
+    "source_location_expectations": [
+      "page number",
+      "table row",
+      "source column"
+    ],
+    "table_regions": [
+      {
+        "header_row": null,
+        "name": "price_rows",
+        "notes": "No raw PDF sample is checked into the repository; region details come from legacy config and parser tests.",
+        "selector": "Bilingual PDF product tables with Product Code, product description, size, wholesale, retail, and order multiple columns."
+      }
+    ]
+  },
+  "supplier": {
+    "supplier_code": "HPI",
+    "supplier_id": 14,
+    "supplier_name": "Hill's"
+  },
+  "support_status": "PARTIALLY_VERIFIED",
+  "updated_at": null,
+  "updated_by": null,
+  "validation_rules": [
+    {
+      "description": "Wholesale cost should be lower than RRP when both are present.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "issue_code": "HILLS_COST_NOT_BELOW_RRP",
+      "review_guidance": "Check whether the wholesale and retail price columns were swapped before approving the item.",
+      "rule_id": "hills.cost_below_rrp",
+      "severity": "ERROR",
+      "source_expression": "cost_price < rrp"
+    },
+    {
+      "description": "Order multiple must be positive when present.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/hills.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+        }
+      ],
+      "issue_code": "HILLS_ORDER_MULTIPLE_NOT_POSITIVE",
+      "review_guidance": "Confirm the printed order multiple before approving the purchasing terms.",
+      "rule_id": "hills.order_multiple_positive",
+      "severity": "ERROR",
+      "source_expression": "order_increment_qty >= 1"
+    }
+  ]
+}

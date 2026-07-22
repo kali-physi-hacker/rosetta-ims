@@ -1,0 +1,440 @@
+{
+  "contract_id": "vetapet.vet_price_list.v1",
+  "contract_version": "v1",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
+  "document_type": "PRICE_LIST",
+  "effective_from": null,
+  "effective_to": null,
+  "evidence": [
+    {
+      "evidence_type": "LEGACY_YAML_ONLY",
+      "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+      "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+    },
+    {
+      "evidence_type": "PARSER_BEHAVIOR",
+      "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+      "reference": "apps/api/services/catalogue_contract.py"
+    },
+    {
+      "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+      "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+      "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+    }
+  ],
+  "fields": [
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Vetapet code number.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "supplier_sku",
+      "requirement": "REQUIRED",
+      "role": "SUPPLIER_SKU",
+      "source_column": "CODE NO / 編號",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Printed product name.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "description",
+      "requirement": "REQUIRED",
+      "role": "PRODUCT_NAME",
+      "source_column": "PRODUCT NAME / 產品名稱",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Raw size/packaging text; may express content measure, pack description, or both.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "pack_size",
+      "requirement": "OPTIONAL",
+      "role": "PACKAGING",
+      "source_column": "SIZE / PACK / 重量",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Wholesale price field.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "cost",
+      "requirement": "REQUIRED",
+      "role": "SOURCE_PRICE",
+      "source_column": "WHOLESALE PRICE / 批發價",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Suggested retail or retail price field.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "rrp",
+      "requirement": "OPTIONAL",
+      "role": "RRP",
+      "source_column": "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Species cue from product name when present.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "species",
+      "requirement": "OPTIONAL",
+      "role": "SPECIES",
+      "source_column": null,
+      "source_path": "product_name"
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": "vet",
+      "description": "Vetapet catalogue segment split.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "segment",
+      "requirement": "OPTIONAL",
+      "role": "SEGMENT",
+      "source_column": null,
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Brand/section-derived category remains supplier-specific and reviewable.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "field_key": "category",
+      "requirement": "OPTIONAL",
+      "role": "CATEGORY",
+      "source_column": null,
+      "source_path": "section_header"
+    }
+  ],
+  "format_name": "Vetapet Vet PDF price list",
+  "known_ambiguities": [
+    {
+      "blocks_supported_status": true,
+      "condition": "The repository has parser fixtures but no raw Vetapet Vet source PDF.",
+      "issue_code": "VETAPET_VET_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
+      "review_guidance": "Attach the real Vetapet Vet catalogue and confirm wholesale/RRP and packaging headers."
+    }
+  ],
+  "legacy_yaml_reference": "apps/api/catalogue_contracts/vetapet_vet.yaml",
+  "mbb": {
+    "benefit_patterns": [],
+    "condition_patterns": [],
+    "notes": null,
+    "requires_validation_issue_when": [],
+    "source_fields": [],
+    "supported_scopes": []
+  },
+  "metadata": {},
+  "packaging": {
+    "break_pack_allowed": null,
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "interpretation_rules": [
+      "Treat kg/g/ml size text as content measure, not sellable-unit count.",
+      "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms."
+    ],
+    "minimum_order_source_field": null,
+    "order_increment_source_field": null,
+    "packaging_source_field": "pack_size",
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
+    "purchase_uom": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
+    "unresolved_semantics": [
+      "Purchase UOM, order increment, and break-pack rules are not proven by checked-in source evidence."
+    ]
+  },
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.raw_observation.v1",
+    "raw_observation_fields": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "species",
+      "segment",
+      "category"
+    ],
+    "staging_item_contract_id": "catalogue.staging_item.v1",
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "species",
+      "segment",
+      "category"
+    ],
+    "staging_raw_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "species",
+      "segment",
+      "category"
+    ]
+  },
+  "pricing": {
+    "autoswap_cost_rrp_allowed": true,
+    "cost_source_field": "cost",
+    "currency": "HKD",
+    "notes": "Autoswap behavior is covered by parser tests; price basis still lacks raw-source confirmation.",
+    "null_cost_markers": [],
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
+    "price_basis_status": "PARTIALLY_VERIFIED",
+    "rrp_source_field": "rrp"
+  },
+  "schema_version": "catalogue.supplier_source_contract.v1",
+  "source_format": "PDF_TABLE",
+  "source_structure": {
+    "expected_sections": [
+      "IVD",
+      "Dermoscent",
+      "Chung-Li",
+      "Li-Saint DermCare"
+    ],
+    "expected_sheet_names": [],
+    "optional_headers": [
+      "SIZE / PACK / 重量",
+      "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
+      "TERMS"
+    ],
+    "required_headers": [
+      "CODE NO / 編號",
+      "PRODUCT NAME / 產品名稱",
+      "WHOLESALE PRICE / 批發價"
+    ],
+    "row_eligibility_rules": [
+      "One product row per code/price entry."
+    ],
+    "skip_rules": [],
+    "source_format": "PDF_TABLE",
+    "source_location_expectations": [
+      "page number",
+      "section header",
+      "table row",
+      "source column"
+    ],
+    "table_regions": [
+      {
+        "header_row": null,
+        "name": "vet_brand_sections",
+        "notes": "No raw PDF source sample is committed; examples come from parser tests and YAML comments.",
+        "selector": "Brand-section PDF tables"
+      }
+    ]
+  },
+  "supplier": {
+    "supplier_code": null,
+    "supplier_id": 91,
+    "supplier_name": "Vetapet Vet"
+  },
+  "support_status": "PARTIALLY_VERIFIED",
+  "updated_at": null,
+  "updated_by": null,
+  "validation_rules": [
+    {
+      "description": "Wholesale should be below retail after any allowed autoswap.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "issue_code": "VETAPET_COST_NOT_BELOW_RRP",
+      "review_guidance": "Confirm whether wholesale and retail prices were swapped or whether the row has a non-standard promotion.",
+      "rule_id": "vetapet.cost_below_rrp_after_autoswap",
+      "severity": "ERROR",
+      "source_expression": "cost_price < rrp"
+    },
+    {
+      "description": "Wholesale cost must be positive when present.",
+      "evidence": [
+        {
+          "evidence_type": "LEGACY_YAML_ONLY",
+          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
+          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+          "reference": "apps/api/services/catalogue_contract.py"
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+        }
+      ],
+      "issue_code": "VETAPET_COST_NOT_POSITIVE",
+      "review_guidance": "Confirm the printed wholesale value before approving the supplier cost.",
+      "rule_id": "vetapet.cost_positive",
+      "severity": "ERROR",
+      "source_expression": "cost_price > 0"
+    }
+  ]
+}
