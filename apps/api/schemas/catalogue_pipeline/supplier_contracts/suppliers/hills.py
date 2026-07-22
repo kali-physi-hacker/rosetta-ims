@@ -35,13 +35,13 @@ _EVIDENCE = [
     ),
     evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
-        "apps/api/services/catalogue_contract.py",
-        "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping.",
+        "apps/api/services/supplier_source_contract_runtime.py",
+        "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing.",
     ),
     evidence(
         SupplierSourceEvidenceType.EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE,
-        "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-        "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
+        "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+        "Tests representative Hill's rows against the Pydantic-backed runtime adapter.",
     ),
     evidence(
         SupplierSourceEvidenceType.BUSINESS_DOMAIN_DOCUMENTATION,
@@ -122,7 +122,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.SOURCE_PRICE,
                 requirement=SourceFieldRequirement.REQUIRED,
                 source_column="Gross Wholesale Price / 每箱·罐",
-                description="Supplier cost source field used by the legacy parser.",
+                description="Supplier cost source field used by the supported runtime adapter.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(

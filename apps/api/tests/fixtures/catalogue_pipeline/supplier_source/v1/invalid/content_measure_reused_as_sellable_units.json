@@ -21,13 +21,13 @@
     },
     {
       "evidence_type": "PARSER_BEHAVIOR",
-      "reference": "apps/api/services/catalogue_contract.py",
-      "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+      "reference": "apps/api/services/supplier_source_contract_runtime.py",
+      "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
     },
     {
       "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-      "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-      "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+      "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+      "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
     },
     {
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -94,13 +94,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -131,13 +131,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -164,13 +164,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -188,7 +188,7 @@
       "composed_from": [],
       "constant_value": null,
       "aliases": [],
-      "description": "Supplier cost source field used by the legacy parser.",
+      "description": "Supplier cost source field used by the supported runtime adapter.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -197,13 +197,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -230,13 +230,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -263,13 +263,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -296,13 +296,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -329,13 +329,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -362,13 +362,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -395,13 +395,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -472,13 +472,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -502,13 +502,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",

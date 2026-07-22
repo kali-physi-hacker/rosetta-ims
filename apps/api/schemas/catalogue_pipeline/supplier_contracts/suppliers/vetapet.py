@@ -33,16 +33,6 @@ _VET_COMMON_EVIDENCE = [
         "external-sample:Vetapet.pdf",
         "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
     ),
-    evidence(
-        SupplierSourceEvidenceType.PARSER_BEHAVIOR,
-        "apps/api/services/catalogue_contract.py",
-        "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping.",
-    ),
-    evidence(
-        SupplierSourceEvidenceType.EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE,
-        "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
-        "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-    ),
 ]
 
 _NON_VET_EVIDENCE = [
@@ -50,11 +40,6 @@ _NON_VET_EVIDENCE = [
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:Vetapet.pdf",
         "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-    ),
-    evidence(
-        SupplierSourceEvidenceType.PARSER_BEHAVIOR,
-        "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
-        "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing.",
     ),
 ]
 
@@ -173,7 +158,7 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 SourceTableRegion(
                     name="vet_wholesale_retail_sections",
                     selector="CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS",
-                    notes="Observed later in the supplied Vetapet.pdf and covered by current inline legacy mapping tests.",
+                    notes="Observed later in the supplied Vetapet.pdf; representative per-section row fixtures are still needed.",
                 )
             ],
             required_headers=["CODE NO", "PRODUCT NAME"],
@@ -276,7 +261,7 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         validation_rules=[
             SupplierValidationRule(
                 rule_id="vetapet_non_vet.cost_below_rrp_unverified",
-                description="Wholesale should be below retail if the legacy column mapping is confirmed.",
+                description="Wholesale should be below retail when the source section's column mapping is confirmed.",
                 source_expression="cost_price < rrp",
                 severity=IssueSeverity.WARNING,
                 issue_code="VETAPET_NON_VET_COST_RRP_UNVERIFIED",

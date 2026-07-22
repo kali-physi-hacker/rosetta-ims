@@ -23,7 +23,7 @@ import os
 import models
 import database
 from services import extraction_service, supplier_resolver, audit, tagging_service, tag_service, audit_log
-from services import catalogue_contract
+from services import supplier_source_contract_runtime
 from services.sku_service import next_sku, CATEGORY_PREFIX
 from dependencies import require_user
 from permissions import require_capability
@@ -153,16 +153,16 @@ def import_catalogue(
     filename = file.filename or "upload"
     content_type = file.content_type or ""
 
-    # Legacy extraction mappings are optional and no longer shipped as YAML files.
-    # When no local mapping exists, extraction follows the generic path unchanged.
-    contract = catalogue_contract.load_contract(supplier_id) if supplier_id else None
+    # Select only supported Pydantic supplier-source contracts. Suppliers without a
+    # supported source contract follow generic extraction unchanged.
+    contract = supplier_source_contract_runtime.load_contract(supplier_id) if supplier_id else None
     items_raw, fmt = extraction_service.extract(content, filename, content_type, contract=contract)
     contract_flags, contract_stale = {}, False
     if contract is not None:
         items_raw, _flags = contract.apply(items_raw)
         contract_flags = {f["index"]: f for f in _flags}
         # Drift: most rows failing validation means the catalogue likely no longer
-        # matches the optional local mapping.
+        # matches the selected supplier-source contract.
         contract_stale = bool(items_raw) and len(_flags) > 0.5 * len(items_raw)
 
     # ── Stage 1: detect + resolve the supplier (per file). A user-picked supplier always wins. ──
@@ -279,7 +279,7 @@ def import_catalogue(
                      entity_id=catalogue.id, entity_label=filename,
                      details={"items": len(items_raw), "format": fmt, "supplier_id": supplier_id,
                               "detected_supplier": detected.get("supplier"),
-                              "contract": (f"{contract.slug} v{contract.version}" if contract else None),
+                              "contract": (contract.display_name() if contract else None),
                               "contract_flags": len(contract_flags), "contract_stale": contract_stale},
                      request=request)
     db.commit()
@@ -291,7 +291,7 @@ def import_catalogue(
         "filename":    filename,
         "format":      fmt,
         "item_count":  len(items_raw),
-        "contract":       (f"{contract.slug} v{contract.version}" if contract else None),
+        "contract":       (contract.display_name() if contract else None),
         "contract_flags": len(contract_flags),
         "contract_stale": contract_stale,
         "ai_enabled":  ai_enabled,

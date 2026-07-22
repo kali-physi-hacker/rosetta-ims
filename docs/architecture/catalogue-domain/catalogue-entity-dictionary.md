@@ -125,8 +125,8 @@ Classification legend: **Source Evidence** = captured as-received, preserved, ne
 #### Business rules
 
 - The **raw uploaded file is preserved** (`source_ref`) so the catalogue can be re-parsed deterministically later; a storage failure never fails the import (best-effort, `catalogues.py:38`).
-- If **>50% of rows fail optional legacy mapping validation**, the catalogue is flagged `contract_stale` for review (drift signal in `catalogues.py:167`).
-- Current ingestion has no repository-shipped supplier YAML mappings and falls back to generic AI extraction unless a local operator-only mapping is supplied. Future contract selection should use the Pydantic supplier-source registry.
+- If **>50% of rows fail selected supplier-source contract validation**, the catalogue is flagged `contract_stale` for review (drift signal in `catalogues.py:167`).
+- Current ingestion selects supported Pydantic supplier-source contracts through `services/supplier_source_contract_runtime.py`; suppliers without a supported declaration fall back to generic AI extraction.
 - Supplier resolution is **suggested, never forced**: an ambiguous match leaves `supplier_status = needs_review` with a best-guess pre-selection (§4.3 rules).
 
 #### Example
@@ -613,7 +613,7 @@ Supplier Product: Variant `10010385` × Supplier 14, `supplier_sku=10447`, `basi
 
 - **Structured, not text-driven, for calculation.** `units_per_pack` is the *only* value that feeds the cost divisor; the raw `pack_size` string is preserved as evidence but never math'd directly. A deterministic guard (`catalogue_pack.corrected_units_per_pack`, `catalogue_pack.py:104`) detects when `units_per_pack` is actually a **mis-read weight/volume** (e.g. "4000" from "4kg") and proposes `1`, but **holds count-unit ambiguities** (e.g. "1.06oz" == 30 sachets) for human review rather than auto-fixing.
 - **Never assume every pack holds the same count.** Pack size is per-offering; two suppliers of the same Variant may have different `units_per_pack`.
-- **A per-unit contract sets `units_per_pack = 1`** at ingest (`basis: per_unit` → const 1), so a per-unit price is never divided (`catalogue_contract.py:141`).
+- **A per-unit source contract sets the current flat runtime divisor to `units_per_pack = 1`** at ingest for compatibility, so a per-unit price is never divided by an order multiple (`supplier_source_contract_runtime.py`).
 - ⚠ **NULL vs 1 is not distinguished** — a genuine multipack with a missed pack size looks like a single unit and computes GP on a pack-as-unit cost (`data-conflation-audit.md` finding 6). Modelling should treat "unknown pack" as distinct from "pack of 1".
 
 #### Example
@@ -643,7 +643,7 @@ Supplier Product above: `raw_pack_text="24 cans/case"` → `units_per_pack=24`, 
 |---|---|---|---|---|---|
 | amount | The published cost | Decimal | Yes | `240.0` | `ProductSupplier.basic_cost`, `models.py:207` |
 | **currency** | Currency of the amount | ISO code | Yes **[intended]** | `HKD` | ⚠ **Not stored** — HKD assumed, symbols stripped at ingest (`extraction_service.py:282`) |
-| **price_basis** | per_sell_unit \| per_pack | Enum | Yes **[intended]** | `per_pack` | ⚠ **Implicit** — encoded only via `units_per_pack`; explicit only transiently in the contract (`catalogue_contract.py:130`) |
+| **price_basis** | per_sell_unit \| per_pack | Enum | Yes **[intended]** | `per_pack` | ⚠ **Implicit** — encoded only via `units_per_pack` in persistence; explicit in the Pydantic supplier-source contract |
 | pack_ref | The Packaging Configuration the basis refers to | Ref | Yes | 24/case | via `units_per_pack` |
 | **effective_from** | When this price takes effect | Date | Yes **[intended]** | `2024-04-01` | ⚠ **Not stored** — printed on the catalogue, dropped |
 | **effective_to** | When it was superseded | Date | No **[intended]** | `2026-06-30` | ⚠ **Not stored** |

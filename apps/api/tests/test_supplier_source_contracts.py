@@ -158,7 +158,7 @@ def test_kangaroo_contracts_use_supplier_code_without_fabricated_numeric_id():
     assert earthz.source_format == "PDF"
 
 
-def test_supported_status_requires_stronger_evidence_than_legacy_yaml_only():
+def test_supported_status_requires_real_evidence():
     payload = _load(FIXTURE_ROOT / "valid" / "hills.price_list.v1.json")
     payload["support_status"] = "SUPPORTED"
     payload["pricing"]["price_basis_status"] = "VERIFIED"

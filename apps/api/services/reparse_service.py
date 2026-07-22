@@ -25,7 +25,7 @@ import models
 from services import audit_log
 from services.pricing_service import get_unit_cost
 from services import catalogue_pack as pack
-from services import catalogue_contract
+from services import supplier_source_contract_runtime
 
 PARSER_VERSION = "v3-recapture"
 
@@ -97,13 +97,13 @@ def derive(item: models.CatalogueItem, ps=None) -> dict:
             continue
         raw = getattr(item, item_attr, None)
         out[field] = pack.clean_str(raw) if isinstance(raw, str) else raw
-    # DC-3 backfill: when the item's supplier has a data contract, its invariants are AUTHORITATIVE over the
-    # generic guard — re-parse re-applies the contract to already-onboarded rows (units_per_pack, order
-    # multiple, consts). Uncontracted suppliers: load_contract → None → unchanged.
-    contract = catalogue_contract.load_contract(getattr(item, "supplier_id", None))
+    # Backfill: when the item's supplier has a supported Pydantic source
+    # contract, reparse reapplies its explicit runtime semantics. Suppliers
+    # without a supported source contract remain on the generic guard.
+    contract = supplier_source_contract_runtime.load_contract(getattr(item, "supplier_id", None))
     if contract is not None:
-        out.setdefault("pack_size", item.pack_size)     # the enforce reads pack_size for the order-multiple parse
-        contract._enforce(out)
+        out.setdefault("pack_size", item.pack_size)
+        contract.apply_to_item(out)
         out.pop("pack_size", None)                       # pack_size is item-only, not a recapture target
     return out
 
@@ -113,12 +113,11 @@ def _candidate(cand: dict, field: str, committed: bool, current, ps=None, item=N
     good live value from noisy catalogue data:
       · never overwrite a live value with an empty catalogue capture (keep the live value);
       · never recapture cost or rrp from a row whose cost > rrp — the columns are almost certainly
-        swapped (see _cost_rrp_swapped). This holds even for a contracted supplier;
+        swapped (see _cost_rrp_swapped). This holds even for a source-contracted supplier;
       · for an UNCONTRACTED supplier, defer to a deliberate pack size (see _pack_protected) and to a
         deliberately-set / verified cost (see _cost_protected) — the generic catalogue may be stale or
-        mis-extracted. A CONTRACTED supplier's contract IS the source of truth for cost + pack (the
-        catalogue is contract-guided and validated), so those two gates are bypassed and the contract's
-        Gross-Wholesale cost / per-unit pack flow through even over a manual value."""
+        mis-extracted. A supported source-contracted supplier's explicit price
+        and pack semantics can bypass those two gates."""
     val = cand[field]
     if committed and _norm(val) is None:
         return current
@@ -209,7 +208,7 @@ def item_snapshot(db, item: models.CatalogueItem) -> list[dict]:
     product = db.get(models.Product, item.matched_product_id) if committed else None
     ps = _matched_ps(db, item) if committed else None
     cand = derive(item, ps)
-    contracted = catalogue_contract.load_contract(getattr(item, "supplier_id", None)) is not None
+    contracted = supplier_source_contract_runtime.load_contract(getattr(item, "supplier_id", None)) is not None
     live_basic = ps.basic_cost if ps else item.cost_price
     live_upp = ps.units_per_pack if ps else item.units_per_pack
     prelim, changed_cost = [], {}
@@ -248,7 +247,7 @@ def compute_changes(db, item: models.CatalogueItem) -> list[dict]:
     committed = bool(item.matched_product_id)
     ps = _matched_ps(db, item) if committed else None
     cand = derive(item, ps)
-    contracted = catalogue_contract.load_contract(getattr(item, "supplier_id", None)) is not None
+    contracted = supplier_source_contract_runtime.load_contract(getattr(item, "supplier_id", None)) is not None
     live_basic = ps.basic_cost if ps else item.cost_price
     live_upp = ps.units_per_pack if ps else item.units_per_pack
     staged, changed_cost = [], {}

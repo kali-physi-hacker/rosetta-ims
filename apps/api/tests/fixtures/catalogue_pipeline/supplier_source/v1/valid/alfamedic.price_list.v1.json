@@ -21,13 +21,13 @@
     },
     {
       "evidence_type": "PARSER_BEHAVIOR",
-      "reference": "apps/api/services/catalogue_contract.py",
-      "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+      "reference": "apps/api/services/supplier_source_contract_runtime.py",
+      "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
     },
     {
       "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-      "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-      "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+      "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+      "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
     },
     {
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -87,13 +87,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -120,13 +120,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -153,13 +153,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -186,13 +186,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -222,13 +222,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -255,13 +255,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -279,7 +279,7 @@
       "composed_from": [],
       "constant_value": null,
       "aliases": [],
-      "description": "Therapeutic section header; Medicine remains a legacy default requiring business review.",
+      "description": "Therapeutic section header; any default category still requires business review.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -288,13 +288,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -321,13 +321,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -407,13 +407,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
@@ -437,13 +437,13 @@
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "reference": "apps/api/services/catalogue_contract.py",
-          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",

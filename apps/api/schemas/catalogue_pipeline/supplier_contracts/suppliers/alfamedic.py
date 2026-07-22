@@ -36,13 +36,13 @@ _EVIDENCE = [
     ),
     evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
-        "apps/api/services/catalogue_contract.py",
-        "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping.",
+        "apps/api/services/supplier_source_contract_runtime.py",
+        "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling.",
     ),
     evidence(
         SupplierSourceEvidenceType.EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE,
-        "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
-        "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
+        "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+        "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter.",
     ),
     evidence(
         SupplierSourceEvidenceType.BUSINESS_DOMAIN_DOCUMENTATION,
@@ -138,7 +138,7 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.CATEGORY,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_path="section_header",
-                description="Therapeutic section header; Medicine remains a legacy default requiring business review.",
+                description="Therapeutic section header; any default category still requires business review.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(

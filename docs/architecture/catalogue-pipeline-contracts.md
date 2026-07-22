@@ -37,11 +37,11 @@ The repository no longer ships files under `apps/api/catalogue_contracts/*.yaml`
 
 Use these names consistently:
 
-- Legacy extraction mapping: historical YAML-style parser guidance for the old `services/catalogue_contract.py` engine; not shipped as contract files.
+- Removed legacy extraction mapping: historical YAML-style parser guidance for the old loader; not shipped as contract files.
 - Extraction Profile Contract: `catalogue.extraction_profile.v1`, the new typed/versioned Pydantic configuration contract.
 - Pipeline Contract: a Pydantic payload model defining a stage boundary.
 
-The legacy mapping loader now finds no repository-shipped mappings, so current upload behavior falls back to generic extraction unless a local operator-only mapping directory is supplied. Future integration should validate extraction configuration through Pydantic models, not revive YAML files as contracts.
+Current upload behavior uses `services/supplier_source_contract_runtime.py`, a Pydantic-backed adapter that selects supported supplier-source declarations from the registry. Future integration should continue validating extraction configuration through Pydantic models, not revive YAML files as contracts.
 
 ## Versioning Rules
 
@@ -133,4 +133,4 @@ Future SQLAlchemy work should map contracts to logical entities without making t
 
 ## Non-Wiring Statement
 
-CIS-103 does not wire these contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current ingestion, current OpenAPI, current UI, or current persistence. Runtime ingestion still uses the legacy loader surface, but the repository no longer ships YAML mappings for it.
+CIS-103 does not wire the shared pipeline payload contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current OpenAPI, current UI, or current persistence. Runtime ingestion has a narrow Pydantic supplier-source adapter for supported source formats, but it does not yet create Raw Observation, Staging, Mastering, Validation Issue, or Serving payload records.

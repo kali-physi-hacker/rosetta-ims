@@ -33,7 +33,7 @@ A supplier-source contract identity is per supplier plus document format plus ma
 
 ## Runtime Boundary
 
-CIS-103B does not replace `services/catalogue_contract.py`, parse files at upload time, alter `/catalogues/import`, or select contracts in production. The legacy loader now has no repository-shipped YAML mappings, so current upload behavior falls back to generic extraction unless an operator supplies a local mapping directory outside the contract package. The new registry rejects unknown supplier formats and has a separate `get_supported_supplier_source_contract()` path that only returns `SUPPORTED` declarations. Only Hill's and Alfamedic are currently `SUPPORTED`; the remaining declarations still need row fixtures, supplier-id reconciliation, or per-section parser rules.
+Runtime ingestion now uses `services/supplier_source_contract_runtime.py` as a small adapter over the Pydantic supplier-source registry. It selects exactly one `SUPPORTED` declaration by supplier ID, adds prompt guidance from that declaration, and applies only explicit runtime-safe semantics to the current flat ingestion payload. Hill's and Alfamedic are currently selected; the remaining declarations are not production-selected because they still need row fixtures, supplier-id reconciliation, or per-section parser rules.
 
 Future integration should:
 
