@@ -55,7 +55,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
         schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
         contract_id="hills.price_list.v1",
         contract_version="v1",
-        supplier=SupplierReference(supplier_id=14, supplier_name="Hill's", supplier_code="HPI"),
+        supplier=SupplierReference(supplier_id=14, supplier_name="Hill's", supplier_code=None),
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Hill's Science Diet PDF price list",
         source_format=SourceFormat.PDF_TABLE,
@@ -242,4 +242,3 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
         created_by=DECLARATION_CREATED_BY,
     )
 )
-

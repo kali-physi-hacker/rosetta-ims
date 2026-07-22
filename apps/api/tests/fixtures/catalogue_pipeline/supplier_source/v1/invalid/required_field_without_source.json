@@ -502,7 +502,7 @@
     ]
   },
   "supplier": {
-    "supplier_code": "HPI",
+    "supplier_code": null,
     "supplier_id": 14,
     "supplier_name": "Hill's"
   },
