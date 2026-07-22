@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from schemas.catalogue_pipeline.common import SupplierReference, UnitOfMeasure
+from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import IssueSeverity, SourceFormat, UnitCode
 from schemas.catalogue_pipeline.supplier_contracts.common import (
     SUPPLIER_SOURCE_SCHEMA_VERSION,
@@ -19,6 +19,7 @@ from schemas.catalogue_pipeline.supplier_contracts.common import (
     SupplierDocumentType,
     SupplierSourceContractV1,
     SupplierSourceEvidenceType,
+    SupplierSourceReference,
     SupplierValidationRule,
 )
 from schemas.catalogue_pipeline.supplier_contracts.registry import register_supplier_source_contract
@@ -27,6 +28,11 @@ from ._shared import DECLARATION_CREATED_AT, DECLARATION_CREATED_BY, evidence, p
 
 
 _VET_COMMON_EVIDENCE = [
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:Vetapet.pdf",
+        "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+    ),
     evidence(
         SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
         "apps/api/catalogue_contracts/vetapet_vet.yaml",
@@ -45,6 +51,11 @@ _VET_COMMON_EVIDENCE = [
 ]
 
 _NON_VET_EVIDENCE = [
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:Vetapet.pdf",
+        "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+    ),
     evidence(
         SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
         "apps/api/catalogue_contracts/vetapet_nonvet.yaml",
@@ -154,7 +165,7 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
         contract_id="vetapet.vet_price_list.v1",
         contract_version="v1",
-        supplier=SupplierReference(supplier_id=91, supplier_name="Vetapet Vet", supplier_code=None),
+        supplier=SupplierSourceReference(supplier_id=91, supplier_name="Vetapet Vet", supplier_code=None),
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Vetapet Vet PDF price list",
         source_format=SourceFormat.PDF_TABLE,
@@ -163,16 +174,29 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         legacy_yaml_reference="apps/api/catalogue_contracts/vetapet_vet.yaml",
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
-            expected_sections=["IVD", "Dermoscent", "Chung-Li", "Li-Saint DermCare"],
+            expected_sections=["Part A Drugs", "Part B Supplements", "IVD", "Dermoscent", "Chung-Li", "Li-Saint DermCare"],
             table_regions=[
                 SourceTableRegion(
-                    name="vet_brand_sections",
-                    selector="Brand-section PDF tables",
-                    notes="No raw PDF source sample is committed; examples come from parser tests and YAML comments.",
+                    name="vet_clinic_unit_price_sections",
+                    selector="CODE NO / PRODUCT NAME / PACKING PER UNIT / UNIT PRICE / REMARKS or TERMS",
+                    notes="Observed in the supplied Vetapet.pdf early clinic sections.",
+                ),
+                SourceTableRegion(
+                    name="vet_wholesale_retail_sections",
+                    selector="CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS",
+                    notes="Observed later in the supplied Vetapet.pdf and covered by current legacy YAML behavior.",
                 )
             ],
-            required_headers=["CODE NO / 編號", "PRODUCT NAME / 產品名稱", "WHOLESALE PRICE / 批發價"],
-            optional_headers=["SIZE / PACK / 重量", "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價", "TERMS"],
+            required_headers=["CODE NO", "PRODUCT NAME"],
+            optional_headers=[
+                "PACKING PER UNIT",
+                "UNIT PRICE",
+                "WHOLESALE PRICE",
+                "RETAIL PRICE",
+                "TERMS",
+                "SIZE / PACK / 重量",
+                "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
+            ],
             row_eligibility_rules=["One product row per code/price entry."],
             source_location_expectations=["page number", "section header", "table row", "source column"],
         ),
@@ -183,7 +207,7 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
             price_basis=UnitOfMeasure(code=UnitCode.UNIT),
             price_basis_status=SemanticResolutionStatus.PARTIALLY_VERIFIED,
             autoswap_cost_rrp_allowed=True,
-            notes="Autoswap behavior is covered by parser tests; price basis still lacks raw-source confirmation.",
+            notes="The source PDF confirms multiple price layouts. Wholesale/Retail sections align with parser tests; Unit Price sections need a dedicated parser rule before production use.",
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
@@ -201,9 +225,9 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         validation_rules=_VET_VALIDATION_RULES,
         known_ambiguities=[
             AmbiguityRule(
-                issue_code="VETAPET_VET_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
-                condition="The repository has parser fixtures but no raw Vetapet Vet source PDF.",
-                review_guidance="Attach the real Vetapet Vet catalogue and confirm wholesale/RRP and packaging headers.",
+                issue_code="VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
+                condition="The supplied Vetapet PDF contains both Unit Price tables and Wholesale/Retail/Terms tables.",
+                review_guidance="Decide whether to split Vetapet into multiple supplier-format contracts or add typed per-section interpretation rules before production selection.",
                 blocks_supported_status=True,
             )
         ],
@@ -219,11 +243,11 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
         contract_id="vetapet.non_vet_price_list.v1",
         contract_version="v1",
-        supplier=SupplierReference(supplier_id=90, supplier_name="Vetapet (Non-Vet)", supplier_code=None),
+        supplier=SupplierSourceReference(supplier_id=90, supplier_name="Vetapet (Non-Vet)", supplier_code=None),
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Vetapet Non-Vet PDF price list",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.UNVERIFIED,
+        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
         evidence=_NON_VET_EVIDENCE,
         legacy_yaml_reference="apps/api/catalogue_contracts/vetapet_nonvet.yaml",
         source_structure=SourceStructure(
@@ -233,7 +257,7 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 SourceTableRegion(
                     name="non_vet_brand_sections",
                     selector="Chinese-primary price rows",
-                    notes="Only the legacy YAML shape is present in-repo; no representative row fixture validates semantics.",
+            notes="The supplied Vetapet.pdf contains matching Chinese wholesale/retail labels, but non-vet row semantics still need representative extraction fixtures.",
                 )
             ],
             required_headers=["CODE NO / 編號", "PRODUCT NAME / 產品名稱", "批發價 / WHOLESALE PRICE"],
@@ -248,7 +272,7 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
             price_basis=None,
             price_basis_status=SemanticResolutionStatus.UNRESOLVED,
             autoswap_cost_rrp_allowed=True,
-            notes="Legacy YAML claims per-unit wholesale semantics, but this contract leaves the basis unresolved until source evidence is supplied.",
+            notes="The supplied source confirms wholesale/retail labels, but the price basis remains unresolved without row-level business confirmation.",
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
@@ -274,9 +298,9 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         ],
         known_ambiguities=[
             AmbiguityRule(
-                issue_code="VETAPET_NON_VET_SOURCE_SAMPLE_MISSING",
-                condition="No representative non-vet source row or source PDF exists in the repository.",
-                review_guidance="Attach a real Vetapet Non-Vet catalogue sample and confirm wholesale, retail, size, and category semantics.",
+                issue_code="VETAPET_NON_VET_ROW_FIXTURE_MISSING",
+                condition="The supplied PDF has relevant labels, but no representative extracted non-vet row fixture has been committed.",
+                review_guidance="Create representative row fixtures from the source PDF and confirm wholesale, retail, size, and category semantics.",
                 blocks_supported_status=True,
             ),
             AmbiguityRule(
@@ -290,4 +314,3 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         created_by=DECLARATION_CREATED_BY,
     )
 )
-

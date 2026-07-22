@@ -29,6 +29,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 EXPECTED_CONTRACT_IDS = [
     "alfamedic.price_list.v1",
     "hills.price_list.v1",
+    "kangaroo.earthz_pet_price_sheet.v1",
+    "kangaroo.mixed_price_catalogue.v1",
+    "kangaroo.purina_proplan_veterinary_diets.v1",
     "vetapet.non_vet_price_list.v1",
     "vetapet.vet_price_list.v1",
 ]
@@ -38,6 +41,7 @@ EXPECTED_INVALID_MESSAGES = {
     "forbidden_extra_field.json": "Extra inputs are not permitted",
     "invalid_support_status.json": "Input should be",
     "required_field_without_source.json": "source field requires source_column",
+    "supplier_without_id_or_code.json": "supplier source reference requires supplier_id or supplier_code",
     "supported_with_unresolved_price_basis.json": "SUPPORTED supplier contracts require VERIFIED price basis",
     "unknown_field_reference.json": "references unknown field_key",
     "unsupported_currency.json": "Input should be 'HKD'",
@@ -109,11 +113,17 @@ def test_duplicate_supplier_source_registration_fails():
 def test_non_supported_contracts_cannot_be_selected_for_production_interpretation():
     statuses = {item.contract_id: item.support_status for item in iter_supplier_source_contracts()}
 
-    assert statuses["hills.price_list.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
-    assert statuses["alfamedic.price_list.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    assert statuses["hills.price_list.v1"] == SupplierContractSupportStatus.SUPPORTED
+    assert statuses["alfamedic.price_list.v1"] == SupplierContractSupportStatus.SUPPORTED
     assert statuses["vetapet.vet_price_list.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
-    assert statuses["vetapet.non_vet_price_list.v1"] == SupplierContractSupportStatus.UNVERIFIED
-    for contract_id in EXPECTED_CONTRACT_IDS:
+    assert statuses["vetapet.non_vet_price_list.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    assert statuses["kangaroo.mixed_price_catalogue.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    assert statuses["kangaroo.purina_proplan_veterinary_diets.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    assert statuses["kangaroo.earthz_pet_price_sheet.v1"] == SupplierContractSupportStatus.UNVERIFIED
+
+    assert get_supported_supplier_source_contract("hills.price_list.v1", "v1").contract_id == "hills.price_list.v1"
+    assert get_supported_supplier_source_contract("alfamedic.price_list.v1", "v1").contract_id == "alfamedic.price_list.v1"
+    for contract_id in set(EXPECTED_CONTRACT_IDS) - {"hills.price_list.v1", "alfamedic.price_list.v1"}:
         with pytest.raises(ValueError, match="not SUPPORTED"):
             get_supported_supplier_source_contract(contract_id, "v1")
 
@@ -130,10 +140,22 @@ def test_packaging_content_measure_is_not_sellable_unit_count():
 def test_ambiguous_cost_basis_remains_unresolved_for_unverified_vetapet_non_vet():
     non_vet = get_supplier_source_contract("vetapet.non_vet_price_list.v1", "v1").declaration
 
-    assert non_vet.support_status == SupplierContractSupportStatus.UNVERIFIED
+    assert non_vet.support_status == SupplierContractSupportStatus.PARTIALLY_VERIFIED
     assert non_vet.pricing.price_basis is None
     assert non_vet.pricing.price_basis_status == SemanticResolutionStatus.UNRESOLVED
     assert any(issue.issue_code == "VETAPET_NON_VET_PRICE_BASIS_UNRESOLVED" for issue in non_vet.known_ambiguities)
+
+
+def test_kangaroo_contracts_use_supplier_code_without_fabricated_numeric_id():
+    mixed = get_supplier_source_contract("kangaroo.mixed_price_catalogue.v1", "v1").declaration
+    proplan = get_supplier_source_contract("kangaroo.purina_proplan_veterinary_diets.v1", "v1").declaration
+    earthz = get_supplier_source_contract("kangaroo.earthz_pet_price_sheet.v1", "v1").declaration
+
+    assert mixed.supplier.supplier_id is None
+    assert mixed.supplier.supplier_code == "KPN"
+    assert proplan.pricing.price_basis.code == "PACK"
+    assert earthz.pricing.price_basis is None
+    assert earthz.source_format == "PDF"
 
 
 def test_supported_status_requires_stronger_evidence_than_legacy_yaml_only():

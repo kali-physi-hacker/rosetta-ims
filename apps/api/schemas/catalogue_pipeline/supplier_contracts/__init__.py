@@ -18,6 +18,7 @@ from .common import (
     SupplierDocumentType,
     SupplierSourceContractV1,
     SupplierSourceEvidenceType,
+    SupplierSourceReference,
     SupplierSourceModel,
     SupplierValidationRule,
 )
@@ -34,6 +35,9 @@ from .suppliers import *  # noqa: F403
 
 __all__ = [
     "ALFAMEDIC_PRICE_LIST_V1",
+    "KANGAROO_EARTHZ_PET_PRICE_SHEET_V1",
+    "KANGAROO_MIXED_PRICE_CATALOGUE_V1",
+    "KANGAROO_PURINA_PROPLAN_VETERINARY_DIETS_V1",
     "SUPPLIER_SOURCE_SCHEMA_VERSION",
     "AmbiguityRule",
     "EvidenceReference",
@@ -53,6 +57,7 @@ __all__ = [
     "SupplierSourceContractRegistry",
     "SupplierSourceContractV1",
     "SupplierSourceEvidenceType",
+    "SupplierSourceReference",
     "SupplierSourceModel",
     "SupplierValidationRule",
     "HILLS_PRICE_LIST_V1",

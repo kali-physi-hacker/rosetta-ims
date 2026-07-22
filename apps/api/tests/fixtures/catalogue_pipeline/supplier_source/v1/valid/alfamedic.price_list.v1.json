@@ -8,6 +8,11 @@
   "effective_to": null,
   "evidence": [
     {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+      "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+    },
+    {
       "evidence_type": "LEGACY_YAML_ONLY",
       "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
       "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
@@ -35,6 +40,11 @@
       "constant_value": null,
       "description": "Stable Alfamedic order code.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
@@ -69,6 +79,11 @@
       "description": "Printed product name.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
@@ -102,6 +117,11 @@
       "description": "Printed brand column when present.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
@@ -134,6 +154,11 @@
       "constant_value": null,
       "description": "Raw packing text; used by the current parser to derive order increment only.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
@@ -171,6 +196,11 @@
       "description": "Supplier cost field; By Quote is retained as a null-cost/manual-quote case.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
@@ -203,6 +233,11 @@
       "constant_value": "vet",
       "description": "Legacy configuration classifies this catalogue as vet segment.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
@@ -237,6 +272,11 @@
       "description": "Therapeutic section header; Medicine remains a legacy default requiring business review.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
@@ -270,6 +310,11 @@
       "description": "Legacy config notes multi-row tiers; no checked-in source examples prove all tier semantics.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
@@ -299,12 +344,6 @@
   ],
   "format_name": "Alfamedic HK PDF price list",
   "known_ambiguities": [
-    {
-      "blocks_supported_status": true,
-      "condition": "The repository has parser fixtures but no raw Alfamedic source PDF.",
-      "issue_code": "ALFAMEDIC_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
-      "review_guidance": "Attach the real Alfamedic price list and confirm Price/Unit and Packing/Unit semantics."
-    },
     {
       "blocks_supported_status": false,
       "condition": "Repeated order-code rows may represent bulk tiers, but tier condition and benefit semantics are not fully evidenced.",
@@ -391,7 +430,7 @@
     "autoswap_cost_rrp_allowed": false,
     "cost_source_field": "cost",
     "currency": "HKD",
-    "notes": "Current parser treats Price/Unit as per individual sellable piece and does not expose RRP.",
+    "notes": "Source sample and parser tests establish Price/Unit as the supplier price basis, with no RRP column.",
     "null_cost_markers": [
       "By Quote"
     ],
@@ -399,7 +438,7 @@
       "code": "PIECE",
       "label": null
     },
-    "price_basis_status": "PARTIALLY_VERIFIED",
+    "price_basis_status": "VERIFIED",
     "rrp_source_field": null
   },
   "schema_version": "catalogue.supplier_source_contract.v1",
@@ -432,7 +471,7 @@
       {
         "header_row": null,
         "name": "therapeutic_class_price_rows",
-        "notes": "No raw PDF source sample is committed; section detail comes from legacy config.",
+        "notes": "Raw PDF sample was supplied externally; section detail is captured from source text plus legacy config.",
         "selector": "PDF tables grouped by therapeutic class"
       }
     ]
@@ -442,13 +481,18 @@
     "supplier_id": 1,
     "supplier_name": "Alfamedic"
   },
-  "support_status": "PARTIALLY_VERIFIED",
+  "support_status": "SUPPORTED",
   "updated_at": null,
   "updated_by": null,
   "validation_rules": [
     {
       "description": "Numeric cost must be positive; By Quote is null and reviewed manually.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
@@ -479,6 +523,11 @@
     {
       "description": "Parsed order increment must be positive when present.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",

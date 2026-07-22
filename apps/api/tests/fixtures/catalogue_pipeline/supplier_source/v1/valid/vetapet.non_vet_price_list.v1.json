@@ -8,6 +8,11 @@
   "effective_to": null,
   "evidence": [
     {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+      "reference": "external-sample:Vetapet.pdf"
+    },
+    {
       "evidence_type": "LEGACY_YAML_ONLY",
       "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
       "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
@@ -25,6 +30,11 @@
       "constant_value": null,
       "description": "Vetapet code number.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
@@ -49,6 +59,11 @@
       "description": "Printed product name.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
           "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
@@ -71,6 +86,11 @@
       "constant_value": null,
       "description": "Raw size/packaging text; may express content measure, pack description, or both.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
@@ -95,6 +115,11 @@
       "description": "Wholesale price field.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
           "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
@@ -117,6 +142,11 @@
       "constant_value": null,
       "description": "Suggested retail or retail price field.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
@@ -141,6 +171,11 @@
       "description": "Species cue from product name when present.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
           "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
@@ -163,6 +198,11 @@
       "constant_value": "non_vet",
       "description": "Vetapet catalogue segment split.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
@@ -187,6 +227,11 @@
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
           "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
@@ -208,9 +253,9 @@
   "known_ambiguities": [
     {
       "blocks_supported_status": true,
-      "condition": "No representative non-vet source row or source PDF exists in the repository.",
-      "issue_code": "VETAPET_NON_VET_SOURCE_SAMPLE_MISSING",
-      "review_guidance": "Attach a real Vetapet Non-Vet catalogue sample and confirm wholesale, retail, size, and category semantics."
+      "condition": "The supplied PDF has relevant labels, but no representative extracted non-vet row fixture has been committed.",
+      "issue_code": "VETAPET_NON_VET_ROW_FIXTURE_MISSING",
+      "review_guidance": "Create representative row fixtures from the source PDF and confirm wholesale, retail, size, and category semantics."
     },
     {
       "blocks_supported_status": false,
@@ -285,7 +330,7 @@
     "autoswap_cost_rrp_allowed": true,
     "cost_source_field": "cost",
     "currency": "HKD",
-    "notes": "Legacy YAML claims per-unit wholesale semantics, but this contract leaves the basis unresolved until source evidence is supplied.",
+    "notes": "The supplied source confirms wholesale/retail labels, but the price basis remains unresolved without row-level business confirmation.",
     "null_cost_markers": [],
     "price_basis": null,
     "price_basis_status": "UNRESOLVED",
@@ -322,7 +367,7 @@
       {
         "header_row": null,
         "name": "non_vet_brand_sections",
-        "notes": "Only the legacy YAML shape is present in-repo; no representative row fixture validates semantics.",
+        "notes": "The supplied Vetapet.pdf contains matching Chinese wholesale/retail labels, but non-vet row semantics still need representative extraction fixtures.",
         "selector": "Chinese-primary price rows"
       }
     ]
@@ -332,13 +377,18 @@
     "supplier_id": 90,
     "supplier_name": "Vetapet (Non-Vet)"
   },
-  "support_status": "UNVERIFIED",
+  "support_status": "PARTIALLY_VERIFIED",
   "updated_at": null,
   "updated_by": null,
   "validation_rules": [
     {
       "description": "Wholesale should be below retail if the legacy column mapping is confirmed.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",

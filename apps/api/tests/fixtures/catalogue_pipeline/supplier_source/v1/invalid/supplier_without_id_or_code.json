@@ -69,6 +69,7 @@
       "field_key": "supplier_sku",
       "requirement": "REQUIRED",
       "role": "SUPPLIER_SKU",
+      "source_column": "Product Code / 產品編號",
       "source_path": null
     },
     {
@@ -557,9 +558,7 @@
     ]
   },
   "supplier": {
-    "supplier_code": null,
-    "supplier_id": 14,
-    "supplier_name": "Hill's"
+    "supplier_name": "Unknown Numeric Supplier"
   },
   "support_status": "SUPPORTED",
   "updated_at": null,

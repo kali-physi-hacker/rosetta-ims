@@ -772,43 +772,6 @@
       "title": "SupplierDocumentType",
       "type": "string"
     },
-    "SupplierReference": {
-      "additionalProperties": false,
-      "description": "Reference compatible with the repository's current integer supplier IDs.",
-      "properties": {
-        "supplier_code": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Optional short supplier code when known.",
-          "title": "Supplier Code"
-        },
-        "supplier_id": {
-          "description": "Current Rosetta numeric supplier ID.",
-          "exclusiveMinimum": 0,
-          "title": "Supplier Id",
-          "type": "integer"
-        },
-        "supplier_name": {
-          "description": "Human-readable supplier name.",
-          "minLength": 1,
-          "title": "Supplier Name",
-          "type": "string"
-        }
-      },
-      "required": [
-        "supplier_id",
-        "supplier_name"
-      ],
-      "title": "SupplierReference",
-      "type": "object"
-    },
     "SupplierSourceEvidenceType": {
       "description": "Evidence classes used to justify supplier-source declarations.",
       "enum": [
@@ -821,6 +784,51 @@
       ],
       "title": "SupplierSourceEvidenceType",
       "type": "string"
+    },
+    "SupplierSourceReference": {
+      "additionalProperties": false,
+      "description": "Supplier identity for source contracts, allowing pre-reconciled supplier codes.",
+      "properties": {
+        "supplier_code": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stable supplier code or abbreviation when known.",
+          "title": "Supplier Code"
+        },
+        "supplier_id": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Current Rosetta numeric supplier ID when known.",
+          "title": "Supplier Id"
+        },
+        "supplier_name": {
+          "description": "Human-readable supplier name.",
+          "minLength": 1,
+          "title": "Supplier Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "supplier_name"
+      ],
+      "title": "SupplierSourceReference",
+      "type": "object"
     },
     "SupplierValidationRule": {
       "additionalProperties": false,
@@ -1097,7 +1105,7 @@
       "description": "Expected source structure."
     },
     "supplier": {
-      "$ref": "#/$defs/SupplierReference",
+      "$ref": "#/$defs/SupplierSourceReference",
       "description": "Supplier this source format belongs to."
     },
     "support_status": {

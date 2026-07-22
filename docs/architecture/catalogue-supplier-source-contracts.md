@@ -33,7 +33,7 @@ A supplier-source contract identity is per supplier plus document format plus ma
 
 ## Runtime Boundary
 
-CIS-103B does not replace `services/catalogue_contract.py`, parse files at upload time, alter `/catalogues/import`, or select contracts in production. The new registry rejects unknown supplier formats and has a separate `get_supported_supplier_source_contract()` path that only returns `SUPPORTED` declarations. Current declarations are not `SUPPORTED` because this checkout does not contain raw catalogue source samples.
+CIS-103B does not replace `services/catalogue_contract.py`, parse files at upload time, alter `/catalogues/import`, or select contracts in production. The new registry rejects unknown supplier formats and has a separate `get_supported_supplier_source_contract()` path that only returns `SUPPORTED` declarations. Only Hill's and Alfamedic are currently `SUPPORTED`; the remaining declarations still need row fixtures, supplier-id reconciliation, or per-section parser rules.
 
 Future integration should:
 
@@ -58,14 +58,17 @@ Legacy YAML alone is insufficient for `SUPPORTED`. A format needs raw source sam
 
 ## Coverage Audit
 
-The prompt referenced documentation for about 24 suppliers, but this clean checkout does not contain that inventory or source samples. The local seed file lists nine starter suppliers, `supplier_import.py` can import larger external supplier sheets, and the domain dictionary cites four legacy YAML-backed supplier data-contract files. The table below reflects only evidence present in this repository.
+The prompt referenced documentation for about 24 suppliers, but this clean checkout does not contain that full inventory. The local seed file lists nine starter suppliers, `supplier_import.py` can import larger external supplier sheets, and the domain dictionary cites four legacy YAML-backed supplier data-contract files. The table below reflects repository evidence plus the source samples supplied locally for CIS-103B follow-up.
 
 | Supplier | Document format | Evidence available | Legacy YAML exists | Proposed contract ID | Implementation status | Confidence/gap |
 |---|---|---|---|---|---|---|
-| Alfamedic | PDF price list | Legacy YAML; parser behavior; existing test extraction fixture; business/domain documentation | Yes | `alfamedic.price_list.v1` | `PARTIALLY_VERIFIED` | No raw source PDF in repo; MBB tier semantics need sample/business confirmation. |
-| Hill's | PDF price list | Legacy YAML; parser behavior; existing test extraction fixture; business/domain documentation | Yes | `hills.price_list.v1` | `PARTIALLY_VERIFIED` | No raw source PDF in repo; supplier code is not asserted because local seed uses `HPI` for Happypaws. |
-| C. Vetapet & Company / Vetapet Vet | PDF price list | Legacy YAML; parser behavior; existing test extraction fixture | Yes | `vetapet.vet_price_list.v1` | `PARTIALLY_VERIFIED` | No raw source PDF in repo; packaging/order semantics remain incomplete. |
-| C. Vetapet & Company / Vetapet Non-Vet | PDF price list | Legacy YAML; parser load behavior only | Yes | `vetapet.non_vet_price_list.v1` | `UNVERIFIED` | Needs real source sample and representative row fixtures; price basis intentionally unresolved. |
+| Alfamedic | PDF price list | Real source catalogue sample; legacy YAML; parser behavior; existing test extraction fixture; business/domain documentation | Yes | `alfamedic.price_list.v1` | `SUPPORTED` | Real sample confirms headers and Price/Unit semantics; MBB tier semantics still need later runtime parsing evidence. |
+| Hill's | PDF price list | Real source catalogue sample; legacy YAML; parser behavior; existing test extraction fixture; business/domain documentation | Yes | `hills.price_list.v1` | `SUPPORTED` | Real sample confirms Gross Wholesale, Product Code, Size, Order Multiple, and effective-date layout; supplier code remains unasserted. |
+| C. Vetapet & Company / Vetapet Vet | Mixed PDF catalogue/price list | Real source catalogue sample; legacy YAML; parser behavior; existing test extraction fixture | Yes | `vetapet.vet_price_list.v1` | `PARTIALLY_VERIFIED` | Supplied PDF contains several table layouts (`UNIT PRICE`, `WHOLESALE/RETAIL/TERMS`, Chinese wholesale/retail); split or per-section parser rules needed. |
+| C. Vetapet & Company / Vetapet Non-Vet | PDF price list section | Real source catalogue sample; legacy YAML; parser load behavior | Yes | `vetapet.non_vet_price_list.v1` | `PARTIALLY_VERIFIED` | Source confirms wholesale/retail labels, but price basis and representative non-vet row fixtures remain missing. |
+| Kangaroo Pet Nutrition Ltd / KPN | Mixed PDF catalogue | Real source catalogue sample; user-supplied supplier label | No | `kangaroo.mixed_price_catalogue.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; multiple table layouts need row fixtures before runtime selection. |
+| Kangaroo Pet Nutrition Ltd / KPN | Purina Pro Plan Veterinary Diets product list | Real source catalogue sample; user-supplied supplier label | No | `kangaroo.purina_proplan_veterinary_diets.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; wet-can retail basis varies and needs row fixtures. |
+| Kangaroo Pet Nutrition Ltd / KPN | Earthz Pet image-only price sheet | Real source catalogue sample; visual inspection | No | `kangaroo.earthz_pet_price_sheet.v1` | `UNVERIFIED` | No text layer; needs OCR/vision fixtures, bounding boxes, and price-basis confirmation. |
 | Arrowana Int'l Ltd | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
 | Asia Vet Medical Limited | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
 | Blue Pet Co | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |

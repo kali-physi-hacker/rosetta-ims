@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from schemas.catalogue_pipeline.common import SupplierReference, UnitOfMeasure
+from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import IssueSeverity, SourceFormat, UnitCode
 from schemas.catalogue_pipeline.supplier_contracts.common import (
     SUPPLIER_SOURCE_SCHEMA_VERSION,
@@ -19,6 +19,7 @@ from schemas.catalogue_pipeline.supplier_contracts.common import (
     SupplierDocumentType,
     SupplierSourceContractV1,
     SupplierSourceEvidenceType,
+    SupplierSourceReference,
     SupplierValidationRule,
 )
 from schemas.catalogue_pipeline.supplier_contracts.registry import register_supplier_source_contract
@@ -27,6 +28,11 @@ from ._shared import DECLARATION_CREATED_AT, DECLARATION_CREATED_BY, evidence, p
 
 
 _EVIDENCE = [
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:Hill's.pdf",
+        "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+    ),
     evidence(
         SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
         "apps/api/catalogue_contracts/hills.yaml",
@@ -55,11 +61,11 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
         schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
         contract_id="hills.price_list.v1",
         contract_version="v1",
-        supplier=SupplierReference(supplier_id=14, supplier_name="Hill's", supplier_code=None),
+        supplier=SupplierSourceReference(supplier_id=14, supplier_name="Hill's", supplier_code=None),
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Hill's Science Diet PDF price list",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_EVIDENCE,
         legacy_yaml_reference="apps/api/catalogue_contracts/hills.yaml",
         source_structure=SourceStructure(
@@ -69,7 +75,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 SourceTableRegion(
                     name="price_rows",
                     selector="Bilingual PDF product tables with Product Code, product description, size, wholesale, retail, and order multiple columns.",
-                    notes="No raw PDF sample is checked into the repository; region details come from legacy config and parser tests.",
+                    notes="Raw PDF sample was supplied externally; region details are captured from source text plus legacy config and parser tests.",
                 )
             ],
             required_headers=[
@@ -178,9 +184,9 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
             cost_source_field="cost",
             rrp_source_field="rrp",
             price_basis=UnitOfMeasure(code=UnitCode.UNIT),
-            price_basis_status=SemanticResolutionStatus.PARTIALLY_VERIFIED,
+            price_basis_status=SemanticResolutionStatus.VERIFIED,
             autoswap_cost_rrp_allowed=False,
-            notes="Parser tests establish per-sellable-unit behavior, but no raw source sample is committed.",
+            notes="Source sample and parser tests establish Gross Wholesale Price as a per sellable unit price.",
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
@@ -220,10 +226,10 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
         ],
         known_ambiguities=[
             AmbiguityRule(
-                issue_code="HILLS_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
-                condition="The repository contains parser fixtures but not the source PDF sample.",
-                review_guidance="Attach the real Hill's source catalogue and confirm headers before promoting to SUPPORTED.",
-                blocks_supported_status=True,
+                issue_code="HILLS_SUPPLIER_CODE_NOT_IN_SEED",
+                condition="The source contract can identify Hill's by supplier_id/name, but this clean checkout does not seed a verified Hill's supplier code.",
+                review_guidance="Confirm the supplier master code before recording a supplier_code on this contract.",
+                blocks_supported_status=False,
             )
         ],
         pipeline_mapping=pipeline_mapping(

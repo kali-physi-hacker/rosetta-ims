@@ -8,6 +8,11 @@
   "effective_to": null,
   "evidence": [
     {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+      "reference": "external-sample:Hill's.pdf"
+    },
+    {
       "evidence_type": "LEGACY_YAML_ONLY",
       "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
       "reference": "apps/api/catalogue_contracts/hills.yaml"
@@ -35,6 +40,11 @@
       "constant_value": null,
       "description": "Stable Hill's product code.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
@@ -73,6 +83,11 @@
       "description": "Joined product range, life stage, and product description.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/hills.yaml"
@@ -105,6 +120,11 @@
       "constant_value": null,
       "description": "Raw size/content string; may contain content measure or a case-prefix plus content measure.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
@@ -139,6 +159,11 @@
       "description": "Supplier cost source field used by the legacy parser.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/hills.yaml"
@@ -171,6 +196,11 @@
       "constant_value": null,
       "description": "Recommended retail price when present.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
@@ -205,6 +235,11 @@
       "description": "Order multiple; never proof for price divisor.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/hills.yaml"
@@ -237,6 +272,11 @@
       "constant_value": "Hill's",
       "description": "Single-brand catalogue constant.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
@@ -271,6 +311,11 @@
       "description": "Feline/Canine section banners map to cat/dog.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/hills.yaml"
@@ -303,6 +348,11 @@
       "constant_value": null,
       "description": "Prescription Diet vs Science Diet segment cue from the product range.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
@@ -337,6 +387,11 @@
       "description": "Current parser treats Hill's price-list rows as Food.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/hills.yaml"
@@ -367,10 +422,10 @@
   "format_name": "Hill's Science Diet PDF price list",
   "known_ambiguities": [
     {
-      "blocks_supported_status": true,
-      "condition": "The repository contains parser fixtures but not the source PDF sample.",
-      "issue_code": "HILLS_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
-      "review_guidance": "Attach the real Hill's source catalogue and confirm headers before promoting to SUPPORTED."
+      "blocks_supported_status": false,
+      "condition": "The source contract can identify Hill's by supplier_id/name, but this clean checkout does not seed a verified Hill's supplier code.",
+      "issue_code": "HILLS_SUPPLIER_CODE_NOT_IN_SEED",
+      "review_guidance": "Confirm the supplier master code before recording a supplier_code on this contract."
     }
   ],
   "legacy_yaml_reference": "apps/api/catalogue_contracts/hills.yaml",
@@ -451,13 +506,13 @@
     "autoswap_cost_rrp_allowed": false,
     "cost_source_field": "cost",
     "currency": "USD",
-    "notes": "Parser tests establish per-sellable-unit behavior, but no raw source sample is committed.",
+    "notes": "Source sample and parser tests establish Gross Wholesale Price as a per sellable unit price.",
     "null_cost_markers": [],
     "price_basis": {
       "code": "UNIT",
       "label": null
     },
-    "price_basis_status": "PARTIALLY_VERIFIED",
+    "price_basis_status": "VERIFIED",
     "rrp_source_field": "rrp"
   },
   "schema_version": "catalogue.supplier_source_contract.v1",
@@ -497,7 +552,7 @@
       {
         "header_row": null,
         "name": "price_rows",
-        "notes": "No raw PDF sample is checked into the repository; region details come from legacy config and parser tests.",
+        "notes": "Raw PDF sample was supplied externally; region details are captured from source text plus legacy config and parser tests.",
         "selector": "Bilingual PDF product tables with Product Code, product description, size, wholesale, retail, and order multiple columns."
       }
     ]
@@ -507,13 +562,18 @@
     "supplier_id": 14,
     "supplier_name": "Hill's"
   },
-  "support_status": "PARTIALLY_VERIFIED",
+  "support_status": "SUPPORTED",
   "updated_at": null,
   "updated_by": null,
   "validation_rules": [
     {
       "description": "Wholesale cost should be lower than RRP when both are present.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
@@ -544,6 +604,11 @@
     {
       "description": "Order multiple must be positive when present.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+          "reference": "external-sample:Hill's.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",

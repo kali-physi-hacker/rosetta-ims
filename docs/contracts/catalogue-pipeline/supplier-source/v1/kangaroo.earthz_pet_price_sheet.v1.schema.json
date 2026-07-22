@@ -957,13 +957,13 @@
       "type": "object"
     }
   },
-  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/supplier-source/v1/hills.price_list.v1.schema.json",
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/supplier-source/v1/kangaroo.earthz_pet_price_sheet.v1.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "JSON Schema derived from the authoritative SupplierSourceContractV1 Pydantic model for hills.price_list.v1@v1.",
+  "description": "JSON Schema derived from the authoritative SupplierSourceContractV1 Pydantic model for kangaroo.earthz_pet_price_sheet.v1@v1.",
   "properties": {
     "contract_id": {
-      "const": "hills.price_list.v1",
+      "const": "kangaroo.earthz_pet_price_sheet.v1",
       "description": "Stable supplier-format contract identity.",
       "title": "Contract Id",
       "type": "string"
@@ -1166,6 +1166,6 @@
     "created_at",
     "created_by"
   ],
-  "title": "hills.price_list.v1 Supplier Source Contract",
+  "title": "kangaroo.earthz_pet_price_sheet.v1 Supplier Source Contract",
   "type": "object"
 }

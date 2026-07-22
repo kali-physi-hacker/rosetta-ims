@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from schemas.catalogue_pipeline.common import SupplierReference, UnitOfMeasure
+from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import IssueSeverity, SourceFormat, UnitCode
 from schemas.catalogue_pipeline.supplier_contracts.common import (
     SUPPLIER_SOURCE_SCHEMA_VERSION,
@@ -20,6 +20,7 @@ from schemas.catalogue_pipeline.supplier_contracts.common import (
     SupplierDocumentType,
     SupplierSourceContractV1,
     SupplierSourceEvidenceType,
+    SupplierSourceReference,
     SupplierValidationRule,
 )
 from schemas.catalogue_pipeline.supplier_contracts.registry import register_supplier_source_contract
@@ -28,6 +29,11 @@ from ._shared import DECLARATION_CREATED_AT, DECLARATION_CREATED_BY, evidence, p
 
 
 _EVIDENCE = [
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+        "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+    ),
     evidence(
         SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
         "apps/api/catalogue_contracts/alfamedic.yaml",
@@ -56,11 +62,11 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
         schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
         contract_id="alfamedic.price_list.v1",
         contract_version="v1",
-        supplier=SupplierReference(supplier_id=1, supplier_name="Alfamedic", supplier_code="ALF"),
+        supplier=SupplierSourceReference(supplier_id=1, supplier_name="Alfamedic", supplier_code="ALF"),
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Alfamedic HK PDF price list",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_EVIDENCE,
         legacy_yaml_reference="apps/api/catalogue_contracts/alfamedic.yaml",
         source_structure=SourceStructure(
@@ -70,7 +76,7 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 SourceTableRegion(
                     name="therapeutic_class_price_rows",
                     selector="PDF tables grouped by therapeutic class",
-                    notes="No raw PDF source sample is committed; section detail comes from legacy config.",
+                    notes="Raw PDF sample was supplied externally; section detail is captured from source text plus legacy config.",
                 )
             ],
             required_headers=[
@@ -154,9 +160,9 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             cost_source_field="cost",
             rrp_source_field=None,
             price_basis=UnitOfMeasure(code=UnitCode.PIECE),
-            price_basis_status=SemanticResolutionStatus.PARTIALLY_VERIFIED,
+            price_basis_status=SemanticResolutionStatus.VERIFIED,
             null_cost_markers=["By Quote"],
-            notes="Current parser treats Price/Unit as per individual sellable piece and does not expose RRP.",
+            notes="Source sample and parser tests establish Price/Unit as the supplier price basis, with no RRP column.",
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
@@ -203,12 +209,6 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
         ],
         known_ambiguities=[
             AmbiguityRule(
-                issue_code="ALFAMEDIC_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
-                condition="The repository has parser fixtures but no raw Alfamedic source PDF.",
-                review_guidance="Attach the real Alfamedic price list and confirm Price/Unit and Packing/Unit semantics.",
-                blocks_supported_status=True,
-            ),
-            AmbiguityRule(
                 issue_code="ALFAMEDIC_MBB_TIER_BASIS_UNVERIFIED",
                 condition="Repeated order-code rows may represent bulk tiers, but tier condition and benefit semantics are not fully evidenced.",
                 review_guidance="Confirm how Alfamedic tier rows specify minimum quantity and discounted price before normalizing MBB.",
@@ -228,4 +228,3 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
         created_by=DECLARATION_CREATED_BY,
     )
 )
-

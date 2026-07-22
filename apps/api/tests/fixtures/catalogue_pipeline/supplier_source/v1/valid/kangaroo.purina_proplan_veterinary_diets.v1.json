@@ -1,0 +1,341 @@
+{
+  "contract_id": "kangaroo.purina_proplan_veterinary_diets.v1",
+  "contract_version": "v1",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
+  "document_type": "PRODUCT_LIST",
+  "effective_from": null,
+  "effective_to": null,
+  "evidence": [
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+      "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+    },
+    {
+      "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+      "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+      "reference": "user-supplied label: KPN Kangaroo"
+    }
+  ],
+  "fields": [
+    {
+      "aliases": [
+        "SKU#",
+        "OLD SKU# > NEW SKU#"
+      ],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Purina SKU shown in the product row.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "field_key": "supplier_sku",
+      "requirement": "REQUIRED",
+      "role": "SUPPLIER_SKU",
+      "source_column": "SKU#",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "English/Chinese product name preceding the SKU line.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "field_key": "description",
+      "requirement": "REQUIRED",
+      "role": "PRODUCT_NAME",
+      "source_column": null,
+      "source_path": "product row text above SKU#"
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Case configuration such as 1x6 or 1x24.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "field_key": "packs_per_case",
+      "requirement": "REQUIRED",
+      "role": "PACKAGING",
+      "source_column": "Packs / Case",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Printed pack size and content measure.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "field_key": "pack_size",
+      "requirement": "REQUIRED",
+      "role": "PACKAGING",
+      "source_column": "Size",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Supplier price per pack.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "field_key": "cost",
+      "requirement": "REQUIRED",
+      "role": "SOURCE_PRICE",
+      "source_column": "Supply Price / Pack HK$",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Recommended retail price per pack or case, as printed.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "field_key": "rrp",
+      "requirement": "OPTIONAL",
+      "role": "RRP",
+      "source_column": "Retail Price / Pack HK$",
+      "source_path": null
+    },
+    {
+      "aliases": [],
+      "composed_from": [],
+      "constant_value": null,
+      "description": "Effective-from footer text, observed as DEC 2024.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "field_key": "effective_date",
+      "requirement": "OPTIONAL",
+      "role": "EFFECTIVE_DATE",
+      "source_column": null,
+      "source_path": "page footer"
+    }
+  ],
+  "format_name": "Purina Pro Plan Veterinary Diets Product List",
+  "known_ambiguities": [
+    {
+      "blocks_supported_status": true,
+      "condition": "Some wet-can rows print retail as case and per-can values while supply price is per pack.",
+      "issue_code": "KANGAROO_PROPLAN_RETAIL_BASIS_VARIES",
+      "review_guidance": "Create row fixtures for dry, supplement, and wet-can rows before promotion to SUPPORTED."
+    }
+  ],
+  "legacy_yaml_reference": null,
+  "mbb": {
+    "benefit_patterns": [],
+    "condition_patterns": [],
+    "notes": null,
+    "requires_validation_issue_when": [],
+    "source_fields": [],
+    "supported_scopes": []
+  },
+  "metadata": {},
+  "packaging": {
+    "break_pack_allowed": null,
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "interpretation_rules": [
+      "Treat Packs / Case as case configuration, not proof that supplier requires case-only purchasing.",
+      "Content measures such as 5.5oz (156g) are not sellable-unit counts."
+    ],
+    "minimum_order_source_field": null,
+    "order_increment_source_field": null,
+    "packaging_source_field": "pack_size",
+    "price_basis": {
+      "code": "PACK",
+      "label": null
+    },
+    "purchase_uom": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
+    "unresolved_semantics": [
+      "Order increment and break-pack permission are not proven by the source sample."
+    ]
+  },
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.raw_observation.v1",
+    "raw_observation_fields": [
+      "supplier_sku",
+      "description",
+      "packs_per_case",
+      "pack_size",
+      "cost",
+      "rrp",
+      "effective_date"
+    ],
+    "staging_item_contract_id": "catalogue.staging_item.v1",
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "packs_per_case",
+      "pack_size",
+      "cost",
+      "rrp",
+      "effective_date"
+    ],
+    "staging_raw_field_keys": [
+      "supplier_sku",
+      "description",
+      "packs_per_case",
+      "pack_size",
+      "cost",
+      "rrp",
+      "effective_date"
+    ]
+  },
+  "pricing": {
+    "autoswap_cost_rrp_allowed": false,
+    "cost_source_field": "cost",
+    "currency": "HKD",
+    "notes": "Source header states Supply Price / Pack HK$; wet-can retail values can be printed as case and per-can values and need parser fixtures.",
+    "null_cost_markers": [],
+    "price_basis": {
+      "code": "PACK",
+      "label": null
+    },
+    "price_basis_status": "PARTIALLY_VERIFIED",
+    "rrp_source_field": "rrp"
+  },
+  "schema_version": "catalogue.supplier_source_contract.v1",
+  "source_format": "PDF_TABLE",
+  "source_structure": {
+    "expected_sections": [
+      "Purina Pro Plan Veterinary Supplements",
+      "Purina Pro Plan Veterinary Diets Canine Formula",
+      "Purina Pro Plan Veterinary Diets Feline Formula"
+    ],
+    "expected_sheet_names": [],
+    "optional_headers": [
+      "Retail Price / Pack HK$",
+      "Effective from DEC 2024"
+    ],
+    "required_headers": [
+      "SKU#",
+      "Packs / Case",
+      "Size",
+      "Supply Price / Pack HK$"
+    ],
+    "row_eligibility_rules": [
+      "Rows with SKU# and Supply Price / Pack are candidate catalogue rows."
+    ],
+    "skip_rules": [],
+    "source_format": "PDF_TABLE",
+    "source_location_expectations": [
+      "page number",
+      "section heading",
+      "row group",
+      "source column"
+    ],
+    "table_regions": [
+      {
+        "header_row": null,
+        "name": "proplan_product_rows",
+        "notes": "Extracted text is table-like but product names span multiple lines.",
+        "selector": "Rows containing SKU#, Packs / Case, Size, Supply Price / Pack HK$, and Retail Price / Pack HK$"
+      }
+    ]
+  },
+  "supplier": {
+    "supplier_code": "KPN",
+    "supplier_id": null,
+    "supplier_name": "Kangaroo Pet Nutrition Ltd"
+  },
+  "support_status": "PARTIALLY_VERIFIED",
+  "updated_at": null,
+  "updated_by": null,
+  "validation_rules": [
+    {
+      "description": "Supply price should be below retail price when both are comparable pack prices.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf"
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+          "reference": "user-supplied label: KPN Kangaroo"
+        }
+      ],
+      "issue_code": "KANGAROO_PROPLAN_COST_RRP_REVIEW",
+      "review_guidance": "Confirm whether retail was printed per pack, per case, or per can before applying this as a blocking rule.",
+      "rule_id": "kangaroo_proplan.cost_below_rrp",
+      "severity": "WARNING",
+      "source_expression": "cost_price < rrp"
+    }
+  ]
+}

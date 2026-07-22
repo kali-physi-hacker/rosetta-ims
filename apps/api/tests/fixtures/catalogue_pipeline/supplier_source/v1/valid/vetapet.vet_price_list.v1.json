@@ -8,6 +8,11 @@
   "effective_to": null,
   "evidence": [
     {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+      "reference": "external-sample:Vetapet.pdf"
+    },
+    {
       "evidence_type": "LEGACY_YAML_ONLY",
       "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
       "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
@@ -30,6 +35,11 @@
       "constant_value": null,
       "description": "Vetapet code number.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
@@ -59,6 +69,11 @@
       "description": "Printed product name.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
@@ -86,6 +101,11 @@
       "constant_value": null,
       "description": "Raw size/packaging text; may express content measure, pack description, or both.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
@@ -115,6 +135,11 @@
       "description": "Wholesale price field.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
@@ -142,6 +167,11 @@
       "constant_value": null,
       "description": "Suggested retail or retail price field.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
@@ -171,6 +201,11 @@
       "description": "Species cue from product name when present.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
@@ -198,6 +233,11 @@
       "constant_value": "vet",
       "description": "Vetapet catalogue segment split.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
@@ -227,6 +267,11 @@
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
         {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
+        {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
           "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
@@ -253,9 +298,9 @@
   "known_ambiguities": [
     {
       "blocks_supported_status": true,
-      "condition": "The repository has parser fixtures but no raw Vetapet Vet source PDF.",
-      "issue_code": "VETAPET_VET_SOURCE_SAMPLE_REQUIRED_FOR_SUPPORTED",
-      "review_guidance": "Attach the real Vetapet Vet catalogue and confirm wholesale/RRP and packaging headers."
+      "condition": "The supplied Vetapet PDF contains both Unit Price tables and Wholesale/Retail/Terms tables.",
+      "issue_code": "VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
+      "review_guidance": "Decide whether to split Vetapet into multiple supplier-format contracts or add typed per-section interpretation rules before production selection."
     }
   ],
   "legacy_yaml_reference": "apps/api/catalogue_contracts/vetapet_vet.yaml",
@@ -328,7 +373,7 @@
     "autoswap_cost_rrp_allowed": true,
     "cost_source_field": "cost",
     "currency": "HKD",
-    "notes": "Autoswap behavior is covered by parser tests; price basis still lacks raw-source confirmation.",
+    "notes": "The source PDF confirms multiple price layouts. Wholesale/Retail sections align with parser tests; Unit Price sections need a dedicated parser rule before production use.",
     "null_cost_markers": [],
     "price_basis": {
       "code": "UNIT",
@@ -341,6 +386,8 @@
   "source_format": "PDF_TABLE",
   "source_structure": {
     "expected_sections": [
+      "Part A Drugs",
+      "Part B Supplements",
       "IVD",
       "Dermoscent",
       "Chung-Li",
@@ -348,14 +395,17 @@
     ],
     "expected_sheet_names": [],
     "optional_headers": [
+      "PACKING PER UNIT",
+      "UNIT PRICE",
+      "WHOLESALE PRICE",
+      "RETAIL PRICE",
+      "TERMS",
       "SIZE / PACK / 重量",
-      "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
-      "TERMS"
+      "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價"
     ],
     "required_headers": [
-      "CODE NO / 編號",
-      "PRODUCT NAME / 產品名稱",
-      "WHOLESALE PRICE / 批發價"
+      "CODE NO",
+      "PRODUCT NAME"
     ],
     "row_eligibility_rules": [
       "One product row per code/price entry."
@@ -371,9 +421,15 @@
     "table_regions": [
       {
         "header_row": null,
-        "name": "vet_brand_sections",
-        "notes": "No raw PDF source sample is committed; examples come from parser tests and YAML comments.",
-        "selector": "Brand-section PDF tables"
+        "name": "vet_clinic_unit_price_sections",
+        "notes": "Observed in the supplied Vetapet.pdf early clinic sections.",
+        "selector": "CODE NO / PRODUCT NAME / PACKING PER UNIT / UNIT PRICE / REMARKS or TERMS"
+      },
+      {
+        "header_row": null,
+        "name": "vet_wholesale_retail_sections",
+        "notes": "Observed later in the supplied Vetapet.pdf and covered by current legacy YAML behavior.",
+        "selector": "CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS"
       }
     ]
   },
@@ -389,6 +445,11 @@
     {
       "description": "Wholesale should be below retail after any allowed autoswap.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
@@ -414,6 +475,11 @@
     {
       "description": "Wholesale cost must be positive when present.",
       "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+          "reference": "external-sample:Vetapet.pdf"
+        },
         {
           "evidence_type": "LEGACY_YAML_ONLY",
           "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",

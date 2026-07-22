@@ -13,7 +13,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from schemas.catalogue_pipeline.common import SupplierReference, UnitOfMeasure
+from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import IssueSeverity, MbbScope, SourceFormat
 
 
@@ -112,6 +112,24 @@ class EvidenceReference(SupplierSourceModel):
     evidence_type: SupplierSourceEvidenceType = Field(..., description="Kind of evidence available.")
     reference: str = Field(..., min_length=1, description="Repository path, test name, document, or source citation.")
     note: str | None = Field(None, description="Concise explanation of what this evidence proves or does not prove.")
+
+
+class SupplierSourceReference(SupplierSourceModel):
+    """Supplier identity for source contracts, allowing pre-reconciled supplier codes."""
+
+    supplier_id: int | None = Field(
+        None,
+        gt=0,
+        description="Current Rosetta numeric supplier ID when known.",
+    )
+    supplier_name: str = Field(..., min_length=1, description="Human-readable supplier name.")
+    supplier_code: str | None = Field(None, min_length=1, description="Stable supplier code or abbreviation when known.")
+
+    @model_validator(mode="after")
+    def _requires_id_or_code(self):
+        if self.supplier_id is None and not self.supplier_code:
+            raise ValueError("supplier source reference requires supplier_id or supplier_code")
+        return self
 
 
 class SourceTableRegion(SupplierSourceModel):
@@ -295,7 +313,7 @@ class SupplierSourceContractV1(SupplierSourceModel):
         description="Stable supplier-format contract identity, for example hills.price_list.v1.",
     )
     contract_version: Literal["v1"] = Field(..., description="Supplier-format major version.")
-    supplier: SupplierReference = Field(..., description="Supplier this source format belongs to.")
+    supplier: SupplierSourceReference = Field(..., description="Supplier this source format belongs to.")
     document_type: SupplierDocumentType = Field(..., description="Supplier document type.")
     format_name: str = Field(..., min_length=1, description="Human-readable source format name.")
     source_format: SourceFormat = Field(..., description="Physical source format.")
