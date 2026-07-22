@@ -33,7 +33,11 @@ A supplier-source contract identity is per supplier plus document format plus ma
 
 ## Runtime Boundary
 
-Runtime ingestion now uses `services/supplier_source_contract_runtime.py` as a small adapter over the Pydantic supplier-source registry. It selects exactly one `SUPPORTED` declaration by supplier ID, adds prompt guidance from that declaration, and applies only explicit runtime-safe semantics to the current flat ingestion payload. Hill's and Alfamedic are currently selected; the remaining declarations are not production-selected because they still need row fixtures, supplier-id reconciliation, or per-section parser rules.
+Runtime ingestion now uses `services/supplier_source_contract_runtime.py` as a small adapter over the Pydantic supplier-source registry. The authoritative resolver supports exact selection by `supplier_id`, `contract_id`, and `contract_version`; it verifies that the contract belongs to the supplied supplier and that the declaration is `SUPPORTED`. It never falls back from an unknown ID or unsupported version to another format.
+
+Supplier-only selection is allowed only when exactly one `SUPPORTED` declaration exists for the supplier. If no supported contract exists, runtime falls back to generic extraction only through the current compatibility wrapper. If multiple supported formats exist for a supplier, the resolver raises an ambiguity error and requires an explicit contract identity or a later document-format detection path.
+
+Current public upload and reparse callers still pass only the numeric supplier ID. Hill's and Alfamedic therefore remain compatible because each has exactly one supported registered format. Vetapet and KPN/Kangaroo declarations are not production-selected because they still need row fixtures, supplier-id reconciliation, or per-section parser rules. The current public API does not yet expose `contract_id` or `contract_version`; that integration point is intentionally deferred until the upload workflow can transport an explicit source-format identity.
 
 Future integration should:
 
@@ -60,22 +64,27 @@ Historical YAML-style mappings are insufficient for `SUPPORTED`. A format needs 
 
 The prompt referenced documentation for about 24 suppliers, but this clean checkout does not contain that full inventory. The local seed file lists nine starter suppliers, `supplier_import.py` can import larger external supplier sheets, and the domain dictionary records historical YAML-style extraction mappings that have now been removed from the repository. The table below reflects repository evidence plus the source samples supplied locally for CIS-103B follow-up.
 
-| Supplier | Document format | Evidence available | Historical YAML status | Proposed contract ID | Implementation status | Confidence/gap |
-|---|---|---|---|---|---|---|
-| Alfamedic | PDF price list | Real source catalogue sample; parser behavior; existing test extraction fixture; business/domain documentation | Removed; not a contract | `alfamedic.price_list.v1` | `SUPPORTED` | Real sample confirms headers and Price/Unit semantics; MBB tier semantics still need later runtime parsing evidence. |
-| Hill's | PDF price list | Real source catalogue sample; parser behavior; existing test extraction fixture; business/domain documentation | Removed; not a contract | `hills.price_list.v1` | `SUPPORTED` | Real sample confirms Gross Wholesale, Product Code, Size, Order Multiple, and effective-date layout; supplier code remains unasserted. |
-| C. Vetapet & Company / Vetapet Vet | Mixed PDF catalogue/price list | Real source catalogue sample; parser behavior; existing test extraction fixture | Removed; not a contract | `vetapet.vet_price_list.v1` | `PARTIALLY_VERIFIED` | Supplied PDF contains several table layouts (`UNIT PRICE`, `WHOLESALE/RETAIL/TERMS`, Chinese wholesale/retail); split or per-section parser rules needed. |
-| C. Vetapet & Company / Vetapet Non-Vet | PDF price list section | Real source catalogue sample; parser behavior | Removed; not a contract | `vetapet.non_vet_price_list.v1` | `PARTIALLY_VERIFIED` | Source confirms wholesale/retail labels, but price basis and representative non-vet row fixtures remain missing. |
-| Kangaroo Pet Nutrition Ltd / KPN | Mixed PDF catalogue | Real source catalogue sample; user-supplied supplier label | None | `kangaroo.mixed_price_catalogue.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; multiple table layouts need row fixtures before runtime selection. |
-| Kangaroo Pet Nutrition Ltd / KPN | Purina Pro Plan Veterinary Diets product list | Real source catalogue sample; user-supplied supplier label | None | `kangaroo.purina_proplan_veterinary_diets.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; wet-can retail basis varies and needs row fixtures. |
-| Kangaroo Pet Nutrition Ltd / KPN | Earthz Pet image-only price sheet | Real source catalogue sample; visual inspection | None | `kangaroo.earthz_pet_price_sheet.v1` | `UNVERIFIED` | No text layer; needs OCR/vision fixtures, bounding boxes, and price-basis confirmation. |
-| Arrowana Int'l Ltd | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Asia Vet Medical Limited | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Blue Pet Co | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| BuggyBix | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Caesars | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Etta International | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Happypaws Int'l Ltd | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| Supplier | Contract ID | Version | Document format | Status | Runtime selectable | Evidence | Known gaps |
+|---|---|---:|---|---|---|---|---|
+| Alfamedic | `alfamedic.price_list.v1` | `v1` | PDF price list | `SUPPORTED` | Yes, supplier ID `1` | Real source catalogue sample; parser behavior; existing test extraction fixture; business/domain documentation | MBB tier semantics still need later runtime parsing evidence. |
+| Hill's | `hills.price_list.v1` | `v1` | PDF price list | `SUPPORTED` | Yes, supplier ID `14` | Real source catalogue sample; parser behavior; existing test extraction fixture; business/domain documentation | Supplier code remains unasserted. |
+| C. Vetapet & Company / Vetapet Vet | `vetapet.vet_price_list.v1` | `v1` | Mixed PDF catalogue/price list | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; parser behavior; existing test extraction fixture | Several table layouts (`UNIT PRICE`, `WHOLESALE/RETAIL/TERMS`, Chinese wholesale/retail); split or per-section parser rules needed. |
+| C. Vetapet & Company / Vetapet Non-Vet | `vetapet.non_vet_price_list.v1` | `v1` | PDF price list section | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; parser behavior | Price basis and representative non-vet row fixtures remain missing. |
+| Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.mixed_price_catalogue.v1` | `v1` | Mixed PDF catalogue | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; user-supplied supplier label | Numeric supplier ID missing; multiple table layouts need row fixtures before runtime selection. |
+| Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.purina_proplan_veterinary_diets.v1` | `v1` | Purina Pro Plan Veterinary Diets product list | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; user-supplied supplier label | Numeric supplier ID missing; wet-can retail basis varies and needs row fixtures. |
+| Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.earthz_pet_price_sheet.v1` | `v1` | Earthz Pet image-only price sheet | `UNVERIFIED` | No | Real source catalogue sample; visual inspection | No text layer; needs OCR/vision fixtures, bounding boxes, and price-basis confirmation. |
+
+Additional local supplier names without enough source-format evidence remain unimplemented:
+
+| Supplier | Document format | Evidence available | Contract identity | Gap |
+|---|---|---|---|---|
+| Arrowana Int'l Ltd | Unknown | Missing | TBD | Need document type/version, source samples, parser fixtures, and business rules. |
+| Asia Vet Medical Limited | Unknown | Missing | TBD | Need document type/version, source samples, parser fixtures, and business rules. |
+| Blue Pet Co | Unknown | Missing | TBD | Need document type/version, source samples, parser fixtures, and business rules. |
+| BuggyBix | Unknown | Missing | TBD | Need document type/version, source samples, parser fixtures, and business rules. |
+| Caesars | Unknown | Missing | TBD | Need document type/version, source samples, parser fixtures, and business rules. |
+| Etta International | Unknown | Missing | TBD | Need document type/version, source samples, parser fixtures, and business rules. |
+| Happypaws Int'l Ltd | Unknown | Missing | TBD | Need document type/version, source samples, parser fixtures, and business rules. |
 
 ## Adding A Supplier Format
 

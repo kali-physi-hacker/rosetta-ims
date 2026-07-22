@@ -12,7 +12,7 @@ CIS-103B adds a separate supplier-source contract layer for incoming supplier ca
 
 | Boundary | Contract ID | Question answered | Main rule |
 |---|---|---|---|
-| Source extraction -> Raw Observation | `catalogue.raw_observation.v1` | What did extraction observe, and where? | Requires raw evidence and source location; no review/mastering facts. |
+| Source extraction -> Raw Observation | `catalogue.raw_observation.v1` | What did extraction observe, and where? | Requires raw evidence and a meaningful source locator; no review/mastering facts. |
 | Raw Observation -> Staging Catalogue Item | `catalogue.staging_item.v1` | What source fields were present, and what do we propose they mean? | Raw strings and proposed typed fields are separate. |
 | Staging -> Mastering/HITL | `catalogue.mastering_candidate.v1` | How might this item resolve into canonical and supplier-commercial entities? | It is a candidate; confirmed/approved assertions require lineage. |
 | Cross-cutting validation | `catalogue.validation_issue.v1` | What is uncertain, invalid, contradictory, or needs a business decision? | Blocking open issues prevent publication by definition. |
@@ -41,7 +41,7 @@ Use these names consistently:
 - Extraction Profile Contract: `catalogue.extraction_profile.v1`, the new typed/versioned Pydantic configuration contract.
 - Pipeline Contract: a Pydantic payload model defining a stage boundary.
 
-Current upload behavior uses `services/supplier_source_contract_runtime.py`, a Pydantic-backed adapter that selects supported supplier-source declarations from the registry. Future integration should continue validating extraction configuration through Pydantic models, not revive YAML files as contracts.
+Current upload behavior uses `services/supplier_source_contract_runtime.py`, a Pydantic-backed adapter that selects supported supplier-source declarations from the registry. Supplier-only runtime selection is compatible only when exactly one `SUPPORTED` source format exists for the supplier; multiple supported formats require an explicit `contract_id` and `contract_version` or a later format-detection path. Future integration should continue validating extraction configuration through Pydantic models, not revive YAML files as contracts.
 
 ## Versioning Rules
 
@@ -63,6 +63,8 @@ contract = model.model_validate(payload)
 ```
 
 All public models reject extra undeclared fields. Extensibility is explicit through fields such as `metadata`, `source_metadata`, or typed profile extension sections.
+
+`SourceLocation` must contain at least one meaningful locator, such as a 1-based page number, sheet name, 1-based row number, cell range, bounding box, or source-object key. Blank locator strings are rejected, bounding boxes require positive dimensions, and raw/staging/mastering lineage lists reject duplicate raw-observation IDs. These cross-field rules are enforced by the Pydantic models even when JSON Schema cannot express every invariant.
 
 ## JSON Schema Export
 
