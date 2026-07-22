@@ -1,411 +1,470 @@
 {
+  "schema_version": "catalogue.supplier_source_contract.v1",
   "contract_id": "alfamedic.price_list.v1",
   "contract_version": "v1",
-  "created_at": "2026-07-22T00:00:00Z",
-  "created_by": "cis-103b-catalogue-architecture",
+  "supplier": {
+    "supplier_id": 1,
+    "supplier_name": "Alfamedic",
+    "supplier_code": "ALF"
+  },
   "document_type": "PRICE_LIST",
+  "format_name": "Alfamedic HK PDF price list",
+  "source_format": "PDF_TABLE",
+  "support_status": "SUPPORTED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-      "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-      "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-    },
-    {
-      "evidence_type": "LEGACY_YAML_ONLY",
-      "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-      "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+      "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+      "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
     },
     {
       "evidence_type": "PARSER_BEHAVIOR",
-      "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-      "reference": "apps/api/services/catalogue_contract.py"
+      "reference": "apps/api/services/catalogue_contract.py",
+      "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
     },
     {
       "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-      "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-      "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+      "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+      "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
     },
     {
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-      "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-      "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+      "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+      "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
     }
   ],
+  "source_structure": {
+    "source_format": "PDF_TABLE",
+    "expected_sheet_names": [],
+    "expected_sections": [
+      "therapeutic class sections"
+    ],
+    "table_regions": [
+      {
+        "name": "therapeutic_class_price_rows",
+        "selector": "PDF tables grouped by therapeutic class",
+        "header_row": null,
+        "notes": "Raw PDF sample was supplied externally; section detail is captured from source text and parser behavior."
+      }
+    ],
+    "required_headers": [
+      "Order Code",
+      "Product Name",
+      "Brand",
+      "Packing / Unit",
+      "Price/ Unit (HKD)"
+    ],
+    "optional_headers": [],
+    "row_eligibility_rules": [
+      "Catalogue item rows contain an order code and product name."
+    ],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "page number",
+      "section header",
+      "table row",
+      "source column"
+    ]
+  },
   "fields": [
     {
-      "aliases": [],
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "Order Code",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Stable Alfamedic order code.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "supplier_sku",
-      "requirement": "REQUIRED",
-      "role": "SUPPLIER_SKU",
-      "source_column": "Order Code",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": "Product Name",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Printed product name.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "description",
-      "requirement": "REQUIRED",
-      "role": "PRODUCT_NAME",
-      "source_column": "Product Name",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "brand",
+      "role": "BRAND",
+      "requirement": "OPTIONAL",
+      "source_column": "Brand",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Printed brand column when present.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "brand",
-      "requirement": "OPTIONAL",
-      "role": "BRAND",
-      "source_column": "Brand",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "REQUIRED",
+      "source_column": "Packing / Unit",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Raw packing text; used by the current parser to derive order increment only.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "pack_size",
-      "requirement": "REQUIRED",
-      "role": "PACKAGING",
-      "source_column": "Packing / Unit",
-      "source_path": null
+      ]
     },
     {
+      "field_key": "cost",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "Price/ Unit (HKD)",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "Price/ Unit (HKD)",
         "Price/Unit (HKD)"
       ],
-      "composed_from": [],
-      "constant_value": null,
       "description": "Supplier cost field; By Quote is retained as a null-cost/manual-quote case.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "cost",
-      "requirement": "REQUIRED",
-      "role": "SOURCE_PRICE",
-      "source_column": "Price/ Unit (HKD)",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "segment",
+      "role": "SEGMENT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": null,
       "composed_from": [],
       "constant_value": "vet",
+      "aliases": [],
       "description": "Legacy configuration classifies this catalogue as vet segment.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "segment",
-      "requirement": "OPTIONAL",
-      "role": "SEGMENT",
-      "source_column": null,
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "category",
+      "role": "CATEGORY",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "section_header",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Therapeutic section header; Medicine remains a legacy default requiring business review.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "category",
-      "requirement": "OPTIONAL",
-      "role": "CATEGORY",
-      "source_column": null,
-      "source_path": "section_header"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "bulk_tier_rows",
+      "role": "MBB_TEXT",
+      "requirement": "CONDITIONALLY_REQUIRED",
+      "source_column": null,
+      "source_path": "multiple rows sharing an order code",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Legacy config notes multi-row tiers; no checked-in source examples prove all tier semantics.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ],
-      "field_key": "bulk_tier_rows",
-      "requirement": "CONDITIONALLY_REQUIRED",
-      "role": "MBB_TEXT",
-      "source_column": null,
-      "source_path": "multiple rows sharing an order code"
+      ]
     }
   ],
-  "format_name": "Alfamedic HK PDF price list",
-  "known_ambiguities": [
-    {
-      "blocks_supported_status": false,
-      "condition": "Repeated order-code rows may represent bulk tiers, but tier condition and benefit semantics are not fully evidenced.",
-      "issue_code": "ALFAMEDIC_MBB_TIER_BASIS_UNVERIFIED",
-      "review_guidance": "Confirm how Alfamedic tier rows specify minimum quantity and discounted price before normalizing MBB."
-    }
-  ],
-  "legacy_yaml_reference": "apps/api/catalogue_contracts/alfamedic.yaml",
-  "mbb": {
-    "benefit_patterns": [
-      "discounted unit price tiers"
-    ],
-    "condition_patterns": [
-      "multiple rows for the same order code"
-    ],
-    "notes": "Multi-row bulk tiers require later supplier-specific parsing evidence before automated normalization.",
-    "requires_validation_issue_when": [
-      "Rows with repeated order codes do not clearly state tier quantity, basis, or effective period."
-    ],
-    "source_fields": [
-      "bulk_tier_rows"
-    ],
-    "supported_scopes": []
-  },
-  "metadata": {},
-  "packaging": {
-    "break_pack_allowed": null,
-    "content_measure_source_field": null,
-    "content_measure_uom": null,
-    "interpretation_rules": [
-      "Leading count in Packing / Unit is interpreted as supplier order increment, not a price divisor.",
-      "Price basis remains per sellable piece in current parser behavior."
-    ],
-    "minimum_order_source_field": null,
-    "order_increment_source_field": "pack_size",
-    "packaging_source_field": "pack_size",
+  "pricing": {
+    "cost_source_field": "cost",
+    "rrp_source_field": null,
+    "currency": "HKD",
     "price_basis": {
       "code": "PIECE",
       "label": null
     },
+    "price_basis_status": "VERIFIED",
+    "autoswap_cost_rrp_allowed": false,
+    "null_cost_markers": [
+      "By Quote"
+    ],
+    "notes": "Source sample and parser tests establish Price/Unit as the supplier price basis, with no RRP column."
+  },
+  "packaging": {
+    "packaging_source_field": "pack_size",
     "purchase_uom": null,
+    "price_basis": {
+      "code": "PIECE",
+      "label": null
+    },
     "sellable_unit_uom": null,
     "sellable_units_per_purchase_unit_source_field": null,
+    "content_measure_source_field": null,
+    "content_measure_uom": null,
+    "order_increment_source_field": "pack_size",
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
+    "interpretation_rules": [
+      "Leading count in Packing / Unit is interpreted as supplier order increment, not a price divisor.",
+      "Price basis remains per sellable piece in current parser behavior."
+    ],
     "unresolved_semantics": [
       "Purchase UOM and break-pack permission are not proven by checked-in source evidence.",
       "Packing text may contain content/count language and must not be treated as canonical packaging without review."
     ]
   },
-  "pipeline_mapping": {
-    "raw_observation_contract_id": "catalogue.raw_observation.v1",
-    "raw_observation_fields": [
-      "supplier_sku",
-      "description",
-      "brand",
-      "pack_size",
-      "cost",
-      "segment",
-      "category",
+  "mbb": {
+    "source_fields": [
       "bulk_tier_rows"
     ],
+    "supported_scopes": [],
+    "condition_patterns": [
+      "multiple rows for the same order code"
+    ],
+    "benefit_patterns": [
+      "discounted unit price tiers"
+    ],
+    "requires_validation_issue_when": [
+      "Rows with repeated order codes do not clearly state tier quantity, basis, or effective period."
+    ],
+    "notes": "Multi-row bulk tiers require later supplier-specific parsing evidence before automated normalization."
+  },
+  "validation_rules": [
+    {
+      "rule_id": "alfamedic.cost_positive_when_present",
+      "description": "Numeric cost must be positive; By Quote is null and reviewed manually.",
+      "source_expression": "cost_price > 0",
+      "severity": "ERROR",
+      "issue_code": "ALFAMEDIC_COST_NOT_POSITIVE",
+      "review_guidance": "Confirm whether the row is By Quote or whether the supplier cost was misread.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ]
+    },
+    {
+      "rule_id": "alfamedic.order_increment_positive",
+      "description": "Parsed order increment must be positive when present.",
+      "source_expression": "order_increment_qty >= 1",
+      "severity": "ERROR",
+      "issue_code": "ALFAMEDIC_ORDER_INCREMENT_NOT_POSITIVE",
+      "review_guidance": "Confirm the Packing / Unit text before approving the ordering terms.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost",
+          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ]
+    }
+  ],
+  "known_ambiguities": [
+    {
+      "issue_code": "ALFAMEDIC_MBB_TIER_BASIS_UNVERIFIED",
+      "condition": "Repeated order-code rows may represent bulk tiers, but tier condition and benefit semantics are not fully evidenced.",
+      "review_guidance": "Confirm how Alfamedic tier rows specify minimum quantity and discounted price before normalizing MBB.",
+      "blocks_supported_status": false
+    }
+  ],
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.raw_observation.v1",
     "staging_item_contract_id": "catalogue.staging_item.v1",
-    "staging_proposed_field_keys": [
+    "raw_observation_fields": [
       "supplier_sku",
       "description",
       "brand",
@@ -424,136 +483,21 @@
       "segment",
       "category",
       "bulk_tier_rows"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "brand",
+      "pack_size",
+      "cost",
+      "segment",
+      "category",
+      "bulk_tier_rows"
     ]
   },
-  "pricing": {
-    "autoswap_cost_rrp_allowed": false,
-    "cost_source_field": "cost",
-    "currency": "HKD",
-    "notes": "Source sample and parser tests establish Price/Unit as the supplier price basis, with no RRP column.",
-    "null_cost_markers": [
-      "By Quote"
-    ],
-    "price_basis": {
-      "code": "PIECE",
-      "label": null
-    },
-    "price_basis_status": "VERIFIED",
-    "rrp_source_field": null
-  },
-  "schema_version": "catalogue.supplier_source_contract.v1",
-  "source_format": "PDF_TABLE",
-  "source_structure": {
-    "expected_sections": [
-      "therapeutic class sections"
-    ],
-    "expected_sheet_names": [],
-    "optional_headers": [],
-    "required_headers": [
-      "Order Code",
-      "Product Name",
-      "Brand",
-      "Packing / Unit",
-      "Price/ Unit (HKD)"
-    ],
-    "row_eligibility_rules": [
-      "Catalogue item rows contain an order code and product name."
-    ],
-    "skip_rules": [],
-    "source_format": "PDF_TABLE",
-    "source_location_expectations": [
-      "page number",
-      "section header",
-      "table row",
-      "source column"
-    ],
-    "table_regions": [
-      {
-        "header_row": null,
-        "name": "therapeutic_class_price_rows",
-        "notes": "Raw PDF sample was supplied externally; section detail is captured from source text plus legacy config.",
-        "selector": "PDF tables grouped by therapeutic class"
-      }
-    ]
-  },
-  "supplier": {
-    "supplier_code": "ALF",
-    "supplier_id": 1,
-    "supplier_name": "Alfamedic"
-  },
-  "support_status": "SUPPORTED",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
   "updated_at": null,
   "updated_by": null,
-  "validation_rules": [
-    {
-      "description": "Numeric cost must be positive; By Quote is null and reviewed manually.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
-        },
-        {
-          "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
-        },
-        {
-          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
-        },
-        {
-          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
-        }
-      ],
-      "issue_code": "ALFAMEDIC_COST_NOT_POSITIVE",
-      "review_guidance": "Confirm whether the row is By Quote or whether the supplier cost was misread.",
-      "rule_id": "alfamedic.cost_positive_when_present",
-      "severity": "ERROR",
-      "source_expression": "cost_price > 0"
-    },
-    {
-      "description": "Parsed order increment must be positive when present.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
-          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/alfamedic.yaml"
-        },
-        {
-          "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
-          "reference": "apps/api/services/catalogue_contract.py"
-        },
-        {
-          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Alfamedic rows for per-piece price behavior and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_alfamedic_parses_order_multiple_and_keeps_per_unit_cost"
-        },
-        {
-          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
-        }
-      ],
-      "issue_code": "ALFAMEDIC_ORDER_INCREMENT_NOT_POSITIVE",
-      "review_guidance": "Confirm the Packing / Unit text before approving the ordering terms.",
-      "rule_id": "alfamedic.order_increment_positive",
-      "severity": "ERROR",
-      "source_expression": "order_increment_qty >= 1"
-    }
-  ]
+  "metadata": {}
 }

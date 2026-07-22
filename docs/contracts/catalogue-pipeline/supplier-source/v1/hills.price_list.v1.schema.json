@@ -779,7 +779,6 @@
         "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
         "PARSER_BEHAVIOR",
         "BUSINESS_DOMAIN_DOCUMENTATION",
-        "LEGACY_YAML_ONLY",
         "MISSING"
       ],
       "title": "SupplierSourceEvidenceType",
@@ -1049,19 +1048,6 @@
       },
       "title": "Known Ambiguities",
       "type": "array"
-    },
-    "legacy_yaml_reference": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Legacy extraction configuration path, if one exists.",
-      "title": "Legacy Yaml Reference"
     },
     "mbb": {
       "$ref": "#/$defs/MbbSourceSemantics",

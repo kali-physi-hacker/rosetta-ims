@@ -1,221 +1,262 @@
 {
+  "schema_version": "catalogue.supplier_source_contract.v1",
   "contract_id": "kangaroo.earthz_pet_price_sheet.v1",
   "contract_version": "v1",
-  "created_at": "2026-07-22T00:00:00Z",
-  "created_by": "cis-103b-catalogue-architecture",
+  "supplier": {
+    "supplier_id": null,
+    "supplier_name": "Kangaroo Pet Nutrition Ltd",
+    "supplier_code": "KPN"
+  },
   "document_type": "PRICE_LIST",
+  "format_name": "Earthz Pet image-only price sheet",
+  "source_format": "PDF",
+  "support_status": "UNVERIFIED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-      "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
-      "reference": "external-sample:(Kangaroo) Earthz Pet.pdf"
+      "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
+      "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
     },
     {
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-      "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-      "reference": "user-supplied label: KPN Kangaroo"
+      "reference": "user-supplied label: KPN Kangaroo",
+      "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
     }
   ],
+  "source_structure": {
+    "source_format": "PDF",
+    "expected_sheet_names": [],
+    "expected_sections": [
+      "Earthz Pet price rows"
+    ],
+    "table_regions": [
+      {
+        "name": "earthz_visual_price_rows",
+        "selector": "Image-only visual table with sku#, wholesale price, recommended retail price, size, and pack-count text",
+        "header_row": null,
+        "notes": "pdftotext produced no text; OCR/vision extraction is required for runtime interpretation."
+      }
+    ],
+    "required_headers": [
+      "sku#",
+      "\u6279\u767c\u50f9",
+      "\u5efa\u8b70\u96f6\u552e\u50f9"
+    ],
+    "optional_headers": [
+      "size",
+      "pack count",
+      "promotion text"
+    ],
+    "row_eligibility_rules": [
+      "Rows require OCR/vision extraction; no text-layer row parser can be assumed."
+    ],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "page number",
+      "visual row group",
+      "bounding box"
+    ]
+  },
   "fields": [
     {
-      "aliases": [],
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "sku#",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Earthz visual SKU column.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
-          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf"
+          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
+          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "supplier_sku",
-      "requirement": "REQUIRED",
-      "role": "SUPPLIER_SKU",
-      "source_column": "sku#",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": null,
+      "source_path": "visual product heading",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Earthz product/flavour heading.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
-          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf"
+          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
+          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "description",
-      "requirement": "REQUIRED",
-      "role": "PRODUCT_NAME",
-      "source_column": null,
-      "source_path": "visual product heading"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "visual size and pack-count text",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Size such as 35ml/50ml and pack text such as 5-bottle pack.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
-          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf"
+          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
+          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "pack_size",
-      "requirement": "OPTIONAL",
-      "role": "PACKAGING",
-      "source_column": null,
-      "source_path": "visual size and pack-count text"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "cost",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "\u6279\u767c\u50f9",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Wholesale price column.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
-          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf"
+          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
+          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "cost",
-      "requirement": "REQUIRED",
-      "role": "SOURCE_PRICE",
-      "source_column": "批發價",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "rrp",
+      "role": "RRP",
+      "requirement": "OPTIONAL",
+      "source_column": "\u5efa\u8b70\u96f6\u552e\u50f9",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Recommended retail price column.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
-          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf"
+          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
+          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "rrp",
-      "requirement": "OPTIONAL",
-      "role": "RRP",
-      "source_column": "建議零售價",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "promotion_text",
+      "role": "MBB_TEXT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "visual footer",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Visual promotion text, observed as buy 9 get 1.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
-          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf"
+          "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
+          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "promotion_text",
-      "requirement": "OPTIONAL",
-      "role": "MBB_TEXT",
-      "source_column": null,
-      "source_path": "visual footer"
+      ]
     }
   ],
-  "format_name": "Earthz Pet image-only price sheet",
-  "known_ambiguities": [
-    {
-      "blocks_supported_status": true,
-      "condition": "The source PDF has no text layer and requires OCR/vision extraction.",
-      "issue_code": "KANGAROO_EARTHZ_IMAGE_ONLY",
-      "review_guidance": "Create OCR/vision fixtures with bounding boxes and confirm price basis before promotion."
-    }
-  ],
-  "legacy_yaml_reference": null,
-  "mbb": {
-    "benefit_patterns": [
-      "free quantity"
-    ],
-    "condition_patterns": [
-      "buy quantity get free quantity"
-    ],
-    "notes": null,
-    "requires_validation_issue_when": [
-      "The qualifying scope and mix-and-match rules are not explicit."
-    ],
-    "source_fields": [
-      "promotion_text"
-    ],
-    "supported_scopes": []
+  "pricing": {
+    "cost_source_field": "cost",
+    "rrp_source_field": "rrp",
+    "currency": "HKD",
+    "price_basis": null,
+    "price_basis_status": "UNRESOLVED",
+    "autoswap_cost_rrp_allowed": false,
+    "null_cost_markers": [],
+    "notes": "The image shows wholesale/retail prices, but whether the price is per bottle or pack is not machine-verified."
   },
-  "metadata": {},
   "packaging": {
-    "break_pack_allowed": null,
+    "packaging_source_field": "pack_size",
+    "purchase_uom": null,
+    "price_basis": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
     "content_measure_uom": null,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
     "interpretation_rules": [
       "Treat ml values as content measure.",
       "Do not treat 5-bottle pack text as order multiple without supplier confirmation."
     ],
-    "minimum_order_source_field": null,
-    "order_increment_source_field": null,
-    "packaging_source_field": "pack_size",
-    "price_basis": null,
-    "purchase_uom": null,
-    "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
     "unresolved_semantics": [
       "Price basis, order increment, and break-pack permission are unresolved."
     ]
   },
-  "pipeline_mapping": {
-    "raw_observation_contract_id": "catalogue.raw_observation.v1",
-    "raw_observation_fields": [
-      "supplier_sku",
-      "description",
-      "pack_size",
-      "cost",
-      "rrp",
+  "mbb": {
+    "source_fields": [
       "promotion_text"
     ],
+    "supported_scopes": [],
+    "condition_patterns": [
+      "buy quantity get free quantity"
+    ],
+    "benefit_patterns": [
+      "free quantity"
+    ],
+    "requires_validation_issue_when": [
+      "The qualifying scope and mix-and-match rules are not explicit."
+    ],
+    "notes": null
+  },
+  "validation_rules": [],
+  "known_ambiguities": [
+    {
+      "issue_code": "KANGAROO_EARTHZ_IMAGE_ONLY",
+      "condition": "The source PDF has no text layer and requires OCR/vision extraction.",
+      "review_guidance": "Create OCR/vision fixtures with bounding boxes and confirm price basis before promotion.",
+      "blocks_supported_status": true
+    }
+  ],
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.raw_observation.v1",
     "staging_item_contract_id": "catalogue.staging_item.v1",
-    "staging_proposed_field_keys": [
+    "raw_observation_fields": [
       "supplier_sku",
       "description",
       "pack_size",
@@ -230,61 +271,19 @@
       "cost",
       "rrp",
       "promotion_text"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "promotion_text"
     ]
   },
-  "pricing": {
-    "autoswap_cost_rrp_allowed": false,
-    "cost_source_field": "cost",
-    "currency": "HKD",
-    "notes": "The image shows wholesale/retail prices, but whether the price is per bottle or pack is not machine-verified.",
-    "null_cost_markers": [],
-    "price_basis": null,
-    "price_basis_status": "UNRESOLVED",
-    "rrp_source_field": "rrp"
-  },
-  "schema_version": "catalogue.supplier_source_contract.v1",
-  "source_format": "PDF",
-  "source_structure": {
-    "expected_sections": [
-      "Earthz Pet price rows"
-    ],
-    "expected_sheet_names": [],
-    "optional_headers": [
-      "size",
-      "pack count",
-      "promotion text"
-    ],
-    "required_headers": [
-      "sku#",
-      "批發價",
-      "建議零售價"
-    ],
-    "row_eligibility_rules": [
-      "Rows require OCR/vision extraction; no text-layer row parser can be assumed."
-    ],
-    "skip_rules": [],
-    "source_format": "PDF",
-    "source_location_expectations": [
-      "page number",
-      "visual row group",
-      "bounding box"
-    ],
-    "table_regions": [
-      {
-        "header_row": null,
-        "name": "earthz_visual_price_rows",
-        "notes": "pdftotext produced no text; OCR/vision extraction is required for runtime interpretation.",
-        "selector": "Image-only visual table with sku#, wholesale price, recommended retail price, size, and pack-count text"
-      }
-    ]
-  },
-  "supplier": {
-    "supplier_code": "KPN",
-    "supplier_id": null,
-    "supplier_name": "Kangaroo Pet Nutrition Ltd"
-  },
-  "support_status": "UNVERIFIED",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
   "updated_at": null,
   "updated_by": null,
-  "validation_rules": []
+  "metadata": {}
 }

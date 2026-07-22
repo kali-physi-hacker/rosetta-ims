@@ -49,7 +49,7 @@
     "cost_price < rrp",
     "order_increment_qty >= 1"
   ],
-  "legacy_source_reference": "apps/api/catalogue_contracts/hills.yaml",
+  "legacy_source_reference": null,
   "created_at": "2026-07-22T00:00:00Z",
   "created_by": "catalogue-architecture",
   "updated_at": "2026-07-22T01:00:00Z",

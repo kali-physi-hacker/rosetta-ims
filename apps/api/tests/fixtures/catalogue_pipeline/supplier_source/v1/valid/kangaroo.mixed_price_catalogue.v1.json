@@ -1,303 +1,374 @@
 {
+  "schema_version": "catalogue.supplier_source_contract.v1",
   "contract_id": "kangaroo.mixed_price_catalogue.v1",
   "contract_version": "v1",
-  "created_at": "2026-07-22T00:00:00Z",
-  "created_by": "cis-103b-catalogue-architecture",
+  "supplier": {
+    "supplier_id": null,
+    "supplier_name": "Kangaroo Pet Nutrition Ltd",
+    "supplier_code": "KPN"
+  },
   "document_type": "CATALOGUE",
+  "format_name": "Kangaroo mixed product catalogue PDF",
+  "source_format": "PDF_TABLE",
+  "support_status": "PARTIALLY_VERIFIED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-      "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-      "reference": "external-sample:KPN_Kangaroo.pdf"
+      "reference": "external-sample:KPN_Kangaroo.pdf",
+      "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
     },
     {
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-      "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-      "reference": "user-supplied label: KPN Kangaroo"
+      "reference": "user-supplied label: KPN Kangaroo",
+      "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
     }
   ],
+  "source_structure": {
+    "source_format": "PDF_TABLE",
+    "expected_sheet_names": [],
+    "expected_sections": [
+      "Frozen Raw Dinner Patties",
+      "Freeze-Dried Raw Dog Food",
+      "New Recyclable Packing"
+    ],
+    "table_regions": [
+      {
+        "name": "mixed_wholesale_retail_tables",
+        "selector": "Chinese/English tables with SKU#, Product Description, Size, Unit Per Case, Wholesale Price Per Unit, Retail Price Per Unit",
+        "header_row": null,
+        "notes": "The supplied PDF contains several table variants; this declaration captures the shared source concepts without assuming one parser layout."
+      }
+    ],
+    "required_headers": [
+      "\u7522\u54c1\u7de8\u865f",
+      "\u7522\u54c1\u540d\u7a31",
+      "\u6279\u767c\u50f9",
+      "\u5efa\u8b70\u96f6\u552e\u50f9"
+    ],
+    "optional_headers": [
+      "SKU#",
+      "Product Description",
+      "Size",
+      "Unit Per Case",
+      "Wholesale Price Per Unit",
+      "Retail Price Per Unit",
+      "Last update"
+    ],
+    "row_eligibility_rules": [
+      "Rows with a SKU/product code and wholesale price are candidate catalogue rows."
+    ],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "page number",
+      "section header",
+      "table row",
+      "source column"
+    ]
+  },
   "fields": [
     {
-      "aliases": [
-        "產品編號",
-        "SKU#"
-      ],
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "\u7522\u54c1\u7de8\u865f / SKU#",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [
+        "\u7522\u54c1\u7de8\u865f",
+        "SKU#"
+      ],
       "description": "Kangaroo catalogue product code.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "supplier_sku",
-      "requirement": "REQUIRED",
-      "role": "SUPPLIER_SKU",
-      "source_column": "產品編號 / SKU#",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [
-        "產品名稱",
-        "產品內容",
-        "Product Description"
-      ],
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": "\u7522\u54c1\u540d\u7a31 / Product Description",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [
+        "\u7522\u54c1\u540d\u7a31",
+        "\u7522\u54c1\u5167\u5bb9",
+        "Product Description"
+      ],
       "description": "Printed product name or description.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "description",
-      "requirement": "REQUIRED",
-      "role": "PRODUCT_NAME",
-      "source_column": "產品名稱 / Product Description",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [
-        "重量",
-        "包裝",
-        "Size"
-      ],
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": "\u5305\u88dd / Size",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [
+        "\u91cd\u91cf",
+        "\u5305\u88dd",
+        "Size"
+      ],
       "description": "Printed size or packaging text.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "pack_size",
-      "requirement": "OPTIONAL",
-      "role": "PACKAGING",
-      "source_column": "包裝 / Size",
-      "source_path": null
+      ]
     },
     {
+      "field_key": "units_per_case",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": "\u6bcf\u7bb1\u5305\u6578 / Unit Per Case",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
       "aliases": [
-        "原箱包數",
-        "每箱包數",
+        "\u539f\u7bb1\u5305\u6578",
+        "\u6bcf\u7bb1\u5305\u6578",
         "Unit Per Case",
         "Per Case"
       ],
-      "composed_from": [],
-      "constant_value": null,
       "description": "Case configuration printed by source; not proof of case-only purchasing.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "units_per_case",
-      "requirement": "OPTIONAL",
-      "role": "PACKAGING",
-      "source_column": "每箱包數 / Unit Per Case",
-      "source_path": null
+      ]
     },
     {
+      "field_key": "cost",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "\u6bcf\u5305\u6279\u767c\u50f9 / Wholesale Price Per Unit",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
       "aliases": [
-        "批發價",
-        "每包批發價",
+        "\u6279\u767c\u50f9",
+        "\u6bcf\u5305\u6279\u767c\u50f9",
         "Wholesale Price Per Unit",
         "Price Per Unit"
       ],
-      "composed_from": [],
-      "constant_value": null,
       "description": "Wholesale price source field.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "cost",
-      "requirement": "REQUIRED",
-      "role": "SOURCE_PRICE",
-      "source_column": "每包批發價 / Wholesale Price Per Unit",
-      "source_path": null
+      ]
     },
     {
+      "field_key": "rrp",
+      "role": "RRP",
+      "requirement": "OPTIONAL",
+      "source_column": "\u6bcf\u5305\u5efa\u8b70\u96f6\u552e\u50f9 / Retail Price Per Unit",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
       "aliases": [
-        "建議零售價",
+        "\u5efa\u8b70\u96f6\u552e\u50f9",
         "Recommended Retail Price",
         "Retail Price Per Unit"
       ],
-      "composed_from": [],
-      "constant_value": null,
       "description": "Recommended retail price source field.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "rrp",
-      "requirement": "OPTIONAL",
-      "role": "RRP",
-      "source_column": "每包建議零售價 / Retail Price Per Unit",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "last_update",
+      "role": "EFFECTIVE_DATE",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "section_header",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Section-level last update text.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "last_update",
-      "requirement": "OPTIONAL",
-      "role": "EFFECTIVE_DATE",
-      "source_column": null,
-      "source_path": "section_header"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "promotion_text",
+      "role": "MBB_TEXT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "section_notes",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Discount or promotion notes, such as spend threshold discounts.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ],
-      "field_key": "promotion_text",
-      "requirement": "OPTIONAL",
-      "role": "MBB_TEXT",
-      "source_column": null,
-      "source_path": "section_notes"
+      ]
     }
   ],
-  "format_name": "Kangaroo mixed product catalogue PDF",
-  "known_ambiguities": [
-    {
-      "blocks_supported_status": false,
-      "condition": "The sample identifies Kangaroo/KPN, but this clean checkout has no numeric supplier id for it.",
-      "issue_code": "KANGAROO_NUMERIC_SUPPLIER_ID_MISSING",
-      "review_guidance": "Import or supply the Rosetta supplier id before selecting this contract in runtime ingestion."
-    },
-    {
-      "blocks_supported_status": true,
-      "condition": "The supplied mixed catalogue contains several table shapes with per-unit and per-case labels.",
-      "issue_code": "KANGAROO_MULTIPLE_TABLE_LAYOUTS",
-      "review_guidance": "Create representative row fixtures per section before promoting to SUPPORTED."
-    }
-  ],
-  "legacy_yaml_reference": null,
-  "mbb": {
-    "benefit_patterns": [
-      "percentage discount notes"
-    ],
-    "condition_patterns": [
-      "spend threshold discount notes"
-    ],
-    "notes": null,
-    "requires_validation_issue_when": [
-      "The qualifying product set or spend basis is not explicit."
-    ],
-    "source_fields": [
-      "promotion_text"
-    ],
-    "supported_scopes": []
-  },
-  "metadata": {},
-  "packaging": {
-    "break_pack_allowed": null,
-    "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
-    "interpretation_rules": [
-      "Treat Unit Per Case as case configuration only unless supplier ordering rules prove it is an order multiple.",
-      "Do not use size/content text as sellable-unit count."
-    ],
-    "minimum_order_source_field": null,
-    "order_increment_source_field": null,
-    "packaging_source_field": "pack_size",
+  "pricing": {
+    "cost_source_field": "cost",
+    "rrp_source_field": "rrp",
+    "currency": "HKD",
     "price_basis": {
       "code": "UNIT",
       "label": null
     },
+    "price_basis_status": "PARTIALLY_VERIFIED",
+    "autoswap_cost_rrp_allowed": false,
+    "null_cost_markers": [],
+    "notes": "Source headers say Price Per Unit/Wholesale Price Per Unit, but individual table variants need parser fixtures before production use."
+  },
+  "packaging": {
+    "packaging_source_field": "pack_size",
     "purchase_uom": null,
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
     "sellable_unit_uom": null,
     "sellable_units_per_purchase_unit_source_field": null,
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
+    "interpretation_rules": [
+      "Treat Unit Per Case as case configuration only unless supplier ordering rules prove it is an order multiple.",
+      "Do not use size/content text as sellable-unit count."
+    ],
     "unresolved_semantics": [
       "Purchase UOM and break-pack permission are not proven by the source sample alone."
     ]
   },
-  "pipeline_mapping": {
-    "raw_observation_contract_id": "catalogue.raw_observation.v1",
-    "raw_observation_fields": [
-      "supplier_sku",
-      "description",
-      "pack_size",
-      "units_per_case",
-      "cost",
-      "rrp",
-      "last_update",
+  "mbb": {
+    "source_fields": [
       "promotion_text"
     ],
+    "supported_scopes": [],
+    "condition_patterns": [
+      "spend threshold discount notes"
+    ],
+    "benefit_patterns": [
+      "percentage discount notes"
+    ],
+    "requires_validation_issue_when": [
+      "The qualifying product set or spend basis is not explicit."
+    ],
+    "notes": null
+  },
+  "validation_rules": [
+    {
+      "rule_id": "kangaroo.cost_below_rrp",
+      "description": "Wholesale should be below recommended retail when both are present.",
+      "source_expression": "cost_price < rrp",
+      "severity": "ERROR",
+      "issue_code": "KANGAROO_COST_NOT_BELOW_RRP",
+      "review_guidance": "Check whether the wholesale and retail columns were swapped before approving the item.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "user-supplied label: KPN Kangaroo",
+          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+        }
+      ]
+    }
+  ],
+  "known_ambiguities": [
+    {
+      "issue_code": "KANGAROO_NUMERIC_SUPPLIER_ID_MISSING",
+      "condition": "The sample identifies Kangaroo/KPN, but this clean checkout has no numeric supplier id for it.",
+      "review_guidance": "Import or supply the Rosetta supplier id before selecting this contract in runtime ingestion.",
+      "blocks_supported_status": false
+    },
+    {
+      "issue_code": "KANGAROO_MULTIPLE_TABLE_LAYOUTS",
+      "condition": "The supplied mixed catalogue contains several table shapes with per-unit and per-case labels.",
+      "review_guidance": "Create representative row fixtures per section before promoting to SUPPORTED.",
+      "blocks_supported_status": true
+    }
+  ],
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.raw_observation.v1",
     "staging_item_contract_id": "catalogue.staging_item.v1",
-    "staging_proposed_field_keys": [
+    "raw_observation_fields": [
       "supplier_sku",
       "description",
       "pack_size",
@@ -316,93 +387,21 @@
       "rrp",
       "last_update",
       "promotion_text"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "units_per_case",
+      "cost",
+      "rrp",
+      "last_update",
+      "promotion_text"
     ]
   },
-  "pricing": {
-    "autoswap_cost_rrp_allowed": false,
-    "cost_source_field": "cost",
-    "currency": "HKD",
-    "notes": "Source headers say Price Per Unit/Wholesale Price Per Unit, but individual table variants need parser fixtures before production use.",
-    "null_cost_markers": [],
-    "price_basis": {
-      "code": "UNIT",
-      "label": null
-    },
-    "price_basis_status": "PARTIALLY_VERIFIED",
-    "rrp_source_field": "rrp"
-  },
-  "schema_version": "catalogue.supplier_source_contract.v1",
-  "source_format": "PDF_TABLE",
-  "source_structure": {
-    "expected_sections": [
-      "Frozen Raw Dinner Patties",
-      "Freeze-Dried Raw Dog Food",
-      "New Recyclable Packing"
-    ],
-    "expected_sheet_names": [],
-    "optional_headers": [
-      "SKU#",
-      "Product Description",
-      "Size",
-      "Unit Per Case",
-      "Wholesale Price Per Unit",
-      "Retail Price Per Unit",
-      "Last update"
-    ],
-    "required_headers": [
-      "產品編號",
-      "產品名稱",
-      "批發價",
-      "建議零售價"
-    ],
-    "row_eligibility_rules": [
-      "Rows with a SKU/product code and wholesale price are candidate catalogue rows."
-    ],
-    "skip_rules": [],
-    "source_format": "PDF_TABLE",
-    "source_location_expectations": [
-      "page number",
-      "section header",
-      "table row",
-      "source column"
-    ],
-    "table_regions": [
-      {
-        "header_row": null,
-        "name": "mixed_wholesale_retail_tables",
-        "notes": "The supplied PDF contains several table variants; this declaration captures the shared source concepts without assuming one parser layout.",
-        "selector": "Chinese/English tables with SKU#, Product Description, Size, Unit Per Case, Wholesale Price Per Unit, Retail Price Per Unit"
-      }
-    ]
-  },
-  "supplier": {
-    "supplier_code": "KPN",
-    "supplier_id": null,
-    "supplier_name": "Kangaroo Pet Nutrition Ltd"
-  },
-  "support_status": "PARTIALLY_VERIFIED",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
   "updated_at": null,
   "updated_by": null,
-  "validation_rules": [
-    {
-      "description": "Wholesale should be below recommended retail when both are present.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
-          "reference": "external-sample:KPN_Kangaroo.pdf"
-        },
-        {
-          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
-          "reference": "user-supplied label: KPN Kangaroo"
-        }
-      ],
-      "issue_code": "KANGAROO_COST_NOT_BELOW_RRP",
-      "review_guidance": "Check whether the wholesale and retail columns were swapped before approving the item.",
-      "rule_id": "kangaroo.cost_below_rrp",
-      "severity": "ERROR",
-      "source_expression": "cost_price < rrp"
-    }
-  ]
+  "metadata": {}
 }

@@ -504,8 +504,8 @@ def extract(content: bytes, filename: str, content_type: str, contract=None) -> 
     """
     Main entry point. Dispatches to the right extractor based on file type, then translates
     any non-English descriptions to English (keeping the original). Returns (items, format).
-    `contract` (a catalogue_contract.Contract | None) guides the model prompt when the supplier
-    has one; None → today's generic extraction, unchanged.
+    `contract` is an optional legacy extraction mapping. None means today's
+    generic extraction path is used unchanged.
     """
     name_lower = filename.lower()
     ct_lower   = content_type.lower()

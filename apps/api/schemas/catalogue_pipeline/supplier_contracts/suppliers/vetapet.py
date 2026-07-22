@@ -34,14 +34,9 @@ _VET_COMMON_EVIDENCE = [
         "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
     ),
     evidence(
-        SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
-        "apps/api/catalogue_contracts/vetapet_vet.yaml",
-        "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-    ),
-    evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
         "apps/api/services/catalogue_contract.py",
-        "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
+        "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping.",
     ),
     evidence(
         SupplierSourceEvidenceType.EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE,
@@ -57,14 +52,9 @@ _NON_VET_EVIDENCE = [
         "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
     ),
     evidence(
-        SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
-        "apps/api/catalogue_contracts/vetapet_nonvet.yaml",
-        "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-    ),
-    evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
-        "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts",
-        "Existing tests only prove the legacy YAML file loads for supplier id 90.",
+        "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+        "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing.",
     ),
 ]
 
@@ -171,7 +161,6 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         source_format=SourceFormat.PDF_TABLE,
         support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
         evidence=_VET_COMMON_EVIDENCE,
-        legacy_yaml_reference="apps/api/catalogue_contracts/vetapet_vet.yaml",
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
             expected_sections=["Part A Drugs", "Part B Supplements", "IVD", "Dermoscent", "Chung-Li", "Li-Saint DermCare"],
@@ -184,7 +173,7 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 SourceTableRegion(
                     name="vet_wholesale_retail_sections",
                     selector="CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS",
-                    notes="Observed later in the supplied Vetapet.pdf and covered by current legacy YAML behavior.",
+                    notes="Observed later in the supplied Vetapet.pdf and covered by current inline legacy mapping tests.",
                 )
             ],
             required_headers=["CODE NO", "PRODUCT NAME"],
@@ -249,7 +238,6 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         source_format=SourceFormat.PDF_TABLE,
         support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
         evidence=_NON_VET_EVIDENCE,
-        legacy_yaml_reference="apps/api/catalogue_contracts/vetapet_nonvet.yaml",
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
             expected_sections=["multi-brand non-vet sections"],

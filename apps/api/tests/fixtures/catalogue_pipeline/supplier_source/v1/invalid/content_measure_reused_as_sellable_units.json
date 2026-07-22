@@ -1,483 +1,535 @@
 {
+  "schema_version": "catalogue.supplier_source_contract.v1",
   "contract_id": "hills.price_list.v1",
   "contract_version": "v1",
-  "created_at": "2026-07-22T00:00:00Z",
-  "created_by": "cis-103b-catalogue-architecture",
+  "supplier": {
+    "supplier_id": 14,
+    "supplier_name": "Hill's",
+    "supplier_code": null
+  },
   "document_type": "PRICE_LIST",
+  "format_name": "Hill's Science Diet PDF price list",
+  "source_format": "PDF_TABLE",
+  "support_status": "SUPPORTED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-      "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-      "reference": "external-sample:Hill's.pdf"
-    },
-    {
-      "evidence_type": "LEGACY_YAML_ONLY",
-      "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-      "reference": "apps/api/catalogue_contracts/hills.yaml"
+      "reference": "external-sample:Hill's.pdf",
+      "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
     },
     {
       "evidence_type": "PARSER_BEHAVIOR",
-      "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-      "reference": "apps/api/services/catalogue_contract.py"
+      "reference": "apps/api/services/catalogue_contract.py",
+      "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
     },
     {
       "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-      "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-      "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+      "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+      "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
     },
     {
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-      "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-      "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+      "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+      "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
     }
   ],
+  "source_structure": {
+    "source_format": "PDF_TABLE",
+    "expected_sheet_names": [],
+    "expected_sections": [
+      "Feline",
+      "Canine",
+      "Prescription Diet",
+      "Science Diet"
+    ],
+    "table_regions": [
+      {
+        "name": "price_rows",
+        "selector": "Bilingual PDF product tables with Product Code, product description, size, wholesale, retail, and order multiple columns.",
+        "header_row": null,
+        "notes": "Raw PDF sample was supplied externally; region details are captured from source text and parser tests."
+      }
+    ],
+    "required_headers": [
+      "Product Code / \u7522\u54c1\u7de8\u865f",
+      "Product Range / \u7522\u54c1\u7cfb\u5217",
+      "Life Stage / \u751f\u547d\u968e\u6bb5",
+      "Product Description / \u7522\u54c1\u540d\u7a31",
+      "Size / \u91cd\u91cf",
+      "Gross Wholesale Price / \u6bcf\u7bb1\u00b7\u7f50",
+      "Order Multiple / \u8a02\u8ca8\u55ae\u4f4d"
+    ],
+    "optional_headers": [
+      "Recommended Retail Selling Price / \u5efa\u8b70\u96f6\u552e\u50f9",
+      "Regular Retail Price / \u6b63\u50f9"
+    ],
+    "row_eligibility_rules": [
+      "One product variant per price-table row."
+    ],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "page number",
+      "table row",
+      "source column"
+    ]
+  },
   "fields": [
     {
-      "aliases": [],
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "Product Code / \u7522\u54c1\u7de8\u865f",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Stable Hill's product code.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "supplier_sku",
-      "requirement": "REQUIRED",
-      "role": "SUPPLIER_SKU",
-      "source_column": "Product Code / 產品編號",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": null,
+      "source_path": null,
       "composed_from": [
-        "Product Range / 產品系列",
-        "Life Stage / 生命階段",
-        "Product Description / 產品名稱"
+        "Product Range / \u7522\u54c1\u7cfb\u5217",
+        "Life Stage / \u751f\u547d\u968e\u6bb5",
+        "Product Description / \u7522\u54c1\u540d\u7a31"
       ],
       "constant_value": null,
+      "aliases": [],
       "description": "Joined product range, life stage, and product description.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "description",
-      "requirement": "REQUIRED",
-      "role": "PRODUCT_NAME",
-      "source_column": null,
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "REQUIRED",
+      "source_column": "Size / \u91cd\u91cf",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Raw size/content string; may contain content measure or a case-prefix plus content measure.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "pack_size",
-      "requirement": "REQUIRED",
-      "role": "PACKAGING",
-      "source_column": "Size / 重量",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "cost",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "Gross Wholesale Price / \u6bcf\u7bb1\u00b7\u7f50",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Supplier cost source field used by the legacy parser.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "cost",
-      "requirement": "REQUIRED",
-      "role": "SOURCE_PRICE",
-      "source_column": "Gross Wholesale Price / 每箱·罐",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "rrp",
+      "role": "RRP",
+      "requirement": "OPTIONAL",
+      "source_column": "Recommended Retail Selling Price / \u5efa\u8b70\u96f6\u552e\u50f9",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Recommended retail price when present.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "rrp",
-      "requirement": "OPTIONAL",
-      "role": "RRP",
-      "source_column": "Recommended Retail Selling Price / 建議零售價",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "order_multiple",
+      "role": "ORDER_INCREMENT",
+      "requirement": "REQUIRED",
+      "source_column": "Order Multiple / \u8a02\u8ca8\u55ae\u4f4d",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Order multiple; never proof for price divisor.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "order_multiple",
-      "requirement": "REQUIRED",
-      "role": "ORDER_INCREMENT",
-      "source_column": "Order Multiple / 訂貨單位",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "brand",
+      "role": "BRAND",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": null,
       "composed_from": [],
       "constant_value": "Hill's",
+      "aliases": [],
       "description": "Single-brand catalogue constant.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "brand",
-      "requirement": "OPTIONAL",
-      "role": "BRAND",
-      "source_column": null,
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "species",
+      "role": "SPECIES",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "section_header",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Feline/Canine section banners map to cat/dog.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "species",
-      "requirement": "OPTIONAL",
-      "role": "SPECIES",
-      "source_column": null,
-      "source_path": "section_header"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "segment",
+      "role": "SEGMENT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "product_range",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Prescription Diet vs Science Diet segment cue from the product range.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "segment",
-      "requirement": "OPTIONAL",
-      "role": "SEGMENT",
-      "source_column": null,
-      "source_path": "product_range"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "category",
+      "role": "CATEGORY",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": null,
       "composed_from": [],
       "constant_value": "Food",
+      "aliases": [],
       "description": "Current parser treats Hill's price-list rows as Food.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ],
-      "field_key": "category",
-      "requirement": "OPTIONAL",
-      "role": "CATEGORY",
-      "source_column": null,
-      "source_path": null
+      ]
     }
   ],
-  "format_name": "Hill's Science Diet PDF price list",
-  "known_ambiguities": [
-    {
-      "blocks_supported_status": false,
-      "condition": "The source contract can identify Hill's by supplier_id/name, but this clean checkout does not seed a verified Hill's supplier code.",
-      "issue_code": "HILLS_SUPPLIER_CODE_NOT_IN_SEED",
-      "review_guidance": "Confirm the supplier master code before recording a supplier_code on this contract."
-    }
-  ],
-  "legacy_yaml_reference": "apps/api/catalogue_contracts/hills.yaml",
-  "mbb": {
-    "benefit_patterns": [],
-    "condition_patterns": [],
-    "notes": null,
-    "requires_validation_issue_when": [],
-    "source_fields": [],
-    "supported_scopes": []
-  },
-  "metadata": {},
-  "packaging": {
-    "break_pack_allowed": null,
-    "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
-    "interpretation_rules": [
-      "Treat Size / 重量 as content measure for one sellable unit when a weight/volume unit is printed.",
-      "Ignore a leading case prefix such as 24/ when deriving sellable-unit content measure.",
-      "Order Multiple / 訂貨單位 is ordering semantics, not cost divisor evidence."
-    ],
-    "minimum_order_source_field": null,
-    "order_increment_source_field": "order_multiple",
-    "packaging_source_field": "pack_size",
+  "pricing": {
+    "cost_source_field": "cost",
+    "rrp_source_field": "rrp",
+    "currency": "HKD",
     "price_basis": {
       "code": "UNIT",
       "label": null
     },
+    "price_basis_status": "VERIFIED",
+    "autoswap_cost_rrp_allowed": false,
+    "null_cost_markers": [],
+    "notes": "Source sample and parser tests establish Gross Wholesale Price as a per sellable unit price."
+  },
+  "packaging": {
+    "packaging_source_field": "pack_size",
     "purchase_uom": null,
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
     "sellable_unit_uom": null,
     "sellable_units_per_purchase_unit_source_field": "pack_size",
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "order_increment_source_field": "order_multiple",
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
+    "interpretation_rules": [
+      "Treat Size / \u91cd\u91cf as content measure for one sellable unit when a weight/volume unit is printed.",
+      "Ignore a leading case prefix such as 24/ when deriving sellable-unit content measure.",
+      "Order Multiple / \u8a02\u8ca8\u55ae\u4f4d is ordering semantics, not cost divisor evidence."
+    ],
     "unresolved_semantics": [
       "Purchase UOM varies by row and is not fixed by the format declaration.",
       "Break-pack purchasing is not proven by the checked-in evidence."
     ]
   },
+  "mbb": {
+    "source_fields": [],
+    "supported_scopes": [],
+    "condition_patterns": [],
+    "benefit_patterns": [],
+    "requires_validation_issue_when": [],
+    "notes": null
+  },
+  "validation_rules": [
+    {
+      "rule_id": "hills.cost_below_rrp",
+      "description": "Wholesale cost should be lower than RRP when both are present.",
+      "source_expression": "cost_price < rrp",
+      "severity": "ERROR",
+      "issue_code": "HILLS_COST_NOT_BELOW_RRP",
+      "review_guidance": "Check whether the wholesale and retail price columns were swapped before approving the item.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
+        }
+      ]
+    },
+    {
+      "rule_id": "hills.order_multiple_positive",
+      "description": "Order multiple must be positive when present.",
+      "source_expression": "order_increment_qty >= 1",
+      "severity": "ERROR",
+      "issue_code": "HILLS_ORDER_MULTIPLE_NOT_POSITIVE",
+      "review_guidance": "Confirm the printed order multiple before approving the purchasing terms.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's.pdf",
+          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants",
+          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
+        }
+      ]
+    }
+  ],
+  "known_ambiguities": [
+    {
+      "issue_code": "HILLS_SUPPLIER_CODE_NOT_IN_SEED",
+      "condition": "The source contract can identify Hill's by supplier_id/name, but this clean checkout does not seed a verified Hill's supplier code.",
+      "review_guidance": "Confirm the supplier master code before recording a supplier_code on this contract.",
+      "blocks_supported_status": false
+    }
+  ],
   "pipeline_mapping": {
     "raw_observation_contract_id": "catalogue.raw_observation.v1",
-    "raw_observation_fields": [
-      "supplier_sku",
-      "description",
-      "pack_size",
-      "cost",
-      "rrp",
-      "order_multiple",
-      "brand",
-      "species",
-      "segment",
-      "category"
-    ],
     "staging_item_contract_id": "catalogue.staging_item.v1",
-    "staging_proposed_field_keys": [
+    "raw_observation_fields": [
       "supplier_sku",
       "description",
       "pack_size",
@@ -500,141 +552,23 @@
       "species",
       "segment",
       "category"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "order_multiple",
+      "brand",
+      "species",
+      "segment",
+      "category"
     ]
   },
-  "pricing": {
-    "autoswap_cost_rrp_allowed": false,
-    "cost_source_field": "cost",
-    "currency": "HKD",
-    "notes": "Source sample and parser tests establish Gross Wholesale Price as a per sellable unit price.",
-    "null_cost_markers": [],
-    "price_basis": {
-      "code": "UNIT",
-      "label": null
-    },
-    "price_basis_status": "VERIFIED",
-    "rrp_source_field": "rrp"
-  },
-  "schema_version": "catalogue.supplier_source_contract.v1",
-  "source_format": "PDF_TABLE",
-  "source_structure": {
-    "expected_sections": [
-      "Feline",
-      "Canine",
-      "Prescription Diet",
-      "Science Diet"
-    ],
-    "expected_sheet_names": [],
-    "optional_headers": [
-      "Recommended Retail Selling Price / 建議零售價",
-      "Regular Retail Price / 正價"
-    ],
-    "required_headers": [
-      "Product Code / 產品編號",
-      "Product Range / 產品系列",
-      "Life Stage / 生命階段",
-      "Product Description / 產品名稱",
-      "Size / 重量",
-      "Gross Wholesale Price / 每箱·罐",
-      "Order Multiple / 訂貨單位"
-    ],
-    "row_eligibility_rules": [
-      "One product variant per price-table row."
-    ],
-    "skip_rules": [],
-    "source_format": "PDF_TABLE",
-    "source_location_expectations": [
-      "page number",
-      "table row",
-      "source column"
-    ],
-    "table_regions": [
-      {
-        "header_row": null,
-        "name": "price_rows",
-        "notes": "Raw PDF sample was supplied externally; region details are captured from source text plus legacy config and parser tests.",
-        "selector": "Bilingual PDF product tables with Product Code, product description, size, wholesale, retail, and order multiple columns."
-      }
-    ]
-  },
-  "supplier": {
-    "supplier_code": null,
-    "supplier_id": 14,
-    "supplier_name": "Hill's"
-  },
-  "support_status": "SUPPORTED",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
   "updated_at": null,
   "updated_by": null,
-  "validation_rules": [
-    {
-      "description": "Wholesale cost should be lower than RRP when both are present.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
-        },
-        {
-          "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
-        },
-        {
-          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
-        },
-        {
-          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
-        }
-      ],
-      "issue_code": "HILLS_COST_NOT_BELOW_RRP",
-      "review_guidance": "Check whether the wholesale and retail price columns were swapped before approving the item.",
-      "rule_id": "hills.cost_below_rrp",
-      "severity": "ERROR",
-      "source_expression": "cost_price < rrp"
-    },
-    {
-      "description": "Order multiple must be positive when present.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
-          "reference": "external-sample:Hill's.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/hills.yaml"
-        },
-        {
-          "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
-          "reference": "apps/api/services/catalogue_contract.py"
-        },
-        {
-          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Hill's rows for per-unit pricing and order-multiple separation.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_hills_enforce_invariants"
-        },
-        {
-          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps.",
-          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md"
-        }
-      ],
-      "issue_code": "HILLS_ORDER_MULTIPLE_NOT_POSITIVE",
-      "review_guidance": "Confirm the printed order multiple before approving the purchasing terms.",
-      "rule_id": "hills.order_multiple_positive",
-      "severity": "ERROR",
-      "source_expression": "order_increment_qty >= 1"
-    }
-  ]
+  "metadata": {}
 }

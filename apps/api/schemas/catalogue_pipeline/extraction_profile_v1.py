@@ -83,7 +83,7 @@ class ExtractionProfileV1(ContractModel):
     validation_rules: list[str] = Field(default_factory=list, description="Business validation expressions or rule identifiers.")
     legacy_source_reference: str | None = Field(
         None,
-        description="Optional pointer to legacy supplier extraction configuration that inspired this profile.",
+        description="Deprecated historical pointer only; YAML mappings are not extraction-profile contracts.",
     )
     created_at: datetime = Field(..., description="Timezone-aware profile creation timestamp.")
     created_by: str = Field(..., min_length=1, description="Profile author.")
@@ -103,4 +103,3 @@ class ExtractionProfileV1(ContractModel):
 
 
 register_contract(ExtractionProfileV1)
-

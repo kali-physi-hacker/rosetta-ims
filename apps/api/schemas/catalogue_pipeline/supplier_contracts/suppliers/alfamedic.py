@@ -35,14 +35,9 @@ _EVIDENCE = [
         "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
     ),
     evidence(
-        SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
-        "apps/api/catalogue_contracts/alfamedic.yaml",
-        "Legacy extraction configuration names columns and parser expectations; not authoritative by itself.",
-    ),
-    evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
         "apps/api/services/catalogue_contract.py",
-        "Runtime enforcer parses order increment from packing text, nulls spurious RRP, and normalizes By Quote cost.",
+        "Legacy mapping engine can parse order increment from packing text, null spurious RRP, and normalize By Quote cost when supplied an explicit local mapping.",
     ),
     evidence(
         SupplierSourceEvidenceType.EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE,
@@ -52,7 +47,7 @@ _EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.BUSINESS_DOMAIN_DOCUMENTATION,
         "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
-        "Domain dictionary treats legacy YAML as evidence of current state, not canonical truth.",
+        "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth.",
     ),
 ]
 
@@ -68,7 +63,6 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
         source_format=SourceFormat.PDF_TABLE,
         support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_EVIDENCE,
-        legacy_yaml_reference="apps/api/catalogue_contracts/alfamedic.yaml",
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
             expected_sections=["therapeutic class sections"],
@@ -76,7 +70,7 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 SourceTableRegion(
                     name="therapeutic_class_price_rows",
                     selector="PDF tables grouped by therapeutic class",
-                    notes="Raw PDF sample was supplied externally; section detail is captured from source text plus legacy config.",
+                    notes="Raw PDF sample was supplied externally; section detail is captured from source text and parser behavior.",
                 )
             ],
             required_headers=[

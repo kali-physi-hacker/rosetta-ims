@@ -1,8 +1,7 @@
-"""DC-2 — contract-first ingestion wiring (deterministic; extraction is monkeypatched, no LLM).
+"""Legacy extraction mapping ingestion wiring.
 
-Verifies: a contracted supplier's upload → the contract guides extraction (asserted via the passed-in
-contract) and enforces invariants + flags validation failures; an uncontracted supplier → generic path,
-untouched.
+The repository no longer ships YAML mapping files. Tests that exercise the old
+mapping path inject an inline mapping; the default runtime path remains generic.
 """
 import os
 import tempfile
@@ -42,6 +41,50 @@ def _setup(monkeypatch):
 _client = TestClient(main.app)
 
 
+def _hills_mapping():
+    return catalogue_contract.Contract(
+        {
+            "supplier": "Hill's",
+            "supplier_id": 14,
+            "format": "pdf_table",
+            "document": {
+                "species": {"from": "section_header", "map": {"Feline": "cat", "Canine": "dog"}},
+                "segment": {
+                    "from": "product_range",
+                    "map": {"Prescription Diet": "vet", "Science Diet": "non_vet"},
+                },
+                "category": {"const": "Food"},
+            },
+            "columns": {
+                "supplier_sku": "Product Code / 產品編號",
+                "description": {
+                    "join": [
+                        "Product Range / 產品系列",
+                        "Life Stage / 生命階段",
+                        "Product Description / 產品名稱",
+                    ],
+                    "sep": " · ",
+                },
+                "pack_size": "Size / 重量",
+                "brand": {"const": "Hill's"},
+            },
+            "pricing": {
+                "basis": "per_unit",
+                "units_per_pack": {"const": 1},
+                "basic_cost": {"from": "Gross Wholesale Price / 每箱·罐"},
+                "rrp": "Recommended Retail Selling Price / 建議零售價",
+            },
+            "weight": {"parse_from": "pack_size"},
+            "ordering": {
+                "order_increment_qty": "Order Multiple / 訂貨單位",
+                "order_increment_uom": {"from": "sell_unit"},
+            },
+            "validate": ["cost_price < rrp", "order_increment_qty >= 1"],
+        },
+        "inline_hills",
+    )
+
+
 def _supplier(sid, code, name):
     d = database.SessionLocal()
     try:
@@ -62,6 +105,11 @@ def _items(import_id):
 
 def test_contracted_import_guides_enforces_and_flags(monkeypatch):
     _supplier(14, "HILLS", "Hill's")
+    monkeypatch.setattr(
+        catalogue_contract,
+        "load_contract",
+        lambda supplier_id: _hills_mapping() if int(supplier_id) == 14 else None,
+    )
 
     def fake_extract(content, filename, content_type, contract=None):
         assert contract is not None and contract.supplier_id == 14      # contract-first is wired
@@ -77,7 +125,7 @@ def test_contracted_import_guides_enforces_and_flags(monkeypatch):
                      files={"file": ("hills.pdf", b"%PDF-1.4 fake", "application/pdf")})
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["contract"] and "hills" in body["contract"]
+    assert body["contract"] and "inline_hills" in body["contract"]
     assert body["contract_flags"] == 1
 
     it = _items(body["import_id"])
@@ -94,11 +142,15 @@ def test_dc3_derive_applies_contract_backfill():
     # DC-3: re-parse re-derives a contracted supplier's row THROUGH its contract — a Hill's row whose pack
     # was mis-set to the carton (24) is corrected to per-unit (1); consts applied.
     from services import reparse_service
-    catalogue_contract.reload_contracts()
+    original = catalogue_contract.load_contract
+    catalogue_contract.load_contract = lambda supplier_id: _hills_mapping() if int(supplier_id) == 14 else None
     item = models.CatalogueItem(supplier_id=14, raw_description="Hill's Can 2.8oz", pack_size="2.8oz",
                                 uom="can", units_per_pack=24, cost_price=13.1, rrp=18.0,
                                 supplier_sku="10447", species="cat")
-    out = reparse_service.derive(item)
+    try:
+        out = reparse_service.derive(item)
+    finally:
+        catalogue_contract.load_contract = original
     assert out["units_per_pack"] == 1          # contract per-unit invariant overrides the generic guard
     assert out["brand"] == "Hill's"            # const column
     assert out["category"] == "Food"           # const
@@ -116,11 +168,15 @@ def test_dc3_derive_fills_weight_from_size_for_hills():
     # Hill's re-parse re-derives the sell-unit weight from the retained Size string (an oz size the
     # base extraction missed) — deterministically, no model call.
     from services import reparse_service
-    catalogue_contract.reload_contracts()
+    original = catalogue_contract.load_contract
+    catalogue_contract.load_contract = lambda supplier_id: _hills_mapping() if int(supplier_id) == 14 else None
     item = models.CatalogueItem(supplier_id=14, raw_description="Hill's k/d 2.9oz", pack_size="24/2.9 oz",
                                 uom="can", units_per_pack=24, cost_price=13.1, rrp=18.0,
                                 supplier_sku="10447", weight_grams=None)
-    out = reparse_service.derive(item)
+    try:
+        out = reparse_service.derive(item)
+    finally:
+        catalogue_contract.load_contract = original
     assert out["weight_grams"] == round(2.9 * 28.3495)         # 82 — from Size, sell-unit not the case
 
 
@@ -154,8 +210,13 @@ def test_reparse_swap_guard_holds_even_when_contracted():
 
 
 def test_dc4_drift_flags_stale_contract(monkeypatch):
-    # DC-4: a restyled catalogue where the columns no longer match → mass validation failure → contract_stale
+    # A restyled catalogue where rows fail mapping validation is surfaced as stale.
     _supplier(14, "HILLS", "Hill's")
+    monkeypatch.setattr(
+        catalogue_contract,
+        "load_contract",
+        lambda supplier_id: _hills_mapping() if int(supplier_id) == 14 else None,
+    )
 
     def fake_extract(content, filename, content_type, contract=None):
         return ([{"supplier_sku": f"S{i}", "description": "x", "cost_price": 100.0, "rrp": 50.0,

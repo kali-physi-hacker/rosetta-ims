@@ -1,311 +1,326 @@
 {
+  "schema_version": "catalogue.supplier_source_contract.v1",
   "contract_id": "vetapet.non_vet_price_list.v1",
   "contract_version": "v1",
-  "created_at": "2026-07-22T00:00:00Z",
-  "created_by": "cis-103b-catalogue-architecture",
+  "supplier": {
+    "supplier_id": 90,
+    "supplier_name": "Vetapet (Non-Vet)",
+    "supplier_code": null
+  },
   "document_type": "PRICE_LIST",
+  "format_name": "Vetapet Non-Vet PDF price list",
+  "source_format": "PDF_TABLE",
+  "support_status": "PARTIALLY_VERIFIED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-      "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-      "reference": "external-sample:Vetapet.pdf"
-    },
-    {
-      "evidence_type": "LEGACY_YAML_ONLY",
-      "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-      "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+      "reference": "external-sample:Vetapet.pdf",
+      "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
     },
     {
       "evidence_type": "PARSER_BEHAVIOR",
-      "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-      "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+      "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+      "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
     }
   ],
+  "source_structure": {
+    "source_format": "PDF_TABLE",
+    "expected_sheet_names": [],
+    "expected_sections": [
+      "multi-brand non-vet sections"
+    ],
+    "table_regions": [
+      {
+        "name": "non_vet_brand_sections",
+        "selector": "Chinese-primary price rows",
+        "header_row": null,
+        "notes": "The supplied Vetapet.pdf contains matching Chinese wholesale/retail labels, but non-vet row semantics still need representative extraction fixtures."
+      }
+    ],
+    "required_headers": [
+      "CODE NO / \u7de8\u865f",
+      "PRODUCT NAME / \u7522\u54c1\u540d\u7a31",
+      "\u6279\u767c\u50f9 / WHOLESALE PRICE"
+    ],
+    "optional_headers": [
+      "\u91cd\u91cf / SIZE",
+      "\u96f6\u552e\u50f9 / RETAIL PRICE"
+    ],
+    "row_eligibility_rules": [
+      "One product row per code/price entry when a real sample confirms this shape."
+    ],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "page number",
+      "section header",
+      "table row",
+      "source column"
+    ]
+  },
   "fields": [
     {
-      "aliases": [],
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "CODE NO / \u7de8\u865f",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Vetapet code number.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "supplier_sku",
-      "requirement": "REQUIRED",
-      "role": "SUPPLIER_SKU",
-      "source_column": "CODE NO / 編號",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": "PRODUCT NAME / \u7522\u54c1\u540d\u7a31",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Printed product name.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "description",
-      "requirement": "REQUIRED",
-      "role": "PRODUCT_NAME",
-      "source_column": "PRODUCT NAME / 產品名稱",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": "\u91cd\u91cf / SIZE",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Raw size/packaging text; may express content measure, pack description, or both.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "pack_size",
-      "requirement": "OPTIONAL",
-      "role": "PACKAGING",
-      "source_column": "重量 / SIZE",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "cost",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "\u6279\u767c\u50f9 / WHOLESALE PRICE",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Wholesale price field.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "cost",
-      "requirement": "REQUIRED",
-      "role": "SOURCE_PRICE",
-      "source_column": "批發價 / WHOLESALE PRICE",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "rrp",
+      "role": "RRP",
+      "requirement": "OPTIONAL",
+      "source_column": "\u96f6\u552e\u50f9 / RETAIL PRICE",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Suggested retail or retail price field.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "rrp",
-      "requirement": "OPTIONAL",
-      "role": "RRP",
-      "source_column": "零售價 / RETAIL PRICE",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "species",
+      "role": "SPECIES",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "product_name",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Species cue from product name when present.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "species",
-      "requirement": "OPTIONAL",
-      "role": "SPECIES",
-      "source_column": null,
-      "source_path": "product_name"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "segment",
+      "role": "SEGMENT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": null,
       "composed_from": [],
       "constant_value": "non_vet",
+      "aliases": [],
       "description": "Vetapet catalogue segment split.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "segment",
-      "requirement": "OPTIONAL",
-      "role": "SEGMENT",
-      "source_column": null,
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "category",
+      "role": "CATEGORY",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "section_header",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
         }
-      ],
-      "field_key": "category",
-      "requirement": "OPTIONAL",
-      "role": "CATEGORY",
-      "source_column": null,
-      "source_path": "section_header"
+      ]
     }
   ],
-  "format_name": "Vetapet Non-Vet PDF price list",
-  "known_ambiguities": [
-    {
-      "blocks_supported_status": true,
-      "condition": "The supplied PDF has relevant labels, but no representative extracted non-vet row fixture has been committed.",
-      "issue_code": "VETAPET_NON_VET_ROW_FIXTURE_MISSING",
-      "review_guidance": "Create representative row fixtures from the source PDF and confirm wholesale, retail, size, and category semantics."
-    },
-    {
-      "blocks_supported_status": false,
-      "condition": "A numeric wholesale price does not prove the supplier price basis.",
-      "issue_code": "VETAPET_NON_VET_PRICE_BASIS_UNRESOLVED",
-      "review_guidance": "Confirm whether the wholesale price is per sellable unit, pack, case, or another basis."
-    }
-  ],
-  "legacy_yaml_reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml",
-  "mbb": {
-    "benefit_patterns": [],
-    "condition_patterns": [],
-    "notes": null,
-    "requires_validation_issue_when": [],
-    "source_fields": [],
-    "supported_scopes": []
+  "pricing": {
+    "cost_source_field": "cost",
+    "rrp_source_field": "rrp",
+    "currency": "HKD",
+    "price_basis": null,
+    "price_basis_status": "UNRESOLVED",
+    "autoswap_cost_rrp_allowed": true,
+    "null_cost_markers": [],
+    "notes": "The supplied source confirms wholesale/retail labels, but the price basis remains unresolved without row-level business confirmation."
   },
-  "metadata": {},
   "packaging": {
-    "break_pack_allowed": null,
+    "packaging_source_field": "pack_size",
+    "purchase_uom": null,
+    "price_basis": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
     "content_measure_uom": null,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
     "interpretation_rules": [
       "Treat weight/size text as content measure only after a real sample confirms row semantics."
     ],
-    "minimum_order_source_field": null,
-    "order_increment_source_field": null,
-    "packaging_source_field": "pack_size",
-    "price_basis": null,
-    "purchase_uom": null,
-    "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
     "unresolved_semantics": [
       "Price basis, purchase UOM, sellable unit, order increment, and break-pack rules are unresolved."
     ]
   },
+  "mbb": {
+    "source_fields": [],
+    "supported_scopes": [],
+    "condition_patterns": [],
+    "benefit_patterns": [],
+    "requires_validation_issue_when": [],
+    "notes": null
+  },
+  "validation_rules": [
+    {
+      "rule_id": "vetapet_non_vet.cost_below_rrp_unverified",
+      "description": "Wholesale should be below retail if the legacy column mapping is confirmed.",
+      "source_expression": "cost_price < rrp",
+      "severity": "WARNING",
+      "issue_code": "VETAPET_NON_VET_COST_RRP_UNVERIFIED",
+      "review_guidance": "Confirm the non-vet source columns before applying wholesale/RRP validation automatically.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Inline tests exercise the legacy mapping engine, but representative non-vet row fixtures are still missing."
+        }
+      ]
+    }
+  ],
+  "known_ambiguities": [
+    {
+      "issue_code": "VETAPET_NON_VET_ROW_FIXTURE_MISSING",
+      "condition": "The supplied PDF has relevant labels, but no representative extracted non-vet row fixture has been committed.",
+      "review_guidance": "Create representative row fixtures from the source PDF and confirm wholesale, retail, size, and category semantics.",
+      "blocks_supported_status": true
+    },
+    {
+      "issue_code": "VETAPET_NON_VET_PRICE_BASIS_UNRESOLVED",
+      "condition": "A numeric wholesale price does not prove the supplier price basis.",
+      "review_guidance": "Confirm whether the wholesale price is per sellable unit, pack, case, or another basis.",
+      "blocks_supported_status": false
+    }
+  ],
   "pipeline_mapping": {
     "raw_observation_contract_id": "catalogue.raw_observation.v1",
-    "raw_observation_fields": [
-      "supplier_sku",
-      "description",
-      "pack_size",
-      "cost",
-      "rrp",
-      "species",
-      "segment",
-      "category"
-    ],
     "staging_item_contract_id": "catalogue.staging_item.v1",
-    "staging_proposed_field_keys": [
+    "raw_observation_fields": [
       "supplier_sku",
       "description",
       "pack_size",
@@ -324,87 +339,21 @@
       "species",
       "segment",
       "category"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "species",
+      "segment",
+      "category"
     ]
   },
-  "pricing": {
-    "autoswap_cost_rrp_allowed": true,
-    "cost_source_field": "cost",
-    "currency": "HKD",
-    "notes": "The supplied source confirms wholesale/retail labels, but the price basis remains unresolved without row-level business confirmation.",
-    "null_cost_markers": [],
-    "price_basis": null,
-    "price_basis_status": "UNRESOLVED",
-    "rrp_source_field": "rrp"
-  },
-  "schema_version": "catalogue.supplier_source_contract.v1",
-  "source_format": "PDF_TABLE",
-  "source_structure": {
-    "expected_sections": [
-      "multi-brand non-vet sections"
-    ],
-    "expected_sheet_names": [],
-    "optional_headers": [
-      "重量 / SIZE",
-      "零售價 / RETAIL PRICE"
-    ],
-    "required_headers": [
-      "CODE NO / 編號",
-      "PRODUCT NAME / 產品名稱",
-      "批發價 / WHOLESALE PRICE"
-    ],
-    "row_eligibility_rules": [
-      "One product row per code/price entry when a real sample confirms this shape."
-    ],
-    "skip_rules": [],
-    "source_format": "PDF_TABLE",
-    "source_location_expectations": [
-      "page number",
-      "section header",
-      "table row",
-      "source column"
-    ],
-    "table_regions": [
-      {
-        "header_row": null,
-        "name": "non_vet_brand_sections",
-        "notes": "The supplied Vetapet.pdf contains matching Chinese wholesale/retail labels, but non-vet row semantics still need representative extraction fixtures.",
-        "selector": "Chinese-primary price rows"
-      }
-    ]
-  },
-  "supplier": {
-    "supplier_code": null,
-    "supplier_id": 90,
-    "supplier_name": "Vetapet (Non-Vet)"
-  },
-  "support_status": "PARTIALLY_VERIFIED",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
   "updated_at": null,
   "updated_by": null,
-  "validation_rules": [
-    {
-      "description": "Wholesale should be below retail if the legacy column mapping is confirmed.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy non-vet catalogue config exists, but there is no representative row fixture beyond load coverage.",
-          "reference": "apps/api/catalogue_contracts/vetapet_nonvet.yaml"
-        },
-        {
-          "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Existing tests only prove the legacy YAML file loads for supplier id 90.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_loads_vetapet_contracts"
-        }
-      ],
-      "issue_code": "VETAPET_NON_VET_COST_RRP_UNVERIFIED",
-      "review_guidance": "Confirm the non-vet source columns before applying wholesale/RRP validation automatically.",
-      "rule_id": "vetapet_non_vet.cost_below_rrp_unverified",
-      "severity": "WARNING",
-      "source_expression": "cost_price < rrp"
-    }
-  ]
+  "metadata": {}
 }

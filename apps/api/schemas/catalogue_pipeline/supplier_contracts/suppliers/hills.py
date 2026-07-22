@@ -34,14 +34,9 @@ _EVIDENCE = [
         "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
     ),
     evidence(
-        SupplierSourceEvidenceType.LEGACY_YAML_ONLY,
-        "apps/api/catalogue_contracts/hills.yaml",
-        "Legacy extraction configuration names columns and current parser expectations; not authoritative by itself.",
-    ),
-    evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
         "apps/api/services/catalogue_contract.py",
-        "Runtime loader/enforcer applies per-unit cost, order multiple, constant brand/category, and weight parsing.",
+        "Legacy mapping engine can apply per-unit cost, order multiple, constant brand/category, and weight parsing when supplied an explicit local mapping.",
     ),
     evidence(
         SupplierSourceEvidenceType.EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE,
@@ -67,7 +62,6 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
         source_format=SourceFormat.PDF_TABLE,
         support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_EVIDENCE,
-        legacy_yaml_reference="apps/api/catalogue_contracts/hills.yaml",
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
             expected_sections=["Feline", "Canine", "Prescription Diet", "Science Diet"],
@@ -75,7 +69,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 SourceTableRegion(
                     name="price_rows",
                     selector="Bilingual PDF product tables with Product Code, product description, size, wholesale, retail, and order multiple columns.",
-                    notes="Raw PDF sample was supplied externally; region details are captured from source text plus legacy config and parser tests.",
+                    notes="Raw PDF sample was supplied externally; region details are captured from source text and parser tests.",
                 )
             ],
             required_headers=[

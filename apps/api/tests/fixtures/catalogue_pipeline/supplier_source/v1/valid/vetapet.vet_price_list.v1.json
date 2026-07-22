@@ -1,354 +1,417 @@
 {
+  "schema_version": "catalogue.supplier_source_contract.v1",
   "contract_id": "vetapet.vet_price_list.v1",
   "contract_version": "v1",
-  "created_at": "2026-07-22T00:00:00Z",
-  "created_by": "cis-103b-catalogue-architecture",
+  "supplier": {
+    "supplier_id": 91,
+    "supplier_name": "Vetapet Vet",
+    "supplier_code": null
+  },
   "document_type": "PRICE_LIST",
+  "format_name": "Vetapet Vet PDF price list",
+  "source_format": "PDF_TABLE",
+  "support_status": "PARTIALLY_VERIFIED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-      "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-      "reference": "external-sample:Vetapet.pdf"
-    },
-    {
-      "evidence_type": "LEGACY_YAML_ONLY",
-      "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-      "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+      "reference": "external-sample:Vetapet.pdf",
+      "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
     },
     {
       "evidence_type": "PARSER_BEHAVIOR",
-      "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-      "reference": "apps/api/services/catalogue_contract.py"
+      "reference": "apps/api/services/catalogue_contract.py",
+      "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
     },
     {
       "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-      "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-      "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+      "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+      "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
     }
   ],
+  "source_structure": {
+    "source_format": "PDF_TABLE",
+    "expected_sheet_names": [],
+    "expected_sections": [
+      "Part A Drugs",
+      "Part B Supplements",
+      "IVD",
+      "Dermoscent",
+      "Chung-Li",
+      "Li-Saint DermCare"
+    ],
+    "table_regions": [
+      {
+        "name": "vet_clinic_unit_price_sections",
+        "selector": "CODE NO / PRODUCT NAME / PACKING PER UNIT / UNIT PRICE / REMARKS or TERMS",
+        "header_row": null,
+        "notes": "Observed in the supplied Vetapet.pdf early clinic sections."
+      },
+      {
+        "name": "vet_wholesale_retail_sections",
+        "selector": "CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS",
+        "header_row": null,
+        "notes": "Observed later in the supplied Vetapet.pdf and covered by current inline legacy mapping tests."
+      }
+    ],
+    "required_headers": [
+      "CODE NO",
+      "PRODUCT NAME"
+    ],
+    "optional_headers": [
+      "PACKING PER UNIT",
+      "UNIT PRICE",
+      "WHOLESALE PRICE",
+      "RETAIL PRICE",
+      "TERMS",
+      "SIZE / PACK / \u91cd\u91cf",
+      "SUGGESTED RETAIL PRICE / RETAIL PRICE / \u96f6\u552e\u50f9"
+    ],
+    "row_eligibility_rules": [
+      "One product row per code/price entry."
+    ],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "page number",
+      "section header",
+      "table row",
+      "source column"
+    ]
+  },
   "fields": [
     {
-      "aliases": [],
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "CODE NO / \u7de8\u865f",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Vetapet code number.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "supplier_sku",
-      "requirement": "REQUIRED",
-      "role": "SUPPLIER_SKU",
-      "source_column": "CODE NO / 編號",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": "PRODUCT NAME / \u7522\u54c1\u540d\u7a31",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Printed product name.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "description",
-      "requirement": "REQUIRED",
-      "role": "PRODUCT_NAME",
-      "source_column": "PRODUCT NAME / 產品名稱",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": "SIZE / PACK / \u91cd\u91cf",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Raw size/packaging text; may express content measure, pack description, or both.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "pack_size",
-      "requirement": "OPTIONAL",
-      "role": "PACKAGING",
-      "source_column": "SIZE / PACK / 重量",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "cost",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "WHOLESALE PRICE / \u6279\u767c\u50f9",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Wholesale price field.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "cost",
-      "requirement": "REQUIRED",
-      "role": "SOURCE_PRICE",
-      "source_column": "WHOLESALE PRICE / 批發價",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "rrp",
+      "role": "RRP",
+      "requirement": "OPTIONAL",
+      "source_column": "SUGGESTED RETAIL PRICE / RETAIL PRICE / \u96f6\u552e\u50f9",
+      "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Suggested retail or retail price field.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "rrp",
-      "requirement": "OPTIONAL",
-      "role": "RRP",
-      "source_column": "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "species",
+      "role": "SPECIES",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "product_name",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Species cue from product name when present.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "species",
-      "requirement": "OPTIONAL",
-      "role": "SPECIES",
-      "source_column": null,
-      "source_path": "product_name"
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "segment",
+      "role": "SEGMENT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": null,
       "composed_from": [],
       "constant_value": "vet",
+      "aliases": [],
       "description": "Vetapet catalogue segment split.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "segment",
-      "requirement": "OPTIONAL",
-      "role": "SEGMENT",
-      "source_column": null,
-      "source_path": null
+      ]
     },
     {
-      "aliases": [],
+      "field_key": "category",
+      "role": "CATEGORY",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "section_header",
       "composed_from": [],
       "constant_value": null,
+      "aliases": [],
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         },
         {
           "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
         },
         {
           "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
         }
-      ],
-      "field_key": "category",
-      "requirement": "OPTIONAL",
-      "role": "CATEGORY",
-      "source_column": null,
-      "source_path": "section_header"
+      ]
     }
   ],
-  "format_name": "Vetapet Vet PDF price list",
-  "known_ambiguities": [
-    {
-      "blocks_supported_status": true,
-      "condition": "The supplied Vetapet PDF contains both Unit Price tables and Wholesale/Retail/Terms tables.",
-      "issue_code": "VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
-      "review_guidance": "Decide whether to split Vetapet into multiple supplier-format contracts or add typed per-section interpretation rules before production selection."
-    }
-  ],
-  "legacy_yaml_reference": "apps/api/catalogue_contracts/vetapet_vet.yaml",
-  "mbb": {
-    "benefit_patterns": [],
-    "condition_patterns": [],
-    "notes": null,
-    "requires_validation_issue_when": [],
-    "source_fields": [],
-    "supported_scopes": []
-  },
-  "metadata": {},
-  "packaging": {
-    "break_pack_allowed": null,
-    "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
-    "interpretation_rules": [
-      "Treat kg/g/ml size text as content measure, not sellable-unit count.",
-      "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms."
-    ],
-    "minimum_order_source_field": null,
-    "order_increment_source_field": null,
-    "packaging_source_field": "pack_size",
+  "pricing": {
+    "cost_source_field": "cost",
+    "rrp_source_field": "rrp",
+    "currency": "HKD",
     "price_basis": {
       "code": "UNIT",
       "label": null
     },
+    "price_basis_status": "PARTIALLY_VERIFIED",
+    "autoswap_cost_rrp_allowed": true,
+    "null_cost_markers": [],
+    "notes": "The source PDF confirms multiple price layouts. Wholesale/Retail sections align with parser tests; Unit Price sections need a dedicated parser rule before production use."
+  },
+  "packaging": {
+    "packaging_source_field": "pack_size",
     "purchase_uom": null,
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
     "sellable_unit_uom": null,
     "sellable_units_per_purchase_unit_source_field": null,
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
+    "interpretation_rules": [
+      "Treat kg/g/ml size text as content measure, not sellable-unit count.",
+      "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms."
+    ],
     "unresolved_semantics": [
       "Purchase UOM, order increment, and break-pack rules are not proven by checked-in source evidence."
     ]
   },
+  "mbb": {
+    "source_fields": [],
+    "supported_scopes": [],
+    "condition_patterns": [],
+    "benefit_patterns": [],
+    "requires_validation_issue_when": [],
+    "notes": null
+  },
+  "validation_rules": [
+    {
+      "rule_id": "vetapet.cost_below_rrp_after_autoswap",
+      "description": "Wholesale should be below retail after any allowed autoswap.",
+      "source_expression": "cost_price < rrp",
+      "severity": "ERROR",
+      "issue_code": "VETAPET_COST_NOT_BELOW_RRP",
+      "review_guidance": "Confirm whether wholesale and retail prices were swapped or whether the row has a non-standard promotion.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
+        }
+      ]
+    },
+    {
+      "rule_id": "vetapet.cost_positive",
+      "description": "Wholesale cost must be positive when present.",
+      "source_expression": "cost_price > 0",
+      "severity": "ERROR",
+      "issue_code": "VETAPET_COST_NOT_POSITIVE",
+      "review_guidance": "Confirm the printed wholesale value before approving the supplier cost.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/catalogue_contract.py",
+          "note": "Legacy mapping engine can autoswap wholesale/RRP when explicitly enabled and parse kg content measure when supplied an explicit local mapping."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp",
+          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing."
+        }
+      ]
+    }
+  ],
+  "known_ambiguities": [
+    {
+      "issue_code": "VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
+      "condition": "The supplied Vetapet PDF contains both Unit Price tables and Wholesale/Retail/Terms tables.",
+      "review_guidance": "Decide whether to split Vetapet into multiple supplier-format contracts or add typed per-section interpretation rules before production selection.",
+      "blocks_supported_status": true
+    }
+  ],
   "pipeline_mapping": {
     "raw_observation_contract_id": "catalogue.raw_observation.v1",
-    "raw_observation_fields": [
-      "supplier_sku",
-      "description",
-      "pack_size",
-      "cost",
-      "rrp",
-      "species",
-      "segment",
-      "category"
-    ],
     "staging_item_contract_id": "catalogue.staging_item.v1",
-    "staging_proposed_field_keys": [
+    "raw_observation_fields": [
       "supplier_sku",
       "description",
       "pack_size",
@@ -367,140 +430,21 @@
       "species",
       "segment",
       "category"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "description",
+      "pack_size",
+      "cost",
+      "rrp",
+      "species",
+      "segment",
+      "category"
     ]
   },
-  "pricing": {
-    "autoswap_cost_rrp_allowed": true,
-    "cost_source_field": "cost",
-    "currency": "HKD",
-    "notes": "The source PDF confirms multiple price layouts. Wholesale/Retail sections align with parser tests; Unit Price sections need a dedicated parser rule before production use.",
-    "null_cost_markers": [],
-    "price_basis": {
-      "code": "UNIT",
-      "label": null
-    },
-    "price_basis_status": "PARTIALLY_VERIFIED",
-    "rrp_source_field": "rrp"
-  },
-  "schema_version": "catalogue.supplier_source_contract.v1",
-  "source_format": "PDF_TABLE",
-  "source_structure": {
-    "expected_sections": [
-      "Part A Drugs",
-      "Part B Supplements",
-      "IVD",
-      "Dermoscent",
-      "Chung-Li",
-      "Li-Saint DermCare"
-    ],
-    "expected_sheet_names": [],
-    "optional_headers": [
-      "PACKING PER UNIT",
-      "UNIT PRICE",
-      "WHOLESALE PRICE",
-      "RETAIL PRICE",
-      "TERMS",
-      "SIZE / PACK / 重量",
-      "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價"
-    ],
-    "required_headers": [
-      "CODE NO",
-      "PRODUCT NAME"
-    ],
-    "row_eligibility_rules": [
-      "One product row per code/price entry."
-    ],
-    "skip_rules": [],
-    "source_format": "PDF_TABLE",
-    "source_location_expectations": [
-      "page number",
-      "section header",
-      "table row",
-      "source column"
-    ],
-    "table_regions": [
-      {
-        "header_row": null,
-        "name": "vet_clinic_unit_price_sections",
-        "notes": "Observed in the supplied Vetapet.pdf early clinic sections.",
-        "selector": "CODE NO / PRODUCT NAME / PACKING PER UNIT / UNIT PRICE / REMARKS or TERMS"
-      },
-      {
-        "header_row": null,
-        "name": "vet_wholesale_retail_sections",
-        "notes": "Observed later in the supplied Vetapet.pdf and covered by current legacy YAML behavior.",
-        "selector": "CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS"
-      }
-    ]
-  },
-  "supplier": {
-    "supplier_code": null,
-    "supplier_id": 91,
-    "supplier_name": "Vetapet Vet"
-  },
-  "support_status": "PARTIALLY_VERIFIED",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "cis-103b-catalogue-architecture",
   "updated_at": null,
   "updated_by": null,
-  "validation_rules": [
-    {
-      "description": "Wholesale should be below retail after any allowed autoswap.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
-        },
-        {
-          "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
-        },
-        {
-          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
-        }
-      ],
-      "issue_code": "VETAPET_COST_NOT_BELOW_RRP",
-      "review_guidance": "Confirm whether wholesale and retail prices were swapped or whether the row has a non-standard promotion.",
-      "rule_id": "vetapet.cost_below_rrp_after_autoswap",
-      "severity": "ERROR",
-      "source_expression": "cost_price < rrp"
-    },
-    {
-      "description": "Wholesale cost must be positive when present.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "note": "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
-          "reference": "external-sample:Vetapet.pdf"
-        },
-        {
-          "evidence_type": "LEGACY_YAML_ONLY",
-          "note": "Legacy vet catalogue config names columns and current parser expectations; not authoritative by itself.",
-          "reference": "apps/api/catalogue_contracts/vetapet_vet.yaml"
-        },
-        {
-          "evidence_type": "PARSER_BEHAVIOR",
-          "note": "Runtime enforcer can autoswap wholesale/RRP when explicitly enabled and parse kg content measure.",
-          "reference": "apps/api/services/catalogue_contract.py"
-        },
-        {
-          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
-          "note": "Tests representative Vetapet Vet rows for autoswap behavior and kg parsing.",
-          "reference": "apps/api/tests/test_catalogue_contract.py::test_vetapet_autoswaps_wholesale_below_rrp"
-        }
-      ],
-      "issue_code": "VETAPET_COST_NOT_POSITIVE",
-      "review_guidance": "Confirm the printed wholesale value before approving the supplier cost.",
-      "rule_id": "vetapet.cost_positive",
-      "severity": "ERROR",
-      "source_expression": "cost_price > 0"
-    }
-  ]
+  "metadata": {}
 }

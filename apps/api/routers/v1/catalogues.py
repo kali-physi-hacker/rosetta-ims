@@ -153,17 +153,16 @@ def import_catalogue(
     filename = file.filename or "upload"
     content_type = file.content_type or ""
 
-    # ── DC-2: contract-first extraction. A user-picked supplier's contract (if one exists) guides the
-    #    model prompt and then deterministically enforces its invariants + validates each row; no contract
-    #    → today's generic extraction, unchanged. ──
+    # Legacy extraction mappings are optional and no longer shipped as YAML files.
+    # When no local mapping exists, extraction follows the generic path unchanged.
     contract = catalogue_contract.load_contract(supplier_id) if supplier_id else None
     items_raw, fmt = extraction_service.extract(content, filename, content_type, contract=contract)
     contract_flags, contract_stale = {}, False
     if contract is not None:
         items_raw, _flags = contract.apply(items_raw)
         contract_flags = {f["index"]: f for f in _flags}
-        # DC-4 drift: most rows failing validation ⇒ the catalogue likely no longer matches its contract
-        # (restyled columns). Surface it for review — the contract owner bumps the version + re-parses.
+        # Drift: most rows failing validation means the catalogue likely no longer
+        # matches the optional local mapping.
         contract_stale = bool(items_raw) and len(_flags) > 0.5 * len(items_raw)
 
     # ── Stage 1: detect + resolve the supplier (per file). A user-picked supplier always wins. ──

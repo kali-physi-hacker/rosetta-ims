@@ -1,15 +1,13 @@
-"""Catalogue data contracts — a per-supplier schema for the parser.
+"""Legacy supplier extraction mapping engine.
 
-A contract (`backend/catalogue_contracts/<slug>.yaml`) states, for ONE supplier, which source column is
-cost vs RRP, the pricing basis, and where the order multiple / species / segment / category live — instead
-of the generic prompt re-guessing on every import. Extraction stays model-assisted but contract-GUIDED
-(`prompt_section`); this module then deterministically ENFORCES the contract's invariants and VALIDATES
-each row (`apply`).
+This module predates the Pydantic catalogue pipeline and supplier-source contracts.
+It can still parse an optional local YAML mapping directory, but the repository no
+longer ships those YAML files and they must not be treated as contracts. With no
+local mappings present, `load_contract` returns None and callers use the generic
+extraction path unchanged.
 
-Pure + deterministic: reads the contract file, no model calls, no DB. Additive + opt-in — a supplier with
-no contract → `load_contract` returns None → the caller runs today's generic path unchanged.
-
-Design: PRD/architecture in `_bmad-output/planning-artifacts/*-catalogue-contracts.md`.
+The authoritative contract layer lives under
+`schemas.catalogue_pipeline.supplier_contracts`.
 """
 from __future__ import annotations
 
@@ -19,7 +17,7 @@ from typing import Optional
 
 import yaml
 
-_CONTRACT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "catalogue_contracts")
+_LEGACY_MAPPING_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "catalogue_contracts")
 
 # Canonical catalogue_item / ordering fields a contract may bind. Binding anything else is a typo → fail loud.
 _CANONICAL = {
@@ -125,7 +123,7 @@ class Contract:
         """A supplier-specific instruction block appended to EXTRACTION_PROMPT so the model extracts the
         NAMED columns for this supplier (not a guess). The deterministic `apply` still has final say on the
         invariants below, so a model slip can't override them."""
-        L = [f"\n=== SUPPLIER CONTRACT — {self.supplier} (do EXACTLY this) ==="]
+        L = [f"\n=== LEGACY SUPPLIER EXTRACTION MAPPING — {self.supplier} (do EXACTLY this) ==="]
         cost, rrp = self._cost_col(), self._rrp_col()
         basis = self.pricing.get("basis", "per_unit")
         if cost:
@@ -280,11 +278,11 @@ _LOADED = False
 def _load_all():
     global _LOADED
     _CACHE.clear()
-    if os.path.isdir(_CONTRACT_DIR):
-        for name in os.listdir(_CONTRACT_DIR):
+    if os.path.isdir(_LEGACY_MAPPING_DIR):
+        for name in os.listdir(_LEGACY_MAPPING_DIR):
             if not name.endswith((".yaml", ".yml")):
                 continue
-            path = os.path.join(_CONTRACT_DIR, name)
+            path = os.path.join(_LEGACY_MAPPING_DIR, name)
             with open(path, "r", encoding="utf-8") as fh:
                 raw = yaml.safe_load(fh)
             if not isinstance(raw, dict) or "supplier_id" not in raw:
@@ -295,8 +293,11 @@ def _load_all():
 
 
 def load_contract(supplier_id: Optional[int]) -> Optional[Contract]:
-    """The contract for this supplier, or None (→ caller uses the generic path). Contracts with load
-    errors raise here, deliberately, so a broken contract can't silently mis-map."""
+    """The legacy mapping for this supplier, or None so callers use the generic path.
+
+    Mapping load errors raise deliberately, so a broken local mapping cannot
+    silently mis-map a supplier catalogue.
+    """
     if supplier_id is None:
         return None
     if not _LOADED:
@@ -305,7 +306,7 @@ def load_contract(supplier_id: Optional[int]) -> Optional[Contract]:
 
 
 def reload_contracts():
-    """Test/ops hook — re-read the contract directory."""
+    """Test/ops hook: re-read the optional legacy mapping directory."""
     global _LOADED
     _LOADED = False
     _load_all()

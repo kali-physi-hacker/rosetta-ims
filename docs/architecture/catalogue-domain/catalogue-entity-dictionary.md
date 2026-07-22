@@ -13,9 +13,9 @@
 | **Intended reviewers** | Austin (Ops / Product), Chris (Technical owner / CODEOWNERS), Ops team |
 | **Related ClickUp task** | **CIS-102 — Define Canonical Catalogue Domain Entities** |
 | **Repository** | `rosetta-ims-clean` (this repo). Backend evidence lives in `apps/api/`, which is byte-identical to the legacy `rosetta-ims/backend/`, so every `file:line` reference below is valid in this repo. |
-| **Predecessor inputs** | The CIS-101.1/2/3 + support docs live in the **legacy `rosetta-ims/docs/`** (not ported to this repo per the CIS-102 scope): `catalogue-ingestion-flow.md` · `database-models-review.md` · `data-conflation-audit.md` · `product-vs-supplier-fields.md` · `mbb-per-supplier-margin.md`. Catalogue data-contracts: `apps/api/catalogue_contracts/*.yaml`. All inline `*.md` citations in this document refer to those legacy-repo predecessor deliverables. |
+| **Predecessor inputs** | The CIS-101.1/2/3 + support docs live in the **legacy `rosetta-ims/docs/`** (not ported to this repo per the CIS-102 scope): `catalogue-ingestion-flow.md` · `database-models-review.md` · `data-conflation-audit.md` · `product-vs-supplier-fields.md` · `mbb-per-supplier-margin.md`. Historical YAML-style supplier extraction mappings have been removed from this repo because they are not contracts. All inline `*.md` citations in this document refer to those legacy-repo predecessor deliverables. |
 
-> **Nature of this document.** This is a **conceptual** dictionary — the *intended* canonical domain model, expressed in business terms. It is grounded in the current implementation (`apps/api/models.py`, ingestion code, and the four supplier data-contracts) as **evidence of the current state**, but it does **not** treat every existing column as canonical truth. Where the implementation conflates concepts or lacks an abstraction, that is recorded as a **modelling gap** in §7, not silently reproduced.
+> **Nature of this document.** This is a **conceptual** dictionary — the *intended* canonical domain model, expressed in business terms. It is grounded in the current implementation (`apps/api/models.py`, ingestion code, and supplier-source contract work) as **evidence of the current state**, but it does **not** treat every existing column as canonical truth. Where the implementation conflates concepts or lacks an abstraction, that is recorded as a **modelling gap** in §7, not silently reproduced.
 >
 > **Constraints honoured.** No code, models, migrations, serializers, or APIs were changed to produce this document. It is documentation only. The next deliverable (the Canonical Catalogue ERD) consumes this dictionary.
 
@@ -120,20 +120,20 @@ Classification legend: **Source Evidence** = captured as-received, preserved, ne
 |---|---|---|---|---|
 | is from | Supplier | Zero or one | No (until confirmed) | The vendor whose catalogue this is; unresolved at upload, set on confirm |
 | contains | Catalogue Item | Zero or many | No | The extracted rows |
-| governed by | (Supplier Data Contract) | Zero or one | No | A per-supplier YAML contract that guides extraction & validation, keyed by `supplier_id` (see note) |
+| governed by | Supplier Source Contract | Zero or one | No | A Pydantic supplier-format contract selected by explicit contract ID/version in future ingestion work |
 
 #### Business rules
 
 - The **raw uploaded file is preserved** (`source_ref`) so the catalogue can be re-parsed deterministically later; a storage failure never fails the import (best-effort, `catalogues.py:38`).
-- If **>50% of rows fail contract validation**, the catalogue is flagged `contract_stale` for the contract owner (drift signal DC-4, `catalogues.py:167`).
-- A catalogue with **no matching contract** falls back to generic AI extraction — behaviour is unchanged and additive (`catalogue_contracts/README.md`).
+- If **>50% of rows fail optional legacy mapping validation**, the catalogue is flagged `contract_stale` for review (drift signal in `catalogues.py:167`).
+- Current ingestion has no repository-shipped supplier YAML mappings and falls back to generic AI extraction unless a local operator-only mapping is supplied. Future contract selection should use the Pydantic supplier-source registry.
 - Supplier resolution is **suggested, never forced**: an ambiguous match leaves `supplier_status = needs_review` with a best-guess pre-selection (§4.3 rules).
 
 #### Example
 
 `import 42`: `Hill's Science Diet Price List.pdf`, format `pdf`, received 2026-07-21, resolved to Supplier 14 (Hill's) at confidence 0.95 (`confirmed`), 120 rows, raw file persisted at `source_ref`. The document header states "Effective 1 APR 2024" — a business-meaningful **effective date** that today is *not* captured on the record (gap, §7).
 
-> **Supplier Data Contract (governance artifact, not a stored entity).** A contract (`apps/api/catalogue_contracts/<supplier>.yaml`) declares, per supplier, which source column is cost vs RRP, whether price is `per_unit` or `per_pack`, how `units_per_pack` is set, and where species/segment/category come from. Four exist (Alfamedic 1, Hill's 14, Vetapet Non-Vet 90, Vetapet Vet 91). It is configuration that governs a Supplier Catalogue's extraction; it is not itself catalogue data. Modelled here as a relationship, flagged in §8 Q (packaging/basis).
+> **Supplier Source Contract (governance artifact, not a stored entity).** A supplier-source contract is a Pydantic declaration under `apps/api/schemas/catalogue_pipeline/supplier_contracts/` keyed by supplier, document format, and version. Historical YAML-style files under `apps/api/catalogue_contracts/` were removed because they were extraction mappings, not contracts.
 
 ---
 
@@ -725,7 +725,7 @@ Today: `basic_cost=240`, `cost_source=catalogue`, `cost_updated_at=2026-07-21`. 
 
 Supplier Product (24-can case, base unit HK$10.00) has two terms: `tier` (min_qty 10 cases, unit_cost 9.20) and `buy_x_get_y` (min_qty 10, free_qty 1 → effective 10 × 10/(10+1) = HK$9.09). `best_mbb` → HK$9.09.
 
-> **Note — Hill's settlement discounts are NOT MBB.** Hill's "Net Invoice @0/4/6%" columns are prompt-payment/settlement discounts, retained as catalogue evidence but explicitly **not** mapped to `basic_cost` or to MBB terms (`hills.yaml:34`). Only genuine quantity/spend-conditional bulk deals become MBB terms.
+> **Note — Hill's settlement discounts are NOT MBB.** Hill's "Net Invoice @0/4/6%" columns are prompt-payment/settlement discounts, retained as catalogue evidence but explicitly **not** mapped to supplier cost or to MBB terms in the Pydantic supplier-source contract. Only genuine quantity/spend-conditional bulk deals become MBB terms.
 
 ---
 

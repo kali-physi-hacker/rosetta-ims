@@ -2,7 +2,7 @@
 
 CIS-103B adds a separate supplier-source contract layer for incoming supplier catalogue formats. These contracts describe the shape and semantics of source documents before Rosetta creates shared `RawObservationV1` and `StagingCatalogueItemV1` payloads.
 
-The Python models in `apps/api/schemas/catalogue_pipeline/supplier_contracts/` are authoritative. JSON fixtures and JSON Schemas are generated/review artifacts. The legacy files in `apps/api/catalogue_contracts/*.yaml` remain runtime extraction configuration only; they are not authoritative contracts and were not renamed or wired into the new layer.
+The Python models in `apps/api/schemas/catalogue_pipeline/supplier_contracts/` are authoritative. JSON fixtures and JSON Schemas are generated/review artifacts. The repository no longer ships the old files under `apps/api/catalogue_contracts/*.yaml`; those files were legacy extraction mappings, not contracts.
 
 ## Contract Architecture
 
@@ -33,7 +33,7 @@ A supplier-source contract identity is per supplier plus document format plus ma
 
 ## Runtime Boundary
 
-CIS-103B does not replace `services/catalogue_contract.py`, parse files at upload time, alter `/catalogues/import`, or select contracts in production. The new registry rejects unknown supplier formats and has a separate `get_supported_supplier_source_contract()` path that only returns `SUPPORTED` declarations. Only Hill's and Alfamedic are currently `SUPPORTED`; the remaining declarations still need row fixtures, supplier-id reconciliation, or per-section parser rules.
+CIS-103B does not replace `services/catalogue_contract.py`, parse files at upload time, alter `/catalogues/import`, or select contracts in production. The legacy loader now has no repository-shipped YAML mappings, so current upload behavior falls back to generic extraction unless an operator supplies a local mapping directory outside the contract package. The new registry rejects unknown supplier formats and has a separate `get_supported_supplier_source_contract()` path that only returns `SUPPORTED` declarations. Only Hill's and Alfamedic are currently `SUPPORTED`; the remaining declarations still need row fixtures, supplier-id reconciliation, or per-section parser rules.
 
 Future integration should:
 
@@ -54,28 +54,28 @@ Set `support_status` conservatively:
 | `UNVERIFIED` | Contract identity is known, but evidence is too thin to apply semantics automatically. |
 | `DEPRECATED` | Historical format retained for validation or audit only. |
 
-Legacy YAML alone is insufficient for `SUPPORTED`. A format needs raw source samples, representative extracted rows, confirmed column/header semantics, price basis, packaging/order semantics, and MBB/promotion rules where applicable.
+Historical YAML-style mappings are insufficient for `SUPPORTED`. A format needs raw source samples, representative extracted rows, confirmed column/header semantics, price basis, packaging/order semantics, and MBB/promotion rules where applicable.
 
 ## Coverage Audit
 
-The prompt referenced documentation for about 24 suppliers, but this clean checkout does not contain that full inventory. The local seed file lists nine starter suppliers, `supplier_import.py` can import larger external supplier sheets, and the domain dictionary cites four legacy YAML-backed supplier data-contract files. The table below reflects repository evidence plus the source samples supplied locally for CIS-103B follow-up.
+The prompt referenced documentation for about 24 suppliers, but this clean checkout does not contain that full inventory. The local seed file lists nine starter suppliers, `supplier_import.py` can import larger external supplier sheets, and the domain dictionary records historical YAML-style extraction mappings that have now been removed from the repository. The table below reflects repository evidence plus the source samples supplied locally for CIS-103B follow-up.
 
-| Supplier | Document format | Evidence available | Legacy YAML exists | Proposed contract ID | Implementation status | Confidence/gap |
+| Supplier | Document format | Evidence available | Historical YAML status | Proposed contract ID | Implementation status | Confidence/gap |
 |---|---|---|---|---|---|---|
-| Alfamedic | PDF price list | Real source catalogue sample; legacy YAML; parser behavior; existing test extraction fixture; business/domain documentation | Yes | `alfamedic.price_list.v1` | `SUPPORTED` | Real sample confirms headers and Price/Unit semantics; MBB tier semantics still need later runtime parsing evidence. |
-| Hill's | PDF price list | Real source catalogue sample; legacy YAML; parser behavior; existing test extraction fixture; business/domain documentation | Yes | `hills.price_list.v1` | `SUPPORTED` | Real sample confirms Gross Wholesale, Product Code, Size, Order Multiple, and effective-date layout; supplier code remains unasserted. |
-| C. Vetapet & Company / Vetapet Vet | Mixed PDF catalogue/price list | Real source catalogue sample; legacy YAML; parser behavior; existing test extraction fixture | Yes | `vetapet.vet_price_list.v1` | `PARTIALLY_VERIFIED` | Supplied PDF contains several table layouts (`UNIT PRICE`, `WHOLESALE/RETAIL/TERMS`, Chinese wholesale/retail); split or per-section parser rules needed. |
-| C. Vetapet & Company / Vetapet Non-Vet | PDF price list section | Real source catalogue sample; legacy YAML; parser load behavior | Yes | `vetapet.non_vet_price_list.v1` | `PARTIALLY_VERIFIED` | Source confirms wholesale/retail labels, but price basis and representative non-vet row fixtures remain missing. |
-| Kangaroo Pet Nutrition Ltd / KPN | Mixed PDF catalogue | Real source catalogue sample; user-supplied supplier label | No | `kangaroo.mixed_price_catalogue.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; multiple table layouts need row fixtures before runtime selection. |
-| Kangaroo Pet Nutrition Ltd / KPN | Purina Pro Plan Veterinary Diets product list | Real source catalogue sample; user-supplied supplier label | No | `kangaroo.purina_proplan_veterinary_diets.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; wet-can retail basis varies and needs row fixtures. |
-| Kangaroo Pet Nutrition Ltd / KPN | Earthz Pet image-only price sheet | Real source catalogue sample; visual inspection | No | `kangaroo.earthz_pet_price_sheet.v1` | `UNVERIFIED` | No text layer; needs OCR/vision fixtures, bounding boxes, and price-basis confirmation. |
-| Arrowana Int'l Ltd | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Asia Vet Medical Limited | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Blue Pet Co | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| BuggyBix | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Caesars | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Etta International | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
-| Happypaws Int'l Ltd | Unknown | Missing | No | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| Alfamedic | PDF price list | Real source catalogue sample; parser behavior; existing test extraction fixture; business/domain documentation | Removed; not a contract | `alfamedic.price_list.v1` | `SUPPORTED` | Real sample confirms headers and Price/Unit semantics; MBB tier semantics still need later runtime parsing evidence. |
+| Hill's | PDF price list | Real source catalogue sample; parser behavior; existing test extraction fixture; business/domain documentation | Removed; not a contract | `hills.price_list.v1` | `SUPPORTED` | Real sample confirms Gross Wholesale, Product Code, Size, Order Multiple, and effective-date layout; supplier code remains unasserted. |
+| C. Vetapet & Company / Vetapet Vet | Mixed PDF catalogue/price list | Real source catalogue sample; parser behavior; existing test extraction fixture | Removed; not a contract | `vetapet.vet_price_list.v1` | `PARTIALLY_VERIFIED` | Supplied PDF contains several table layouts (`UNIT PRICE`, `WHOLESALE/RETAIL/TERMS`, Chinese wholesale/retail); split or per-section parser rules needed. |
+| C. Vetapet & Company / Vetapet Non-Vet | PDF price list section | Real source catalogue sample; parser behavior | Removed; not a contract | `vetapet.non_vet_price_list.v1` | `PARTIALLY_VERIFIED` | Source confirms wholesale/retail labels, but price basis and representative non-vet row fixtures remain missing. |
+| Kangaroo Pet Nutrition Ltd / KPN | Mixed PDF catalogue | Real source catalogue sample; user-supplied supplier label | None | `kangaroo.mixed_price_catalogue.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; multiple table layouts need row fixtures before runtime selection. |
+| Kangaroo Pet Nutrition Ltd / KPN | Purina Pro Plan Veterinary Diets product list | Real source catalogue sample; user-supplied supplier label | None | `kangaroo.purina_proplan_veterinary_diets.v1` | `PARTIALLY_VERIFIED` | Numeric supplier id missing; wet-can retail basis varies and needs row fixtures. |
+| Kangaroo Pet Nutrition Ltd / KPN | Earthz Pet image-only price sheet | Real source catalogue sample; visual inspection | None | `kangaroo.earthz_pet_price_sheet.v1` | `UNVERIFIED` | No text layer; needs OCR/vision fixtures, bounding boxes, and price-basis confirmation. |
+| Arrowana Int'l Ltd | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| Asia Vet Medical Limited | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| Blue Pet Co | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| BuggyBix | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| Caesars | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| Etta International | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
+| Happypaws Int'l Ltd | Unknown | Missing | None | TBD | Missing | Need document type/version, source samples, parser fixtures, and business rules. |
 
 ## Adding A Supplier Format
 

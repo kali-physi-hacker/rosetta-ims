@@ -165,13 +165,13 @@ def test_supported_status_requires_stronger_evidence_than_legacy_yaml_only():
     payload["known_ambiguities"] = []
     payload["evidence"] = [
         {
-            "evidence_type": "LEGACY_YAML_ONLY",
-            "reference": "apps/api/catalogue_contracts/hills.yaml",
-            "note": "Legacy YAML alone is insufficient.",
+            "evidence_type": "MISSING",
+            "reference": "missing source evidence",
+            "note": "Missing evidence alone is insufficient for SUPPORTED.",
         }
     ]
 
-    with pytest.raises(ValidationError, match="evidence beyond legacy YAML"):
+    with pytest.raises(ValidationError, match="evidence beyond missing evidence"):
         SupplierSourceContractV1.model_validate(payload)
 
 

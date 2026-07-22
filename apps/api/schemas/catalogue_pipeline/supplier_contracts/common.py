@@ -63,7 +63,6 @@ class SupplierSourceEvidenceType(str, Enum):
     EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE = "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE"
     PARSER_BEHAVIOR = "PARSER_BEHAVIOR"
     BUSINESS_DOMAIN_DOCUMENTATION = "BUSINESS_DOMAIN_DOCUMENTATION"
-    LEGACY_YAML_ONLY = "LEGACY_YAML_ONLY"
     MISSING = "MISSING"
 
 
@@ -321,7 +320,6 @@ class SupplierSourceContractV1(SupplierSourceModel):
     effective_from: date | None = Field(None, description="Supplier-format effective date when source verified.")
     effective_to: date | None = Field(None, description="Supplier-format retirement/effective-to date when known.")
     evidence: list[EvidenceReference] = Field(..., min_length=1, description="Evidence used to justify this declaration.")
-    legacy_yaml_reference: str | None = Field(None, description="Legacy extraction configuration path, if one exists.")
     source_structure: SourceStructure = Field(..., description="Expected source structure.")
     fields: list[SourceFieldContract] = Field(..., min_length=1, description="Source field declarations.")
     pricing: PricingSourceSemantics = Field(..., description="Supplier price source semantics.")
@@ -386,8 +384,8 @@ class SupplierSourceContractV1(SupplierSourceModel):
 
         evidence_types = {item.evidence_type for item in self.evidence}
         if self.support_status == SupplierContractSupportStatus.SUPPORTED:
-            if evidence_types <= {SupplierSourceEvidenceType.LEGACY_YAML_ONLY, SupplierSourceEvidenceType.MISSING}:
-                raise ValueError("SUPPORTED supplier contracts require evidence beyond legacy YAML or missing evidence")
+            if evidence_types <= {SupplierSourceEvidenceType.MISSING}:
+                raise ValueError("SUPPORTED supplier contracts require evidence beyond missing evidence")
             if self.pricing.price_basis_status != SemanticResolutionStatus.VERIFIED:
                 raise ValueError("SUPPORTED supplier contracts require VERIFIED price basis semantics")
             blocking_ambiguities = [item.issue_code for item in self.known_ambiguities if item.blocks_supported_status]

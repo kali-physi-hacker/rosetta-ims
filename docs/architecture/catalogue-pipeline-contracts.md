@@ -31,17 +31,17 @@ Rosetta must preserve four different meanings:
 
 CIS-103 keeps these meanings in different contracts. A parser proposal is never represented as approved truth, and raw evidence is never mutated to agree with a proposal.
 
-## Legacy YAML Naming
+## Removed Legacy YAML Mappings
 
-The existing files under `apps/api/catalogue_contracts/*.yaml` are legacy supplier extraction configuration. They guide the current parser through `services/catalogue_contract.py`, but they are not CIS-103 Pipeline Contracts and are not the source of truth for these models.
+The repository no longer ships files under `apps/api/catalogue_contracts/*.yaml`. Those YAML files were legacy supplier extraction mappings, not CIS-103 Pipeline Contracts, and they were not the source of truth for these models.
 
 Use these names consistently:
 
-- Legacy extraction configuration: existing supplier-format YAML consumed by current runtime code.
+- Legacy extraction mapping: historical YAML-style parser guidance for the old `services/catalogue_contract.py` engine; not shipped as contract files.
 - Extraction Profile Contract: `catalogue.extraction_profile.v1`, the new typed/versioned Pydantic configuration contract.
 - Pipeline Contract: a Pydantic payload model defining a stage boundary.
 
-The legacy YAML loader remains untouched in CIS-103. Later integration may parse YAML as untrusted configuration and validate it through `ExtractionProfileV1`, but that is intentionally deferred.
+The legacy mapping loader now finds no repository-shipped mappings, so current upload behavior falls back to generic extraction unless a local operator-only mapping directory is supplied. Future integration should validate extraction configuration through Pydantic models, not revive YAML files as contracts.
 
 ## Versioning Rules
 
@@ -133,4 +133,4 @@ Future SQLAlchemy work should map contracts to logical entities without making t
 
 ## Non-Wiring Statement
 
-CIS-103 does not wire these contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current ingestion, current OpenAPI, current UI, or current persistence. Existing runtime behavior and legacy YAML loading are intentionally preserved.
+CIS-103 does not wire these contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current ingestion, current OpenAPI, current UI, or current persistence. Runtime ingestion still uses the legacy loader surface, but the repository no longer ships YAML mappings for it.
