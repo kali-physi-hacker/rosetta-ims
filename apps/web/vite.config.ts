@@ -8,7 +8,8 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
-  // In dev the app calls the same-origin `/api` prefix; Vite proxies it to the backend.
+  // In dev the app calls the same-origin `/api/v1` prefix; Vite proxies `/api/*`
+  // to the backend and leaves the version path intact.
   // This mirrors the old Next.js `/api/:path*` rewrite, so the backend needs no extra
   // CORS setup for localhost. In prod, set VITE_API_URL to the backend origin instead.
   const proxyTarget = env.VITE_API_PROXY_TARGET || 'https://178.128.127.5.nip.io'

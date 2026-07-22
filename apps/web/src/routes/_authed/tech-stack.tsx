@@ -95,7 +95,7 @@ function TechStackPage() {
               { layer: 'Database',  choice: 'SQLite (dev) — Postgres-ready via DATABASE_URL',                              host: 'Fly volume' },
               { layer: 'Auth',      choice: 'JWT (HS256) + legacy API-key gate (transitional)',                            host: '—' },
               { layer: 'OCR / AI',  choice: 'Anthropic SDK (Claude Haiku for catalogue extraction)',                       host: 'Anthropic API' },
-              { layer: 'Schema',    choice: 'OpenAPI 3.1 auto-published; TypeScript types auto-generated',                 host: '/openapi.json' },
+              { layer: 'Schema',    choice: 'OpenAPI 3.1 auto-published; TypeScript types auto-generated',                 host: '/v1/openapi.json' },
             ].map((r, i) => (
               <div key={r.layer} style={{
                 display: 'grid', gridTemplateColumns: '120px 1fr 130px',
@@ -285,7 +285,7 @@ function TechStackPage() {
             <RepoLink
               href={`${API}/docs`}
               title="Swagger UI (interactive)"
-              desc="Browse + try every API endpoint. Authentication: legacy API key or JWT (POST /auth/login to obtain a token)."
+              desc="Browse + try every API endpoint. Authentication: legacy API key or JWT (POST /v1/auth/login to obtain a token)."
               monoUrl={`${API}/docs`}
             />
             <RepoLink
@@ -302,7 +302,7 @@ function TechStackPage() {
             />
           </div>
           <p style={{ fontSize: '11px', color: C.faint, marginTop: '8px', fontStyle: 'italic' }}>
-            Note: <code>/docs</code> and <code>/openapi.json</code> are public after the next Fly.io deploy. Until then they require the API key —
+            Note: <code>/v1/docs</code> and <code>/v1/openapi.json</code> are public after the next Fly.io deploy. Until then they require the API key —
             you can clone the repo and read <code>api-types.generated.ts</code> directly, which is generated from the same schema.
           </p>
         </Section>

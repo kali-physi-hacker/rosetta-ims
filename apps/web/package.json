@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "types": "openapi-typescript ${VITE_API_URL:-https://178.128.127.5.nip.io}/openapi.json -o src/lib/api/generated.ts"
+    "types": "openapi-typescript ${VITE_API_URL:-https://178.128.127.5.nip.io}/${VITE_API_VERSION:-v1}/openapi.json -o src/lib/api/generated.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",

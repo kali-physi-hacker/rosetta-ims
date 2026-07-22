@@ -10,7 +10,7 @@ Lives at `backend/` in the repo. Frontend lives at `frontend/` and talks to this
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Web framework | [FastAPI](https://fastapi.tiangolo.com/) | Automatic OpenAPI/Swagger at `/docs` |
+| Web framework | [FastAPI](https://fastapi.tiangolo.com/) | Versioned OpenAPI/Swagger at `/v1/docs` |
 | ORM | [SQLAlchemy 2.x](https://www.sqlalchemy.org/) | Declarative models in `models.py` |
 | DB (dev) | SQLite | File at `backend/ims.db` (gitignored) |
 | DB (prod) | Postgres-ready | Set `DATABASE_URL` env var |
@@ -42,7 +42,7 @@ pip install -r requirements.txt
 .\venv\Scripts\python -m uvicorn main:app --reload --port 8001
 ```
 
-API is now at `http://localhost:8001`. Swagger UI at `http://localhost:8001/docs`.
+API v1 is now at `http://localhost:8001/v1`. Swagger UI at `http://localhost:8001/v1/docs`.
 
 ### Run both backend + frontend together
 
@@ -120,15 +120,18 @@ backend/
 ├── fly.toml                 # Fly.io app config
 ├── ims.db                   # SQLite (gitignored)
 │
-├── routers/                 # HTTP routes — one file per domain
-│   ├── auth.py              # /auth/login, /auth/me — JWT issuance
-│   ├── products.py          # /products, /products/{sku}, /products/summary
-│   ├── pricing.py           # /pricing matrix endpoints
-│   ├── suppliers.py         # /suppliers CRUD
-│   ├── sku.py               # SKU-level ops (cost edits, uom stamping)
-│   ├── catalogues.py        # /catalogues OCR ingestion + review
-│   ├── stock.py             # /stock CSV import + adjustments
-│   └── sync.py              # /sync Google Sheet pull
+├── routers/                 # HTTP routes, grouped by API version
+│   ├── v1/                  # current production API mounted at /v1
+│   │   ├── __init__.py      # registers v1 routers
+│   │   ├── auth.py          # /v1/auth/login, /v1/auth/me — JWT issuance
+│   │   ├── products.py      # /v1/products, /v1/products/{sku}, /v1/products/summary
+│   │   ├── pricing.py       # /v1/pricing matrix endpoints
+│   │   ├── suppliers.py     # /v1/suppliers CRUD
+│   │   ├── catalogues.py    # /v1/catalogues OCR ingestion + review
+│   │   ├── stock.py         # /v1/stock CSV import + adjustments
+│   │   └── sync.py          # /v1/sync Google Sheet pull
+│   └── v2/                  # empty next-version API mounted at /v2
+│       └── __init__.py      # register v2 routers here as they are added
 │
 ├── services/                # Business logic — pure Python, no HTTP
 │   ├── extraction_service.py    # OCR pipeline (Claude Haiku)
@@ -155,7 +158,7 @@ Response shapes are typed in [`frontend/src/lib/types.ts`](../frontend/src/lib/t
 
 ### Auto-generating types
 
-FastAPI exposes the full OpenAPI schema at `/openapi.json`. Currently 31KB / ~30 endpoint operations. The generated TypeScript file at [`frontend/src/lib/api-types.generated.ts`](../frontend/src/lib/api-types.generated.ts) is a fully-typed mirror — checked into the repo so audit-readers can browse without running anything.
+FastAPI exposes the current API schema at `/v1/openapi.json`. The generated TypeScript file at [`frontend/src/lib/api-types.generated.ts`](../frontend/src/lib/api-types.generated.ts) is a fully-typed mirror — checked into the repo so audit-readers can browse without running anything.
 
 To regenerate after backend changes, **three options**:
 
@@ -164,13 +167,13 @@ To regenerate after backend changes, **three options**:
 cd frontend
 npm run types:generate
 
-# Option 2 — hit Fly.io prod (after the next deploy makes /openapi.json public)
+# Option 2 — hit prod (after the next deploy makes /v1/openapi.json public)
 cd frontend
 npm run types:generate:prod
 
 # Option 3 — offline (no server, just Python + venv)
 cd backend
-.\venv\Scripts\python.exe -c "import json; from main import app; print(json.dumps(app.openapi()))" > openapi.json
+.\venv\Scripts\python.exe -c "import json; from main import api_v1; print(json.dumps(api_v1.openapi()))" > openapi.json
 cd ..\frontend
 npx openapi-typescript ../backend/openapi.json -o src/lib/api-types.generated.ts
 ```
@@ -188,10 +191,10 @@ Eventually `types.ts` can be deleted in favour of the generated file.
 
 ## Adding a new endpoint
 
-1. Decide which router it belongs in (or create a new file in `routers/`)
+1. Decide which API version it belongs in (`routers/v1/` for current API, `routers/v2/` for next-version contracts)
 2. Add the route handler — use `Depends(get_db)` for DB session and `Depends(get_current_user)` for auth
 3. If the route returns a new shape, add a Pydantic response model in the same file (FastAPI uses it for OpenAPI)
-4. If created a new router file, register it in `main.py` (`app.include_router(...)`)
+4. If created a new router file, register it in that version's `__init__.py` with `target.include_router(...)`
 5. Update `frontend/src/lib/api.ts` with a calling function and `frontend/src/lib/types.ts` with the response type — OR re-run `npm run types:generate` to refresh auto types
 
 ---
@@ -238,14 +241,14 @@ fly secrets set KEY=value     # add or update a secret (triggers redeploy)
 ```
 
 App URL: `https://rosetta-ims-api.fly.dev`
-Swagger: `https://rosetta-ims-api.fly.dev/docs`
+Swagger: `https://rosetta-ims-api.fly.dev/v1/docs`
 
 ### Database in prod
 - Currently SQLite on a Fly volume
 - For higher concurrency, switch to Fly Postgres: `fly postgres create` + `fly postgres attach`, then `DATABASE_URL` is set automatically
 
 ### Vercel (frontend)
-Frontend auto-deploys on every push to `main` via Vercel's GitHub integration. The frontend reads `NEXT_PUBLIC_API_URL` to know where the backend lives (set in Vercel project env vars).
+Frontend auto-deploys on every push to `main` via Vercel's GitHub integration. The frontend reads `VITE_API_URL` for the backend origin and appends `/v1` through its shared API config.
 
 ---
 
@@ -254,7 +257,7 @@ Frontend auto-deploys on every push to `main` via Vercel's GitHub integration. T
 Two auth mechanisms run in parallel for transition reasons. **JWT is the path forward.**
 
 ### JWT (recommended)
-- `POST /auth/login` with `{username, password}` returns `{access_token, user}`
+- `POST /v1/auth/login` with `{username, password}` returns `{access_token, user}`
 - Subsequent requests include `Authorization: Bearer <token>`
 - Token validated per-endpoint via `Depends(get_current_user)` in `dependencies.py`
 - Default users seeded on first run: `seph` (admin), `team` (data_entry)
@@ -264,7 +267,7 @@ Two auth mechanisms run in parallel for transition reasons. **JWT is the path fo
 - Skipped entirely if `IMS_API_KEY` env var is unset (dev mode)
 - Pass via `X-API-Key: <key>` header
 
-`/health` and `/auth/login` are exempt from both gates.
+`/health` and `/v1/auth/login` are exempt from both gates. Legacy root `/auth/login` remains available as a schema-hidden compatibility alias.
 
 ---
 

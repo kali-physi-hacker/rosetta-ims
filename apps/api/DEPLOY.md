@@ -93,12 +93,12 @@ resolve to the droplet). Watch `docker compose logs caddy` if the cert doesn't i
 curl https://api.your-domain.com/health
 
 # CORS preflight from the Vercel origin should return the allow-origin header
-curl -si -X OPTIONS https://api.your-domain.com/suppliers \
+curl -si -X OPTIONS https://api.your-domain.com/v1/suppliers \
   -H "Origin: https://rosetta-ims.vercel.app" \
   -H "Access-Control-Request-Method: GET" | grep -i access-control-allow-origin
 
 # login works (data migrated correctly)
-curl -s -X POST https://api.your-domain.com/auth/login \
+curl -s -X POST https://api.your-domain.com/v1/auth/login \
   -H "Content-Type: application/json" -d '{"username":"seph","password":"rosetta2024"}'
 ```
 
@@ -121,11 +121,9 @@ sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapf
 
 In the Vercel project → **Settings → Environment Variables**, set:
 ```
-NEXT_PUBLIC_API_URL = https://api.your-domain.com
+VITE_API_URL = https://api.your-domain.com
 ```
-…then **redeploy** the frontend. (The code falls back to the old Fly URL only when this var
-is unset, so once it's set the 13 call sites all use the new API. No frontend code change
-needed.)
+…then **redeploy** the frontend. The frontend appends `/v1` through its shared API config.
 
 ## 9. Decommission Fly
 
