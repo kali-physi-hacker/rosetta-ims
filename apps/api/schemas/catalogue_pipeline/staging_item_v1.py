@@ -76,8 +76,9 @@ class StagingCatalogueItemV1(ContractModel):
     def _staging_requires_observation_link(self):
         if not self.raw_observation_ids:
             raise ValueError("Staging Catalogue Item requires at least one Raw Observation link")
+        if len(self.raw_observation_ids) != len(set(self.raw_observation_ids)):
+            raise ValueError("Staging Catalogue Item raw_observation_ids must be unique")
         return self
 
 
 register_contract(StagingCatalogueItemV1)
-

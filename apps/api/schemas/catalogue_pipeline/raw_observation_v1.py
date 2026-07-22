@@ -26,6 +26,17 @@ class BoundingBox(ContractModel):
     height: Decimal = Field(..., gt=Decimal("0"), description="Bounding-box height.")
     unit: str | None = Field(None, description="Coordinate unit, for example px or pt.")
 
+    @field_validator("unit", mode="before")
+    @classmethod
+    def _unit_is_meaningful(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                raise ValueError("bounding_box.unit cannot be blank")
+        return value
+
 
 class SourceLocation(ContractModel):
     """Location of evidence inside the source file."""
@@ -36,6 +47,32 @@ class SourceLocation(ContractModel):
     cell_range: str | None = Field(None, description="Spreadsheet range, for example A2:H2.")
     bounding_box: BoundingBox | None = Field(None, description="Bounding box around the observed object.")
     source_object_key: str | None = Field(None, description="Optional storage/object key or source-specific reference.")
+
+    @field_validator("sheet_name", "cell_range", "source_object_key", mode="before")
+    @classmethod
+    def _locator_text_is_meaningful(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                raise ValueError("source location text locators cannot be blank")
+        return value
+
+    @model_validator(mode="after")
+    def _requires_meaningful_locator(self):
+        if not any(
+            (
+                self.page_number is not None,
+                self.sheet_name is not None,
+                self.row_number is not None,
+                self.cell_range is not None,
+                self.bounding_box is not None,
+                self.source_object_key is not None,
+            )
+        ):
+            raise ValueError("SourceLocation requires at least one meaningful locator")
+        return self
 
 
 class RawCell(ContractModel):
@@ -94,4 +131,3 @@ class RawObservationV1(ContractModel):
 
 
 register_contract(RawObservationV1)
-

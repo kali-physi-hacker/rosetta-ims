@@ -269,6 +269,12 @@ class LineageReference(ContractModel):
     field_paths: list[str] = Field(default_factory=list, description="Optional field paths covered by this lineage.")
     review_decision_id: UUID | None = Field(None, description="Review decision that approved or overrode the assertion.")
 
+    @model_validator(mode="after")
+    def _raw_observation_ids_are_unique(self):
+        if len(self.raw_observation_ids) != len(set(self.raw_observation_ids)):
+            raise ValueError("lineage raw_observation_ids must be unique")
+        return self
+
 
 class ExternalMapping(ContractModel):
     """Mapping between Rosetta and an external product/catalogue identifier."""
@@ -280,4 +286,3 @@ class ExternalMapping(ContractModel):
 
 
 JsonObject = dict[str, Any]
-

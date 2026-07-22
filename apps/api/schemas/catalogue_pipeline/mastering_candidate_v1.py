@@ -124,6 +124,8 @@ class MasteringCandidateV1(ContractModel):
 
     @model_validator(mode="after")
     def _approved_candidate_requires_review_lineage(self):
+        if len(self.raw_observation_ids) != len(set(self.raw_observation_ids)):
+            raise ValueError("Mastering Candidate raw_observation_ids must be unique")
         if self.review_status in {ReviewStatus.APPROVED, ReviewStatus.APPROVED_WITH_OVERRIDE}:
             if self.lineage is None or not self.raw_observation_ids:
                 raise ValueError("approved Mastering Candidate requires lineage and raw observation evidence")
@@ -136,4 +138,3 @@ class MasteringCandidateV1(ContractModel):
 
 
 register_contract(MasteringCandidateV1)
-
