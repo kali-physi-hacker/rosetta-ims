@@ -4,15 +4,14 @@ Auto-deployed to Fly.io on every push to main that touches backend/**.
 See .github/workflows/fly-deploy.yml + backend/README.md → Deployment.
 """
 import os
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, ORJSONResponse
-from sqlalchemy.orm import Session
+from fastapi.responses import JSONResponse, ORJSONResponse, RedirectResponse
 
 import models
 import database
-from routers import products, pricing, suppliers, sku, catalogues, reparse, stock, sync, auth, access_acknowledgements, tags, collections, categories, brands, users, audit, competitors, config
-from clientssot.router import router as clientssot_router
+from routers.v1 import include_routers as include_v1_routers
+from routers.v2 import include_routers as include_v2_routers
 
 models.Base.metadata.create_all(bind=database.engine)
 database.run_migrations(database.engine)
@@ -25,7 +24,26 @@ transform_engine.seed_defaults(database.engine)
 
 # orjson as the default serializer for every endpoint that returns a dict/list — ~5-8x faster
 # than stdlib json across the whole API (catalogue queues, audit, suppliers, clients, …).
-app = FastAPI(title="Rosetta IMS API", version="1.0.0", default_response_class=ORJSONResponse)
+API_V1_PREFIX = "/v1"
+API_V2_PREFIX = "/v2"
+API_VERSION_PREFIXES = (API_V1_PREFIX, API_V2_PREFIX)
+
+
+app = FastAPI(
+    title="Rosetta IMS API",
+    version="1.0.0",
+    default_response_class=ORJSONResponse,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
+api_v1 = FastAPI(title="Rosetta IMS API v1", version="1.0.0", default_response_class=ORJSONResponse)
+api_v2 = FastAPI(title="Rosetta IMS API v2", version="2.0.0", default_response_class=ORJSONResponse)
+
+include_v1_routers(api_v1)
+include_v2_routers(api_v2)
+# Backwards-compatible aliases for existing scripts/tests. New clients should use /v1.
+include_v1_routers(app, include_in_schema=False)
 
 _default_origins = "http://localhost:3001,http://localhost:3000"
 # Explicit allowlist (env-overridable); trim blanks/whitespace so a stray space can't
@@ -51,13 +69,28 @@ _API_KEY = os.environ.get("IMS_API_KEY", "")
 _PUBLIC_PATHS = {"/health", "/auth/login", "/auth/accept-invite",
                  "/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"}
 
+
+def _strip_api_version(path: str) -> str:
+    for prefix in API_VERSION_PREFIXES:
+        if path == prefix:
+            return "/"
+        if path.startswith(f"{prefix}/"):
+            return path[len(prefix):]
+    return path
+
+
+def _is_public_path(path: str) -> bool:
+    unversioned = _strip_api_version(path)
+    return unversioned in _PUBLIC_PATHS or unversioned.startswith("/auth/invite/")
+
+
 @app.middleware("http")
 async def require_api_key(request: Request, call_next):
     # CORS preflight (OPTIONS) must pass through without auth so browser gets CORS headers
     if request.method == "OPTIONS":
         return await call_next(request)
     # Public routes — login + invite onboarding (the invited user has no session yet)
-    if request.url.path in _PUBLIC_PATHS or request.url.path.startswith("/auth/invite/"):
+    if _is_public_path(request.url.path):
         return await call_next(request)
     # Legacy API key gate — skipped if IMS_API_KEY not set (dev mode)
     if not _API_KEY:
@@ -69,27 +102,43 @@ async def require_api_key(request: Request, call_next):
         return await call_next(request)
     return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
 
-app.include_router(auth.router)
-app.include_router(products.router)
-app.include_router(competitors.router)
-app.include_router(pricing.router)
-app.include_router(suppliers.router)
-app.include_router(sku.router)
-app.include_router(reparse.router)       # catalogue re-parse — /catalogues/reparse/* (before the catalogues catch-all)
-app.include_router(catalogues.router)
-app.include_router(stock.router)
-app.include_router(sync.router)
-app.include_router(access_acknowledgements.router)
-app.include_router(tags.router)
-app.include_router(collections.router)
-app.include_router(categories.router)
-app.include_router(brands.router)
-app.include_router(users.router)
-app.include_router(audit.router)
-app.include_router(config.router)       # transformation config engine (Phase B) — /config/*
-app.include_router(clientssot_router)   # Client SSOT / Clientbase — /clients/*
+
+@app.get("/", include_in_schema=False)
+def api_index():
+    return {
+        "name": "Rosetta IMS API",
+        "current": "v1",
+        "versions": {
+            "v1": {"base_path": API_V1_PREFIX, "status": "current"},
+            "v2": {"base_path": API_V2_PREFIX, "status": "empty"},
+        },
+    }
+
+
+@app.get("/docs", include_in_schema=False)
+def docs_redirect():
+    return RedirectResponse(url="v1/docs")
+
+
+@app.get("/redoc", include_in_schema=False)
+def redoc_redirect():
+    return RedirectResponse(url="v1/redoc")
+
+
+@app.get("/openapi.json", include_in_schema=False)
+def openapi_redirect():
+    return RedirectResponse(url="v1/openapi.json")
 
 
 @app.get("/health")
 def health():
+    return {"status": "ok", "version": "1.0.0", "current": "v1"}
+
+
+@api_v1.get("/health", tags=["system"])
+def health_v1():
     return {"status": "ok", "version": "1.0.0"}
+
+
+app.mount(API_V1_PREFIX, api_v1)
+app.mount(API_V2_PREFIX, api_v2)

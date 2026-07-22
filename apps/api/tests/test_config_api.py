@@ -165,7 +165,7 @@ def test_list_config_and_versions():
 
 
 def test_router_imports_cleanly():
-    from routers import config as config_router
+    from routers.v1 import config as config_router
     assert config_router.router is not None
 
 
