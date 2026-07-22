@@ -414,6 +414,53 @@ class CatalogueImport(Base):
     source_ref             = Column(String, nullable=True)
 
     items = relationship("CatalogueItem", back_populates="catalogue_import")
+    ingestion_runs = relationship("CatalogueIngestionRun", back_populates="source_asset")
+
+
+class CatalogueIngestionRun(Base):
+    """One attempt to process a Catalogue Source Asset (CatalogueImport).
+    Stores metadata about what happened during that specific ingestion workflow run.
+    Does not store extracted catalogue data directly - those are in CatalogueItem records."""
+    __tablename__ = "catalogue_ingestion_runs"
+
+    id                      = Column(Integer, primary_key=True, autoincrement=True)
+    source_asset_id         = Column(Integer, ForeignKey("catalogue_imports.id"), nullable=False)
+    supplier_id             = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
+
+    # Extraction profile and version tracking
+    extraction_profile_id   = Column(String, nullable=True)   # profile identifier used
+    extraction_profile_version = Column(String, nullable=True)  # exact version snapshot
+    extractor_name          = Column(String, nullable=True)   # e.g. 'claude-haiku', 'rule-based-excel'
+    extractor_version       = Column(String, nullable=True)   # e.g. '4.5-20251001', 'v2.3'
+
+    # Parent run relationship for retries/reprocessing
+    parent_run_id           = Column(Integer, ForeignKey("catalogue_ingestion_runs.id"), nullable=True)
+
+    # Run lifecycle
+    status                  = Column(String, nullable=False, default='pending')  # pending | running | completed | failed | cancelled
+    started_at              = Column(String, nullable=False)   # ISO datetime when run started
+    completed_at            = Column(String, nullable=True)    # ISO datetime when run finished (success or failure)
+
+    # Operational metrics
+    items_extracted         = Column(Integer, nullable=True)   # number of items successfully extracted
+    extraction_duration_ms  = Column(Integer, nullable=True)   # milliseconds taken for extraction
+    confidence_metrics      = Column(String, nullable=True)    # JSON: confidence distribution, averages, etc.
+
+    # Error tracking
+    error_type              = Column(String, nullable=True)    # e.g. 'extraction_failure', 'timeout', 'validation_error'
+    error_message           = Column(String, nullable=True)    # human-readable error description
+    error_details           = Column(String, nullable=True)    # JSON: stack trace, detailed diagnostics
+
+    # Metadata
+    created_at              = Column(String, nullable=False)   # ISO datetime of record creation
+    created_by              = Column(String, nullable=True)    # user/system that initiated the run
+
+    # Relationships
+    source_asset = relationship("CatalogueImport", back_populates="ingestion_runs")
+    parent_run = relationship("CatalogueIngestionRun",
+                            remote_side=[id],
+                            backref="child_runs")
+    items = relationship("CatalogueItem", back_populates="ingestion_run")
 
 
 class CatalogueCostStaging(Base):
@@ -437,6 +484,7 @@ class CatalogueItem(Base):
 
     id                 = Column(Integer, primary_key=True, autoincrement=True)
     import_id          = Column(Integer, ForeignKey("catalogue_imports.id"), nullable=False)
+    ingestion_run_id   = Column(Integer, ForeignKey("catalogue_ingestion_runs.id"), nullable=True)
     supplier_id        = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
     raw_description    = Column(String)   # product name shown for review (English after translation)
     original_description = Column(String, nullable=True)  # source text as printed, when translated from another language
@@ -482,6 +530,7 @@ class CatalogueItem(Base):
     reparse_source     = Column(String, nullable=True)   # 'text' | 'source'
 
     catalogue_import  = relationship("CatalogueImport", back_populates="items")
+    ingestion_run     = relationship("CatalogueIngestionRun", back_populates="items")
     matched_product   = relationship("Product", back_populates="catalogue_items")
 
 

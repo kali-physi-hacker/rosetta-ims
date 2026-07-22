@@ -40,6 +40,114 @@ def _sqlite_pragmas(dbapi_conn, _record):
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
+_CATALOGUE_INGESTION_RUNS_COLUMNS = {
+    "id",
+    "source_asset_id",
+    "supplier_id",
+    "extraction_profile_id",
+    "extraction_profile_version",
+    "extractor_name",
+    "extractor_version",
+    "parent_run_id",
+    "status",
+    "started_at",
+    "completed_at",
+    "items_extracted",
+    "extraction_duration_ms",
+    "confidence_metrics",
+    "error_type",
+    "error_message",
+    "error_details",
+    "created_at",
+    "created_by",
+}
+
+
+def _catalogue_ingestion_runs_ddl(table_name):
+    """Return the canonical SQLite DDL for an ingestion-run table."""
+    return (
+        f"CREATE TABLE {table_name} ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " source_asset_id INTEGER NOT NULL REFERENCES catalogue_imports(id),"
+        " supplier_id INTEGER REFERENCES suppliers(id),"
+        " extraction_profile_id TEXT,"
+        " extraction_profile_version TEXT,"
+        " extractor_name TEXT,"
+        " extractor_version TEXT,"
+        " parent_run_id INTEGER REFERENCES catalogue_ingestion_runs(id),"
+        " status TEXT NOT NULL DEFAULT 'pending',"
+        " started_at TEXT NOT NULL,"
+        " completed_at TEXT,"
+        " items_extracted INTEGER,"
+        " extraction_duration_ms INTEGER,"
+        " confidence_metrics TEXT,"
+        " error_type TEXT,"
+        " error_message TEXT,"
+        " error_details TEXT,"
+        " created_at TEXT NOT NULL,"
+        " created_by TEXT)"
+    )
+
+
+def _migrate_legacy_catalogue_ingestion_runs(engine):
+    """Upgrade the pre-source-asset ingestion-run schema without losing run history.
+
+    The first version of this table used ``catalogue_import_id``, ``metrics_json`` and
+    ``succeeded``. SQLite's CREATE TABLE IF NOT EXISTS cannot evolve that table, so a
+    fresh table is populated and swapped into place in one transaction.
+    """
+    with engine.begin() as conn:
+        columns = {
+            row[1]
+            for row in conn.exec_driver_sql("PRAGMA table_info(catalogue_ingestion_runs)")
+        }
+        if not columns or _CATALOGUE_INGESTION_RUNS_COLUMNS.issubset(columns):
+            return
+        if "catalogue_import_id" not in columns:
+            return
+
+        conn.exec_driver_sql("DROP TABLE IF EXISTS catalogue_ingestion_runs_new")
+        conn.exec_driver_sql(_catalogue_ingestion_runs_ddl("catalogue_ingestion_runs_new"))
+        conn.exec_driver_sql("""
+            INSERT INTO catalogue_ingestion_runs_new (
+                id, source_asset_id, supplier_id,
+                extraction_profile_id, extraction_profile_version,
+                extractor_name, extractor_version, parent_run_id, status,
+                started_at, completed_at, items_extracted, extraction_duration_ms,
+                confidence_metrics, error_type, error_message, error_details,
+                created_at, created_by
+            )
+            SELECT
+                runs.id,
+                runs.catalogue_import_id,
+                imports.supplier_id,
+                runs.extraction_profile_id,
+                runs.extraction_profile_version,
+                COALESCE(runs.extractor_name, runs.model_name),
+                runs.extractor_version,
+                runs.parent_run_id,
+                CASE runs.status WHEN 'succeeded' THEN 'completed' ELSE runs.status END,
+                COALESCE(runs.started_at, runs.created_at),
+                runs.completed_at,
+                NULL,
+                NULL,
+                runs.metrics_json,
+                runs.error_code,
+                runs.error_message,
+                runs.error_json,
+                runs.created_at,
+                runs.created_by
+            FROM catalogue_ingestion_runs AS runs
+            LEFT JOIN catalogue_imports AS imports
+                ON imports.id = runs.catalogue_import_id
+        """)
+        conn.exec_driver_sql("DROP TABLE catalogue_ingestion_runs")
+        conn.exec_driver_sql(
+            "ALTER TABLE catalogue_ingestion_runs_new RENAME TO catalogue_ingestion_runs"
+        )
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -58,6 +166,7 @@ def run_migrations(engine):
     SQLite-only incremental steps (raw ALTER/DROP DDL) are skipped."""
     if not _is_sqlite:
         return
+    _migrate_legacy_catalogue_ingestion_runs(engine)
     stmts = [
         # User-account management: account-change + login timestamps
         "ALTER TABLE users ADD COLUMN updated_at TEXT",
@@ -300,6 +409,14 @@ def run_migrations(engine):
         " eff_cost_before REAL, eff_cost_after REAL,"
         " status TEXT NOT NULL DEFAULT 'pending', confirmed_by TEXT, confirmed_at TEXT)",
         "CREATE INDEX IF NOT EXISTS ix_reparse_change_batch ON reparse_change(batch_id)",
+        # ── Catalogue Ingestion Run (tracks individual processing attempts) ──
+        _catalogue_ingestion_runs_ddl("IF NOT EXISTS catalogue_ingestion_runs"),
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_source_asset ON catalogue_ingestion_runs(source_asset_id)",
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_parent ON catalogue_ingestion_runs(parent_run_id)",
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_status ON catalogue_ingestion_runs(status)",
+        # Add ingestion_run_id to catalogue_items to track which run produced each item
+        "ALTER TABLE catalogue_items ADD COLUMN ingestion_run_id INTEGER REFERENCES catalogue_ingestion_runs(id)",
+        "CREATE INDEX IF NOT EXISTS ix_catalogue_items_ingestion_run ON catalogue_items(ingestion_run_id)",
     ]
     with engine.connect() as conn:
         for sql in stmts:
