@@ -25,15 +25,26 @@ class SupplierSourceContractRegistry:
 
     def __init__(self) -> None:
         self._registrations: dict[tuple[str, str], SupplierSourceContractRegistration] = {}
+        self._supplier_format_identities: dict[tuple[str, SupplierDocumentType, str, str], tuple[str, str]] = {}
 
     def register(self, declaration: SupplierSourceContractV1) -> SupplierSourceContractV1:
-        """Register a supplier-format declaration, rejecting duplicate IDs."""
+        """Register a supplier-format declaration, rejecting duplicate or conflicting identities."""
 
+        _validate_declaration_identity(declaration)
         key = (declaration.contract_id, declaration.contract_version)
         if key in self._registrations:
             raise ValueError(f"duplicate supplier source contract registration: {declaration.contract_id}@{declaration.contract_version}")
+        format_key = _supplier_format_identity(declaration)
+        existing_key = self._supplier_format_identities.get(format_key)
+        if existing_key is not None:
+            existing_id, existing_version = existing_key
+            raise ValueError(
+                "conflicting supplier source contract identity for "
+                f"{_format_key_label(format_key)}: existing {existing_id}@{existing_version}, "
+                f"new {declaration.contract_id}@{declaration.contract_version}"
+            )
         supplier_code_or_id = declaration.supplier.supplier_code or str(declaration.supplier.supplier_id)
-        self._registrations[key] = SupplierSourceContractRegistration(
+        registration = SupplierSourceContractRegistration(
             contract_id=declaration.contract_id,
             contract_version=declaration.contract_version,
             supplier_code_or_id=supplier_code_or_id,
@@ -41,6 +52,9 @@ class SupplierSourceContractRegistry:
             support_status=declaration.support_status,
             declaration=declaration,
         )
+        _assert_registration_matches_declaration(registration)
+        self._registrations[key] = registration
+        self._supplier_format_identities[format_key] = key
         return declaration
 
     def get(self, contract_id: str, contract_version: str = "v1") -> SupplierSourceContractRegistration:
@@ -120,3 +134,50 @@ def supplier_source_registry_snapshot() -> dict[tuple[str, str], SupplierSourceC
     """Return a copy of the public supplier-source registry."""
 
     return _REGISTRY.snapshot()
+
+
+def _validate_declaration_identity(declaration: SupplierSourceContractV1) -> None:
+    if not declaration.contract_id.strip():
+        raise ValueError("supplier source contract_id cannot be blank")
+    if not declaration.contract_version.strip():
+        raise ValueError("supplier source contract_version cannot be blank")
+    if not declaration.format_name.strip():
+        raise ValueError("supplier source format_name cannot be blank")
+    if declaration.support_status == SupplierContractSupportStatus.SUPPORTED and declaration.supplier.supplier_id is None:
+        raise ValueError("SUPPORTED supplier source contracts require supplier_id for runtime selection")
+
+
+def _supplier_identity(declaration: SupplierSourceContractV1) -> str:
+    supplier = declaration.supplier
+    if supplier.supplier_id is not None:
+        return f"id:{supplier.supplier_id}"
+    return f"code:{supplier.supplier_code}"
+
+
+def _supplier_format_identity(declaration: SupplierSourceContractV1) -> tuple[str, SupplierDocumentType, str, str]:
+    return (
+        _supplier_identity(declaration),
+        declaration.document_type,
+        declaration.format_name.strip().casefold(),
+        declaration.contract_version,
+    )
+
+
+def _format_key_label(format_key: tuple[str, SupplierDocumentType, str, str]) -> str:
+    supplier, document_type, format_name, version = format_key
+    return f"supplier={supplier}, document_type={document_type.value}, format={format_name}, version={version}"
+
+
+def _assert_registration_matches_declaration(registration: SupplierSourceContractRegistration) -> None:
+    declaration = registration.declaration
+    supplier_code_or_id = declaration.supplier.supplier_code or str(declaration.supplier.supplier_id)
+    if registration.contract_id != declaration.contract_id:
+        raise ValueError("registration contract_id contradicts declaration")
+    if registration.contract_version != declaration.contract_version:
+        raise ValueError("registration contract_version contradicts declaration")
+    if registration.supplier_code_or_id != supplier_code_or_id:
+        raise ValueError("registration supplier identity contradicts declaration")
+    if registration.document_type != declaration.document_type:
+        raise ValueError("registration document_type contradicts declaration")
+    if registration.support_status != declaration.support_status:
+        raise ValueError("registration support_status contradicts declaration")

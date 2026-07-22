@@ -124,6 +124,17 @@ class SupplierSourceReference(SupplierSourceModel):
     supplier_name: str = Field(..., min_length=1, description="Human-readable supplier name.")
     supplier_code: str | None = Field(None, min_length=1, description="Stable supplier code or abbreviation when known.")
 
+    @field_validator("supplier_name", "supplier_code", mode="before")
+    @classmethod
+    def _supplier_text_is_meaningful(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                raise ValueError("supplier identity text cannot be blank")
+        return value
+
     @model_validator(mode="after")
     def _requires_id_or_code(self):
         if self.supplier_id is None and not self.supplier_code:
@@ -337,6 +348,17 @@ class SupplierSourceContractV1(SupplierSourceModel):
     updated_by: str | None = Field(None, description="Declaration updater.")
     metadata: dict[str, str] = Field(default_factory=dict, description="Explicit extension point for non-contract metadata.")
 
+    @field_validator("contract_id", "format_name", "created_by", "updated_by", mode="before")
+    @classmethod
+    def _identity_text_is_meaningful(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                raise ValueError("supplier source contract identity text cannot be blank")
+        return value
+
     @model_validator(mode="after")
     def _validate_contract(self):
         if not self.contract_id.endswith(f".{self.contract_version}"):
@@ -384,6 +406,8 @@ class SupplierSourceContractV1(SupplierSourceModel):
 
         evidence_types = {item.evidence_type for item in self.evidence}
         if self.support_status == SupplierContractSupportStatus.SUPPORTED:
+            if self.supplier.supplier_id is None:
+                raise ValueError("SUPPORTED supplier contracts require a numeric supplier_id for runtime selection")
             if evidence_types <= {SupplierSourceEvidenceType.MISSING}:
                 raise ValueError("SUPPORTED supplier contracts require evidence beyond missing evidence")
             if self.pricing.price_basis_status != SemanticResolutionStatus.VERIFIED:

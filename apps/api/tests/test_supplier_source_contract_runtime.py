@@ -1,6 +1,39 @@
 """Runtime adapter tests for Pydantic supplier-source contracts."""
 
+import pytest
+
 from services import supplier_source_contract_runtime as runtime
+from schemas.catalogue_pipeline.supplier_contracts import (
+    SupplierDocumentType,
+    SupplierSourceContractRegistration,
+    SupplierSourceContractV1,
+    get_supplier_source_contract,
+)
+
+
+def _registration(declaration: SupplierSourceContractV1) -> SupplierSourceContractRegistration:
+    supplier_code_or_id = declaration.supplier.supplier_code or str(declaration.supplier.supplier_id)
+    return SupplierSourceContractRegistration(
+        contract_id=declaration.contract_id,
+        contract_version=declaration.contract_version,
+        supplier_code_or_id=supplier_code_or_id,
+        document_type=declaration.document_type,
+        support_status=declaration.support_status,
+        declaration=declaration,
+    )
+
+
+def _synthetic_contract(*, contract_id: str, supplier_id: int, document_type: SupplierDocumentType) -> SupplierSourceContractV1:
+    payload = get_supplier_source_contract("hills.price_list.v1", "v1").declaration.model_dump(mode="json")
+    payload["contract_id"] = contract_id
+    payload["supplier"] = {
+        "supplier_id": supplier_id,
+        "supplier_name": f"Synthetic Supplier {supplier_id}",
+        "supplier_code": f"SYN{supplier_id}",
+    }
+    payload["document_type"] = document_type.value
+    payload["format_name"] = f"Synthetic {document_type.value.lower()} {supplier_id}"
+    return SupplierSourceContractV1.model_validate(payload)
 
 
 def test_selects_only_supported_supplier_source_contracts():
@@ -15,6 +48,109 @@ def test_selects_only_supported_supplier_source_contracts():
     assert runtime.load_contract(90) is None
     assert runtime.load_contract(999) is None
     assert runtime.load_contract(None) is None
+
+
+def test_resolves_exact_supported_contract_and_rejects_mismatch_or_unknown_version():
+    hills = runtime.resolve_supplier_contract(
+        supplier_id=14,
+        contract_id="hills.price_list.v1",
+        contract_version="v1",
+    )
+
+    assert hills.slug == "hills.price_list.v1"
+
+    with pytest.raises(runtime.SupplierContractIdentityError, match="belongs to supplier=14"):
+        runtime.resolve_supplier_contract(
+            supplier_id=1,
+            contract_id="hills.price_list.v1",
+            contract_version="v1",
+        )
+
+    with pytest.raises(runtime.SupplierContractNotFoundError, match="hills.price_list.v1@v2"):
+        runtime.resolve_supplier_contract(
+            supplier_id=14,
+            contract_id="hills.price_list.v1",
+            contract_version="v2",
+        )
+
+    with pytest.raises(runtime.SupplierContractIdentityError, match="contract_version cannot be supplied without contract_id"):
+        runtime.resolve_supplier_contract(supplier_id=14, contract_version="v1")
+
+
+def test_exact_resolution_rejects_unverified_or_partial_contracts_without_fallback():
+    with pytest.raises(runtime.SupplierContractUnsupportedError, match="not SUPPORTED"):
+        runtime.resolve_supplier_contract(
+            supplier_id=91,
+            contract_id="vetapet.vet_price_list.v1",
+            contract_version="v1",
+        )
+
+    with pytest.raises(runtime.SupplierContractIdentityError, match="belongs to supplier=KPN"):
+        runtime.resolve_supplier_contract(
+            supplier_id=777,
+            contract_id="kangaroo.earthz_pet_price_sheet.v1",
+            contract_version="v1",
+        )
+
+
+def test_supplier_only_resolution_errors_are_specific(monkeypatch):
+    partial = _registration(get_supplier_source_contract("vetapet.vet_price_list.v1", "v1").declaration)
+    monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: (partial,))
+
+    with pytest.raises(runtime.SupplierContractUnsupportedError, match="no SUPPORTED"):
+        runtime.resolve_supplier_contract(supplier_id=91)
+
+    assert runtime.load_contract(91) is None
+
+    monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: ())
+
+    with pytest.raises(runtime.SupplierContractUnsupportedError, match="no registered"):
+        runtime.resolve_supplier_contract(supplier_id=91)
+
+
+def test_supplier_only_resolution_rejects_multiple_supported_formats_without_ordering_fallback(monkeypatch):
+    price_list = _registration(
+        _synthetic_contract(
+            contract_id="synthetic_supplier.price_list.v1",
+            supplier_id=777,
+            document_type=SupplierDocumentType.PRICE_LIST,
+        )
+    )
+    promotion_sheet = _registration(
+        _synthetic_contract(
+            contract_id="synthetic_supplier.promotion_sheet.v1",
+            supplier_id=777,
+            document_type=SupplierDocumentType.PROMOTION_SHEET,
+        )
+    )
+
+    monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: (promotion_sheet, price_list))
+
+    with pytest.raises(runtime.SupplierContractAmbiguousError, match="multiple supported"):
+        runtime.resolve_supplier_contract(supplier_id=777)
+
+
+def test_supplier_only_resolution_is_independent_of_registry_order(monkeypatch):
+    supported = _registration(
+        _synthetic_contract(
+            contract_id="synthetic_supplier.price_list.v1",
+            supplier_id=778,
+            document_type=SupplierDocumentType.PRICE_LIST,
+        )
+    )
+    other_supplier = _registration(
+        _synthetic_contract(
+            contract_id="other_supplier.price_list.v1",
+            supplier_id=779,
+            document_type=SupplierDocumentType.PRICE_LIST,
+        )
+    )
+    partial = _registration(get_supplier_source_contract("vetapet.vet_price_list.v1", "v1").declaration)
+    monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: (other_supplier, partial, supported))
+
+    resolved = runtime.resolve_supplier_contract(supplier_id=778)
+
+    assert resolved.slug == "synthetic_supplier.price_list.v1"
 
 
 def test_hills_prompt_is_derived_from_pydantic_source_contract():

@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from schemas.catalogue_pipeline import registry_snapshot as pipeline_registry_snapshot
 from schemas.catalogue_pipeline.supplier_contracts import (
     HILLS_PRICE_LIST_V1,
+    SUPPLIER_SOURCE_SCHEMA_VERSION,
     SupplierContractSupportStatus,
     SupplierSourceContractRegistry,
     SupplierSourceContractV1,
@@ -51,6 +52,18 @@ EXPECTED_INVALID_MESSAGES = {
 
 def _load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _synthetic_hills_contract(**updates) -> SupplierSourceContractV1:
+    payload = _load(FIXTURE_ROOT / "valid" / "hills.price_list.v1.json")
+    payload["contract_id"] = updates.pop("contract_id", "synthetic_hills.price_list.v1")
+    payload["supplier"] = updates.pop(
+        "supplier",
+        {"supplier_id": 777, "supplier_name": "Synthetic Hill's Supplier", "supplier_code": "SYNH"},
+    )
+    payload["format_name"] = updates.pop("format_name", "Synthetic Hill's price list")
+    payload.update(updates)
+    return SupplierSourceContractV1.model_validate(payload)
 
 
 @pytest.mark.parametrize("path", VALID_FIXTURES, ids=lambda p: p.name)
@@ -108,6 +121,34 @@ def test_duplicate_supplier_source_registration_fails():
 
     with pytest.raises(ValueError, match="duplicate supplier source contract registration"):
         registry.register(HILLS_PRICE_LIST_V1)
+
+
+def test_conflicting_supplier_format_identity_registration_fails():
+    first = _synthetic_hills_contract(contract_id="synthetic_hills.price_list.v1")
+    conflicting = _synthetic_hills_contract(contract_id="synthetic_hills.price_list_copy.v1")
+    registry = SupplierSourceContractRegistry()
+
+    registry.register(first)
+
+    with pytest.raises(ValueError, match="conflicting supplier source contract identity"):
+        registry.register(conflicting)
+
+
+def test_supplier_source_contract_rejects_blank_identity_and_invalid_supported_status_combination():
+    payload = _load(FIXTURE_ROOT / "valid" / "hills.price_list.v1.json")
+    payload["contract_id"] = " "
+
+    with pytest.raises(ValidationError, match="identity text cannot be blank"):
+        SupplierSourceContractV1.model_validate(payload)
+
+    payload = _load(FIXTURE_ROOT / "valid" / "kangaroo.mixed_price_catalogue.v1.json")
+    payload["schema_version"] = SUPPLIER_SOURCE_SCHEMA_VERSION
+    payload["support_status"] = "SUPPORTED"
+    payload["pricing"]["price_basis_status"] = "VERIFIED"
+    payload["known_ambiguities"] = []
+
+    with pytest.raises(ValidationError, match="numeric supplier_id"):
+        SupplierSourceContractV1.model_validate(payload)
 
 
 def test_non_supported_contracts_cannot_be_selected_for_production_interpretation():

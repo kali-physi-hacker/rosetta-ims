@@ -9,6 +9,7 @@ semantics needed by the current ingestion/reparse runtime.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -16,7 +17,9 @@ from typing import Any
 from schemas.catalogue_pipeline.enums import UnitCode
 from schemas.catalogue_pipeline.supplier_contracts import (
     SupplierContractSupportStatus,
+    SupplierSourceContractRegistration,
     SupplierSourceContractV1,
+    get_supplier_source_contract,
     iter_supplier_source_contracts,
 )
 from schemas.catalogue_pipeline.supplier_contracts.common import SourceFieldContract, SourceFieldRole
@@ -62,6 +65,26 @@ _MASS_TO_GRAMS = {
     "pounds": Decimal("453.592"),
     "oz": Decimal("28.3495"),
 }
+
+
+class SupplierContractResolutionError(ValueError):
+    """Base error for runtime supplier-source contract resolution failures."""
+
+
+class SupplierContractIdentityError(SupplierContractResolutionError):
+    """Raised when the requested supplier/contract identity is incomplete or contradictory."""
+
+
+class SupplierContractNotFoundError(SupplierContractResolutionError):
+    """Raised when a requested supplier-source contract identity is unknown."""
+
+
+class SupplierContractUnsupportedError(SupplierContractResolutionError):
+    """Raised when a known supplier-source contract is not runtime-selectable."""
+
+
+class SupplierContractAmbiguousError(SupplierContractResolutionError):
+    """Raised when supplier-only resolution has more than one supported format."""
 
 
 @dataclass(frozen=True)
@@ -241,24 +264,135 @@ class SupplierSourceRuntimeContract:
         return None
 
 
-def load_contract(supplier_id: int | None) -> SupplierSourceRuntimeContract | None:
-    """Return the supported source contract for a supplier ID, if exactly one exists."""
+def resolve_supplier_contract(
+    *,
+    supplier_id: int,
+    contract_id: str | None = None,
+    contract_version: str | None = None,
+) -> SupplierSourceRuntimeContract:
+    """Resolve one production-supported supplier-source contract.
+
+    Supplier-only resolution is allowed only when exactly one SUPPORTED source
+    format exists for the supplier. Exact resolution never falls back to another
+    contract ID or version.
+    """
+
+    supplier_id = int(supplier_id)
+    registration = _resolve_supplier_contract_registration(
+        supplier_id=supplier_id,
+        contract_id=contract_id,
+        contract_version=contract_version,
+        registrations=iter_supplier_source_contracts(),
+    )
+    return SupplierSourceRuntimeContract(registration.declaration)
+
+
+def load_contract(
+    supplier_id: int | None,
+    contract_id: str | None = None,
+    contract_version: str | None = None,
+) -> SupplierSourceRuntimeContract | None:
+    """Compatibility wrapper for current ingestion callers.
+
+    Existing upload/reparse paths pass only a supplier ID. For those callers,
+    suppliers without a single supported source contract continue through generic
+    extraction unchanged. Explicit contract requests remain strict and raise.
+    """
 
     if supplier_id is None:
+        if contract_id or contract_version:
+            raise SupplierContractIdentityError("supplier_id is required when requesting an explicit supplier source contract")
         return None
-    supplier_id = int(supplier_id)
-    matches = [
-        registration.declaration
-        for registration in iter_supplier_source_contracts()
-        if registration.support_status == SupplierContractSupportStatus.SUPPORTED
-        and registration.declaration.supplier.supplier_id == supplier_id
+    try:
+        return resolve_supplier_contract(
+            supplier_id=int(supplier_id),
+            contract_id=contract_id,
+            contract_version=contract_version,
+        )
+    except (SupplierContractNotFoundError, SupplierContractUnsupportedError):
+        if contract_id or contract_version:
+            raise
+        return None
+
+
+def _resolve_supplier_contract_registration(
+    *,
+    supplier_id: int,
+    contract_id: str | None,
+    contract_version: str | None,
+    registrations: Iterable[SupplierSourceContractRegistration],
+) -> SupplierSourceContractRegistration:
+    if contract_version and not contract_id:
+        raise SupplierContractIdentityError("contract_version cannot be supplied without contract_id")
+
+    if contract_id:
+        version = contract_version or "v1"
+        registration = _get_registration(contract_id, version)
+        _assert_contract_belongs_to_supplier(registration, supplier_id)
+        _assert_contract_is_supported(registration)
+        return registration
+
+    registration_list = tuple(registrations)
+    supplier_registrations = [
+        registration
+        for registration in registration_list
+        if registration.declaration.supplier.supplier_id == supplier_id
     ]
-    if not matches:
-        return None
-    if len(matches) > 1:
-        ids = ", ".join(sorted(item.contract_id for item in matches))
-        raise ValueError(f"multiple supported supplier source contracts for supplier_id={supplier_id}: {ids}")
-    return SupplierSourceRuntimeContract(matches[0])
+    supported = [
+        registration
+        for registration in supplier_registrations
+        if registration.support_status == SupplierContractSupportStatus.SUPPORTED
+    ]
+    if not supported:
+        if supplier_registrations:
+            raise SupplierContractUnsupportedError(
+                f"supplier_id={supplier_id} has no SUPPORTED supplier source contract. "
+                f"Registered formats: {_registration_summary(supplier_registrations)}"
+            )
+        raise SupplierContractUnsupportedError(f"supplier_id={supplier_id} has no registered supplier source contract")
+    if len(supported) > 1:
+        raise SupplierContractAmbiguousError(
+            f"supplier_id={supplier_id} has multiple supported supplier source contracts. "
+            f"Request an explicit contract_id and contract_version. Supported formats: {_registration_summary(supported)}"
+        )
+    return supported[0]
+
+
+def _get_registration(contract_id: str, contract_version: str) -> SupplierSourceContractRegistration:
+    try:
+        return get_supplier_source_contract(contract_id, contract_version)
+    except ValueError as exc:
+        raise SupplierContractNotFoundError(
+            f"Unknown supplier source contract '{contract_id}@{contract_version}'"
+        ) from exc
+
+
+def _assert_contract_belongs_to_supplier(registration: SupplierSourceContractRegistration, supplier_id: int) -> None:
+    declared_supplier_id = registration.declaration.supplier.supplier_id
+    if declared_supplier_id != supplier_id:
+        declared = declared_supplier_id if declared_supplier_id is not None else registration.declaration.supplier.supplier_code
+        raise SupplierContractIdentityError(
+            f"Supplier source contract '{registration.contract_id}@{registration.contract_version}' belongs to "
+            f"supplier={declared}, not supplier_id={supplier_id}"
+        )
+
+
+def _assert_contract_is_supported(registration: SupplierSourceContractRegistration) -> None:
+    if registration.support_status != SupplierContractSupportStatus.SUPPORTED:
+        raise SupplierContractUnsupportedError(
+            f"Supplier source contract '{registration.contract_id}@{registration.contract_version}' for "
+            f"supplier_id={registration.declaration.supplier.supplier_id} is {registration.support_status.value}, "
+            "not SUPPORTED"
+        )
+
+
+def _registration_summary(registrations: Iterable[SupplierSourceContractRegistration]) -> str:
+    parts = [
+        f"{registration.contract_id}@{registration.contract_version}"
+        f"[{registration.document_type.value}, {registration.support_status.value}]"
+        for registration in sorted(registrations, key=lambda item: (item.contract_id, item.contract_version))
+    ]
+    return ", ".join(parts) or "(none)"
 
 
 def _target_for_field(field: SourceFieldContract) -> str | None:
