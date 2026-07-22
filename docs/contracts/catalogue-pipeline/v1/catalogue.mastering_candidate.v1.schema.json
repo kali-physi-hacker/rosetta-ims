@@ -1,0 +1,1692 @@
+{
+  "$defs": {
+    "Cost": {
+      "additionalProperties": false,
+      "description": "Basis-aware supplier cost.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Cost amount. JSON serializes as a string.",
+          "title": "Amount"
+        },
+        "currency": {
+          "const": "HKD",
+          "default": "HKD",
+          "description": "Currency. v1 accepts HKD only.",
+          "enum": [
+            "HKD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "price_basis": {
+          "$ref": "#/$defs/UnitOfMeasure",
+          "description": "Unit basis the amount prices."
+        }
+      },
+      "required": [
+        "amount",
+        "price_basis"
+      ],
+      "title": "Cost",
+      "type": "object"
+    },
+    "DiscountedUnitPriceBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that changes the unit price to a quoted discounted amount.",
+      "properties": {
+        "benefit_type": {
+          "const": "discounted_unit_price",
+          "default": "discounted_unit_price",
+          "description": "Discriminator.",
+          "enum": [
+            "discounted_unit_price"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "discounted_price": {
+          "$ref": "#/$defs/Cost",
+          "description": "Discounted HKD unit price and its price basis."
+        }
+      },
+      "required": [
+        "discounted_price"
+      ],
+      "title": "DiscountedUnitPriceBenefit",
+      "type": "object"
+    },
+    "ExternalMapping": {
+      "additionalProperties": false,
+      "description": "Mapping between Rosetta and an external product/catalogue identifier.",
+      "properties": {
+        "external_id": {
+          "description": "External identifier.",
+          "minLength": 1,
+          "title": "External Id",
+          "type": "string"
+        },
+        "external_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "External display label when known.",
+          "title": "External Label"
+        },
+        "lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lineage supporting this mapping."
+        },
+        "system": {
+          "description": "External system name.",
+          "minLength": 1,
+          "title": "System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "system",
+        "external_id"
+      ],
+      "title": "ExternalMapping",
+      "type": "object"
+    },
+    "ExtractionProfileReference": {
+      "additionalProperties": false,
+      "description": "Stable reference to the extraction profile used for a pipeline payload.",
+      "properties": {
+        "profile_id": {
+          "description": "Stable extraction profile identifier.",
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "description": "Version of the extraction profile used.",
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version"
+      ],
+      "title": "ExtractionProfileReference",
+      "type": "object"
+    },
+    "FieldEvidence": {
+      "additionalProperties": false,
+      "description": "Field-level provenance and confidence for a proposed interpretation.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "field_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "JSON-style field path inside the supporting payload.",
+          "title": "Field Path"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short provenance note.",
+          "title": "Note"
+        },
+        "raw_observation_id": {
+          "description": "Raw Observation that supports this field.",
+          "format": "uuid",
+          "title": "Raw Observation Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "raw_observation_id"
+      ],
+      "title": "FieldEvidence",
+      "type": "object"
+    },
+    "FixedDiscountBasis": {
+      "enum": [
+        "UNIT_PRICE",
+        "SUPPLIER_SKU_TOTAL",
+        "SUPPLIER_ORDER_TOTAL"
+      ],
+      "title": "FixedDiscountBasis",
+      "type": "string"
+    },
+    "FixedDiscountBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that subtracts a fixed HKD amount from a defined basis.",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/PositiveMoney",
+          "description": "Positive HKD fixed discount."
+        },
+        "benefit_type": {
+          "const": "fixed_discount",
+          "default": "fixed_discount",
+          "description": "Discriminator.",
+          "enum": [
+            "fixed_discount"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "reduction_basis": {
+          "$ref": "#/$defs/FixedDiscountBasis",
+          "description": "What the fixed discount reduces."
+        }
+      },
+      "required": [
+        "amount",
+        "reduction_basis"
+      ],
+      "title": "FixedDiscountBenefit",
+      "type": "object"
+    },
+    "FreeQuantityBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that grants free goods or free quantity.",
+      "properties": {
+        "benefit_type": {
+          "const": "free_quantity",
+          "default": "free_quantity",
+          "description": "Discriminator.",
+          "enum": [
+            "free_quantity"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Positive free quantity and UOM."
+        }
+      },
+      "required": [
+        "quantity"
+      ],
+      "title": "FreeQuantityBenefit",
+      "type": "object"
+    },
+    "LineageReference": {
+      "additionalProperties": false,
+      "description": "Trace from mastered or served values back to staging and raw evidence.",
+      "properties": {
+        "catalogue_item_id": {
+          "description": "Staging Catalogue Item identity.",
+          "format": "uuid",
+          "title": "Catalogue Item Id",
+          "type": "string"
+        },
+        "field_paths": {
+          "description": "Optional field paths covered by this lineage.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Field Paths",
+          "type": "array"
+        },
+        "raw_observation_ids": {
+          "description": "Raw observations supporting the assertion.",
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Raw Observation Ids",
+          "type": "array"
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Review decision that approved or overrode the assertion.",
+          "title": "Review Decision Id"
+        }
+      },
+      "required": [
+        "catalogue_item_id",
+        "raw_observation_ids"
+      ],
+      "title": "LineageReference",
+      "type": "object"
+    },
+    "MbbResolution": {
+      "additionalProperties": false,
+      "description": "Resolution of Max Bulk Buy terms and selected term.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolution confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required when the section is confirmed."
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Decision that confirmed or rejected this section.",
+          "title": "Review Decision Id"
+        },
+        "selected_term": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MbbSelection"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selected best/applicable term when known."
+        },
+        "state": {
+          "$ref": "#/$defs/ResolutionState",
+          "description": "Resolution state for this section."
+        },
+        "terms": {
+          "description": "Resolved MBB terms or tiers.",
+          "items": {
+            "$ref": "#/$defs/MbbTerm"
+          },
+          "title": "Terms",
+          "type": "array"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "title": "MbbResolution",
+      "type": "object"
+    },
+    "MbbScope": {
+      "enum": [
+        "SUPPLIER_SKU",
+        "PRODUCT_GROUP",
+        "SUPPLIER_ORDER"
+      ],
+      "title": "MbbScope",
+      "type": "string"
+    },
+    "MbbSelection": {
+      "additionalProperties": false,
+      "description": "Which MBB term Rosetta selected and whether that selection was overridden.",
+      "properties": {
+        "override_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Business reason for an override.",
+          "title": "Override Reason"
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Review decision that records the override.",
+          "title": "Review Decision Id"
+        },
+        "selected_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reviewer identity when manually overridden.",
+          "title": "Selected By"
+        },
+        "selected_term_id": {
+          "description": "Selected MBB term identity.",
+          "format": "uuid",
+          "title": "Selected Term Id",
+          "type": "string"
+        },
+        "selection_method": {
+          "$ref": "#/$defs/MbbSelectionMethod",
+          "description": "Automatic calculation or reviewed override."
+        }
+      },
+      "required": [
+        "selected_term_id",
+        "selection_method"
+      ],
+      "title": "MbbSelection",
+      "type": "object"
+    },
+    "MbbSelectionMethod": {
+      "enum": [
+        "AUTOMATIC",
+        "OVERRIDDEN"
+      ],
+      "title": "MbbSelectionMethod",
+      "type": "string"
+    },
+    "MbbTerm": {
+      "additionalProperties": false,
+      "description": "Condition plus benefit for one Max Bulk Buy term or tier.",
+      "properties": {
+        "benefit": {
+          "description": "Benefit unlocked by the condition.",
+          "discriminator": {
+            "mapping": {
+              "discounted_unit_price": "#/$defs/DiscountedUnitPriceBenefit",
+              "fixed_discount": "#/$defs/FixedDiscountBenefit",
+              "free_quantity": "#/$defs/FreeQuantityBenefit",
+              "percentage_discount": "#/$defs/PercentageDiscountBenefit"
+            },
+            "propertyName": "benefit_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/DiscountedUnitPriceBenefit"
+            },
+            {
+              "$ref": "#/$defs/PercentageDiscountBenefit"
+            },
+            {
+              "$ref": "#/$defs/FixedDiscountBenefit"
+            },
+            {
+              "$ref": "#/$defs/FreeQuantityBenefit"
+            }
+          ],
+          "title": "Benefit"
+        },
+        "condition": {
+          "description": "Condition that unlocks the term.",
+          "discriminator": {
+            "mapping": {
+              "minimum_quantity": "#/$defs/MinimumQuantityCondition",
+              "minimum_spend": "#/$defs/MinimumSpendCondition"
+            },
+            "propertyName": "condition_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/MinimumQuantityCondition"
+            },
+            {
+              "$ref": "#/$defs/MinimumSpendCondition"
+            }
+          ],
+          "title": "Condition"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Business-readable text copied or summarized from the source.",
+          "title": "Description"
+        },
+        "effective_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier effective date when known.",
+          "title": "Effective From"
+        },
+        "effective_to": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "End date when known.",
+          "title": "Effective To"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence supporting this MBB term."
+        },
+        "mbb_term_id": {
+          "description": "Stable MBB term identity for this pipeline payload.",
+          "format": "uuid",
+          "title": "Mbb Term Id",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/MbbScope",
+          "description": "Business scope the term applies to."
+        }
+      },
+      "required": [
+        "mbb_term_id",
+        "scope",
+        "condition",
+        "benefit"
+      ],
+      "title": "MbbTerm",
+      "type": "object"
+    },
+    "MinimumQuantityCondition": {
+      "additionalProperties": false,
+      "description": "MBB condition unlocked by buying at least a positive quantity.",
+      "properties": {
+        "condition_type": {
+          "const": "minimum_quantity",
+          "default": "minimum_quantity",
+          "description": "Discriminator.",
+          "enum": [
+            "minimum_quantity"
+          ],
+          "title": "Condition Type",
+          "type": "string"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Minimum quantity required to unlock the benefit."
+        }
+      },
+      "required": [
+        "quantity"
+      ],
+      "title": "MinimumQuantityCondition",
+      "type": "object"
+    },
+    "MinimumSpendCondition": {
+      "additionalProperties": false,
+      "description": "MBB condition unlocked by spending at least a positive HKD amount.",
+      "properties": {
+        "condition_type": {
+          "const": "minimum_spend",
+          "default": "minimum_spend",
+          "description": "Discriminator.",
+          "enum": [
+            "minimum_spend"
+          ],
+          "title": "Condition Type",
+          "type": "string"
+        },
+        "spend": {
+          "$ref": "#/$defs/PositiveMoney",
+          "description": "Minimum supplier-order spend in HKD."
+        }
+      },
+      "required": [
+        "spend"
+      ],
+      "title": "MinimumSpendCondition",
+      "type": "object"
+    },
+    "OptionalTextResolution": {
+      "additionalProperties": false,
+      "description": "Optional mastered text resolution, such as Brand or Category.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolution confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required when the section is confirmed."
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Decision that confirmed or rejected this section.",
+          "title": "Review Decision Id"
+        },
+        "state": {
+          "$ref": "#/$defs/ResolutionState",
+          "description": "Resolution state for this section."
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolved text value.",
+          "title": "Value"
+        },
+        "value_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Matched canonical identity when one exists.",
+          "title": "Value Id"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "title": "OptionalTextResolution",
+      "type": "object"
+    },
+    "PackagingConfiguration": {
+      "additionalProperties": false,
+      "description": "Structured purchasing, price-basis, sellable-unit, content, and ordering semantics.",
+      "properties": {
+        "break_pack_allowed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether supplier allows ordering below a full purchase unit.",
+          "title": "Break Pack Allowed"
+        },
+        "content_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Content measure of one sellable unit, for example 410 or 30.",
+          "title": "Content Amount"
+        },
+        "content_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Content-measure unit, for example G or ML."
+        },
+        "minimum_order_quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum order quantity when known."
+        },
+        "order_increment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier order multiple when known."
+        },
+        "price_basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Unit basis for the quoted supplier price."
+        },
+        "purchase_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Unit Rosetta purchases from the supplier."
+        },
+        "sellable_unit_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Smallest sellable unit UOM."
+        },
+        "sellable_units_per_purchase_unit": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Number of sellable units contained in one purchase unit when known.",
+          "title": "Sellable Units Per Purchase Unit"
+        },
+        "source_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Raw packaging text this structure was interpreted from.",
+          "title": "Source Text"
+        }
+      },
+      "title": "PackagingConfiguration",
+      "type": "object"
+    },
+    "PackagingConfigurationResolution": {
+      "additionalProperties": false,
+      "description": "Resolution of structured purchasing packaging.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolution confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required when the section is confirmed."
+        },
+        "packaging": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PackagingConfiguration"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolved purchasing packaging."
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Decision that confirmed or rejected this section.",
+          "title": "Review Decision Id"
+        },
+        "state": {
+          "$ref": "#/$defs/ResolutionState",
+          "description": "Resolution state for this section."
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "title": "PackagingConfigurationResolution",
+      "type": "object"
+    },
+    "PercentageDiscountBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that applies a percentage discount.",
+      "properties": {
+        "benefit_type": {
+          "const": "percentage_discount",
+          "default": "percentage_discount",
+          "description": "Discriminator.",
+          "enum": [
+            "percentage_discount"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "percentage": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 100.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Discount percentage in (0, 100].",
+          "title": "Percentage"
+        }
+      },
+      "required": [
+        "percentage"
+      ],
+      "title": "PercentageDiscountBenefit",
+      "type": "object"
+    },
+    "PipelineTrace": {
+      "additionalProperties": false,
+      "description": "Common identifiers that connect records produced by one catalogue ingestion run.",
+      "properties": {
+        "extraction_profile": {
+          "$ref": "#/$defs/ExtractionProfileReference",
+          "description": "Extraction profile used to interpret the source."
+        },
+        "ingestion_run_id": {
+          "description": "Pipeline run identity.",
+          "format": "uuid",
+          "title": "Ingestion Run Id",
+          "type": "string"
+        },
+        "source_file_id": {
+          "description": "Raw source file identity.",
+          "format": "uuid",
+          "title": "Source File Id",
+          "type": "string"
+        },
+        "supplier_catalogue_id": {
+          "description": "Source catalogue identity for the uploaded document.",
+          "format": "uuid",
+          "title": "Supplier Catalogue Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ingestion_run_id",
+        "supplier_catalogue_id",
+        "source_file_id",
+        "extraction_profile"
+      ],
+      "title": "PipelineTrace",
+      "type": "object"
+    },
+    "PositiveMoney": {
+      "additionalProperties": false,
+      "description": "Positive HKD money amount.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Positive monetary amount. JSON serializes as a string.",
+          "title": "Amount"
+        },
+        "currency": {
+          "const": "HKD",
+          "default": "HKD",
+          "description": "Currency. v1 accepts HKD only.",
+          "enum": [
+            "HKD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "title": "PositiveMoney",
+      "type": "object"
+    },
+    "ProductVariantResolution": {
+      "additionalProperties": false,
+      "description": "Resolution of the canonical inventory identity / Product Variant.",
+      "properties": {
+        "canonical_sku": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rosetta canonical SKU code.",
+          "title": "Canonical Sku"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolution confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required when the section is confirmed."
+        },
+        "product_family_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional Product Family enrichment.",
+          "title": "Product Family Id"
+        },
+        "product_variant_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical Product Variant identity.",
+          "title": "Product Variant Id"
+        },
+        "product_variant_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical variant name.",
+          "title": "Product Variant Name"
+        },
+        "proposed_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name to use when proposing creation.",
+          "title": "Proposed Name"
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Decision that confirmed or rejected this section.",
+          "title": "Review Decision Id"
+        },
+        "state": {
+          "$ref": "#/$defs/ResolutionState",
+          "description": "Resolution state for this section."
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "title": "ProductVariantResolution",
+      "type": "object"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "description": "Positive quantity in an explicitly stated UOM.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Positive quantity. JSON serializes as a string.",
+          "title": "Amount"
+        },
+        "uom": {
+          "$ref": "#/$defs/UnitOfMeasure",
+          "description": "Quantity unit."
+        }
+      },
+      "required": [
+        "amount",
+        "uom"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "ResolutionState": {
+      "enum": [
+        "UNRESOLVED",
+        "PROPOSED_MATCH",
+        "PROPOSED_CREATE",
+        "CONFIRMED_MATCH",
+        "CONFIRMED_CREATE",
+        "REJECTED"
+      ],
+      "title": "ResolutionState",
+      "type": "string"
+    },
+    "ReviewStatus": {
+      "enum": [
+        "PENDING_REVIEW",
+        "APPROVED",
+        "APPROVED_WITH_OVERRIDE",
+        "REJECTED",
+        "NEEDS_CLARIFICATION"
+      ],
+      "title": "ReviewStatus",
+      "type": "string"
+    },
+    "SupplierPriceResolution": {
+      "additionalProperties": false,
+      "description": "Resolution of the supplier cost and price basis.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolution confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "current_cost": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cost"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolved supplier cost."
+        },
+        "effective_from": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timezone-aware effective timestamp when known.",
+          "title": "Effective From"
+        },
+        "effective_to": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timezone-aware end timestamp when known.",
+          "title": "Effective To"
+        },
+        "lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required when the section is confirmed."
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Decision that confirmed or rejected this section.",
+          "title": "Review Decision Id"
+        },
+        "state": {
+          "$ref": "#/$defs/ResolutionState",
+          "description": "Resolution state for this section."
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "title": "SupplierPriceResolution",
+      "type": "object"
+    },
+    "SupplierProductResolution": {
+      "additionalProperties": false,
+      "description": "Resolution of the supplier-specific commercial offering.",
+      "properties": {
+        "barcode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier/offering barcode.",
+          "title": "Barcode"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resolution confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required when the section is confirmed."
+        },
+        "review_decision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Decision that confirmed or rejected this section.",
+          "title": "Review Decision Id"
+        },
+        "state": {
+          "$ref": "#/$defs/ResolutionState",
+          "description": "Resolution state for this section."
+        },
+        "supplier_id": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rosetta supplier ID.",
+          "title": "Supplier Id"
+        },
+        "supplier_product_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stable supplier-product identity when matched.",
+          "title": "Supplier Product Id"
+        },
+        "supplier_sku": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier SKU.",
+          "title": "Supplier Sku"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "title": "SupplierProductResolution",
+      "type": "object"
+    },
+    "UnitCode": {
+      "enum": [
+        "PIECE",
+        "UNIT",
+        "PACK",
+        "BOX",
+        "CASE",
+        "CARTON",
+        "BOTTLE",
+        "BAG",
+        "CAN",
+        "POUCH",
+        "SACHET",
+        "TABLET",
+        "CAPSULE",
+        "VIAL",
+        "TUBE",
+        "TEST",
+        "STRIP",
+        "KG",
+        "G",
+        "L",
+        "ML",
+        "OTHER",
+        "UNKNOWN"
+      ],
+      "title": "UnitCode",
+      "type": "string"
+    },
+    "UnitOfMeasure": {
+      "additionalProperties": false,
+      "description": "Controlled unit code plus optional label for deliberate OTHER classifications.",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Controlled UOM code. Null means not determined."
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required only when code is OTHER.",
+          "title": "Label"
+        }
+      },
+      "title": "UnitOfMeasure",
+      "type": "object"
+    }
+  },
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/v1/catalogue.mastering_candidate.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Proposal for resolving a staged item into canonical and supplier-commercial entities.",
+  "properties": {
+    "brand_resolution": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OptionalTextResolution"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional Brand resolution."
+    },
+    "catalogue_item_id": {
+      "description": "Staging Catalogue Item identity.",
+      "format": "uuid",
+      "title": "Catalogue Item Id",
+      "type": "string"
+    },
+    "category_resolution": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OptionalTextResolution"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional Category resolution."
+    },
+    "contract_version": {
+      "const": "catalogue.mastering_candidate.v1",
+      "description": "Exact CIS-103 Mastering Candidate contract identifier.",
+      "enum": [
+        "catalogue.mastering_candidate.v1"
+      ],
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "created_at": {
+      "description": "Timezone-aware creation timestamp.",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "external_mappings": {
+      "description": "Optional external product mappings.",
+      "items": {
+        "$ref": "#/$defs/ExternalMapping"
+      },
+      "title": "External Mappings",
+      "type": "array"
+    },
+    "lineage": {
+      "$ref": "#/$defs/LineageReference",
+      "description": "Top-level lineage back to staging and raw observations."
+    },
+    "mastering_candidate_id": {
+      "description": "Mastering Candidate identity.",
+      "format": "uuid",
+      "title": "Mastering Candidate Id",
+      "type": "string"
+    },
+    "mbb_resolution": {
+      "$ref": "#/$defs/MbbResolution",
+      "description": "MBB resolution."
+    },
+    "metadata": {
+      "description": "Explicit extension point for non-contract metadata.",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "override_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Reason when approval includes an override.",
+      "title": "Override Reason"
+    },
+    "packaging_resolution": {
+      "$ref": "#/$defs/PackagingConfigurationResolution",
+      "description": "Packaging resolution."
+    },
+    "product_family_resolution": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OptionalTextResolution"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional Product Family resolution."
+    },
+    "product_variant_resolution": {
+      "$ref": "#/$defs/ProductVariantResolution",
+      "description": "Product Variant resolution."
+    },
+    "raw_observation_ids": {
+      "description": "Raw observations supporting this candidate.",
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Raw Observation Ids",
+      "type": "array"
+    },
+    "review_decision_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Review decision identity.",
+      "title": "Review Decision Id"
+    },
+    "review_status": {
+      "$ref": "#/$defs/ReviewStatus",
+      "description": "Current review status."
+    },
+    "reviewed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Timezone-aware review timestamp.",
+      "title": "Reviewed At"
+    },
+    "reviewed_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Reviewer identity when reviewed.",
+      "title": "Reviewed By"
+    },
+    "supplier_price_resolution": {
+      "$ref": "#/$defs/SupplierPriceResolution",
+      "description": "Supplier Price resolution."
+    },
+    "supplier_product_resolution": {
+      "$ref": "#/$defs/SupplierProductResolution",
+      "description": "Supplier Product resolution."
+    },
+    "trace": {
+      "$ref": "#/$defs/PipelineTrace",
+      "description": "Common catalogue pipeline trace metadata."
+    }
+  },
+  "required": [
+    "contract_version",
+    "mastering_candidate_id",
+    "trace",
+    "catalogue_item_id",
+    "raw_observation_ids",
+    "lineage",
+    "supplier_product_resolution",
+    "product_variant_resolution",
+    "packaging_resolution",
+    "supplier_price_resolution",
+    "mbb_resolution",
+    "review_status",
+    "created_at"
+  ],
+  "title": "MasteringCandidateV1",
+  "type": "object"
+}

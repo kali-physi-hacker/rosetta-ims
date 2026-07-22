@@ -1,0 +1,472 @@
+{
+  "$defs": {
+    "ExtractionFieldMapping": {
+      "additionalProperties": false,
+      "description": "High-level source-to-business field mapping for an extraction profile.",
+      "properties": {
+        "constant_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Constant value supplied by the profile.",
+          "title": "Constant Value"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Business-readable mapping notes.",
+          "title": "Notes"
+        },
+        "required": {
+          "default": false,
+          "description": "Whether missing data should create a validation issue.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "source_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source column/header when applicable.",
+          "title": "Source Column"
+        },
+        "source_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path or section selector when the source is not tabular.",
+          "title": "Source Path"
+        },
+        "target_field": {
+          "description": "Pipeline field this mapping populates.",
+          "minLength": 1,
+          "title": "Target Field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_field"
+      ],
+      "title": "ExtractionFieldMapping",
+      "type": "object"
+    },
+    "ExtractionProfileStatus": {
+      "enum": [
+        "DRAFT",
+        "ACTIVE",
+        "RETIRED"
+      ],
+      "title": "ExtractionProfileStatus",
+      "type": "string"
+    },
+    "OrderingExtractionRules": {
+      "additionalProperties": false,
+      "description": "Profile rules for order multiple and minimum order extraction.",
+      "properties": {
+        "minimum_order_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source field for minimum order quantity.",
+          "title": "Minimum Order Source Field"
+        },
+        "order_increment_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source field for order increments.",
+          "title": "Order Increment Source Field"
+        },
+        "qualifying_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "UOM used by ordering quantities when known."
+        }
+      },
+      "title": "OrderingExtractionRules",
+      "type": "object"
+    },
+    "PricingExtractionRules": {
+      "additionalProperties": false,
+      "description": "Profile rules that identify supplier price and basis fields.",
+      "properties": {
+        "autoswap_cost_rrp": {
+          "default": false,
+          "description": "Whether the profile may correct swapped wholesale/RRP values.",
+          "title": "Autoswap Cost Rrp",
+          "type": "boolean"
+        },
+        "cost_source_field": {
+          "description": "Source field containing supplier cost.",
+          "minLength": 1,
+          "title": "Cost Source Field",
+          "type": "string"
+        },
+        "currency": {
+          "const": "HKD",
+          "default": "HKD",
+          "description": "v1 profile currency.",
+          "enum": [
+            "HKD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "price_basis": {
+          "$ref": "#/$defs/UnitOfMeasure",
+          "description": "Price basis to apply to the extracted cost."
+        },
+        "rrp_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source field containing RRP when present.",
+          "title": "Rrp Source Field"
+        }
+      },
+      "required": [
+        "cost_source_field",
+        "price_basis"
+      ],
+      "title": "PricingExtractionRules",
+      "type": "object"
+    },
+    "ProfileMatchStrategy": {
+      "enum": [
+        "SUPPLIER_SKU",
+        "BARCODE",
+        "DESCRIPTION",
+        "COMPOSITE"
+      ],
+      "title": "ProfileMatchStrategy",
+      "type": "string"
+    },
+    "SourceFormat": {
+      "enum": [
+        "PDF",
+        "PDF_TABLE",
+        "SPREADSHEET",
+        "CSV",
+        "IMAGE",
+        "TEXT",
+        "OTHER"
+      ],
+      "title": "SourceFormat",
+      "type": "string"
+    },
+    "SupplierReference": {
+      "additionalProperties": false,
+      "description": "Reference compatible with the repository's current integer supplier IDs.",
+      "properties": {
+        "supplier_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional short supplier code when known.",
+          "title": "Supplier Code"
+        },
+        "supplier_id": {
+          "description": "Current Rosetta numeric supplier ID.",
+          "exclusiveMinimum": 0,
+          "title": "Supplier Id",
+          "type": "integer"
+        },
+        "supplier_name": {
+          "description": "Human-readable supplier name.",
+          "minLength": 1,
+          "title": "Supplier Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "supplier_id",
+        "supplier_name"
+      ],
+      "title": "SupplierReference",
+      "type": "object"
+    },
+    "UnitCode": {
+      "enum": [
+        "PIECE",
+        "UNIT",
+        "PACK",
+        "BOX",
+        "CASE",
+        "CARTON",
+        "BOTTLE",
+        "BAG",
+        "CAN",
+        "POUCH",
+        "SACHET",
+        "TABLET",
+        "CAPSULE",
+        "VIAL",
+        "TUBE",
+        "TEST",
+        "STRIP",
+        "KG",
+        "G",
+        "L",
+        "ML",
+        "OTHER",
+        "UNKNOWN"
+      ],
+      "title": "UnitCode",
+      "type": "string"
+    },
+    "UnitOfMeasure": {
+      "additionalProperties": false,
+      "description": "Controlled unit code plus optional label for deliberate OTHER classifications.",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Controlled UOM code. Null means not determined."
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required only when code is OTHER.",
+          "title": "Label"
+        }
+      },
+      "title": "UnitOfMeasure",
+      "type": "object"
+    }
+  },
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/v1/catalogue.extraction_profile.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Versioned configuration contract for supplier-format extraction profiles.",
+  "properties": {
+    "contract_version": {
+      "const": "catalogue.extraction_profile.v1",
+      "description": "Exact CIS-103 extraction profile contract identifier.",
+      "enum": [
+        "catalogue.extraction_profile.v1"
+      ],
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "created_at": {
+      "description": "Timezone-aware profile creation timestamp.",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_by": {
+      "description": "Profile author.",
+      "minLength": 1,
+      "title": "Created By",
+      "type": "string"
+    },
+    "document_rules": {
+      "description": "Typed extension point for document-level facts.",
+      "title": "Document Rules",
+      "type": "object"
+    },
+    "field_mappings": {
+      "description": "Typed high-level source-to-pipeline mappings.",
+      "items": {
+        "$ref": "#/$defs/ExtractionFieldMapping"
+      },
+      "minItems": 1,
+      "title": "Field Mappings",
+      "type": "array"
+    },
+    "legacy_source_reference": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional pointer to legacy supplier extraction configuration that inspired this profile.",
+      "title": "Legacy Source Reference"
+    },
+    "match_strategy": {
+      "$ref": "#/$defs/ProfileMatchStrategy",
+      "description": "Primary strategy for matching rows."
+    },
+    "metadata": {
+      "description": "Explicit extension point for non-contract metadata.",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "normalization_rules": {
+      "description": "Typed extension point for normalization rules.",
+      "title": "Normalization Rules",
+      "type": "object"
+    },
+    "ordering": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OrderingExtractionRules"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Ordering extraction rules."
+    },
+    "pricing": {
+      "$ref": "#/$defs/PricingExtractionRules",
+      "description": "Price extraction and basis rules."
+    },
+    "profile_id": {
+      "description": "Stable profile identifier.",
+      "minLength": 1,
+      "title": "Profile Id",
+      "type": "string"
+    },
+    "profile_version": {
+      "description": "Version of this profile.",
+      "minLength": 1,
+      "title": "Profile Version",
+      "type": "string"
+    },
+    "source_format": {
+      "$ref": "#/$defs/SourceFormat",
+      "description": "Catalogue source format this profile supports."
+    },
+    "status": {
+      "$ref": "#/$defs/ExtractionProfileStatus",
+      "description": "Profile lifecycle status."
+    },
+    "supplier": {
+      "$ref": "#/$defs/SupplierReference",
+      "description": "Supplier this profile applies to."
+    },
+    "supplier_name": {
+      "description": "Supplier name copied for readability.",
+      "minLength": 1,
+      "title": "Supplier Name",
+      "type": "string"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Timezone-aware profile update timestamp.",
+      "title": "Updated At"
+    },
+    "updated_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Last updater.",
+      "title": "Updated By"
+    },
+    "validation_rules": {
+      "description": "Business validation expressions or rule identifiers.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Validation Rules",
+      "type": "array"
+    }
+  },
+  "required": [
+    "contract_version",
+    "profile_id",
+    "profile_version",
+    "supplier",
+    "supplier_name",
+    "source_format",
+    "status",
+    "match_strategy",
+    "field_mappings",
+    "pricing",
+    "created_at",
+    "created_by"
+  ],
+  "title": "ExtractionProfileV1",
+  "type": "object"
+}

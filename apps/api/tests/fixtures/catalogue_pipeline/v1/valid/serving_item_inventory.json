@@ -1,0 +1,114 @@
+{
+  "contract_version": "catalogue.serving_item.v1",
+  "serving_item_id": "88888888-8888-4888-8888-888888888888",
+  "canonical_sku": "10010385",
+  "product_variant_id": "product-variant:10010385",
+  "product_variant_name": "Hill's Science Diet Adult Chicken 2.9 oz",
+  "supplier_offering": {
+    "supplier_id": 14,
+    "supplier_name": "Hill's",
+    "supplier_product_id": "supplier-product:hills:10447",
+    "supplier_sku": "10447",
+    "barcode": "1234567890123"
+  },
+  "purchasing_packaging": {
+    "purchase_uom": {
+      "code": "CASE"
+    },
+    "price_basis": {
+      "code": "CAN"
+    },
+    "sellable_unit_uom": {
+      "code": "CAN"
+    },
+    "sellable_units_per_purchase_unit": "24",
+    "content_amount": "82",
+    "content_uom": {
+      "code": "G"
+    },
+    "order_increment": {
+      "amount": "24",
+      "uom": {
+        "code": "CAN"
+      }
+    },
+    "minimum_order_quantity": null,
+    "break_pack_allowed": null,
+    "source_text": "24/2.9 oz; order multiple 24 cans"
+  },
+  "current_approved_cost": {
+    "amount": "13.10",
+    "currency": "HKD",
+    "price_basis": {
+      "code": "CAN"
+    }
+  },
+  "cost_per_sellable_unit": {
+    "amount": "13.10",
+    "currency": "HKD"
+  },
+  "review_status": "APPROVED_WITH_OVERRIDE",
+  "published_at": "2026-07-22T02:00:00Z",
+  "lineage": {
+    "catalogue_item_id": "55555555-5555-4555-8555-555555555555",
+    "raw_observation_ids": [
+      "22222222-2222-4222-8222-222222222221"
+    ],
+    "field_paths": [
+      "/supplier_price_resolution",
+      "/packaging_resolution"
+    ],
+    "review_decision_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "mastering_candidate_id": "66666666-6666-4666-8666-666666666666",
+    "publication_version": "2026-07-22T02:00:00Z"
+  },
+  "product_family_id": null,
+  "brand": "Hill's",
+  "categories": [
+    "Food"
+  ],
+  "active_mbb_terms": [
+    {
+      "mbb_term_id": "99999999-9999-4999-8999-999999999991",
+      "scope": "SUPPLIER_SKU",
+      "condition": {
+        "condition_type": "minimum_quantity",
+        "quantity": {
+          "amount": "10",
+          "uom": {
+            "code": "CAN"
+          }
+        }
+      },
+      "benefit": {
+        "benefit_type": "discounted_unit_price",
+        "discounted_price": {
+          "amount": "12.00",
+          "currency": "HKD",
+          "price_basis": {
+            "code": "CAN"
+          }
+        }
+      },
+      "description": "10+ cans at HK$12.00 per can",
+      "effective_from": "2026-03-01",
+      "effective_to": null,
+      "evidence": null
+    }
+  ],
+  "normalized_costs": {
+    "cost_per_sellable_unit": {
+      "amount": "13.10",
+      "currency": "HKD"
+    },
+    "cost_per_kg": {
+      "amount": "159.76",
+      "currency": "HKD"
+    },
+    "cost_per_litre": null
+  },
+  "external_mappings": [],
+  "metadata": {
+    "consumer": "all-inventory"
+  }
+}

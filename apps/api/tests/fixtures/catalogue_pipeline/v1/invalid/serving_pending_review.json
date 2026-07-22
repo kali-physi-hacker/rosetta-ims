@@ -1,0 +1,55 @@
+{
+  "model": "ServingItemV1",
+  "payload": {
+    "contract_version": "catalogue.serving_item.v1",
+    "serving_item_id": "88888888-8888-4888-8888-888888888888",
+    "canonical_sku": "10010385",
+    "product_variant_id": "product-variant:10010385",
+    "product_variant_name": "Hill's Science Diet Adult Chicken 2.9 oz",
+    "supplier_offering": {
+      "supplier_id": 14,
+      "supplier_name": "Hill's",
+      "supplier_product_id": "supplier-product:hills:10447",
+      "supplier_sku": "10447",
+      "barcode": null
+    },
+    "purchasing_packaging": {
+      "purchase_uom": {
+        "code": "CAN"
+      },
+      "price_basis": {
+        "code": "CAN"
+      },
+      "sellable_unit_uom": {
+        "code": "CAN"
+      },
+      "sellable_units_per_purchase_unit": null,
+      "content_amount": null,
+      "content_uom": null,
+      "order_increment": null,
+      "minimum_order_quantity": null,
+      "break_pack_allowed": null,
+      "source_text": "one can"
+    },
+    "current_approved_cost": {
+      "amount": "13.10",
+      "currency": "HKD",
+      "price_basis": {
+        "code": "CAN"
+      }
+    },
+    "cost_per_sellable_unit": null,
+    "review_status": "PENDING_REVIEW",
+    "published_at": "2026-07-22T02:00:00Z",
+    "lineage": {
+      "catalogue_item_id": "55555555-5555-4555-8555-555555555555",
+      "raw_observation_ids": [
+        "22222222-2222-4222-8222-222222222221"
+      ],
+      "field_paths": [],
+      "review_decision_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "mastering_candidate_id": "66666666-6666-4666-8666-666666666666",
+      "publication_version": "2026-07-22T02:00:00Z"
+    }
+  }
+}

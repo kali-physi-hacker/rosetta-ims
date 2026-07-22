@@ -1,0 +1,60 @@
+{
+  "contract_version": "catalogue.extraction_profile.v1",
+  "profile_id": "hills-pdf-table",
+  "profile_version": "2026.03.0",
+  "supplier": {
+    "supplier_id": 14,
+    "supplier_name": "Hill's",
+    "supplier_code": "HPI"
+  },
+  "supplier_name": "Hill's",
+  "source_format": "PDF_TABLE",
+  "status": "ACTIVE",
+  "match_strategy": "SUPPLIER_SKU",
+  "field_mappings": [
+    {
+      "target_field": "supplier_sku",
+      "source_column": "Product Code / \u7522\u54c1\u7de8\u865f",
+      "required": true
+    },
+    {
+      "target_field": "product_name",
+      "source_column": "Product Description / \u7522\u54c1\u540d\u7a31",
+      "required": true
+    }
+  ],
+  "pricing": {
+    "cost_source_field": "Gross Wholesale Price / \u6bcf\u7bb1\u00b7\u7f50",
+    "rrp_source_field": "Recommended Retail Selling Price / \u5efa\u8b70\u96f6\u552e\u50f9",
+    "price_basis": {
+      "code": "CAN"
+    },
+    "currency": "HKD",
+    "autoswap_cost_rrp": false
+  },
+  "ordering": {
+    "order_increment_source_field": "Order Multiple / \u8a02\u8ca8\u55ae\u4f4d",
+    "qualifying_uom": {
+      "code": "CAN"
+    }
+  },
+  "document_rules": {
+    "category": "Food",
+    "species_from": "section_header"
+  },
+  "normalization_rules": {
+    "convert_weight_to": "G"
+  },
+  "validation_rules": [
+    "cost_price < rrp",
+    "order_increment_qty >= 1"
+  ],
+  "legacy_source_reference": "apps/api/catalogue_contracts/hills.yaml",
+  "created_at": "2026-07-22T00:00:00Z",
+  "created_by": "catalogue-architecture",
+  "updated_at": "2026-07-22T01:00:00Z",
+  "updated_by": "catalogue-architecture",
+  "metadata": {
+    "source": "CIS-103 fixture"
+  }
+}

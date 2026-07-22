@@ -1,0 +1,21 @@
+{
+  "contract_version": "catalogue.validation_issue.v1",
+  "validation_issue_id": "77777777-7777-4777-8777-777777777777",
+  "ingestion_run_id": "11111111-1111-4111-8111-111111111111",
+  "catalogue_item_id": "55555555-5555-4555-8555-555555555555",
+  "raw_observation_id": "22222222-2222-4222-8222-222222222221",
+  "stage": "STAGING",
+  "issue_code": "AMBIGUOUS_COST_BASIS",
+  "severity": "WARNING",
+  "message": "The source lists both case and can quantities; Rosetta needs confirmation of the price basis.",
+  "created_at": "2026-07-22T00:20:00Z",
+  "resolution_status": "OPEN",
+  "field_path": "/proposed_fields/cost/price_basis",
+  "raw_value": "HK$13.10; 24/2.9 oz",
+  "proposed_value": "CAN",
+  "expected_value": "Confirm whether HK$13.10 prices one can or one case.",
+  "review_guidance": "Confirm the unit that the HK$13.10 supplier cost prices before approving this item.",
+  "resolver_id": null,
+  "resolved_at": null,
+  "resolution_note": null
+}

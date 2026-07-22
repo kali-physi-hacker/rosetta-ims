@@ -1,0 +1,416 @@
+{
+  "$defs": {
+    "BoundingBox": {
+      "additionalProperties": false,
+      "description": "Non-negative source bounding box, typically in page/image coordinates.",
+      "properties": {
+        "height": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Bounding-box height.",
+          "title": "Height"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Coordinate unit, for example px or pt.",
+          "title": "Unit"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Bounding-box width.",
+          "title": "Width"
+        },
+        "x": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Left coordinate.",
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Top coordinate.",
+          "title": "Y"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "title": "BoundingBox",
+      "type": "object"
+    },
+    "ExtractionMethod": {
+      "enum": [
+        "OCR",
+        "PDF_TEXT",
+        "SPREADSHEET_CELL",
+        "MODEL_VISION",
+        "MODEL_TEXT",
+        "MANUAL_ENTRY",
+        "OTHER"
+      ],
+      "title": "ExtractionMethod",
+      "type": "string"
+    },
+    "ExtractionProfileReference": {
+      "additionalProperties": false,
+      "description": "Stable reference to the extraction profile used for a pipeline payload.",
+      "properties": {
+        "profile_id": {
+          "description": "Stable extraction profile identifier.",
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "description": "Version of the extraction profile used.",
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version"
+      ],
+      "title": "ExtractionProfileReference",
+      "type": "object"
+    },
+    "RawCell": {
+      "additionalProperties": false,
+      "description": "One raw cell observed in a spreadsheet-like source.",
+      "properties": {
+        "cell_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Cell reference, for example B12.",
+          "title": "Cell Reference"
+        },
+        "column_index": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based source column index.",
+          "title": "Column Index"
+        },
+        "column_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source column/header label.",
+          "title": "Column Name"
+        },
+        "raw_value": {
+          "description": "Raw cell value as extracted from the source.",
+          "title": "Raw Value"
+        },
+        "row_number": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based row number.",
+          "title": "Row Number"
+        }
+      },
+      "required": [
+        "raw_value"
+      ],
+      "title": "RawCell",
+      "type": "object"
+    },
+    "SourceLocation": {
+      "additionalProperties": false,
+      "description": "Location of evidence inside the source file.",
+      "properties": {
+        "bounding_box": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingBox"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bounding box around the observed object."
+        },
+        "cell_range": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Spreadsheet range, for example A2:H2.",
+          "title": "Cell Range"
+        },
+        "page_number": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based page number for paged sources.",
+          "title": "Page Number"
+        },
+        "row_number": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based spreadsheet row number.",
+          "title": "Row Number"
+        },
+        "sheet_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Spreadsheet sheet name.",
+          "title": "Sheet Name"
+        },
+        "source_object_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional storage/object key or source-specific reference.",
+          "title": "Source Object Key"
+        }
+      },
+      "title": "SourceLocation",
+      "type": "object"
+    }
+  },
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/v1/catalogue.raw_observation.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "What the extraction system observed in the source catalogue, and where.",
+  "properties": {
+    "captured_at": {
+      "description": "Timezone-aware capture timestamp.",
+      "format": "date-time",
+      "title": "Captured At",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "catalogue.raw_observation.v1",
+      "description": "Exact CIS-103 Raw Observation contract identifier.",
+      "enum": [
+        "catalogue.raw_observation.v1"
+      ],
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "extraction_confidence": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Observation-level confidence in [0, 1].",
+      "title": "Extraction Confidence"
+    },
+    "extraction_method": {
+      "$ref": "#/$defs/ExtractionMethod",
+      "description": "How this observation was captured."
+    },
+    "extraction_model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Model/provider used for extraction when applicable.",
+      "title": "Extraction Model"
+    },
+    "extraction_model_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Version of the extraction model when applicable.",
+      "title": "Extraction Model Version"
+    },
+    "extraction_profile": {
+      "$ref": "#/$defs/ExtractionProfileReference",
+      "description": "Extraction profile used."
+    },
+    "ingestion_run_id": {
+      "description": "Pipeline run identity.",
+      "format": "uuid",
+      "title": "Ingestion Run Id",
+      "type": "string"
+    },
+    "raw_cells": {
+      "description": "Observed raw cells for tabular sources.",
+      "items": {
+        "$ref": "#/$defs/RawCell"
+      },
+      "title": "Raw Cells",
+      "type": "array"
+    },
+    "raw_observation_id": {
+      "description": "Raw Observation pipeline identity.",
+      "format": "uuid",
+      "title": "Raw Observation Id",
+      "type": "string"
+    },
+    "raw_text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Observed raw text, if the source was text-like.",
+      "title": "Raw Text"
+    },
+    "source_file_id": {
+      "description": "Raw source file identity.",
+      "format": "uuid",
+      "title": "Source File Id",
+      "type": "string"
+    },
+    "source_location": {
+      "$ref": "#/$defs/SourceLocation",
+      "description": "Location where the evidence was observed."
+    },
+    "source_metadata": {
+      "description": "Explicit extension point for source metadata.",
+      "title": "Source Metadata",
+      "type": "object"
+    },
+    "supplier_catalogue_id": {
+      "description": "Supplier catalogue identity.",
+      "format": "uuid",
+      "title": "Supplier Catalogue Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_version",
+    "raw_observation_id",
+    "ingestion_run_id",
+    "supplier_catalogue_id",
+    "source_file_id",
+    "extraction_profile",
+    "source_location",
+    "extraction_method",
+    "captured_at"
+  ],
+  "title": "RawObservationV1",
+  "type": "object"
+}

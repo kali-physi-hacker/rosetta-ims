@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
 from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -15,7 +14,6 @@ class ContractModel(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
         validate_assignment=True,
-        json_encoders={Decimal: lambda value: str(value)},
     )
 
     contract_id: ClassVar[str | None] = None
@@ -65,4 +63,3 @@ def registry_snapshot() -> dict[str, type[ContractModel]]:
     """Expose a copy of the public registry for tests and schema export."""
 
     return dict(_CONTRACT_REGISTRY)
-

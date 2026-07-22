@@ -1,0 +1,1183 @@
+{
+  "$defs": {
+    "Cost": {
+      "additionalProperties": false,
+      "description": "Basis-aware supplier cost.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Cost amount. JSON serializes as a string.",
+          "title": "Amount"
+        },
+        "currency": {
+          "const": "HKD",
+          "default": "HKD",
+          "description": "Currency. v1 accepts HKD only.",
+          "enum": [
+            "HKD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "price_basis": {
+          "$ref": "#/$defs/UnitOfMeasure",
+          "description": "Unit basis the amount prices."
+        }
+      },
+      "required": [
+        "amount",
+        "price_basis"
+      ],
+      "title": "Cost",
+      "type": "object"
+    },
+    "CostProposal": {
+      "additionalProperties": false,
+      "description": "Proposed cost with optional provenance.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Cost amount. JSON serializes as a string.",
+          "title": "Amount"
+        },
+        "currency": {
+          "const": "HKD",
+          "default": "HKD",
+          "description": "Currency. v1 accepts HKD only.",
+          "enum": [
+            "HKD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence supporting this cost proposal."
+        },
+        "price_basis": {
+          "$ref": "#/$defs/UnitOfMeasure",
+          "description": "Unit basis the amount prices."
+        }
+      },
+      "required": [
+        "amount",
+        "price_basis"
+      ],
+      "title": "CostProposal",
+      "type": "object"
+    },
+    "DiscountedUnitPriceBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that changes the unit price to a quoted discounted amount.",
+      "properties": {
+        "benefit_type": {
+          "const": "discounted_unit_price",
+          "default": "discounted_unit_price",
+          "description": "Discriminator.",
+          "enum": [
+            "discounted_unit_price"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "discounted_price": {
+          "$ref": "#/$defs/Cost",
+          "description": "Discounted HKD unit price and its price basis."
+        }
+      },
+      "required": [
+        "discounted_price"
+      ],
+      "title": "DiscountedUnitPriceBenefit",
+      "type": "object"
+    },
+    "ExtractionProfileReference": {
+      "additionalProperties": false,
+      "description": "Stable reference to the extraction profile used for a pipeline payload.",
+      "properties": {
+        "profile_id": {
+          "description": "Stable extraction profile identifier.",
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "description": "Version of the extraction profile used.",
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version"
+      ],
+      "title": "ExtractionProfileReference",
+      "type": "object"
+    },
+    "FieldEvidence": {
+      "additionalProperties": false,
+      "description": "Field-level provenance and confidence for a proposed interpretation.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field confidence in [0, 1].",
+          "title": "Confidence"
+        },
+        "field_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "JSON-style field path inside the supporting payload.",
+          "title": "Field Path"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short provenance note.",
+          "title": "Note"
+        },
+        "raw_observation_id": {
+          "description": "Raw Observation that supports this field.",
+          "format": "uuid",
+          "title": "Raw Observation Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "raw_observation_id"
+      ],
+      "title": "FieldEvidence",
+      "type": "object"
+    },
+    "FixedDiscountBasis": {
+      "enum": [
+        "UNIT_PRICE",
+        "SUPPLIER_SKU_TOTAL",
+        "SUPPLIER_ORDER_TOTAL"
+      ],
+      "title": "FixedDiscountBasis",
+      "type": "string"
+    },
+    "FixedDiscountBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that subtracts a fixed HKD amount from a defined basis.",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/PositiveMoney",
+          "description": "Positive HKD fixed discount."
+        },
+        "benefit_type": {
+          "const": "fixed_discount",
+          "default": "fixed_discount",
+          "description": "Discriminator.",
+          "enum": [
+            "fixed_discount"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "reduction_basis": {
+          "$ref": "#/$defs/FixedDiscountBasis",
+          "description": "What the fixed discount reduces."
+        }
+      },
+      "required": [
+        "amount",
+        "reduction_basis"
+      ],
+      "title": "FixedDiscountBenefit",
+      "type": "object"
+    },
+    "FreeQuantityBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that grants free goods or free quantity.",
+      "properties": {
+        "benefit_type": {
+          "const": "free_quantity",
+          "default": "free_quantity",
+          "description": "Discriminator.",
+          "enum": [
+            "free_quantity"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Positive free quantity and UOM."
+        }
+      },
+      "required": [
+        "quantity"
+      ],
+      "title": "FreeQuantityBenefit",
+      "type": "object"
+    },
+    "MbbScope": {
+      "enum": [
+        "SUPPLIER_SKU",
+        "PRODUCT_GROUP",
+        "SUPPLIER_ORDER"
+      ],
+      "title": "MbbScope",
+      "type": "string"
+    },
+    "MbbTerm": {
+      "additionalProperties": false,
+      "description": "Condition plus benefit for one Max Bulk Buy term or tier.",
+      "properties": {
+        "benefit": {
+          "description": "Benefit unlocked by the condition.",
+          "discriminator": {
+            "mapping": {
+              "discounted_unit_price": "#/$defs/DiscountedUnitPriceBenefit",
+              "fixed_discount": "#/$defs/FixedDiscountBenefit",
+              "free_quantity": "#/$defs/FreeQuantityBenefit",
+              "percentage_discount": "#/$defs/PercentageDiscountBenefit"
+            },
+            "propertyName": "benefit_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/DiscountedUnitPriceBenefit"
+            },
+            {
+              "$ref": "#/$defs/PercentageDiscountBenefit"
+            },
+            {
+              "$ref": "#/$defs/FixedDiscountBenefit"
+            },
+            {
+              "$ref": "#/$defs/FreeQuantityBenefit"
+            }
+          ],
+          "title": "Benefit"
+        },
+        "condition": {
+          "description": "Condition that unlocks the term.",
+          "discriminator": {
+            "mapping": {
+              "minimum_quantity": "#/$defs/MinimumQuantityCondition",
+              "minimum_spend": "#/$defs/MinimumSpendCondition"
+            },
+            "propertyName": "condition_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/MinimumQuantityCondition"
+            },
+            {
+              "$ref": "#/$defs/MinimumSpendCondition"
+            }
+          ],
+          "title": "Condition"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Business-readable text copied or summarized from the source.",
+          "title": "Description"
+        },
+        "effective_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier effective date when known.",
+          "title": "Effective From"
+        },
+        "effective_to": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "End date when known.",
+          "title": "Effective To"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence supporting this MBB term."
+        },
+        "mbb_term_id": {
+          "description": "Stable MBB term identity for this pipeline payload.",
+          "format": "uuid",
+          "title": "Mbb Term Id",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/MbbScope",
+          "description": "Business scope the term applies to."
+        }
+      },
+      "required": [
+        "mbb_term_id",
+        "scope",
+        "condition",
+        "benefit"
+      ],
+      "title": "MbbTerm",
+      "type": "object"
+    },
+    "MinimumQuantityCondition": {
+      "additionalProperties": false,
+      "description": "MBB condition unlocked by buying at least a positive quantity.",
+      "properties": {
+        "condition_type": {
+          "const": "minimum_quantity",
+          "default": "minimum_quantity",
+          "description": "Discriminator.",
+          "enum": [
+            "minimum_quantity"
+          ],
+          "title": "Condition Type",
+          "type": "string"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Minimum quantity required to unlock the benefit."
+        }
+      },
+      "required": [
+        "quantity"
+      ],
+      "title": "MinimumQuantityCondition",
+      "type": "object"
+    },
+    "MinimumSpendCondition": {
+      "additionalProperties": false,
+      "description": "MBB condition unlocked by spending at least a positive HKD amount.",
+      "properties": {
+        "condition_type": {
+          "const": "minimum_spend",
+          "default": "minimum_spend",
+          "description": "Discriminator.",
+          "enum": [
+            "minimum_spend"
+          ],
+          "title": "Condition Type",
+          "type": "string"
+        },
+        "spend": {
+          "$ref": "#/$defs/PositiveMoney",
+          "description": "Minimum supplier-order spend in HKD."
+        }
+      },
+      "required": [
+        "spend"
+      ],
+      "title": "MinimumSpendCondition",
+      "type": "object"
+    },
+    "PackagingProposal": {
+      "additionalProperties": false,
+      "description": "Proposed packaging configuration with optional provenance.",
+      "properties": {
+        "break_pack_allowed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether supplier allows ordering below a full purchase unit.",
+          "title": "Break Pack Allowed"
+        },
+        "content_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Content measure of one sellable unit, for example 410 or 30.",
+          "title": "Content Amount"
+        },
+        "content_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Content-measure unit, for example G or ML."
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence supporting this packaging proposal."
+        },
+        "minimum_order_quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum order quantity when known."
+        },
+        "order_increment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier order multiple when known."
+        },
+        "price_basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Unit basis for the quoted supplier price."
+        },
+        "purchase_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Unit Rosetta purchases from the supplier."
+        },
+        "sellable_unit_uom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Smallest sellable unit UOM."
+        },
+        "sellable_units_per_purchase_unit": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Number of sellable units contained in one purchase unit when known.",
+          "title": "Sellable Units Per Purchase Unit"
+        },
+        "source_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Raw packaging text this structure was interpreted from.",
+          "title": "Source Text"
+        }
+      },
+      "title": "PackagingProposal",
+      "type": "object"
+    },
+    "PercentageDiscountBenefit": {
+      "additionalProperties": false,
+      "description": "MBB benefit that applies a percentage discount.",
+      "properties": {
+        "benefit_type": {
+          "const": "percentage_discount",
+          "default": "percentage_discount",
+          "description": "Discriminator.",
+          "enum": [
+            "percentage_discount"
+          ],
+          "title": "Benefit Type",
+          "type": "string"
+        },
+        "percentage": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 100.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Discount percentage in (0, 100].",
+          "title": "Percentage"
+        }
+      },
+      "required": [
+        "percentage"
+      ],
+      "title": "PercentageDiscountBenefit",
+      "type": "object"
+    },
+    "PipelineTrace": {
+      "additionalProperties": false,
+      "description": "Common identifiers that connect records produced by one catalogue ingestion run.",
+      "properties": {
+        "extraction_profile": {
+          "$ref": "#/$defs/ExtractionProfileReference",
+          "description": "Extraction profile used to interpret the source."
+        },
+        "ingestion_run_id": {
+          "description": "Pipeline run identity.",
+          "format": "uuid",
+          "title": "Ingestion Run Id",
+          "type": "string"
+        },
+        "source_file_id": {
+          "description": "Raw source file identity.",
+          "format": "uuid",
+          "title": "Source File Id",
+          "type": "string"
+        },
+        "supplier_catalogue_id": {
+          "description": "Source catalogue identity for the uploaded document.",
+          "format": "uuid",
+          "title": "Supplier Catalogue Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ingestion_run_id",
+        "supplier_catalogue_id",
+        "source_file_id",
+        "extraction_profile"
+      ],
+      "title": "PipelineTrace",
+      "type": "object"
+    },
+    "PositiveMoney": {
+      "additionalProperties": false,
+      "description": "Positive HKD money amount.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Positive monetary amount. JSON serializes as a string.",
+          "title": "Amount"
+        },
+        "currency": {
+          "const": "HKD",
+          "default": "HKD",
+          "description": "Currency. v1 accepts HKD only.",
+          "enum": [
+            "HKD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "title": "PositiveMoney",
+      "type": "object"
+    },
+    "ProposedCatalogueFields": {
+      "additionalProperties": false,
+      "description": "Typed interpretation Rosetta proposes from raw source evidence.",
+      "properties": {
+        "barcode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed barcode."
+        },
+        "brand": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed brand."
+        },
+        "category": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed category."
+        },
+        "cost": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CostProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed basis-aware supplier cost."
+        },
+        "mbb_terms": {
+          "description": "Proposed MBB terms or tiers.",
+          "items": {
+            "$ref": "#/$defs/MbbTerm"
+          },
+          "title": "Mbb Terms",
+          "type": "array"
+        },
+        "packaging": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PackagingProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed packaging configuration."
+        },
+        "product_name": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed product name."
+        },
+        "supplier_sku": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed supplier SKU."
+        },
+        "variant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed variant."
+        }
+      },
+      "title": "ProposedCatalogueFields",
+      "type": "object"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "description": "Positive quantity in an explicitly stated UOM.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Positive quantity. JSON serializes as a string.",
+          "title": "Amount"
+        },
+        "uom": {
+          "$ref": "#/$defs/UnitOfMeasure",
+          "description": "Quantity unit."
+        }
+      },
+      "required": [
+        "amount",
+        "uom"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "ReviewRequirement": {
+      "enum": [
+        "NOT_REQUIRED",
+        "RECOMMENDED",
+        "REQUIRED",
+        "BLOCKING"
+      ],
+      "title": "ReviewRequirement",
+      "type": "string"
+    },
+    "StagingRawFields": {
+      "additionalProperties": false,
+      "description": "Raw source strings preserved separately from Rosetta's proposals.",
+      "properties": {
+        "barcode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Barcode exactly as printed.",
+          "title": "Barcode"
+        },
+        "brand": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Brand text exactly as printed.",
+          "title": "Brand"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Category/section text exactly as printed.",
+          "title": "Category"
+        },
+        "cost": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Cost text exactly as printed, including symbols or notes.",
+          "title": "Cost"
+        },
+        "mbb_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Raw Max Bulk Buy / discount text.",
+          "title": "Mbb Text"
+        },
+        "original_product_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Original source-language name when translated.",
+          "title": "Original Product Name"
+        },
+        "packaging": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Packaging text exactly as printed.",
+          "title": "Packaging"
+        },
+        "product_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Product name/description exactly as printed or translated.",
+          "title": "Product Name"
+        },
+        "source_row_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable source row label when useful.",
+          "title": "Source Row Label"
+        },
+        "supplier_sku": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Supplier SKU exactly as printed.",
+          "title": "Supplier Sku"
+        },
+        "variant": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Variant/size/flavour text exactly as printed.",
+          "title": "Variant"
+        }
+      },
+      "title": "StagingRawFields",
+      "type": "object"
+    },
+    "TextProposal": {
+      "additionalProperties": false,
+      "description": "Proposed text value plus optional field-level evidence.",
+      "properties": {
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence supporting this proposal."
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proposed interpreted text value.",
+          "title": "Value"
+        }
+      },
+      "title": "TextProposal",
+      "type": "object"
+    },
+    "UnitCode": {
+      "enum": [
+        "PIECE",
+        "UNIT",
+        "PACK",
+        "BOX",
+        "CASE",
+        "CARTON",
+        "BOTTLE",
+        "BAG",
+        "CAN",
+        "POUCH",
+        "SACHET",
+        "TABLET",
+        "CAPSULE",
+        "VIAL",
+        "TUBE",
+        "TEST",
+        "STRIP",
+        "KG",
+        "G",
+        "L",
+        "ML",
+        "OTHER",
+        "UNKNOWN"
+      ],
+      "title": "UnitCode",
+      "type": "string"
+    },
+    "UnitOfMeasure": {
+      "additionalProperties": false,
+      "description": "Controlled unit code plus optional label for deliberate OTHER classifications.",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Controlled UOM code. Null means not determined."
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required only when code is OTHER.",
+          "title": "Label"
+        }
+      },
+      "title": "UnitOfMeasure",
+      "type": "object"
+    }
+  },
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/v1/catalogue.staging_item.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "What business fields Rosetta proposes were present, and what it thinks they mean.",
+  "properties": {
+    "catalogue_item_id": {
+      "description": "Staging Catalogue Item pipeline identity.",
+      "format": "uuid",
+      "title": "Catalogue Item Id",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "catalogue.staging_item.v1",
+      "description": "Exact CIS-103 Staging Catalogue Item contract identifier.",
+      "enum": [
+        "catalogue.staging_item.v1"
+      ],
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "created_at": {
+      "description": "Timezone-aware creation timestamp.",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Explicit extension point for non-contract metadata.",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "proposed_fields": {
+      "$ref": "#/$defs/ProposedCatalogueFields",
+      "description": "Typed proposals from parser/model/business rules."
+    },
+    "raw_fields": {
+      "$ref": "#/$defs/StagingRawFields",
+      "description": "Source strings preserved as evidence."
+    },
+    "raw_observation_ids": {
+      "description": "Raw observations supporting this staged item.",
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Raw Observation Ids",
+      "type": "array"
+    },
+    "review_requirement": {
+      "$ref": "#/$defs/ReviewRequirement",
+      "description": "Whether business review is needed."
+    },
+    "trace": {
+      "$ref": "#/$defs/PipelineTrace",
+      "description": "Common catalogue pipeline trace metadata."
+    },
+    "validation_issue_ids": {
+      "description": "Validation issues associated with the staged item.",
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Validation Issue Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "contract_version",
+    "trace",
+    "catalogue_item_id",
+    "raw_observation_ids",
+    "raw_fields",
+    "proposed_fields",
+    "review_requirement",
+    "created_at"
+  ],
+  "title": "StagingCatalogueItemV1",
+  "type": "object"
+}

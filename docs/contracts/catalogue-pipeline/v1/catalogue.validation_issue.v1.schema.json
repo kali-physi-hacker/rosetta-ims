@@ -1,0 +1,215 @@
+{
+  "$defs": {
+    "IssueResolutionStatus": {
+      "enum": [
+        "OPEN",
+        "CONFIRMED",
+        "CORRECTED",
+        "ACCEPTED_AS_IS",
+        "DISMISSED"
+      ],
+      "title": "IssueResolutionStatus",
+      "type": "string"
+    },
+    "IssueSeverity": {
+      "enum": [
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "BLOCKING"
+      ],
+      "title": "IssueSeverity",
+      "type": "string"
+    },
+    "ValidationStage": {
+      "enum": [
+        "SOURCE_EXTRACTION",
+        "RAW_OBSERVATION",
+        "STAGING",
+        "MASTERING",
+        "SERVING"
+      ],
+      "title": "ValidationStage",
+      "type": "string"
+    }
+  },
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/v1/catalogue.validation_issue.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Uncertainty, invalid data, contradiction, incompleteness, or HITL decision request.",
+  "properties": {
+    "catalogue_item_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Related Staging Catalogue Item when applicable.",
+      "title": "Catalogue Item Id"
+    },
+    "contract_version": {
+      "const": "catalogue.validation_issue.v1",
+      "description": "Exact CIS-103 Validation Issue contract identifier.",
+      "enum": [
+        "catalogue.validation_issue.v1"
+      ],
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "created_at": {
+      "description": "Timezone-aware issue creation timestamp.",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "expected_value": {
+      "default": null,
+      "description": "Expected value or rule summary.",
+      "title": "Expected Value"
+    },
+    "field_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "JSON-style path to the field involved.",
+      "title": "Field Path"
+    },
+    "ingestion_run_id": {
+      "description": "Pipeline run identity.",
+      "format": "uuid",
+      "title": "Ingestion Run Id",
+      "type": "string"
+    },
+    "issue_code": {
+      "description": "Stable machine-readable issue code.",
+      "minLength": 1,
+      "title": "Issue Code",
+      "type": "string"
+    },
+    "message": {
+      "description": "Human-readable issue message.",
+      "minLength": 1,
+      "title": "Message",
+      "type": "string"
+    },
+    "proposed_value": {
+      "default": null,
+      "description": "Proposed value involved in the issue.",
+      "title": "Proposed Value"
+    },
+    "raw_observation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Related Raw Observation when applicable.",
+      "title": "Raw Observation Id"
+    },
+    "raw_value": {
+      "default": null,
+      "description": "Raw value involved in the issue.",
+      "title": "Raw Value"
+    },
+    "resolution_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Auditable note explaining the resolution.",
+      "title": "Resolution Note"
+    },
+    "resolution_status": {
+      "$ref": "#/$defs/IssueResolutionStatus",
+      "description": "Issue resolution status."
+    },
+    "resolved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Timezone-aware resolution timestamp.",
+      "title": "Resolved At"
+    },
+    "resolver_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Identity that resolved the issue.",
+      "title": "Resolver Id"
+    },
+    "review_guidance": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Business-readable instruction for the reviewer.",
+      "title": "Review Guidance"
+    },
+    "severity": {
+      "$ref": "#/$defs/IssueSeverity",
+      "description": "Issue severity."
+    },
+    "stage": {
+      "$ref": "#/$defs/ValidationStage",
+      "description": "Pipeline stage that created the issue."
+    },
+    "validation_issue_id": {
+      "description": "Validation Issue identity.",
+      "format": "uuid",
+      "title": "Validation Issue Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_version",
+    "validation_issue_id",
+    "ingestion_run_id",
+    "stage",
+    "issue_code",
+    "severity",
+    "message",
+    "created_at",
+    "resolution_status"
+  ],
+  "title": "ValidationIssueV1",
+  "type": "object"
+}
