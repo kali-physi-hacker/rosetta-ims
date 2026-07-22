@@ -110,7 +110,7 @@ def api_index():
         "current": "v1",
         "versions": {
             "v1": {"base_path": API_V1_PREFIX, "status": "current"},
-            "v2": {"base_path": API_V2_PREFIX, "status": "empty"},
+            "v2": {"base_path": API_V2_PREFIX, "status": "inventory-preview"},
         },
     }
 

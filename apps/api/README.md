@@ -136,8 +136,8 @@ apps/api/
 │   │   ├── catalogues.py    # /v1/catalogues OCR ingestion + review
 │   │   ├── stock.py         # /v1/stock CSV import + adjustments
 │   │   └── sync.py          # /v1/sync Google Sheet pull
-│   └── v2/                  # empty next-version API mounted at /v2
-│       └── __init__.py      # register v2 routers here as they are added
+│   └── v2/                  # auth + inventory API mounted at /v2
+│       └── __init__.py      # mirrors v1 inventory routes; excludes catalogue ingestion/reparse
 │
 ├── services/                # Business logic — pure Python, no HTTP
 │   ├── extraction_service.py    # OCR pipeline (Claude Haiku)
@@ -164,7 +164,7 @@ Response shapes are typed in [`../web/src/lib/types.ts`](../web/src/lib/types.ts
 
 ### Auto-generating types
 
-FastAPI exposes the current API schema at `/v1/openapi.json`. The generated TypeScript file at [`../web/src/lib/api/generated.ts`](../web/src/lib/api/generated.ts) is a fully-typed mirror — checked into the repo so audit-readers can browse without running anything.
+FastAPI exposes the current API schema at `/v1/openapi.json`, and the v2 inventory-preview schema at `/v2/openapi.json`. The generated TypeScript file at [`../web/src/lib/api/generated.ts`](../web/src/lib/api/generated.ts) is a fully-typed mirror of the frontend's configured API version — checked into the repo so audit-readers can browse without running anything.
 
 To regenerate after backend changes, **three options**:
 
@@ -261,7 +261,7 @@ Frontend auto-deploys on every push to `main` via Vercel's GitHub integration. T
 Two auth mechanisms run in parallel for transition reasons. **JWT is the path forward.**
 
 ### JWT (recommended)
-- `POST /v1/auth/login` with `{username, password}` returns `{access_token, user}`
+- `POST /v1/auth/login` or `/v2/auth/login` with `{username, password}` returns `{access_token, user}`
 - Subsequent requests include `Authorization: Bearer <token>`
 - Token validated per-endpoint via `Depends(get_current_user)` in `dependencies.py`
 - Default users seeded on first run: `seph` (admin), `team` (data_entry)
@@ -271,7 +271,7 @@ Two auth mechanisms run in parallel for transition reasons. **JWT is the path fo
 - Skipped entirely if `IMS_API_KEY` env var is unset (dev mode)
 - Pass via `X-API-Key: <key>` header
 
-`/health` and `/v1/auth/login` are exempt from both gates. Legacy root `/auth/login` remains available as a schema-hidden compatibility alias.
+`/health`, `/v1/auth/login`, and `/v2/auth/login` are exempt from both gates. Legacy root `/auth/login` remains available as a schema-hidden compatibility alias.
 
 ---
 

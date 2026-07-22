@@ -23,11 +23,21 @@ def test_v1_exposes_current_api_contract():
     assert _client.get("/v1/health").json() == {"status": "ok", "version": "1.0.0"}
 
 
-def test_v2_is_mounted_with_empty_contract():
+def test_v2_exposes_auth_and_inventory_contract_without_catalogue_ingestion():
     schema = _client.get("/v2/openapi.json").json()
+    paths = schema["paths"]
 
     assert schema["info"]["version"] == "2.0.0"
-    assert schema["paths"] == {}
+    assert "/auth/login" in paths
+    assert "/products" in paths
+    assert "/products/{sku}" in paths
+    assert "/products/{sku}/stock/adjust" in paths
+    assert "/suppliers" in paths
+    assert "/pricing" in paths
+    assert "/catalogues" not in paths
+    assert "/catalogues/import" not in paths
+    assert "/catalogues/reparse/latest" not in paths
+    assert not any(path.startswith("/catalogues/") for path in paths)
 
 
 def test_root_openapi_redirects_to_v1_schema():
@@ -47,9 +57,32 @@ def test_api_key_gate_applies_to_v1_routes():
         main._API_KEY = previous_key
 
 
+def test_api_key_gate_applies_to_v2_inventory_routes():
+    previous_key = main._API_KEY
+    main._API_KEY = "test-key"
+    try:
+        assert _client.get("/v2/tags").status_code == 401
+        assert _client.get("/v2/tags", headers={"X-API-Key": "test-key"}).status_code == 200
+    finally:
+        main._API_KEY = previous_key
+
+
 def test_cors_preflight_applies_to_v1_routes():
     response = _client.options(
         "/v1/suppliers",
+        headers={
+            "Origin": "http://localhost:3001",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3001"
+
+
+def test_cors_preflight_applies_to_v2_routes():
+    response = _client.options(
+        "/v2/suppliers",
         headers={
             "Origin": "http://localhost:3001",
             "Access-Control-Request-Method": "GET",
