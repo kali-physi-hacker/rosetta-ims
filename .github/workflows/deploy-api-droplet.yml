@@ -1,0 +1,91 @@
+name: Deploy API to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/deploy-api-droplet.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-droplet
+  cancel-in-progress: false
+
+env:
+  DROPLET_HOST: 178.128.127.5
+  DROPLET_USER: root
+  DEPLOY_PATH: /root/rosetta-ims/backend
+
+jobs:
+  deploy:
+    name: Test and deploy API
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run API smoke tests
+        working-directory: apps/api
+        run: |
+          uv run --with-requirements requirements.txt --with pytest \
+            python -m pytest tests/test_api_versioning.py tests/test_config_api.py
+
+      - name: Install SSH key
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.DROPLET_SSH_PRIVATE_KEY }}" > ~/.ssh/droplet_deploy_key
+          chmod 600 ~/.ssh/droplet_deploy_key
+          ssh-keyscan -H "$DROPLET_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync API files to droplet
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/droplet_deploy_key "$DROPLET_USER@$DROPLET_HOST" "mkdir -p '$DEPLOY_PATH'"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/droplet_deploy_key" \
+            --exclude ".env" \
+            --exclude ".env.*" \
+            --exclude "data/" \
+            --exclude "secrets/" \
+            --exclude "__pycache__/" \
+            --exclude ".pytest_cache/" \
+            --exclude "*.pyc" \
+            --exclude "*.db" \
+            --exclude "*.db-*" \
+            --exclude "last_sync.json" \
+            --exclude "*.bak" \
+            apps/api/ "$DROPLET_USER@$DROPLET_HOST:$DEPLOY_PATH/"
+
+      - name: Rebuild and restart Docker services
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/droplet_deploy_key "$DROPLET_USER@$DROPLET_HOST" <<'SSH'
+            set -euo pipefail
+            cd /root/rosetta-ims/backend
+            mkdir -p data secrets
+            docker network inspect edge >/dev/null 2>&1 || docker network create edge
+            docker compose up -d --build api caddy
+            for i in $(seq 1 30); do
+              if docker compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health', timeout=5)" >/dev/null 2>&1; then
+                docker compose ps
+                exit 0
+              fi
+              sleep 2
+            done
+            docker compose ps
+            docker compose logs --tail=120 api
+            exit 1
+          SSH

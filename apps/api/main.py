@@ -1,7 +1,7 @@
 """Rosetta IMS API — FastAPI app.
 
-Auto-deployed to Fly.io on every push to main that touches backend/**.
-See .github/workflows/fly-deploy.yml + backend/README.md → Deployment.
+Auto-deployed to the DigitalOcean Docker host on pushes to main that touch apps/api/**.
+See .github/workflows/deploy-api-droplet.yml + apps/api/README.md -> Deployment.
 """
 import os
 from fastapi import FastAPI, Request

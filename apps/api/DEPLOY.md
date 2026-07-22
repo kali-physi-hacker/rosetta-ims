@@ -1,7 +1,8 @@
-# Deploying Rosetta IMS API on a DigitalOcean droplet (Docker)
+# Deploying Rosetta IMS API on the DigitalOcean droplet (Docker)
 
-This replaces the Fly.io backend. The Vercel frontend stays as-is — you only repoint
-it at the new API URL (last step).
+The backend runs on the DigitalOcean droplet at `root@178.128.127.5` using Docker
+Compose from `/root/rosetta-ims/backend`. The Vercel frontend stays separate and
+auto-deploys from its existing Vercel Git integration.
 
 **Architecture:** `Caddy` (HTTPS, auto Let's Encrypt) → `api` (FastAPI/uvicorn) →
 SQLite file on a mounted volume. CORS is handled by the app.
@@ -10,13 +11,13 @@ SQLite file on a mounted volume. CORS is handled by the app.
 
 ## 0. Prerequisites
 
-- A droplet running Ubuntu 22.04/24.04. **Recommend ≥ 2 GB RAM** — AI extraction spikes
-  memory, and the old 512 MB Fly machine was being OOM-killed (that was the real cause of
-  the intermittent "CORS" failures). If you're on 1 GB, add swap (see §7).
-- A **domain/subdomain** for the API (e.g. `api.your-domain.com`). HTTPS is mandatory
+- A droplet running Ubuntu 22.04/24.04. **Recommend >= 2 GB RAM** because AI extraction
+  can spike memory. If you're on 1 GB, add swap (see §8).
+- A **domain/subdomain** for the API. The current host uses
+  `https://178.128.127.5.nip.io`. HTTPS is mandatory
   because the Vercel site is HTTPS — browsers block an HTTP API from an HTTPS page.
 - DNS: an **A record** for that subdomain pointing at the droplet's public IP.
-- Ports **80** and **443** reachable (see firewall, §7).
+- Ports **80** and **443** reachable (see firewall, §8).
 
 ## 1. Install Docker on the droplet
 
@@ -29,10 +30,14 @@ docker --version && docker compose version
 ## 2. Get the code onto the droplet
 
 ```bash
-git clone <your-repo-url> rosetta-ims
-cd rosetta-ims/backend
+mkdir -p /root/rosetta-ims/backend
+rsync -az apps/api/ root@178.128.127.5:/root/rosetta-ims/backend/
+ssh root@178.128.127.5
+cd /root/rosetta-ims/backend
 ```
-(Only the `backend/` folder is needed — the frontend is on Vercel.)
+
+The production directory is not a Git checkout today. Deployment syncs the `apps/api/`
+folder into `/root/rosetta-ims/backend` and preserves `.env`, `data/`, and `secrets/`.
 
 ## 3. Configure environment + secrets
 
@@ -41,7 +46,7 @@ cp .env.example .env
 nano .env                       # fill in every REQUIRED value
 ```
 
-Must-set values:
+Must-set values in `/root/rosetta-ims/backend/.env`:
 - `API_DOMAIN` — your API subdomain (matches the DNS A record).
 - `JWT_SECRET` — generate with `openssl rand -hex 32`.
 - `ANTHROPIC_API_KEY` — for AI extraction/tagging/species.
@@ -54,27 +59,26 @@ nano secrets/google-sa.json     # paste the service-account JSON
 ```
 Leave `GOOGLE_SA_KEY_JSON` empty in `.env` — compose sets `GOOGLE_SA_KEY_PATH=/secrets/google-sa.json`.
 
-> The values for `ANTHROPIC_API_KEY`, `GOOGLE_SA_KEY_JSON`, `RESEND_API_KEY`,
-> `ROSETTA_TECH_API_KEY`, etc. are currently Fly secrets. Grab them from wherever they
-> were originally stored (password manager / Fly was just holding copies).
+> The GitHub Action does not sync `.env`, `data/`, or `secrets/`. Keep runtime secrets
+> on the droplet or in the password manager, not in Git.
 
-## 4. Bring over the production database
+## 4. Production database
 
-**Option A — migrate the live data from Fly (recommended).** On a machine that still has
-working Fly access:
+SQLite lives at:
+
 ```bash
-# checkpoint WAL into the main file so the copy is consistent, then download it
-fly ssh console -a rosetta-ims-api -C "python -c \"import sqlite3; sqlite3.connect('/data/ims.db').execute('PRAGMA wal_checkpoint(TRUNCATE)')\""
-fly ssh sftp get /data/ims.db ./ims.db -a rosetta-ims-api
-```
-Copy that `ims.db` to the droplet and place it at `backend/data/ims.db`:
-```bash
-scp ./ims.db root@<droplet-ip>:/root/rosetta-ims/backend/data/ims.db
+/root/rosetta-ims/backend/data/ims.db
 ```
 
-**Option B — start fresh.** Skip the copy. On first boot the app creates the schema and
+To restore a database copy, place it there:
+
+```bash
+scp ./ims.db root@178.128.127.5:/root/rosetta-ims/backend/data/ims.db
+```
+
+To start fresh, skip the copy. On first boot the app creates the schema and
 seeds the default admin (`seph` / `rosetta2024`) automatically. You'd re-onboard data from
-scratch and lose the existing verified products + audit trail, so prefer Option A.
+scratch and lose the existing verified products + audit trail.
 
 ## 5. Launch
 
@@ -102,7 +106,38 @@ curl -s -X POST https://api.your-domain.com/v1/auth/login \
   -H "Content-Type: application/json" -d '{"username":"seph","password":"rosetta2024"}'
 ```
 
-## 7. Firewall, swap, backups
+## 7. GitHub Actions auto-deploy
+
+The checked-in workflow is:
+
+```text
+.github/workflows/deploy-api-droplet.yml
+```
+
+It runs on:
+
+- pushes to `main` that touch `apps/api/**` or the workflow file
+- manual `workflow_dispatch`
+
+The workflow:
+
+1. checks out the repo
+2. runs API smoke tests
+3. rsyncs `apps/api/` to `/root/rosetta-ims/backend`
+4. preserves `.env`, `data/`, `secrets/`, cache files, and local DB/runtime files
+5. runs `docker compose up -d --build api caddy`
+6. verifies the container health endpoint from inside the API container
+
+Required GitHub Actions secret:
+
+```text
+DROPLET_SSH_PRIVATE_KEY
+```
+
+This is a private SSH key whose public key is present in
+`root@178.128.127.5:/root/.ssh/authorized_keys`.
+
+## 8. Firewall, swap, backups
 
 ```bash
 # firewall
@@ -117,26 +152,25 @@ sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapf
 # 0 3 * * * cp /root/rosetta-ims/backend/data/ims.db /root/ims-backups/ims-$(date +\%F).db
 ```
 
-## 8. Point the Vercel frontend at the new API
+## 9. Vercel frontend
 
-In the Vercel project → **Settings → Environment Variables**, set:
+The frontend is already connected to Vercel and auto-deploys on push. In the
+Vercel project -> **Settings -> Environment Variables**, the backend origin should be:
+
 ```
-VITE_API_URL = https://api.your-domain.com
+VITE_API_URL = https://178.128.127.5.nip.io
 ```
-…then **redeploy** the frontend. The frontend appends `/v1` through its shared API config.
 
-## 9. Decommission Fly
-
-Once the droplet is verified and the frontend is repointed, stop/destroy the Fly app:
-`fly apps destroy rosetta-ims-api`. Keep a copy of the migrated `ims.db` first.
+The frontend appends `/v1` through its shared API config.
 
 ---
 
 ## Day-2 operations
 
-| Task | Command (run in `backend/`) |
+| Task | Command (run in `/root/rosetta-ims/backend`) |
 |------|------|
-| Update to latest code | `git pull && docker compose up -d --build` |
+| Deploy latest code | push to `main`, or run the GitHub Action manually |
+| Manual update from an already-synced directory | `docker compose up -d --build api caddy` |
 | View logs | `docker compose logs -f api` |
 | Restart | `docker compose restart api` |
 | Stop / start | `docker compose down` / `docker compose up -d` |

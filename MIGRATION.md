@@ -25,7 +25,7 @@ login, `/_authed` guard, client-side login (replaces the Next `/api/login` route
 ## Infra dropped (replaced by SPA equivalents)
 `middleware.ts` → `/_authed` guard · `app/api/login/route.ts` → client login ·
 `next.config.ts` `/api` rewrite → Vite proxy · OpenNext/wrangler/Cloudflare config ·
-`fly.toml` (backend, Fly disabled).
+the old Fly backend config (production API now deploys to the DigitalOcean Docker host).
 
 ## Migration-time notes
 - **Typed-route casts:** data-driven `<Link to={x as never}>` and `navigate({to: x as never})`

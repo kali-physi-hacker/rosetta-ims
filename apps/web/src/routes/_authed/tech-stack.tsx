@@ -5,7 +5,7 @@ import { getUser, type IMSUser } from '@/lib/auth'
 import { getMyAcknowledgement, createAcknowledgement, listAcknowledgements } from '@/lib/api'
 import type { AccessAcknowledgement } from '@/lib/types'
 
-const REPO = 'https://github.com/cswf86/rosetta-ims'
+const REPO = 'https://github.com/kali-physi-hacker/rosetta-ims'
 const API = 'https://178.128.127.5.nip.io'
 
 export const Route = createFileRoute('/_authed/tech-stack')({ component: TechStackPage })
@@ -51,21 +51,21 @@ function TechStackPage() {
             <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 12px' }}>
               <p style={{ fontSize: '11px', fontWeight: 700, color: C.indigoInk, marginBottom: '4px' }}>Tech team (data side)</p>
               <p style={{ fontSize: '11px', color: '#1E1B4B', lineHeight: 1.55, margin: 0 }}>
-                Owns <code style={{ background: C.monoBg, padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>backend/</code> —
+                Owns <code style={{ background: C.monoBg, padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>apps/api/</code> —
                 builds ingestion pipelines, schemas, business logic, API endpoints. Can refactor freely as long as JSON response shapes stay stable.
               </p>
             </div>
             <div style={{ background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '10px 12px' }}>
               <p style={{ fontSize: '11px', fontWeight: 700, color: C.indigoInk, marginBottom: '4px' }}>UI team (Chris)</p>
               <p style={{ fontSize: '11px', color: '#1E1B4B', lineHeight: 1.55, margin: 0 }}>
-                Owns <code style={{ background: C.monoBg, padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>frontend/</code> —
+                Owns <code style={{ background: C.monoBg, padding: '1px 4px', borderRadius: '2px', fontSize: '10.5px' }}>apps/web/</code> —
                 builds pages, layouts, content, UX. Can rebuild any page completely without touching the backend.
               </p>
             </div>
           </div>
           <p style={{ fontSize: '12px', color: '#1E1B4B', lineHeight: 1.6, margin: 0 }}>
             <strong>The contract</strong> is the OpenAPI schema (auto-published from FastAPI) + the TypeScript types
-            mirror in <code style={{ background: 'white', padding: '1px 4px', borderRadius: '2px', fontSize: '11px' }}>src/lib/api-types.generated.ts</code>.
+            mirror in <code style={{ background: 'white', padding: '1px 4px', borderRadius: '2px', fontSize: '11px' }}>src/lib/api/generated.ts</code>.
             If the backend changes a response shape, TypeScript breaks loudly on the frontend until types are regenerated — drift is detectable.
             Cross-team conversations happen only when the contract changes.{' '}
             <a href="/architecture" style={{ color: C.indigo, fontWeight: 600, textDecoration: 'underline' }}>
@@ -90,9 +90,9 @@ function TechStackPage() {
               ))}
             </div>
             {[
-              { layer: 'Frontend',  choice: 'Next.js 16.2 (App Router) · React 19 · TypeScript 5 · Tailwind v4',          host: 'Vercel' },
-              { layer: 'Backend',   choice: 'FastAPI · SQLAlchemy 2.x · Pydantic · Python 3.13+',                          host: 'Fly.io (Docker, auto-deploy via GitHub Actions)' },
-              { layer: 'Database',  choice: 'SQLite (dev) — Postgres-ready via DATABASE_URL',                              host: 'Fly volume' },
+              { layer: 'Frontend',  choice: 'Vite · React 19 · TypeScript 5 · Tailwind v4',                                 host: 'Vercel' },
+              { layer: 'Backend',   choice: 'FastAPI · SQLAlchemy 2.x · Pydantic · Python 3.13+',                          host: 'DigitalOcean Docker Compose' },
+              { layer: 'Database',  choice: 'SQLite today — Postgres-ready via DATABASE_URL',                               host: 'Droplet volume' },
               { layer: 'Auth',      choice: 'JWT (HS256) + legacy API-key gate (transitional)',                            host: '—' },
               { layer: 'OCR / AI',  choice: 'Anthropic SDK (Claude Haiku for catalogue extraction)',                       host: 'Anthropic API' },
               { layer: 'Schema',    choice: 'OpenAPI 3.1 auto-published; TypeScript types auto-generated',                 host: '/v1/openapi.json' },
@@ -114,7 +114,7 @@ function TechStackPage() {
         <Section title="Where things live">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <DirCard
-              title="backend/"
+              title="apps/api/"
               subtitle="Python · FastAPI · SQLAlchemy"
               items={[
                 ['models.py',     'SQLAlchemy ORM — single source of truth for schema'],
@@ -126,15 +126,15 @@ function TechStackPage() {
               ]}
             />
             <DirCard
-              title="frontend/"
-              subtitle="Next.js · TypeScript · Tailwind"
+              title="apps/web/"
+              subtitle="Vite · TypeScript · Tailwind"
               items={[
-                ['src/app/',                       'One folder per page (App Router)'],
-                ['src/components/shell/',          'Shared chrome — Sidebar, AppShell, login'],
+                ['src/routes/',                    'File-based TanStack Router routes'],
+                ['src/components/',                'Shared UI components'],
                 ['src/data/',                      'Static page content (v7 spec, AM walkthrough)'],
                 ['src/lib/api.ts',                 'Single abstraction for ALL HTTP calls'],
                 ['src/lib/types.ts',               'Hand-written types (transitional)'],
-                ['src/lib/api-types.generated.ts', 'Auto-generated from OpenAPI schema'],
+                ['src/lib/api/generated.ts',       'Auto-generated from OpenAPI schema'],
               ]}
             />
           </div>
@@ -167,8 +167,8 @@ function TechStackPage() {
             {[
               {
                 what: 'Database (ims.db)',
-                where: 'Local dev: backend/ims.db (gitignored). Prod: Fly.io volume mounted to the API container.',
-                notes: 'SQLite file — moves with the Fly app. All SKUs, suppliers, stock, prices, extracted catalogue items, users, audit logs.',
+                where: 'Local dev: apps/api/ims.db (gitignored). Prod: /root/rosetta-ims/backend/data/ims.db on the droplet.',
+                notes: 'SQLite file mounted into the API container. All SKUs, suppliers, stock, prices, extracted catalogue items, users, audit logs.',
               },
               {
                 what: '⚠️ Raw catalogue PDFs / Excel',
@@ -198,8 +198,8 @@ function TechStackPage() {
               },
               {
                 what: 'API key / JWT secret',
-                where: 'Fly.io secrets (prod). .env.local (gitignored, never committed) for dev.',
-                notes: 'Rotated via fly secrets set ... — never visible in repo or logs.',
+                where: 'Droplet .env file in /root/rosetta-ims/backend/.env. Local .env files are gitignored.',
+                notes: 'Runtime secrets stay on the droplet. GitHub Actions only stores the SSH deploy key.',
               },
             ].map((r, i, arr) => (
               <div key={r.what} style={{
@@ -252,28 +252,28 @@ function TechStackPage() {
         <Section title="Canonical docs in the repo">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <RepoLink
-              href={`${REPO}/blob/main/backend/README.md`}
-              title="backend/README.md"
+              href={`${REPO}/blob/main/apps/api/README.md`}
+              title="apps/api/README.md"
               desc="Backend onboarding: stack, local dev, env vars, project layout, how to add endpoints / tables, deployment, auth"
             />
             <RepoLink
-              href={`${REPO}/blob/main/backend/SCHEMA.md`}
-              title="backend/SCHEMA.md"
+              href={`${REPO}/blob/main/apps/api/SCHEMA.md`}
+              title="apps/api/SCHEMA.md"
               desc="Full ER diagram (renders natively in GitHub) + per-table notes + where future tables (purchase_orders, sf_express_rates, etc.) would slot in"
             />
             <RepoLink
-              href={`${REPO}/blob/main/frontend/src/lib/api-types.generated.ts`}
-              title="frontend/src/lib/api-types.generated.ts"
-              desc="Auto-generated TypeScript types — every endpoint, every response shape. ~2200 lines. Regenerate via npm run types:generate."
+              href={`${REPO}/blob/main/apps/web/src/lib/api/generated.ts`}
+              title="apps/web/src/lib/api/generated.ts"
+              desc="Auto-generated TypeScript types — every endpoint, every response shape. Regenerate via pnpm types."
             />
             <RepoLink
-              href={`${REPO}/blob/main/frontend/src/lib/api.ts`}
-              title="frontend/src/lib/api.ts"
+              href={`${REPO}/blob/main/apps/web/src/lib/api.ts`}
+              title="apps/web/src/lib/api.ts"
               desc="The single HTTP abstraction. 80 lines. Every backend call in the frontend goes through this file."
             />
             <RepoLink
-              href={`${REPO}/blob/main/backend/models.py`}
-              title="backend/models.py"
+              href={`${REPO}/blob/main/apps/api/models.py`}
+              title="apps/api/models.py"
               desc="SQLAlchemy ORM. 250 lines. 14 tables. The actual source of truth for the schema."
             />
           </div>
@@ -283,16 +283,16 @@ function TechStackPage() {
         <Section title="Live endpoints">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <RepoLink
-              href={`${API}/docs`}
+              href={`${API}/v1/docs`}
               title="Swagger UI (interactive)"
               desc="Browse + try every API endpoint. Authentication: legacy API key or JWT (POST /v1/auth/login to obtain a token)."
-              monoUrl={`${API}/docs`}
+              monoUrl={`${API}/v1/docs`}
             />
             <RepoLink
-              href={`${API}/openapi.json`}
+              href={`${API}/v1/openapi.json`}
               title="OpenAPI 3.1 schema (raw)"
               desc="JSON spec — feed this to any code-generator (openapi-typescript, openapi-generator) to produce a typed client in any language."
-              monoUrl={`${API}/openapi.json`}
+              monoUrl={`${API}/v1/openapi.json`}
             />
             <RepoLink
               href={`${API}/health`}
@@ -302,8 +302,7 @@ function TechStackPage() {
             />
           </div>
           <p style={{ fontSize: '11px', color: C.faint, marginTop: '8px', fontStyle: 'italic' }}>
-            Note: <code>/v1/docs</code> and <code>/v1/openapi.json</code> are public after the next Fly.io deploy. Until then they require the API key —
-            you can clone the repo and read <code>api-types.generated.ts</code> directly, which is generated from the same schema.
+            Note: <code>/docs</code> and <code>/openapi.json</code> redirect to the current v1 endpoints. The canonical schema is <code>/v1/openapi.json</code>.
           </p>
         </Section>
 
@@ -311,15 +310,15 @@ function TechStackPage() {
         <Section title="If you want to audit X, look at Y">
           <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
             {[
-              { q: 'The data model',                                 a: 'backend/SCHEMA.md (ER diagram)' },
-              { q: 'The API surface',                                a: `${API}/docs (Swagger) — or api-types.generated.ts in the repo` },
-              { q: 'How the frontend talks to the backend',          a: 'frontend/src/lib/api.ts (80 lines, all calls live here)' },
-              { q: 'How auth works',                                 a: 'backend/main.py (middleware) + backend/routers/auth.py + frontend/src/lib/auth.ts' },
-              { q: 'What the business logic is',                     a: 'backend/services/*.py — pricing_service, extraction_service (OCR), sheet_sync, sku_service' },
-              { q: 'How to run locally',                             a: 'backend/README.md → Local development' },
-              { q: 'How to add a new endpoint',                      a: 'backend/README.md → Adding a new endpoint' },
-              { q: 'How to add a new database table',                a: 'backend/README.md → Adding a new table' },
-              { q: 'How catalogues are ingested (OCR pipeline)',     a: 'backend/services/extraction_service.py + frontend/src/app/catalogues/' },
+              { q: 'The data model',                                 a: 'apps/api/SCHEMA.md (ER diagram)' },
+              { q: 'The API surface',                                a: `${API}/v1/docs (Swagger) — or apps/web/src/lib/api/generated.ts in the repo` },
+              { q: 'How the frontend talks to the backend',          a: 'apps/web/src/lib/api.ts (all calls live here)' },
+              { q: 'How auth works',                                 a: 'apps/api/main.py (middleware) + apps/api/routers/v1/auth.py + apps/web/src/lib/auth.ts' },
+              { q: 'What the business logic is',                     a: 'apps/api/services/*.py — pricing_service, extraction_service (OCR), sheet_sync, sku_service' },
+              { q: 'How to run locally',                             a: 'apps/api/README.md → Local development' },
+              { q: 'How to add a new endpoint',                      a: 'apps/api/README.md → Adding a new endpoint' },
+              { q: 'How to add a new database table',                a: 'apps/api/README.md → Adding a new table' },
+              { q: 'How catalogues are ingested (OCR pipeline)',     a: 'apps/api/services/extraction_service.py + apps/web/src/routes/_authed/catalogues/' },
               { q: 'What\'s next on the architecture roadmap',       a: 'See in-app /architecture — current state, target state, 4-layer model, Desmond pipelines' },
               { q: 'How Biz Ops Sheet maps to v7 (the migration)',   a: 'See in-app /am-walkthrough — column-by-column gap analysis' },
               { q: 'What v7 actually is',                            a: 'See in-app /ssot-spec — the 65-column SKU master + suppliers spec' },
@@ -349,7 +348,7 @@ function TechStackPage() {
         <AcknowledgementLog />
 
         <p style={{ fontSize: '11px', color: C.knobOff, marginTop: '20px', textAlign: 'center' }}>
-          Edit this page at <code>frontend/src/app/tech-stack/page.tsx</code>. Canonical docs live in the repo.
+          Edit this page at <code>apps/web/src/routes/_authed/tech-stack.tsx</code>. Canonical docs live in the repo.
         </p>
       </div>
     </>
@@ -393,7 +392,7 @@ function GitHubAccessGate() {
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: '13px', fontWeight: 700, margin: 0 }}>GitHub repository ↗</p>
           <p style={{ fontSize: '11px', color: C.faint, margin: '2px 0 0 0', fontFamily: 'ui-monospace, monospace' }}>
-            cswf86/rosetta-ims
+            kali-physi-hacker/rosetta-ims
           </p>
         </div>
         <span style={{ fontSize: '11px', color: C.faint }}>admin · gate bypassed</span>

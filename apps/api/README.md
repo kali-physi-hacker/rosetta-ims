@@ -1,8 +1,8 @@
 # Rosetta IMS — Backend
 
-FastAPI + SQLAlchemy + SQLite (dev) / Postgres (prod-ready) backend for the Rosetta Inventory Management System.
+FastAPI + SQLAlchemy + SQLite/Postgres-ready backend for the Rosetta Inventory Management System.
 
-Lives at `backend/` in the repo. Frontend lives at `frontend/` and talks to this API over HTTP — see [`../frontend/src/lib/api.ts`](../frontend/src/lib/api.ts).
+Lives at `apps/api/` in the repo. The frontend lives at `apps/web/` and talks to this API over HTTP — see [`../web/src/lib/api.ts`](../web/src/lib/api.ts).
 
 ---
 
@@ -12,11 +12,11 @@ Lives at `backend/` in the repo. Frontend lives at `frontend/` and talks to this
 |---|---|---|
 | Web framework | [FastAPI](https://fastapi.tiangolo.com/) | Versioned OpenAPI/Swagger at `/v1/docs` |
 | ORM | [SQLAlchemy 2.x](https://www.sqlalchemy.org/) | Declarative models in `models.py` |
-| DB (dev) | SQLite | File at `backend/ims.db` (gitignored) |
-| DB (prod) | Postgres-ready | Set `DATABASE_URL` env var |
+| DB (dev) | SQLite | File at `apps/api/ims.db` (gitignored) |
+| DB (prod) | SQLite on the droplet today; Postgres-ready | Set `DATABASE_URL` env var to cut over |
 | Auth | JWT (HS256) + legacy API key gate | `auth.py` router, middleware in `main.py` |
 | OCR / extraction | Claude Haiku via Anthropic SDK | `services/extraction_service.py` |
-| Deployment | [Fly.io](https://fly.io) | `fly.toml` + `Dockerfile` |
+| Deployment | DigitalOcean droplet | Docker Compose + Caddy; GitHub Actions syncs `apps/api/` and restarts the containers |
 
 ---
 
@@ -24,12 +24,12 @@ Lives at `backend/` in the repo. Frontend lives at `frontend/` and talks to this
 
 ### Prerequisites
 - Python 3.13+ (project tested on 3.14)
-- Recommended: use the bundled venv at `backend/venv/`
+- Recommended: use a local venv at `apps/api/venv/`
 
 ### Setup
 
 ```powershell
-cd backend
+cd apps/api
 python -m venv venv
 .\venv\Scripts\Activate.ps1   # Windows PowerShell
 # OR: source venv/bin/activate (macOS/Linux)
@@ -46,7 +46,7 @@ API v1 is now at `http://localhost:8001/v1`. Swagger UI at `http://localhost:800
 
 ### Run both backend + frontend together
 
-From the **project root** (not `backend/`):
+From the **project root**:
 
 ```powershell
 .\start.ps1
@@ -69,10 +69,15 @@ Starts the backend on `:8001` and the frontend on `:3001`.
 | `EMAIL_FROM` | optional | `Rosetta IMS <onboarding@resend.dev>` | Sender for transactional emails. Switch to a verified `algogroup.io` sender once DNS is configured on Resend. |
 | `ADMIN_EMAIL` | optional | `chris@algogroup.io` | Who receives the /tech-stack access-request emails. Requestor is cc'd. |
 
-Use `.env.local` (gitignored) for local secrets. In production, set via Fly.io secrets:
+Use `.env.local` or `.env` files (gitignored) for local secrets. In production,
+runtime values live in `/root/rosetta-ims/backend/.env` on the DigitalOcean
+droplet and are deliberately preserved by the deploy workflow.
 
 ```bash
-fly secrets set JWT_SECRET=<...> IMS_API_KEY=<...> ANTHROPIC_API_KEY=<...>
+ssh root@178.128.127.5
+cd /root/rosetta-ims/backend
+nano .env
+docker compose up -d --build api caddy
 ```
 
 ---
@@ -108,7 +113,7 @@ For complex migrations (renames, data backfills), promote to [Alembic](https://a
 ## Project layout
 
 ```
-backend/
+apps/api/
 ├── main.py                  # FastAPI app, router wiring, CORS, auth middleware
 ├── database.py              # Engine, session, migrations, user seeding
 ├── models.py                # SQLAlchemy ORM — single source of truth for schema
@@ -116,8 +121,9 @@ backend/
 ├── seed.py                  # Initial SKU seed (legacy — kept for reference)
 ├── seed_from_sheet.py       # Pull SKUs from Google Sheet on demand
 ├── requirements.txt
-├── Dockerfile               # For Fly.io deploy
-├── fly.toml                 # Fly.io app config
+├── Dockerfile               # API container image
+├── docker-compose.yml       # api + caddy + optional postgres profile
+├── Caddyfile                # HTTPS reverse proxy for the droplet
 ├── ims.db                   # SQLite (gitignored)
 │
 ├── routers/                 # HTTP routes, grouped by API version
@@ -149,39 +155,37 @@ backend/
 
 ## API contract
 
-The frontend talks to the backend over HTTP via a single abstraction file: [`frontend/src/lib/api.ts`](../frontend/src/lib/api.ts).
+The frontend talks to the backend over HTTP via a single abstraction file: [`../web/src/lib/api.ts`](../web/src/lib/api.ts).
 
-Response shapes are typed in [`frontend/src/lib/types.ts`](../frontend/src/lib/types.ts). When you change a JSON response shape, update both:
+Response shapes are typed in [`../web/src/lib/types.ts`](../web/src/lib/types.ts). When you change a JSON response shape, update both:
 
 1. The Pydantic model / dict structure in the FastAPI route handler
 2. The matching TypeScript interface in `lib/types.ts`
 
 ### Auto-generating types
 
-FastAPI exposes the current API schema at `/v1/openapi.json`. The generated TypeScript file at [`frontend/src/lib/api-types.generated.ts`](../frontend/src/lib/api-types.generated.ts) is a fully-typed mirror — checked into the repo so audit-readers can browse without running anything.
+FastAPI exposes the current API schema at `/v1/openapi.json`. The generated TypeScript file at [`../web/src/lib/api/generated.ts`](../web/src/lib/api/generated.ts) is a fully-typed mirror — checked into the repo so audit-readers can browse without running anything.
 
 To regenerate after backend changes, **three options**:
 
 ```powershell
 # Option 1 — backend running locally on :8001
-cd frontend
-npm run types:generate
+pnpm types
 
 # Option 2 — hit prod (after the next deploy makes /v1/openapi.json public)
-cd frontend
-npm run types:generate:prod
+pnpm types
 
 # Option 3 — offline (no server, just Python + venv)
-cd backend
+cd apps/api
 .\venv\Scripts\python.exe -c "import json; from main import api_v1; print(json.dumps(api_v1.openapi()))" > openapi.json
-cd ..\frontend
-npx openapi-typescript ../backend/openapi.json -o src/lib/api-types.generated.ts
+cd ../web
+npx openapi-typescript ../api/openapi.json -o src/lib/api/generated.ts
 ```
 
-The hand-written [`lib/types.ts`](../frontend/src/lib/types.ts) (152 lines) and the auto-generated `api-types.generated.ts` (~2200 lines) coexist during the transition. Existing pages still import from `types.ts`; new code can import from `api-types.generated.ts` like:
+The hand-written [`lib/types.ts`](../web/src/lib/types.ts) and the auto-generated `generated.ts` coexist during the transition. Existing pages still import from `types.ts`; new code can import from `generated.ts` like:
 
 ```typescript
-import type { components } from '@/lib/api-types.generated'
+import type { components } from '@/lib/api/generated'
 type Product = components['schemas']['Product']
 ```
 
@@ -195,7 +199,7 @@ Eventually `types.ts` can be deleted in favour of the generated file.
 2. Add the route handler — use `Depends(get_db)` for DB session and `Depends(get_current_user)` for auth
 3. If the route returns a new shape, add a Pydantic response model in the same file (FastAPI uses it for OpenAPI)
 4. If created a new router file, register it in that version's `__init__.py` with `target.include_router(...)`
-5. Update `frontend/src/lib/api.ts` with a calling function and `frontend/src/lib/types.ts` with the response type — OR re-run `npm run types:generate` to refresh auto types
+5. Update `apps/web/src/lib/api.ts` with a calling function and `apps/web/src/lib/types.ts` with the response type — OR re-run `pnpm types` to refresh auto types
 
 ---
 
@@ -203,8 +207,8 @@ Eventually `types.ts` can be deleted in favour of the generated file.
 
 1. Add the SQLAlchemy model to `models.py`
 2. Add `CREATE TABLE IF NOT EXISTS purchase_orders (...)` to `run_migrations()` in `database.py`
-3. Create a router in `routers/purchase_orders.py` (or extend an existing one) with the relevant endpoints
-4. Register the router in `main.py`
+3. Create a router in `routers/v1/purchase_orders.py` or `routers/v2/purchase_orders.py` with the relevant endpoints
+4. Register the router in that version's `__init__.py`
 5. Restart the API — migration runs
 
 For example: when migrating the Biz Ops tab into Rosetta IMS, this is the table that holds per-PO records. It would FK to `products.id` and `suppliers.id`.
@@ -213,39 +217,39 @@ For example: when migrating the Biz Ops tab into Rosetta IMS, this is the table 
 
 ## Deployment
 
-### Fly.io (production)
+### DigitalOcean droplet (production)
 
-**Auto-deploy** is wired up via GitHub Actions ([`.github/workflows/fly-deploy.yml`](../.github/workflows/fly-deploy.yml)) — every push to `main` that touches `backend/**` triggers `flyctl deploy --remote-only`. Mirrors what Vercel does for the frontend so neither side needs manual redeploys.
+The backend runs on `root@178.128.127.5` from `/root/rosetta-ims/backend`.
+The public API is `https://178.128.127.5.nip.io`; Swagger is at
+`https://178.128.127.5.nip.io/v1/docs`.
 
-To enable the workflow you need a `FLY_API_TOKEN` GitHub secret:
+**Auto-deploy** is wired up via GitHub Actions:
+[`/.github/workflows/deploy-api-droplet.yml`](../../.github/workflows/deploy-api-droplet.yml).
+Every push to `main` that touches `apps/api/**` syncs `apps/api/` to the droplet,
+then runs `docker compose up -d --build api caddy`.
 
-```bash
-# 1) Generate a deploy token (one-off; expires after 1 year by default)
-fly tokens create deploy --name "github-actions-rosetta-ims"
+Required GitHub Actions secret:
 
-# 2) Copy the token (starts with FlyV1 fm2_...) and add it to GitHub at
-#    https://github.com/cswf86/rosetta-ims/settings/secrets/actions
-#    Name: FLY_API_TOKEN
+```text
+DROPLET_SSH_PRIVATE_KEY
 ```
 
-Once the secret is set, every backend push triggers a deploy automatically. Check progress at https://github.com/cswf86/rosetta-ims/actions or trigger manually from there.
+This is a deploy-only SSH key whose public key is installed in
+`/root/.ssh/authorized_keys` on the droplet.
 
-**Manual deploy** (still useful for testing locally before pushing, or replaying a failed Action):
+**Manual deploy / diagnostics:**
 
 ```bash
-fly deploy                    # from backend/ dir
-fly logs                      # tail logs
-fly ssh console               # shell into the container
-fly secrets list              # check env var names
-fly secrets set KEY=value     # add or update a secret (triggers redeploy)
+ssh root@178.128.127.5
+cd /root/rosetta-ims/backend
+docker compose up -d --build api caddy
+docker compose logs -f api
+docker compose ps
 ```
-
-App URL: `https://rosetta-ims-api.fly.dev`
-Swagger: `https://rosetta-ims-api.fly.dev/v1/docs`
 
 ### Database in prod
-- Currently SQLite on a Fly volume
-- For higher concurrency, switch to Fly Postgres: `fly postgres create` + `fly postgres attach`, then `DATABASE_URL` is set automatically
+- SQLite currently lives at `/root/rosetta-ims/backend/data/ims.db`
+- A Postgres container profile exists in `docker-compose.yml`; cut over by setting `DATABASE_URL` and starting the `postgres` profile
 
 ### Vercel (frontend)
 Frontend auto-deploys on every push to `main` via Vercel's GitHub integration. The frontend reads `VITE_API_URL` for the backend origin and appends `/v1` through its shared API config.
@@ -285,9 +289,9 @@ Two auth mechanisms run in parallel for transition reasons. **JWT is the path fo
 
 | Concern | Location |
 |---|---|
-| Frontend UI | `../frontend/` |
-| API client | `../frontend/src/lib/api.ts` |
-| TypeScript types | `../frontend/src/lib/types.ts` |
-| Static page content (v7 spec, AM walkthrough data) | `../frontend/src/data/` |
+| Frontend UI | `../web/` |
+| API client | `../web/src/lib/api.ts` |
+| TypeScript types | `../web/src/lib/types.ts` |
+| Static page content (v7 spec, AM walkthrough data) | `../web/src/data/` |
 | Project-wide CLAUDE.md (BMAD workflow) | `../CLAUDE.md` |
 | Planning artifacts | `../_bmad-output/` |
