@@ -6,6 +6,8 @@ CIS-103 adds standalone, versioned Pydantic v2 contracts for catalogue pipeline 
 
 The Python models in `apps/api/schemas/catalogue_pipeline/` are the authoritative contracts. JSON fixtures are examples and regression inputs. JSON Schema files in `docs/contracts/catalogue-pipeline/v1/` are generated interoperability artifacts.
 
+CIS-103B adds a separate supplier-source contract layer for incoming supplier catalogue formats. See `docs/architecture/catalogue-supplier-source-contracts.md`.
+
 ## Boundary Map
 
 | Boundary | Contract ID | Question answered | Main rule |
@@ -132,4 +134,3 @@ Future SQLAlchemy work should map contracts to logical entities without making t
 ## Non-Wiring Statement
 
 CIS-103 does not wire these contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current ingestion, current OpenAPI, current UI, or current persistence. Existing runtime behavior and legacy YAML loading are intentionally preserved.
-
