@@ -35,7 +35,6 @@ def _sqlite_pragmas(dbapi_conn, _record):
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         cur = dbapi_conn.cursor()
         cur.execute("PRAGMA journal_mode=WAL")
-        cur.execute("PRAGMA foreign_keys=ON")
         cur.execute("PRAGMA busy_timeout=30000")
         cur.execute("PRAGMA synchronous=NORMAL")
         cur.close()

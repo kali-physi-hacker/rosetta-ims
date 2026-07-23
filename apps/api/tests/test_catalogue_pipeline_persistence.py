@@ -51,8 +51,11 @@ def db():
     session = database.SessionLocal()
     try:
         _reset(session)
+        _cleanup_legacy_fixture_rows(session)
         yield session
         session.rollback()
+        _reset(session)
+        _cleanup_legacy_fixture_rows(session)
     finally:
         session.close()
 
@@ -74,6 +77,24 @@ def _reset(session) -> None:
         v2_models.CatalogueSourceDocument,
     ):
         session.query(model).delete()
+    session.commit()
+
+
+def _cleanup_legacy_fixture_rows(session) -> None:
+    audit_supplier = session.get(models.Supplier, 914)
+    if audit_supplier is not None:
+        audit_links = session.query(models.ProductSupplier).filter_by(supplier_id=914).all()
+        for link in audit_links:
+            session.query(models.MbbTerm).filter_by(product_supplier_id=link.id).delete()
+        session.query(models.ProductSupplier).filter_by(supplier_id=914).delete()
+        product = session.query(models.Product).filter_by(sku_code="AUDIT-SKU").first()
+        if product is not None:
+            session.delete(product)
+        session.delete(audit_supplier)
+    session.query(models.CatalogueImport).filter_by(
+        filename="hills.pdf",
+        imported_at="2026-07-22T00:00:00+00:00",
+    ).delete()
     session.commit()
 
 
@@ -179,6 +200,59 @@ def test_fresh_schema_contains_logical_persistence_tables_and_indexes():
         column["name"] for column in inspector.get_columns("catalogue_ingestion_runs")
     }
     assert any(index["name"] == "ix_validation_issues_blocking" for index in inspector.get_indexes("catalogue_validation_issues"))
+
+
+def test_sqlite_foreign_key_enforcement_for_pipeline_models(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'fk_enabled.db'}")
+
+    @sa.event.listens_for(engine, "connect")
+    def _enable_foreign_keys(dbapi_conn, _record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+    models.Base.metadata.create_all(bind=engine)
+    database.run_migrations(engine)
+
+    with engine.begin() as conn:
+        assert conn.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
+        with pytest.raises(IntegrityError):
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO catalogue_raw_observations (
+                        raw_observation_uuid,
+                        contract_version,
+                        ingestion_run_uuid,
+                        supplier_catalogue_uuid,
+                        source_file_uuid,
+                        extraction_profile_id,
+                        extraction_profile_version,
+                        source_location_json,
+                        page_number,
+                        raw_text,
+                        extraction_method,
+                        captured_at,
+                        created_at
+                    )
+                    VALUES (
+                        '99999999-9999-4999-8999-999999999999',
+                        'catalogue.raw_observation.v1',
+                        '11111111-1111-4111-8111-111111111111',
+                        '22222222-2222-4222-8222-222222222222',
+                        '33333333-3333-4333-8333-333333333333',
+                        'hills.price_list',
+                        'v1',
+                        '{"page_number": 1}',
+                        1,
+                        'orphan evidence',
+                        'OCR',
+                        '2026-07-22T00:00:00+00:00',
+                        '2026-07-22T00:00:00+00:00'
+                    )
+                    """
+                )
+            )
 
 
 def test_migration_backfills_existing_ingestion_run_uuid_and_is_idempotent(tmp_path):
