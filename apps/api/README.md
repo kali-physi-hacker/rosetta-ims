@@ -86,7 +86,10 @@ Starts the backend on `:8001` and the frontend on `:3001`.
 | `CATALOGUE_ORCHESTRATION_MAX_SOURCE_BYTES` | optional | `26214400` | Maximum source size the Prefect orchestration loader will verify/read |
 | `CATALOGUE_DISPATCH_BATCH_SIZE` | optional | `10` | Bounded queued-run batch size for the catalogue worker profile |
 | `CATALOGUE_DISPATCH_INTERVAL_SECONDS` | optional | `30` | Sleep interval for the catalogue worker dispatcher loop |
-| `PREFECT_API_URL` | optional | (empty) | Optional Prefect server URL; local one-shot flows can run without external credentials |
+| `PREFECT_API_URL` | optional | `http://prefect-server:4200/api` in Docker | Prefect API URL used by the catalogue worker |
+| `PREFECT_UI_BIND` | optional | `127.0.0.1` | Host interface for the Prefect UI port. Use `0.0.0.0` only behind a private network or authenticated proxy |
+| `PREFECT_UI_PORT` | optional | `4200` | Host port for the Prefect UI |
+| `PREFECT_UI_API_URL` | optional | `http://localhost:4200/api` | Browser-visible Prefect API URL used by the UI |
 | `RESEND_API_KEY` | yes for access-request emails | (empty) | Used by `services/email_service.py` to send /tech-stack access-request emails. Free tier at [resend.com](https://resend.com) gives 100 emails/day. If unset, requests are still recorded in the DB; only the email is skipped. |
 | `EMAIL_FROM` | optional | `Rosetta IMS <onboarding@resend.dev>` | Sender for transactional emails. Switch to a verified `algogroup.io` sender once DNS is configured on Resend. |
 | `ADMIN_EMAIL` | optional | `chris@algogroup.io` | Who receives the /tech-stack access-request emails. Requestor is cc'd. |
@@ -99,14 +102,16 @@ droplet and are deliberately preserved by the deploy workflow.
 ssh root@178.128.127.5
 cd /root/rosetta-ims/backend
 nano .env
-docker compose up -d --build api caddy
+docker compose up -d --build api caddy prefect-server
 ```
 
-To run the catalogue dispatcher on the droplet:
+To run the catalogue dispatcher on the droplet and view Prefect locally:
 
 ```bash
 docker compose --profile catalogue-worker up -d catalogue-worker
 docker compose logs -f catalogue-worker
+# Prefect UI: http://localhost:4200 when running locally, or SSH tunnel the
+# droplet's localhost-bound port before opening it from a browser.
 ```
 
 ---
@@ -153,7 +158,7 @@ apps/api/
 ├── seed_from_sheet.py       # Pull SKUs from Google Sheet on demand
 ├── requirements.txt
 ├── Dockerfile               # API container image
-├── docker-compose.yml       # api + caddy + optional postgres/catalogue-worker profiles
+├── docker-compose.yml       # api + caddy + prefect UI + optional postgres/catalogue-worker profiles
 ├── Caddyfile                # HTTPS reverse proxy for the droplet
 ├── ims.db                   # SQLite (gitignored)
 │

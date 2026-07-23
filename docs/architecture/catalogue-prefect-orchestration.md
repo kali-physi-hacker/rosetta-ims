@@ -261,15 +261,29 @@ python -m orchestration.catalogue_dispatch --batch-size 10
 python -m orchestration.catalogue_dispatch --loop --interval-seconds 30 --batch-size 10
 ```
 
-The current Docker Compose file includes a dormant worker profile:
+The current Docker Compose file includes a `prefect-server` service and a
+catalogue worker profile. The Prefect UI/API runs from the same API image and
+stores local Prefect state in the `prefect_data` Docker volume. The UI is bound
+to localhost by default:
+
+```bash
+cd apps/api
+docker compose up -d --build prefect-server
+# UI: http://localhost:4200
+```
+
+The worker profile starts the queued-run dispatcher loop and points it at the
+container-local Prefect API:
 
 ```bash
 docker compose --profile catalogue-worker up -d catalogue-worker
 ```
 
 This worker runs the dispatcher loop from the same API image and shares the
-same data volume for source files. No Prefect server is exposed publicly by this
-change.
+same data volume for source files. `PREFECT_UI_BIND` defaults to `127.0.0.1` so
+the unauthenticated Prefect UI is not exposed publicly by accident. Use an SSH
+tunnel, VPN, private network, or authenticated reverse proxy before binding it
+to `0.0.0.0`.
 
 ## Environment Variables
 
@@ -280,7 +294,10 @@ change.
 | `CATALOGUE_DISPATCH_BATCH_SIZE` | `10` | Docker worker bounded queued-run batch size. |
 | `CATALOGUE_DISPATCH_INTERVAL_SECONDS` | `30` | Docker worker loop sleep between dispatch scans. |
 | `ANTHROPIC_API_KEY` | unset | Required only when the extraction provider is used. Disabled extraction is treated as non-truthful evidence in the Prefect path. |
-| `PREFECT_API_URL` | unset | Optional Prefect server URL. Tests and local one-shot flows can run with Prefect's local/ephemeral mode. |
+| `PREFECT_API_URL` | `http://prefect-server:4200/api` in Docker | Prefect API URL used by the catalogue worker. Tests and local one-shot flows can still run with Prefect's local/ephemeral mode. |
+| `PREFECT_UI_BIND` | `127.0.0.1` | Host interface for the Prefect UI port. |
+| `PREFECT_UI_PORT` | `4200` | Host port for the Prefect UI. |
+| `PREFECT_UI_API_URL` | `http://localhost:4200/api` | Browser-visible Prefect API URL used by the UI. |
 
 ## Retry Classification
 

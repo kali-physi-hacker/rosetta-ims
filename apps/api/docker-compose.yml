@@ -59,27 +59,76 @@ services:
       default:                       # reached by caddy (unchanged)
       edge:                          # reach the algo-dashboard Postgres (algo-dashboard-db-1) for POST /sync/algo
 
+  prefect-server:
+    build: .
+    image: rosetta-ims-api:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PREFECT_HOME: /prefect
+      PREFECT_API_URL: ""
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+      PREFECT_UI_API_URL: ${PREFECT_UI_API_URL:-http://localhost:${PREFECT_UI_PORT:-4200}/api}
+    command:
+      - sh
+      - -c
+      - prefect server start --host 0.0.0.0 --port 4200
+    ports:
+      - "${PREFECT_UI_BIND:-127.0.0.1}:${PREFECT_UI_PORT:-4200}:4200"
+    volumes:
+      - prefect_data:/prefect
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4200/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
   catalogue-worker:
     build: .
     image: rosetta-ims-api:latest
     profiles: ["catalogue-worker"]
     restart: unless-stopped
     env_file: .env
+    depends_on:
+      - prefect-server
     environment:
       DATABASE_URL: ${DATABASE_URL:-sqlite:////data/ims.db}
       GOOGLE_SA_KEY_PATH: /secrets/google-sa.json
+      PREFECT_API_URL: ${PREFECT_API_URL:-http://prefect-server:4200/api}
       CATALOGUE_DISPATCH_INTERVAL_SECONDS: ${CATALOGUE_DISPATCH_INTERVAL_SECONDS:-30}
       CATALOGUE_DISPATCH_BATCH_SIZE: ${CATALOGUE_DISPATCH_BATCH_SIZE:-10}
     command:
       - sh
       - -c
-      - >-
+      - |
+        python - <<'PY'
+        import os
+        import time
+        import urllib.request
+
+        url = os.environ["PREFECT_API_URL"].rstrip("/") + "/admin/version"
+        for _ in range(60):
+            try:
+                urllib.request.urlopen(url, timeout=2).close()
+                break
+            except Exception:
+                time.sleep(2)
+        else:
+            raise SystemExit(f"Prefect API did not become ready at {url}")
+        PY
         python -m orchestration.catalogue_dispatch --loop
         --interval-seconds $${CATALOGUE_DISPATCH_INTERVAL_SECONDS}
         --batch-size $${CATALOGUE_DISPATCH_BATCH_SIZE}
     volumes:
       - ./data:/data
       - ./secrets:/secrets:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://prefect-server:4200/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     networks:
       default:
       edge:
@@ -93,7 +142,7 @@ services:
       - "80:80"                      # required for the ACME HTTP challenge + HTTP->HTTPS redirect
       - "443:443"
     environment:
-      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env}
+      API_DOMAIN: ${API_DOMAIN:-localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data             # stores issued certificates (keep this volume!)
@@ -106,6 +155,7 @@ volumes:
   caddy_data:
   caddy_config:
   pgdata:
+  prefect_data:
 
 # Shared with the algo-dashboard compose so this Caddy can reverse-proxy the dashboard.
 # Created once with:  docker network create edge
