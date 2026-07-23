@@ -38,12 +38,12 @@ _KPN_MIXED_EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:KPN_Kangaroo.pdf",
-        "User-supplied 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
+        "I supplied a 53-page PDF sample with extractable Chinese/English catalogue tables, last-update labels, wholesale prices, retail prices, package sizes, and units per case.",
     ),
     evidence(
         SupplierSourceEvidenceType.BUSINESS_DOMAIN_DOCUMENTATION,
-        "user-supplied label: KPN Kangaroo",
-        "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+        "label I supplied: KPN Kangaroo",
+        "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout.",
     ),
 ]
 
@@ -51,12 +51,12 @@ _KPN_PROPLAN_EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
-        "User-supplied 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
+        "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024.",
     ),
     evidence(
         SupplierSourceEvidenceType.BUSINESS_DOMAIN_DOCUMENTATION,
-        "user-supplied label: KPN Kangaroo",
-        "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+        "label I supplied: KPN Kangaroo",
+        "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout.",
     ),
 ]
 
@@ -64,12 +64,12 @@ _KPN_EARTHZ_EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:(Kangaroo) Earthz Pet.pdf",
-        "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
+        "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues.",
     ),
     evidence(
         SupplierSourceEvidenceType.BUSINESS_DOMAIN_DOCUMENTATION,
-        "user-supplied label: KPN Kangaroo",
-        "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout.",
+        "label I supplied: KPN Kangaroo",
+        "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout.",
     ),
 ]
 

@@ -17,12 +17,12 @@
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
       "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
-      "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
+      "note": "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
     },
     {
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-      "reference": "user-supplied label: KPN Kangaroo",
-      "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+      "reference": "label I supplied: KPN Kangaroo",
+      "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
     }
   ],
   "source_structure": {
@@ -74,12 +74,12 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
+          "note": "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "user-supplied label: KPN Kangaroo",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+          "reference": "label I supplied: KPN Kangaroo",
+          "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
       ]
     },
@@ -97,12 +97,12 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
+          "note": "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "user-supplied label: KPN Kangaroo",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+          "reference": "label I supplied: KPN Kangaroo",
+          "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
       ]
     },
@@ -120,12 +120,12 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
+          "note": "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "user-supplied label: KPN Kangaroo",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+          "reference": "label I supplied: KPN Kangaroo",
+          "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
       ]
     },
@@ -143,12 +143,12 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
+          "note": "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "user-supplied label: KPN Kangaroo",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+          "reference": "label I supplied: KPN Kangaroo",
+          "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
       ]
     },
@@ -166,12 +166,12 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
+          "note": "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "user-supplied label: KPN Kangaroo",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+          "reference": "label I supplied: KPN Kangaroo",
+          "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
       ]
     },
@@ -189,12 +189,12 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:(Kangaroo) Earthz Pet.pdf",
-          "note": "User-supplied one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
+          "note": "I supplied a one-page image-only PDF price sheet for Earthz Pet; visual inspection confirms SKU, wholesale, retail, size, and buy-9-get-1 promotion cues."
         },
         {
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "user-supplied label: KPN Kangaroo",
-          "note": "Supplier identity supplied by user; numeric Rosetta supplier id was not present in the clean checkout."
+          "reference": "label I supplied: KPN Kangaroo",
+          "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
       ]
     }

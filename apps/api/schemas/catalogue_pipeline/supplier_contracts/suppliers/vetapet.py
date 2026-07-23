@@ -31,7 +31,7 @@ _VET_COMMON_EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:Vetapet.pdf",
-        "User-supplied 177-page PDF sample confirms Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
+        "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables.",
     ),
 ]
 
@@ -39,7 +39,7 @@ _NON_VET_EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:Vetapet.pdf",
-        "User-supplied 177-page PDF includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+        "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
     ),
 ]
 

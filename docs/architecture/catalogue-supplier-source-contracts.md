@@ -80,7 +80,7 @@ Non-supported contracts use `NEEDS_CONFIRMATION` or `TECHNICAL_DEBT` with an exp
 
 ## Coverage Audit
 
-The prompt referenced documentation for about 24 suppliers, but this clean checkout does not contain that full inventory. The local seed file lists nine starter suppliers, `supplier_import.py` can import larger external supplier sheets, and the domain dictionary records historical YAML-style extraction mappings that have now been removed from the repository. The table below reflects repository evidence plus the source samples supplied locally for CIS-103B follow-up.
+My prompt referenced documentation for about 24 suppliers, but this clean checkout does not contain that full inventory. The local seed file lists nine starter suppliers, `supplier_import.py` can import larger external supplier sheets, and the domain dictionary records historical YAML-style extraction mappings that have now been removed from the repository. The table below reflects repository evidence plus the source samples I supplied locally for CIS-103B follow-up.
 
 | Supplier | Contract ID | Version | Document format | Status | Runtime selectable | Evidence | Known gaps |
 |---|---|---:|---|---|---|---|---|
@@ -88,8 +88,8 @@ The prompt referenced documentation for about 24 suppliers, but this clean check
 | Hill's | `hills.price_list.v1` | `v1` | PDF price list | `SUPPORTED` | Yes, supplier ID `14` | Real source catalogue sample; parser behavior; existing test extraction fixture; business/domain documentation | Supplier code remains unasserted. |
 | C. Vetapet & Company / Vetapet Vet | `vetapet.vet_price_list.v1` | `v1` | Mixed PDF catalogue/price list | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; parser behavior; existing test extraction fixture | Several table layouts (`UNIT PRICE`, `WHOLESALE/RETAIL/TERMS`, Chinese wholesale/retail); split or per-section parser rules needed. |
 | C. Vetapet & Company / Vetapet Non-Vet | `vetapet.non_vet_price_list.v1` | `v1` | PDF price list section | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; parser behavior | Price basis and representative non-vet row fixtures remain missing. |
-| Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.mixed_price_catalogue.v1` | `v1` | Mixed PDF catalogue | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; user-supplied supplier label | Deferred technical debt: confirm whether supplier ID `15` (`K.P.N. Trading`) or `81` (`Kangaroo Pet Nutrition`) owns this document, then add representative row fixtures. |
-| Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.purina_proplan_veterinary_diets.v1` | `v1` | Purina Pro Plan Veterinary Diets product list | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; user-supplied supplier label | Deferred technical debt: confirm supplier ID `15` or `81`, then add dry/supplement/wet-can row fixtures. |
+| Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.mixed_price_catalogue.v1` | `v1` | Mixed PDF catalogue | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; supplier label I supplied | Deferred technical debt: confirm whether supplier ID `15` (`K.P.N. Trading`) or `81` (`Kangaroo Pet Nutrition`) owns this document, then add representative row fixtures. |
+| Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.purina_proplan_veterinary_diets.v1` | `v1` | Purina Pro Plan Veterinary Diets product list | `PARTIALLY_VERIFIED` | No | Real source catalogue sample; supplier label I supplied | Deferred technical debt: confirm supplier ID `15` or `81`, then add dry/supplement/wet-can row fixtures. |
 | Kangaroo Pet Nutrition Ltd / KPN | `kangaroo.earthz_pet_price_sheet.v1` | `v1` | Earthz Pet image-only price sheet | `UNVERIFIED` | No | Real source catalogue sample; visual inspection | Deferred technical debt: confirm supplier ID `15` or `81`, then add OCR/vision row fixtures with bounding boxes and price-basis confirmation. |
 
 Additional local supplier names without enough source-format evidence remain unimplemented:

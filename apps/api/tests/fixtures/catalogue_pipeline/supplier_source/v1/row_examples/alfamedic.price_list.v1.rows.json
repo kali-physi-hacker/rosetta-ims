@@ -4,7 +4,7 @@
   "row_evidence_status": "CONFIRMED",
   "supplier_id": 1,
   "supplier_name": "Alfamedic",
-  "notes": "Confirmed source-backed rows from the user-supplied Alfamedic PDF text layer. These fixtures standardize the evidence used by the supported runtime adapter.",
+  "notes": "Confirmed source-backed rows from the Alfamedic PDF text layer I supplied. These fixtures standardize the evidence used by the supported runtime adapter.",
   "examples": [
     {
       "example_id": "alfamedic-901-100-price-row",

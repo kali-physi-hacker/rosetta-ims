@@ -32,7 +32,7 @@ _EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
-        "User-supplied 56-page PDF sample confirms Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
+        "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers.",
     ),
     evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
