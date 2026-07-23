@@ -31,7 +31,7 @@ _EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:Hill's.pdf",
-        "User-supplied 9-page PDF sample confirms bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
+        "I supplied a 9-page PDF sample confirming bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns.",
     ),
     evidence(
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,

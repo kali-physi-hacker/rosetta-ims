@@ -1,0 +1,59 @@
+{
+  "contract_id": "hills.price_list.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "CONFIRMED",
+  "supplier_id": 14,
+  "supplier_name": "Hill's",
+  "notes": "Confirmed source-backed rows from the Hill's PDF text layer I supplied. These fixtures standardize the evidence used by the supported runtime adapter.",
+  "examples": [
+    {
+      "example_id": "hills-607665-prescription-stew-row",
+      "source": {
+        "sample_reference": "external-sample:Hill's.pdf",
+        "page_number": 4,
+        "extraction_method": "pdftotext -layout",
+        "text_excerpt": "Cancer ONC ONC Care Chicken Stew - Cancer Care 2.9 oz 607665 24 $36.0 $25.20"
+      },
+      "raw_row": {
+        "Product Range": "Cancer",
+        "Life Stage": "ONC",
+        "Product Description": "ONC Care Chicken Stew - Cancer Care",
+        "Size": "2.9 oz",
+        "Product Code": "607665",
+        "Order Multiple": "24",
+        "Recommended Retail Selling Price": "$36.0",
+        "Gross Wholesale Price": "$25.20"
+      },
+      "runtime_input": {
+        "supplier_sku": "607665",
+        "description": "ONC Care Chicken Stew - Cancer Care",
+        "cost_price": "25.20",
+        "rrp": "36.0",
+        "units_per_pack": 24,
+        "order_increment_qty": 24,
+        "brand": null,
+        "category": null,
+        "pack_size": "2.9 oz"
+      },
+      "expected_runtime_item": {
+        "cost_price": "25.20",
+        "rrp": "36.0",
+        "units_per_pack": 1,
+        "order_increment_qty": 24,
+        "brand": "Hill's",
+        "category": "Food",
+        "weight_grams": 82
+      },
+      "expected_semantics": {
+        "price_basis": "UNIT",
+        "currency": "HKD",
+        "content_amount": "2.9",
+        "content_uom": "OZ",
+        "purchase_uom": null,
+        "break_pack_allowed": null,
+        "reason": "Order Multiple is order-increment evidence; the gross wholesale amount remains per sellable unit."
+      }
+    }
+  ],
+  "technical_debt": []
+}

@@ -1,0 +1,22 @@
+{
+  "contract_id": "vetapet.vet_price_list.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "NEEDS_CONFIRMATION",
+  "supplier_id": 91,
+  "supplier_name": "Vetapet Vet",
+  "notes": "The supplier ID is known, but the source PDF contains multiple Vetapet table layouts. Confirmed per-layout row examples are required before promotion to SUPPORTED.",
+  "examples": [],
+  "technical_debt": [
+    {
+      "debt_id": "VETAPET-VET-ROW-EVIDENCE",
+      "status": "OPEN",
+      "summary": "Capture representative rows for Unit Price sections and Wholesale/Retail/Terms sections.",
+      "needed_confirmation": [
+        "Which Vetapet table layouts belong to Vetapet Vet supplier_id 91 versus C. Vetapet supplier_id 4.",
+        "Whether UNIT PRICE and WHOLESALE PRICE have the same price basis.",
+        "Whether TERMS text implies MOQ, order increment, discount, or free-goods behavior.",
+        "How packing text maps to purchase UOM, content measure, and sellable unit without conflation."
+      ]
+    }
+  ]
+}
