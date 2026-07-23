@@ -26,7 +26,9 @@ background jobs, or switch public read APIs to the new publication tables.
 
 Current extraction and reparse runtime still write legacy `CatalogueItem` and
 legacy product/supplier rows. The stage services are callable beside that
-runtime and are not yet wired into upload endpoints or orchestration.
+runtime and are not yet invoked by upload endpoints or orchestration. The v2
+FastAPI submission boundary records source files and queued runs only; it does
+not call these stage services.
 
 ## Service Responsibilities
 
@@ -204,7 +206,8 @@ serving reads in this task.
 
 ## Deferred Work
 
-- FastAPI submission boundary that calls these services.
+- Prefect or application orchestration that calls these services after v2
+  submission creates a queued run.
 - Prefect flow/task orchestration and retries.
 - Runtime adapter from all real supplier extraction outputs into raw-capture
   commands.

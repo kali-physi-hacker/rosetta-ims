@@ -138,7 +138,7 @@ apps/api/
 │   │   ├── stock.py         # /v1/stock CSV import + adjustments
 │   │   └── sync.py          # /v1/sync Google Sheet pull
 │   └── v2/                  # auth + inventory API mounted at /v2
-│       └── __init__.py      # mirrors v1 inventory routes; excludes catalogue ingestion/reparse
+│       └── __init__.py      # mirrors inventory routes; adds queued catalogue submission only
 │
 ├── services/                # Business logic — pure Python, no HTTP
 │   ├── extraction_service.py    # OCR pipeline (Claude Haiku)
@@ -165,7 +165,7 @@ Response shapes are typed in [`../web/src/lib/types.ts`](../web/src/lib/types.ts
 
 ### Auto-generating types
 
-FastAPI exposes the current API schema at `/v1/openapi.json`, and the v2 inventory-preview schema at `/v2/openapi.json`. The generated TypeScript file at [`../web/src/lib/api/generated.ts`](../web/src/lib/api/generated.ts) is a fully-typed mirror of the frontend's configured API version — checked into the repo so audit-readers can browse without running anything.
+FastAPI exposes the current API schema at `/v1/openapi.json`, and the v2 schema at `/v2/openapi.json`. The v2 schema includes inventory/admin-support routes plus the queued catalogue submission boundary; synchronous catalogue import and reparse remain v1-only. The generated TypeScript file at [`../web/src/lib/api/generated.ts`](../web/src/lib/api/generated.ts) is a fully-typed mirror of the frontend's configured API version — checked into the repo so audit-readers can browse without running anything.
 
 To regenerate after backend changes, **three options**:
 

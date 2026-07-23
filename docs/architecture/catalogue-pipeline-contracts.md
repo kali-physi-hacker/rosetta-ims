@@ -2,7 +2,7 @@
 
 ## Status
 
-CIS-103 adds standalone, versioned Pydantic v2 contracts for catalogue pipeline payloads. These models define data passed between stages and remain the authoritative boundary contracts. The later catalogue logical persistence task adds SQLAlchemy tables and mapper services for these contracts, but it still does not wire FastAPI upload, OCR calls, matching, HITL UI, or serving API payloads into the new persistence path.
+CIS-103 adds standalone, versioned Pydantic v2 contracts for catalogue pipeline payloads. These models define data passed between stages and remain the authoritative boundary contracts. The catalogue logical persistence task adds SQLAlchemy tables and mapper services for these contracts. The v2 submission boundary records a source file and queued run, but OCR calls, stage execution, matching, HITL UI, and serving API payloads are still outside the Pydantic pipeline-contract runtime path.
 
 The Python models in `apps/api/schemas/catalogue_pipeline/` are the authoritative contracts. JSON fixtures are examples and regression inputs. JSON Schema files in `docs/contracts/catalogue-pipeline/v1/` are generated interoperability artifacts.
 
@@ -135,4 +135,4 @@ The catalogue logical persistence task maps contracts to logical entities withou
 
 ## Non-Wiring Statement
 
-CIS-103 and the logical persistence foundation do not wire the shared pipeline payload contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current OpenAPI, current UI, OCR execution or Prefect. Runtime ingestion has a narrow Pydantic supplier-source adapter for supported source formats, but it does not yet create Raw Observation, Staging, Mastering, Validation Issue, or Serving payload records.
+CIS-103 and the logical persistence foundation do not wire the shared pipeline payload contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, the current UI, OCR execution or Prefect. The v2 API exposes only the queued submission boundary, which creates durable source/run records. Runtime ingestion has a narrow Pydantic supplier-source adapter for supported source formats, but it does not yet create Raw Observation, Staging, Mastering, Validation Issue, or Serving payload records.

@@ -6,7 +6,7 @@ Date: 2026-07-23
 
 This document defines the durable catalogue-ingestion persistence model that backs the approved CIS-103 Pydantic contracts without making those contracts table-shaped. The boundary contracts remain authoritative for payload semantics; SQLAlchemy stores durable evidence, lifecycle state, lineage, review decisions, and publication snapshots.
 
-This task does not wire the full upload workflow, OCR pipeline, Prefect orchestration, HITL UI, or public serving API into these new tables. Existing v1 catalogue runtime behavior remains compatibility behavior.
+This task does not wire the full upload workflow, OCR pipeline, Prefect orchestration, HITL UI, or public serving API into these new tables. Existing v1 catalogue runtime behavior remains compatibility behavior. A later v2 submission boundary records source documents and queued runs, but still does not execute OCR or the downstream pipeline stages.
 
 Implemented files:
 
@@ -191,11 +191,11 @@ UV_CACHE_DIR=/tmp/uv-cache uv run --with-requirements requirements.txt \
 
 ## Current Runtime Wiring
 
-Current `/v1/catalogues/import`, reparse services and inventory views continue to use legacy `CatalogueImport`, `CatalogueItem`, `Product`, `ProductSupplier` and legacy `MbbTerm` behavior. The new logical persistence tables and mappers are standalone foundations for the next ingestion-integration task. They are not yet emitted by upload, OCR, supplier-source runtime, FastAPI endpoints or Prefect.
+Current `/v1/catalogues/import`, reparse services and inventory views continue to use legacy `CatalogueImport`, `CatalogueItem`, `Product`, `ProductSupplier` and legacy `MbbTerm` behavior. The new logical persistence tables and mappers are standalone foundations for ingestion integration. The v2 submission boundary now creates `CatalogueSourceDocument` and queued `IngestionRun` records, but OCR, supplier-source runtime, Raw Observation, Staging, Mastering, Validation Issue, Serving publication and Prefect orchestration do not emit downstream pipeline records yet.
 
 ## Deferred Work
 
-- Wire upload/OCR to create source documents, ingestion runs, raw observations and staging items.
+- Wire orchestration/OCR from queued v2 runs into raw observations and staging items.
 - Add explicit public upload parameters or internal transport for `contract_id` and `contract_version`.
 - Build HITL APIs/UI on typed validation issues, mastering candidates and review decisions.
 - Backfill legacy rows only where source evidence and review state are sufficient.
