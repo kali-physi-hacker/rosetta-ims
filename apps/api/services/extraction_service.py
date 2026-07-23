@@ -1,27 +1,36 @@
-"""
-AI-assisted catalogue extraction service.
+"""Catalogue extraction entry points.
 
-Uses Claude claude-haiku-4-5-20251001 (fast, cheap) for PDF/image extraction.
-Falls back to rule-based parsing for Excel/CSV files.
+``extract_evidence`` is the typed, source-located pre-Raw API. It records only
+what the source contains and where it was observed.
 
-Set ANTHROPIC_API_KEY in the environment to enable AI extraction.
-Without the key, extraction returns a stub result with confidence_score=0
-so the review queue still works — items just need manual field entry.
+``extract`` is the legacy semantic extraction API retained for current v1 and
+orchestration compatibility. It extracts and interprets product fields before
+Raw, so new pipeline code must not depend on it.
 """
 import os
 import io
 import json
 import re
 import base64
-from typing import Optional
 import openpyxl
 import pypdf
+
+from services.catalogue_evidence_extraction import (
+    ExtractionResult,
+    extract_evidence as _extract_evidence,
+)
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 # Haiku 4.5 supports a large output budget. Dense catalogues produce long JSON
 # arrays — too small a cap truncates mid-object and the whole parse fails.
 MAX_TOKENS = 8192
+
+
+def extract_evidence(content: bytes, filename: str, content_type: str) -> ExtractionResult:
+    """Expose the typed pre-Raw extractor through the historical service module."""
+
+    return _extract_evidence(content, filename, content_type)
 
 
 def _loads_json_array(raw: str) -> list[dict]:
@@ -502,10 +511,12 @@ def translate_to_english(items: list[dict]) -> list[dict]:
 
 def extract(content: bytes, filename: str, content_type: str, contract=None) -> tuple[list[dict], str]:
     """
-    Main entry point. Dispatches to the right extractor based on file type, then translates
-    any non-English descriptions to English (keeping the original). Returns (items, format).
+    Legacy semantic entry point retained while v1 and orchestration callers migrate.
+
+    Dispatches to the old extractor based on file type, interprets product
+    fields, then translates non-English descriptions. Returns (items, format).
     `contract` is an optional Pydantic-backed supplier-source runtime contract.
-    None means today's generic extraction path is used unchanged.
+    New pre-Raw code must call ``extract_evidence`` instead.
     """
     name_lower = filename.lower()
     ct_lower   = content_type.lower()

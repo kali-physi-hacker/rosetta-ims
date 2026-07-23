@@ -5,13 +5,38 @@ from __future__ import annotations
 from uuid import UUID
 
 from services import catalogue_pipeline_stages as stages
+from services.catalogue_evidence_extraction import ExtractedEvidence
 
 from .catalogue_extraction_adapter import staging_payload_from_extracted_row
 from .catalogue_types import ExtractedCatalogueRow, RunIdentity
 
 
+def raw_input_from_extracted_evidence(evidence: ExtractedEvidence) -> stages.RawObservationInput:
+    """Map one evidence observation to one Raw input without semantic mutation."""
+
+    source_metadata = {
+        **evidence.source_metadata,
+        "observation_key": evidence.observation_key,
+        "provider": evidence.provider,
+        "provider_version": evidence.provider_version,
+        "provider_request_id": evidence.provider_request_id,
+        "extraction_warnings": list(evidence.warnings),
+    }
+    return stages.RawObservationInput(
+        idempotency_key=evidence.observation_key,
+        source_location=evidence.source_location,
+        raw_text=evidence.raw_text,
+        raw_cells=evidence.raw_cells,
+        extraction_method=evidence.extraction_method,
+        extraction_model=evidence.model or evidence.provider,
+        extraction_model_version=evidence.model_version or evidence.provider_version,
+        extraction_confidence=str(evidence.confidence) if evidence.confidence is not None else None,
+        source_metadata=source_metadata,
+    )
+
+
 def raw_input_from_extracted_row(row: ExtractedCatalogueRow) -> stages.RawObservationInput:
-    """Create a Raw Observation stage input from one extracted row."""
+    """Compatibility adapter for the legacy combined extraction/parsing row."""
 
     return stages.RawObservationInput(
         idempotency_key=row.row_key,
