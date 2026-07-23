@@ -279,6 +279,14 @@ Authentication users. `role` is `admin` or `data_entry`. Passwords stored as bcr
 
 ## Where new tables would slot in
 
+### Catalogue pipeline persistence foundation
+- Implemented as additive v2 SQLAlchemy models in `apps/api/v2/models/catalogue_pipeline.py`
+- Current tables cover source documents, raw observations, staging items, validation issues, mastering candidates, review decisions, supplier products, packaging configurations, supplier price history, typed MBB terms, and serving publications
+- These tables back the CIS-103 Pydantic contracts through `services/catalogue_pipeline_persistence.py`
+- Current `/v1/catalogues`, reparse, inventory and supplier-term endpoints still use the legacy runtime tables; wiring the upload/OCR/HITL flow into the new persistence path remains deferred
+
+See `docs/architecture/catalogue-logical-persistence-model.md` for the ER model, contract-to-persistence matrix, migration/backfill rules and legacy compatibility boundaries.
+
 The architecture work currently in flight (see `/architecture` and `/am-walkthrough` pages) anticipates these new tables in future:
 
 ### `purchase_orders` (for migrating the Biz Ops tab from Google Sheets)
@@ -303,6 +311,6 @@ The architecture work currently in flight (see `/architecture` and `/am-walkthro
 
 ## Migration approach
 
-See [README.md → Migrations](./README.md#migrations). TL;DR: edit `models.py` + add the `ALTER TABLE` / `CREATE TABLE IF NOT EXISTS` statement to `run_migrations()` in `database.py`. Runs on next app start.
+See [README.md → Migrations](./README.md#migrations). TL;DR: edit `models.py` for current v1 runtime tables or `apps/api/v2/models/` for additive v2 foundations, then add the idempotent migration/backfill step to `run_migrations()` in `database.py`. Runs on next app start.
 
 For complex migrations (renames, backfills, FK changes), promote to [Alembic](https://alembic.sqlalchemy.org/). Not needed yet at current scale (~400 products).

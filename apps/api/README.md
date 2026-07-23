@@ -95,11 +95,11 @@ models.Base.metadata.create_all(bind=database.engine)
 database.run_migrations(database.engine)
 ```
 
-The pattern is intentionally simple — idempotent `ALTER TABLE ADD COLUMN` statements wrapped in `try/except` (SQLite throws when a column already exists; we ignore). For new tables, use `CREATE TABLE IF NOT EXISTS`.
+The pattern is intentionally simple — idempotent `ALTER TABLE ADD COLUMN` statements wrapped in `try/except` (SQLite throws when a column already exists; we ignore). For new legacy-runtime tables, use `CREATE TABLE IF NOT EXISTS`. New v2 catalogue persistence tables live under `apps/api/v2/models/` and are registered by `import v2.models`; `run_migrations()` imports that package for scripts/tests that do not import `main.py`.
 
 **To add a new column or table:**
-1. Update the SQLAlchemy model in `models.py`
-2. Add the corresponding `ALTER TABLE` / `CREATE TABLE` statement to `run_migrations()` in `database.py`
+1. Update the SQLAlchemy model in `models.py` for current v1 runtime tables, or `apps/api/v2/models/` for additive v2 foundations
+2. Add the corresponding idempotent migration/backfill step to `run_migrations()` in `database.py`
 3. Restart the API — migration runs on next startup
 
 For complex migrations (renames, data backfills), promote to [Alembic](https://alembic.sqlalchemy.org/). Not needed yet.
@@ -116,7 +116,8 @@ For complex migrations (renames, data backfills), promote to [Alembic](https://a
 apps/api/
 ├── main.py                  # FastAPI app, router wiring, CORS, auth middleware
 ├── database.py              # Engine, session, migrations, user seeding
-├── models.py                # SQLAlchemy ORM — single source of truth for schema
+├── models.py                # SQLAlchemy ORM — current v1 runtime/compatibility schema
+├── v2/models/               # Additive v2 persistence foundations registered by import v2.models
 ├── dependencies.py          # FastAPI dependency injection (get_db, etc.)
 ├── seed.py                  # Initial SKU seed (legacy — kept for reference)
 ├── seed_from_sheet.py       # Pull SKUs from Google Sheet on demand

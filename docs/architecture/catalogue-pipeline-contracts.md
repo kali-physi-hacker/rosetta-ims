@@ -2,7 +2,7 @@
 
 ## Status
 
-CIS-103 adds standalone, versioned Pydantic v2 contracts for catalogue pipeline payloads. These models define data passed between stages; they do not change SQLAlchemy persistence, migrations, FastAPI routers, OCR calls, matching, HITL UI, or serving API payloads.
+CIS-103 adds standalone, versioned Pydantic v2 contracts for catalogue pipeline payloads. These models define data passed between stages and remain the authoritative boundary contracts. The later catalogue logical persistence task adds SQLAlchemy tables and mapper services for these contracts, but it still does not wire FastAPI upload, OCR calls, matching, HITL UI, or serving API payloads into the new persistence path.
 
 The Python models in `apps/api/schemas/catalogue_pipeline/` are the authoritative contracts. JSON fixtures are examples and regression inputs. JSON Schema files in `docs/contracts/catalogue-pipeline/v1/` are generated interoperability artifacts.
 
@@ -101,10 +101,10 @@ The current SQLAlchemy models remain runtime state, not approved CIS-103 contrac
 | `ReparseBatch` | `REUSABLE_WITH_LATER_MIGRATION` | Good staged-diff boundary for reparse runs, but scoped to retained text recapture and not a general Mastering Candidate or validation issue model. |
 | `ReparseChange` | `REUSABLE_WITH_LATER_MIGRATION` | Preserves old/new field diffs before confirmed apply, but values are strings/floats and field semantics are not typed. |
 | Packaging fields (`uom`, `pack_unit`, `units_per_pack`, `pack_size`, order terms) | `SEMANTICALLY_INADEQUATE` | Current fields partially separate sell UOM, buy UOM, pack size, order increment, and MOQ, but content measure and price basis can still be ambiguous. |
-| Validation Issue / durable issue table | `MISSING` | No durable typed issue model with severity, resolution, review guidance, and publish-blocking semantics. |
-| Raw Observation table/contract | `MISSING` | Source text/cells and exact source location are not first-class typed payloads. |
+| Validation Issue / durable issue table | `IMPLEMENTED_FOUNDATION` | `catalogue_validation_issues` now stores typed severity/status, review guidance, resolution metadata and publish-blocking query fields. Runtime ingestion does not emit it yet. |
+| Raw Observation table/contract | `IMPLEMENTED_FOUNDATION` | `catalogue_raw_observations` now stores source text/cells, source location, extractor metadata and UUID lineage. Runtime ingestion does not emit it yet. |
 | Mastering Candidate contract | `MISSING` | Current HITL flow writes to runtime tables; there is no standalone candidate payload with per-section resolution states and lineage. |
-| Serving Item contract | `MISSING` | Existing API responses serve inventory data, but there is no contract that guarantees only approved catalogue facts and traceable publication lineage. |
+| Serving Item contract | `IMPLEMENTED_FOUNDATION` | `catalogue_serving_publications` now stores approved serving snapshots and lineage. Existing API responses do not read it yet. |
 | Extraction Profile Contract | `MISSING` | Legacy YAML exists, but no typed/versioned Pydantic configuration contract validates supplier-format extraction profiles. |
 | Inventory, stock, sales, channels, competitor price, Client SSOT | `OUT_OF_SCOPE` | These consume catalogue identity/cost or are adjacent operational domains; CIS-103 does not model them. |
 
@@ -119,20 +119,20 @@ Key risks found and carried into the new contract design:
 - `30 ML` and `410 G` must remain content measures, not sellable-unit counts.
 - Case configuration does not prove whole-case-only purchasing, so break-pack semantics remain nullable.
 - MBB must be modelled as condition + benefit, not nullable scalar columns.
-- Durable validation issues and business-readable review guidance are missing.
+- Durable validation issues and business-readable review guidance now have a persistence foundation, but the current ingestion runtime does not write those rows yet.
 - Lineage from mastered/served values back to staging/raw evidence is incomplete.
 
-## Future Persistence Mapping
+## Persistence Foundation
 
-Future SQLAlchemy work should map contracts to logical entities without making the contracts table-shaped:
+The catalogue logical persistence task maps contracts to logical entities without making the contracts table-shaped. The design is documented in `docs/architecture/catalogue-logical-persistence-model.md`; the implementation lives in `apps/api/v2/models/catalogue_pipeline.py` and `apps/api/services/catalogue_pipeline_persistence.py`.
 
-- Raw Observation can become an immutable evidence table keyed by UUID and linked to source file/catalogue/import.
-- Staging Catalogue Item can preserve raw fields, proposed typed fields, issue references, and review requirement.
-- Mastering Candidate can map to reviewable resolution sections and review decisions.
-- Validation Issue should be durable and independently resolvable.
-- Serving Item can be a publication/read-model artifact derived from approved mastering decisions.
-- Product Variant, Supplier Product, Packaging Configuration, Supplier Price, MBB Term, Product Family, Brand, and Category should become clearer logical/persistence entities in a later task.
+- Raw Observation is an immutable evidence table keyed by UUID and linked to source file/catalogue/import UUIDs.
+- Staging Catalogue Item preserves raw fields, proposed typed fields, issue references, review requirement and raw-observation lineage.
+- Mastering Candidate maps to reviewable resolution-section snapshots and typed review decisions.
+- Validation Issue is durable and independently resolvable.
+- Serving Item is a publication/read-model snapshot derived only from approved mastering decisions.
+- Supplier Product, Packaging Configuration, Supplier Price and MBB Term now have normalized foundation tables; legacy runtime tables remain compatibility projections until integration work replaces the current reads/writes.
 
 ## Non-Wiring Statement
 
-CIS-103 does not wire the shared pipeline payload contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current OpenAPI, current UI, or current persistence. Runtime ingestion has a narrow Pydantic supplier-source adapter for supported source formats, but it does not yet create Raw Observation, Staging, Mastering, Validation Issue, or Serving payload records.
+CIS-103 and the logical persistence foundation do not wire the shared pipeline payload contracts into `/v1/catalogues`, `/v1/catalogues/reparse`, `/v2`, current OpenAPI, current UI, OCR execution or Prefect. Runtime ingestion has a narrow Pydantic supplier-source adapter for supported source formats, but it does not yet create Raw Observation, Staging, Mastering, Validation Issue, or Serving payload records.

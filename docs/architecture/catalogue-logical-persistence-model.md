@@ -8,6 +8,14 @@ This document defines the durable catalogue-ingestion persistence model that bac
 
 This task does not wire the full upload workflow, OCR pipeline, Prefect orchestration, HITL UI, or public serving API into these new tables. Existing v1 catalogue runtime behavior remains compatibility behavior.
 
+Implemented files:
+
+- SQLAlchemy models: `apps/api/v2/models/catalogue_pipeline.py`
+- Evolved ingestion run model: `apps/api/v2/models/ingestion_run.py`
+- Contract mappers: `apps/api/services/catalogue_pipeline_persistence.py`
+- Migration audit script: `apps/api/scripts/audit_catalogue_pipeline_migration.py`
+- Focused tests: `apps/api/tests/test_catalogue_pipeline_persistence.py`
+
 ## Pre-Edit Audit
 
 Remote `main` was inspected at `d7d66e18add21996e4c29a28c4a4bcfe6cbdcc87`. Open PR #1 (`ingestion-run-model`) remains open and contains a broad duplicated `apps/api/models/v2/*` model package, so it is not used as this foundation. The merged CIS-104.1 `IngestionRun` table is present at `apps/api/v2/models/ingestion_run.py` and is evolved rather than duplicated.
@@ -165,7 +173,13 @@ Legacy data is not silently corrected:
 | Legacy `MbbTerm` rows | Requires remediation into condition+benefit semantics when type and basis are clear; otherwise review-required. |
 | `CatalogueAuditEvent` rows | Useful audit evidence, but not automatically complete typed review decisions. |
 
-The migration audit script counts current legacy rows into safe-linkable, compatibility-only and review-required buckets. It does not mutate business meaning.
+The migration audit script counts current legacy rows into safe-linkable, compatibility-only and review-required buckets. It does not mutate business meaning:
+
+```bash
+cd apps/api
+UV_CACHE_DIR=/tmp/uv-cache uv run --with-requirements requirements.txt \
+  python scripts/audit_catalogue_pipeline_migration.py
+```
 
 ## Transaction Boundaries
 
