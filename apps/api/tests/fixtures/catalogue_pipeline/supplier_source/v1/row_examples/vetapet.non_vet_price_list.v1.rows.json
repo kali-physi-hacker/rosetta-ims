@@ -1,0 +1,22 @@
+{
+  "contract_id": "vetapet.non_vet_price_list.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "NEEDS_CONFIRMATION",
+  "supplier_id": 90,
+  "supplier_name": "Vetapet (Non-Vet)",
+  "notes": "The supplier ID is known, but representative non-vet rows still need confirmation before price basis or packaging semantics can be promoted.",
+  "examples": [],
+  "technical_debt": [
+    {
+      "debt_id": "VETAPET-NON-VET-ROW-EVIDENCE",
+      "status": "OPEN",
+      "summary": "Capture representative non-vet Chinese/retail section rows.",
+      "needed_confirmation": [
+        "Wholesale/Retail column mapping for non-vet rows.",
+        "Whether wholesale prices are per sellable unit, pack, case, or another basis.",
+        "Whether size text is content measure only or also packaging configuration.",
+        "Whether category/brand can be inferred from section headers without review."
+      ]
+    }
+  ]
+}

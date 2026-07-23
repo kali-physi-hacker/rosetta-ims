@@ -1,0 +1,36 @@
+{
+  "contract_id": "kangaroo.earthz_pet_price_sheet.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "TECHNICAL_DEBT",
+  "supplier_id": null,
+  "supplier_name": "Kangaroo Pet Nutrition Ltd / KPN",
+  "notes": "KPN Trading and Kangaroo Pet Nutrition ownership and OCR/vision row evidence are intentionally deferred to a later draft PR.",
+  "supplier_id_candidates": [
+    {
+      "supplier_id": 15,
+      "code": "KPNTRADI",
+      "name": "K.P.N. Trading",
+      "segment": "non_vet"
+    },
+    {
+      "supplier_id": 81,
+      "code": "KANGAR",
+      "name": "Kangaroo Pet Nutrition",
+      "segment": "non_vet"
+    }
+  ],
+  "examples": [],
+  "technical_debt": [
+    {
+      "debt_id": "KPN-EARTHZ-OCR-VISION-ROW-EVIDENCE",
+      "status": "DRAFT_PR_LATER",
+      "summary": "Resolve supplier ownership and capture OCR/vision row evidence with bounding boxes for the image-only Earthz sheet.",
+      "needed_confirmation": [
+        "Exact supplier_id for (Kangaroo) Earthz Pet.pdf.",
+        "OCR/vision text for each row with page number and bounding boxes.",
+        "Wholesale and retail price basis.",
+        "Promotion notation such as buy-9-get-1, including qualifying quantity and benefit scope."
+      ]
+    }
+  ]
+}

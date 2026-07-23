@@ -1,0 +1,36 @@
+{
+  "contract_id": "kangaroo.purina_proplan_veterinary_diets.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "TECHNICAL_DEBT",
+  "supplier_id": null,
+  "supplier_name": "Kangaroo Pet Nutrition Ltd / KPN",
+  "notes": "KPN Trading and Kangaroo Pet Nutrition ownership is intentionally deferred to a later draft PR. Do not promote this contract or select it at runtime until that work is complete.",
+  "supplier_id_candidates": [
+    {
+      "supplier_id": 15,
+      "code": "KPNTRADI",
+      "name": "K.P.N. Trading",
+      "segment": "non_vet"
+    },
+    {
+      "supplier_id": 81,
+      "code": "KANGAR",
+      "name": "Kangaroo Pet Nutrition",
+      "segment": "non_vet"
+    }
+  ],
+  "examples": [],
+  "technical_debt": [
+    {
+      "debt_id": "KPN-PROPLAN-SUPPLIER-ID-AND-ROW-EVIDENCE",
+      "status": "DRAFT_PR_LATER",
+      "summary": "Resolve supplier ownership for the Purina ProPlan product list and capture dry, supplement, and wet-can row examples.",
+      "needed_confirmation": [
+        "Exact supplier_id for Proplan PPVD & PPSD Product List 202412 New packing.pdf.",
+        "Rows for dry/supplement pack pricing.",
+        "Rows for wet-can retail basis where case and per-can values can differ.",
+        "Whether Packs / Case is only case configuration or an order constraint."
+      ]
+    }
+  ]
+}

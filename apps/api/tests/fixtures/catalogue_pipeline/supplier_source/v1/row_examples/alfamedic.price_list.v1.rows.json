@@ -1,0 +1,90 @@
+{
+  "contract_id": "alfamedic.price_list.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "CONFIRMED",
+  "supplier_id": 1,
+  "supplier_name": "Alfamedic",
+  "notes": "Confirmed source-backed rows from the user-supplied Alfamedic PDF text layer. These fixtures standardize the evidence used by the supported runtime adapter.",
+  "examples": [
+    {
+      "example_id": "alfamedic-901-100-price-row",
+      "source": {
+        "sample_reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+        "page_number": 11,
+        "extraction_method": "pdftotext -layout",
+        "text_excerpt": "901-100 cCRP (Canine) Cartridge-T (Turbidimetry) Plasma/ Serum 5~10uL 10 pcs/ box 1 box 820.0"
+      },
+      "raw_row": {
+        "Order Code": "901-100",
+        "Product Name": "cCRP (Canine) Cartridge-T",
+        "Sample Type": "(Turbidimetry) Plasma/ Serum",
+        "Volume": "5~10uL",
+        "Brand": "Skyla",
+        "Packing / Unit": "10 pcs/ box",
+        "Order Unit": "1 box",
+        "Price": "820.0"
+      },
+      "runtime_input": {
+        "supplier_sku": "901-100",
+        "description": "cCRP (Canine) Cartridge-T",
+        "cost_price": "820.0",
+        "pack_size": "10 pcs/ box",
+        "units_per_pack": 10,
+        "brand": "Skyla"
+      },
+      "expected_runtime_item": {
+        "cost_price": "820.0",
+        "units_per_pack": 1,
+        "order_increment_qty": 10,
+        "segment": "vet",
+        "rrp": null
+      },
+      "expected_semantics": {
+        "price_basis": "PIECE",
+        "currency": "HKD",
+        "purchase_uom": null,
+        "break_pack_allowed": null,
+        "content_measure": null,
+        "reason": "The contract treats Price/Unit as per sellable piece and the leading pack count as order-increment evidence, not as a price divisor."
+      }
+    },
+    {
+      "example_id": "alfamedic-ms-8-by-quote-row",
+      "source": {
+        "sample_reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+        "page_number": 12,
+        "extraction_method": "pdftotext -layout",
+        "text_excerpt": "MS-8 Image Processor 1 unit 1 unit By Quote"
+      },
+      "raw_row": {
+        "Order Code": "MS-8",
+        "Product Name": "Image Processor",
+        "Brand": null,
+        "Packing / Unit": "1 unit",
+        "Order Units": "1 unit",
+        "Price/ Unit (HKD)": "By Quote"
+      },
+      "runtime_input": {
+        "supplier_sku": "MS-8",
+        "description": "Image Processor",
+        "cost_price": "By Quote",
+        "pack_size": "1 unit",
+        "units_per_pack": 1
+      },
+      "expected_runtime_item": {
+        "cost_price": null,
+        "units_per_pack": 1,
+        "order_increment_qty": 1,
+        "segment": "vet",
+        "rrp": null
+      },
+      "expected_semantics": {
+        "price_basis": "PIECE",
+        "currency": "HKD",
+        "null_cost_marker": "By Quote",
+        "review_required": true
+      }
+    }
+  ],
+  "technical_debt": []
+}
