@@ -348,6 +348,10 @@ def run_migrations(engine):
             conn.commit()
         except Exception:
             pass
+        try:
+            _relax_ingestion_run_started_at(conn)
+        except Exception:
+            pass
 
         # catalogue_cost_staging — OCR writes here; humans approve before costs go to product_suppliers
         conn.execute(text("""
@@ -373,13 +377,18 @@ def run_migrations(engine):
             CREATE TABLE IF NOT EXISTS catalogue_ingestion_runs (
                 id                  INTEGER PRIMARY KEY AUTOINCREMENT,
                 source_document_id  INTEGER NOT NULL REFERENCES catalogue_imports(id),
+                run_uuid            TEXT,
+                catalogue_source_document_id INTEGER REFERENCES catalogue_source_documents(id),
                 supplier_id         INTEGER REFERENCES suppliers(id),
                 contract_version    TEXT,
+                supplier_source_contract_id TEXT,
+                supplier_source_contract_version TEXT,
+                document_type       TEXT,
                 extractor_name      TEXT NOT NULL,
                 extractor_version   TEXT NOT NULL,
                 parent_run_id       INTEGER REFERENCES catalogue_ingestion_runs(id),
                 status              TEXT NOT NULL DEFAULT 'queued',
-                started_at          TEXT NOT NULL,
+                started_at          TEXT,
                 completed_at        TEXT,
                 items_extracted     INTEGER,
                 metrics             TEXT,
@@ -469,6 +478,101 @@ def run_migrations(engine):
                 conn.commit()
             except Exception:
                 pass
+
+
+def _relax_ingestion_run_started_at(conn):
+    """Make queued ingestion runs truthful on SQLite by allowing started_at NULL.
+
+    Earlier CIS-104.1 installs created `catalogue_ingestion_runs.started_at` as
+    NOT NULL. SQLite cannot alter nullability in place, so this performs a
+    narrow table rebuild only when PRAGMA table_info reports that older shape.
+    """
+
+    columns = conn.execute(text("PRAGMA table_info(catalogue_ingestion_runs)")).fetchall()
+    if not columns:
+        return
+    column_map = {row[1]: row for row in columns}
+    started_at = column_map.get("started_at")
+    if started_at is None or int(started_at[3]) == 0:
+        return
+
+    required_columns = [
+        "id",
+        "run_uuid",
+        "source_document_id",
+        "catalogue_source_document_id",
+        "supplier_id",
+        "contract_version",
+        "supplier_source_contract_id",
+        "supplier_source_contract_version",
+        "document_type",
+        "extractor_name",
+        "extractor_version",
+        "parent_run_id",
+        "status",
+        "started_at",
+        "completed_at",
+        "items_extracted",
+        "metrics",
+        "error_summary",
+        "created_at",
+    ]
+    existing = set(column_map)
+    for name in required_columns:
+        if name not in existing:
+            if name == "run_uuid":
+                conn.execute(text("ALTER TABLE catalogue_ingestion_runs ADD COLUMN run_uuid TEXT"))
+            elif name == "catalogue_source_document_id":
+                conn.execute(text("ALTER TABLE catalogue_ingestion_runs ADD COLUMN catalogue_source_document_id INTEGER REFERENCES catalogue_source_documents(id)"))
+            elif name in {"supplier_source_contract_id", "supplier_source_contract_version", "document_type"}:
+                conn.execute(text(f"ALTER TABLE catalogue_ingestion_runs ADD COLUMN {name} TEXT"))
+            else:
+                return
+    conn.commit()
+
+    conn.execute(text("ALTER TABLE catalogue_ingestion_runs RENAME TO catalogue_ingestion_runs__old"))
+    conn.execute(text("""
+        CREATE TABLE catalogue_ingestion_runs (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_uuid            TEXT,
+            source_document_id  INTEGER NOT NULL REFERENCES catalogue_imports(id),
+            catalogue_source_document_id INTEGER REFERENCES catalogue_source_documents(id),
+            supplier_id         INTEGER REFERENCES suppliers(id),
+            contract_version    TEXT,
+            supplier_source_contract_id TEXT,
+            supplier_source_contract_version TEXT,
+            document_type       TEXT,
+            extractor_name      TEXT NOT NULL,
+            extractor_version   TEXT NOT NULL,
+            parent_run_id       INTEGER REFERENCES catalogue_ingestion_runs(id),
+            status              TEXT NOT NULL DEFAULT 'queued',
+            started_at          TEXT,
+            completed_at        TEXT,
+            items_extracted     INTEGER,
+            metrics             TEXT,
+            error_summary       TEXT,
+            created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """))
+    column_list = ", ".join(required_columns)
+    conn.execute(text(
+        f"INSERT INTO catalogue_ingestion_runs ({column_list}) "
+        f"SELECT {column_list} FROM catalogue_ingestion_runs__old"
+    ))
+    conn.execute(text("DROP TABLE catalogue_ingestion_runs__old"))
+    conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_catalogue_ingestion_runs_run_uuid ON catalogue_ingestion_runs(run_uuid)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_ingestion_runs_source_document ON catalogue_ingestion_runs(source_document_id)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_ingestion_runs_parent ON catalogue_ingestion_runs(parent_run_id)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_ingestion_runs_source_document_uuid ON catalogue_ingestion_runs(run_uuid)"))
+    conn.execute(text(
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_supplier_contract "
+        "ON catalogue_ingestion_runs(supplier_id, supplier_source_contract_id, supplier_source_contract_version)"
+    ))
+    conn.execute(text(
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_pipeline_source_document "
+        "ON catalogue_ingestion_runs(catalogue_source_document_id)"
+    ))
+    conn.commit()
 
 
 def seed_default_users(engine):

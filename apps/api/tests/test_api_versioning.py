@@ -23,7 +23,7 @@ def test_v1_exposes_current_api_contract():
     assert _client.get("/v1/health").json() == {"status": "ok", "version": "1.0.0"}
 
 
-def test_v2_exposes_auth_and_inventory_contract_without_catalogue_ingestion():
+def test_v2_exposes_auth_inventory_and_async_catalogue_submission_contract():
     schema = _client.get("/v2/openapi.json").json()
     paths = schema["paths"]
 
@@ -34,10 +34,12 @@ def test_v2_exposes_auth_and_inventory_contract_without_catalogue_ingestion():
     assert "/products/{sku}/stock/adjust" in paths
     assert "/suppliers" in paths
     assert "/pricing" in paths
+    assert "/catalogues/ingestions" in paths
+    assert "/catalogues/ingestions/{run_uuid}" in paths
     assert "/catalogues" not in paths
     assert "/catalogues/import" not in paths
     assert "/catalogues/reparse/latest" not in paths
-    assert not any(path.startswith("/catalogues/") for path in paths)
+    assert not any(path.startswith("/catalogues/reparse") for path in paths)
 
 
 def test_root_openapi_redirects_to_v1_schema():

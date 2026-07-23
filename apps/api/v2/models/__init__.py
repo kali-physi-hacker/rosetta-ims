@@ -1,4 +1,5 @@
 from .ingestion_run import IngestionRun, IngestionRunStatus, IngestionRunMetrics
+from .catalogue_submission import CatalogueSubmissionIdempotency
 from .catalogue_pipeline import (
     CatalogueMasteringCandidate,
     CataloguePackagingConfiguration,
@@ -19,6 +20,7 @@ __all__ = [
     "IngestionRun",
     "IngestionRunStatus",
     "IngestionRunMetrics",
+    "CatalogueSubmissionIdempotency",
     "CatalogueSourceDocument",
     "CatalogueRawObservation",
     "CatalogueStagingItem",

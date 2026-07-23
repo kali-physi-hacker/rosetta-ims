@@ -91,6 +91,21 @@ def test_defaults_to_queued_status():
         session.close()
 
 
+def test_queued_run_can_have_no_started_at_timestamp():
+    session = database.SessionLocal()
+    try:
+        supplier = _seed_supplier(session, "T2Q")
+        imp = _seed_catalogue_import(session, supplier)
+        run = _make_run(session, imp, supplier, started_at=None)
+
+        session.refresh(run)
+        assert run.status == IngestionRunStatus.QUEUED.value
+        assert run.started_at is None
+        assert run.completed_at is None
+    finally:
+        session.close()
+
+
 def test_retry_creates_new_row_linked_via_parent_run_id():
     session = database.SessionLocal()
     try:
@@ -158,6 +173,7 @@ def test_metrics_json_round_trip():
 if __name__ == "__main__":
     test_creates_run_with_required_fields()
     test_defaults_to_queued_status()
+    test_queued_run_can_have_no_started_at_timestamp()
     test_retry_creates_new_row_linked_via_parent_run_id()
     test_self_reference_as_parent_is_rejected()
     test_relationships_read_existing_v1_rows()

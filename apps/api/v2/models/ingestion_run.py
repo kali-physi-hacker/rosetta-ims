@@ -114,7 +114,7 @@ class IngestionRun(Base):
 
     # Process lifecycle — separate from item review/approval state.
     status = Column(String, nullable=False, default=IngestionRunStatus.QUEUED.value)
-    started_at = Column(String, nullable=False)     # ISO datetime
+    started_at = Column(String, nullable=True)      # ISO datetime; null while queued
     completed_at = Column(String, nullable=True)    # ISO datetime; set once status is terminal
 
     # Operational facts.

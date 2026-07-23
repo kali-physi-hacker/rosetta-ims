@@ -18,13 +18,15 @@ from routers.v1 import (
     tags,
     users,
 )
+from . import catalogues
 
 
 def include_routers(target: FastAPI, *, include_in_schema: bool = True) -> None:
     """Register the v2 inventory surface.
 
-    v2 currently mirrors v1 auth and inventory/admin-support endpoints while
-    intentionally excluding catalogue ingestion and catalogue reparse flows.
+    v2 mirrors v1 auth and inventory/admin-support endpoints, keeps the
+    synchronous v1 catalogue import/reparse flows excluded, and exposes only
+    the queued catalogue submission boundary.
     """
     target.include_router(auth.router, include_in_schema=include_in_schema)
     target.include_router(products.router, include_in_schema=include_in_schema)
@@ -39,6 +41,7 @@ def include_routers(target: FastAPI, *, include_in_schema: bool = True) -> None:
     target.include_router(collections.router, include_in_schema=include_in_schema)
     target.include_router(categories.router, include_in_schema=include_in_schema)
     target.include_router(brands.router, include_in_schema=include_in_schema)
+    target.include_router(catalogues.router, include_in_schema=include_in_schema)
     target.include_router(users.router, include_in_schema=include_in_schema)
     target.include_router(audit.router, include_in_schema=include_in_schema)
     target.include_router(config.router, include_in_schema=include_in_schema)
