@@ -1,0 +1,321 @@
+"""Catalogue logical persistence foundation tests."""
+
+from __future__ import annotations
+
+import json
+import os
+import tempfile
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+import sqlalchemy as sa
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import IntegrityError
+
+os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
+
+import database  # noqa: E402
+import models  # noqa: E402
+import v2.models as v2_models  # noqa: E402
+from schemas.catalogue_pipeline import (  # noqa: E402
+    MasteringCandidateV1,
+    RawObservationV1,
+    ServingItemV1,
+    StagingCatalogueItemV1,
+    ValidationIssueV1,
+)
+from services import catalogue_pipeline_persistence as persistence  # noqa: E402
+
+
+models.Base.metadata.create_all(bind=database.engine)
+database.run_migrations(database.engine)
+
+FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "catalogue_pipeline" / "v1" / "valid"
+
+
+def _load(name: str) -> dict:
+    return json.loads((FIXTURE_ROOT / name).read_text(encoding="utf-8"))
+
+
+def _model_json(model) -> dict:
+    return json.loads(model.model_dump_json())
+
+
+@pytest.fixture()
+def db():
+    session = database.SessionLocal()
+    try:
+        _reset(session)
+        yield session
+        session.rollback()
+    finally:
+        session.close()
+
+
+def _reset(session) -> None:
+    for model in (
+        v2_models.CatalogueServingPublication,
+        v2_models.CatalogueSupplierMbbTerm,
+        v2_models.CatalogueSupplierPrice,
+        v2_models.CataloguePackagingConfiguration,
+        v2_models.CatalogueSupplierProduct,
+        v2_models.CatalogueReviewDecision,
+        v2_models.CatalogueMasteringCandidate,
+        v2_models.CatalogueValidationIssue,
+        v2_models.CatalogueStagingRawObservation,
+        v2_models.CatalogueStagingItem,
+        v2_models.CatalogueRawObservation,
+        v2_models.IngestionRun,
+        v2_models.CatalogueSourceDocument,
+        models.Product,
+        models.CatalogueImport,
+        models.Supplier,
+    ):
+        session.query(model).delete()
+    session.commit()
+
+
+def _seed_context(session) -> None:
+    raw = _load("raw_observation_pdf.json")
+    supplier = models.Supplier(id=14, code="HILLS", name="Hill's", created_at="2026-07-22T00:00:00+00:00")
+    session.add(supplier)
+    session.flush()
+    product = models.Product(
+        sku_code="10010385",
+        name="Hill's Science Diet Adult Chicken 2.9 oz",
+        brand="Hill's",
+        category="Food",
+        storage_rule="any",
+        status="ACTIVE",
+        created_at="2026-07-22T00:00:00+00:00",
+        updated_at="2026-07-22T00:00:00+00:00",
+    )
+    session.add(product)
+    catalogue_import = models.CatalogueImport(
+        supplier_id=14,
+        filename="hills.pdf",
+        format="pdf",
+        imported_at="2026-07-22T00:00:00+00:00",
+        status="review",
+        item_count=1,
+    )
+    session.add(catalogue_import)
+    session.flush()
+    source_document = v2_models.CatalogueSourceDocument(
+        supplier_catalogue_uuid=raw["supplier_catalogue_id"],
+        source_file_uuid=raw["source_file_id"],
+        legacy_import_id=catalogue_import.id,
+        supplier_id=14,
+        filename="hills.pdf",
+        source_format="PDF_TABLE",
+        source_ref="catalogue_uploads/hills-2024.pdf",
+        received_at="2026-07-22T00:00:00+00:00",
+        supplier_source_contract_id="hills.price_list.v1",
+        supplier_source_contract_version="v1",
+        document_type="PRICE_LIST",
+        created_at="2026-07-22T00:00:00+00:00",
+    )
+    session.add(source_document)
+    session.flush()
+    run = v2_models.IngestionRun(
+        run_uuid=raw["ingestion_run_id"],
+        source_document_id=catalogue_import.id,
+        catalogue_source_document_id=source_document.id,
+        supplier_id=14,
+        contract_version="catalogue.extraction_profile.v1",
+        supplier_source_contract_id="hills.price_list.v1",
+        supplier_source_contract_version="v1",
+        document_type="PRICE_LIST",
+        extractor_name="fixture-extractor",
+        extractor_version="v1",
+        started_at="2026-07-22T00:00:00+00:00",
+        created_at="2026-07-22T00:00:00+00:00",
+    )
+    session.add(run)
+    session.commit()
+
+
+def _persist_happy_path(session):
+    _seed_context(session)
+    raw = RawObservationV1.model_validate(_load("raw_observation_pdf.json"))
+    staging = StagingCatalogueItemV1.model_validate(_load("staging_item_with_mbb.json"))
+    issue = ValidationIssueV1.model_validate(_load("validation_issue_ambiguous_cost_basis.json"))
+    candidate = MasteringCandidateV1.model_validate(_load("mastering_candidate_no_family.json"))
+    serving = ServingItemV1.model_validate(_load("serving_item_inventory.json"))
+
+    raw_row = persistence.persist_raw_observation(session, raw)
+    staging_row = persistence.persist_staging_item(session, staging)
+    issue_row = persistence.persist_validation_issue(session, issue)
+    candidate_row = persistence.persist_mastering_candidate(session, candidate)
+    serving_row = persistence.persist_serving_item(session, serving)
+    session.commit()
+    return raw, raw_row, staging, staging_row, issue, issue_row, candidate, candidate_row, serving, serving_row
+
+
+def test_fresh_schema_contains_logical_persistence_tables_and_indexes():
+    inspector = sa.inspect(database.engine)
+    tables = set(inspector.get_table_names())
+
+    assert {
+        "catalogue_source_documents",
+        "catalogue_raw_observations",
+        "catalogue_staging_items",
+        "catalogue_validation_issues",
+        "catalogue_mastering_candidates",
+        "catalogue_review_decisions",
+        "catalogue_supplier_products",
+        "catalogue_packaging_configurations",
+        "catalogue_supplier_prices",
+        "catalogue_supplier_mbb_terms",
+        "catalogue_serving_publications",
+    } <= tables
+    assert {"run_uuid", "supplier_source_contract_id", "supplier_source_contract_version"} <= {
+        column["name"] for column in inspector.get_columns("catalogue_ingestion_runs")
+    }
+    assert any(index["name"] == "ix_validation_issues_blocking" for index in inspector.get_indexes("catalogue_validation_issues"))
+
+
+def test_migration_backfills_existing_ingestion_run_uuid_and_is_idempotent(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'pre_task.db'}")
+    with engine.begin() as conn:
+        conn.execute(text("CREATE TABLE suppliers (id INTEGER PRIMARY KEY, code TEXT UNIQUE NOT NULL, name TEXT NOT NULL, created_at TEXT NOT NULL)"))
+        conn.execute(text("CREATE TABLE catalogue_imports (id INTEGER PRIMARY KEY, supplier_id INTEGER, filename TEXT NOT NULL, format TEXT, imported_at TEXT NOT NULL, status TEXT NOT NULL, item_count INTEGER)"))
+        conn.execute(text("""
+            CREATE TABLE catalogue_ingestion_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_document_id INTEGER NOT NULL,
+                supplier_id INTEGER,
+                contract_version TEXT,
+                extractor_name TEXT NOT NULL,
+                extractor_version TEXT NOT NULL,
+                parent_run_id INTEGER,
+                status TEXT NOT NULL DEFAULT 'queued',
+                started_at TEXT NOT NULL,
+                completed_at TEXT,
+                items_extracted INTEGER,
+                metrics TEXT,
+                error_summary TEXT,
+                created_at TEXT NOT NULL
+            )
+        """))
+        conn.execute(text("INSERT INTO suppliers VALUES (14, 'HILLS', 'Hill''s', '2026-01-01')"))
+        conn.execute(text("INSERT INTO catalogue_imports VALUES (1, 14, 'hills.pdf', 'pdf', '2026-01-01', 'review', 1)"))
+        conn.execute(text("""
+            INSERT INTO catalogue_ingestion_runs
+            (source_document_id, supplier_id, contract_version, extractor_name, extractor_version, started_at, created_at)
+            VALUES (1, 14, 'catalogue.extraction_profile.v1', 'fixture', 'v1', '2026-01-01T00:00:00+00:00', '2026-01-01T00:00:00+00:00')
+        """))
+
+    database.run_migrations(engine)
+    database.run_migrations(engine)
+
+    inspector = sa.inspect(engine)
+    assert "catalogue_raw_observations" in inspector.get_table_names()
+    columns = {column["name"] for column in inspector.get_columns("catalogue_ingestion_runs")}
+    assert {"run_uuid", "supplier_source_contract_id", "supplier_source_contract_version", "document_type"} <= columns
+    with engine.connect() as conn:
+        run_uuid = conn.execute(text("SELECT run_uuid FROM catalogue_ingestion_runs WHERE id = 1")).scalar()
+    assert run_uuid and len(run_uuid) == 36
+
+
+def test_pipeline_contracts_round_trip_through_persistence(db):
+    raw, raw_row, staging, staging_row, issue, issue_row, candidate, candidate_row, serving, serving_row = _persist_happy_path(db)
+
+    assert _model_json(persistence.raw_observation_to_contract(raw_row)) == _model_json(raw)
+    assert _model_json(persistence.staging_item_to_contract(staging_row)) == _model_json(staging)
+    assert _model_json(persistence.validation_issue_to_contract(issue_row)) == _model_json(issue)
+    assert _model_json(persistence.mastering_candidate_to_contract(candidate_row)) == _model_json(candidate)
+    assert _model_json(persistence.serving_item_to_contract(serving_row)) == _model_json(serving)
+
+    assert raw_row.extraction_confidence == Decimal("0.9600")
+    assert db.query(v2_models.CatalogueReviewDecision).filter_by(review_decision_uuid="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").count() == 1
+
+
+def test_cross_run_raw_observation_lineage_is_rejected(db):
+    _seed_context(db)
+    raw = RawObservationV1.model_validate(_load("raw_observation_pdf.json"))
+    persistence.persist_raw_observation(db, raw)
+    db.commit()
+
+    staging_payload = _load("staging_item_with_mbb.json")
+    staging_payload["trace"]["ingestion_run_id"] = "11111111-1111-4111-8111-111111111112"
+    staging = StagingCatalogueItemV1.model_validate(staging_payload)
+
+    with pytest.raises(persistence.CatalogueLineageError, match="cannot cross ingestion runs"):
+        persistence.persist_staging_item(db, staging)
+
+
+def test_open_blocking_issue_prevents_mastering_approval_and_publication(db):
+    _seed_context(db)
+    raw = RawObservationV1.model_validate(_load("raw_observation_pdf.json"))
+    staging = StagingCatalogueItemV1.model_validate(_load("staging_item_with_mbb.json"))
+    persistence.persist_raw_observation(db, raw)
+    persistence.persist_staging_item(db, staging)
+
+    issue_payload = _load("validation_issue_ambiguous_cost_basis.json")
+    issue_payload["severity"] = "BLOCKING"
+    blocking_issue = ValidationIssueV1.model_validate(issue_payload)
+    persistence.persist_validation_issue(db, blocking_issue)
+
+    candidate = MasteringCandidateV1.model_validate(_load("mastering_candidate_no_family.json"))
+    with pytest.raises(persistence.CataloguePublicationError, match="Open blocking validation issue"):
+        persistence.persist_mastering_candidate(db, candidate)
+
+
+def test_approved_serving_item_persists_commercial_history_and_supersedes(db):
+    *_, serving, first_publication = _persist_happy_path(db)
+
+    supplier_product = db.query(v2_models.CatalogueSupplierProduct).one()
+    assert supplier_product.product_family_id is None
+    price = db.query(v2_models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).one()
+    assert price.amount == Decimal("13.1000")
+    assert price.currency == "HKD"
+    assert price.price_basis_uom_code == "CAN"
+    packaging = db.query(v2_models.CataloguePackagingConfiguration).filter_by(supplier_product_id=supplier_product.id).one()
+    assert packaging.sellable_units_per_purchase_unit == Decimal("24.000000")
+    assert packaging.content_amount == Decimal("82.000000")
+    assert packaging.content_uom_code == "G"
+    assert packaging.order_increment_amount == Decimal("24.000000")
+    mbb = db.query(v2_models.CatalogueSupplierMbbTerm).filter_by(supplier_product_id=supplier_product.id).one()
+    assert mbb.condition_type == "minimum_quantity"
+    assert mbb.benefit_type == "discounted_unit_price"
+    assert mbb.discounted_price_amount == Decimal("12.0000")
+
+    second_payload = _model_json(serving)
+    second_payload["serving_item_id"] = "88888888-8888-4888-8888-888888888889"
+    second_payload["published_at"] = "2026-07-23T02:00:00Z"
+    second_payload["lineage"]["publication_version"] = "2026-07-23T02:00:00Z"
+    second = ServingItemV1.model_validate(second_payload)
+    second_publication = persistence.persist_serving_item(db, second)
+    db.commit()
+
+    db.refresh(first_publication)
+    assert first_publication.is_current == 0
+    assert first_publication.superseded_at == "2026-07-23T02:00:00+00:00"
+    assert second_publication.is_current == 1
+    assert db.query(v2_models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).count() == 1
+
+
+def test_database_constraints_reject_invalid_commercial_values(db):
+    _seed_context(db)
+    supplier_product = v2_models.CatalogueSupplierProduct(
+        supplier_product_key="supplier:14:offer:bad-price",
+        supplier_id=14,
+        supplier_sku="BAD",
+        created_at="2026-07-22T00:00:00+00:00",
+    )
+    db.add(supplier_product)
+    db.flush()
+    db.add(
+        v2_models.CatalogueSupplierPrice(
+            supplier_product_id=supplier_product.id,
+            amount=Decimal("-1.00"),
+            currency="HKD",
+            price_basis_uom_code="CAN",
+            created_at="2026-07-22T00:00:00+00:00",
+        )
+    )
+
+    with pytest.raises(IntegrityError):
+        db.commit()
