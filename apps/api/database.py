@@ -327,6 +327,36 @@ def run_migrations(engine):
         """))
         conn.commit()
 
+        # catalogue_ingestion_runs — CIS-104.1. One row per extraction attempt on a
+        # catalogue_imports row; isolated v2 table, not read/written by any v1 code.
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS catalogue_ingestion_runs (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_document_id  INTEGER NOT NULL REFERENCES catalogue_imports(id),
+                supplier_id         INTEGER REFERENCES suppliers(id),
+                contract_version    TEXT,
+                extractor_name      TEXT NOT NULL,
+                extractor_version   TEXT NOT NULL,
+                parent_run_id       INTEGER REFERENCES catalogue_ingestion_runs(id),
+                status              TEXT NOT NULL DEFAULT 'queued',
+                started_at          TEXT NOT NULL,
+                completed_at        TEXT,
+                items_extracted     INTEGER,
+                metrics             TEXT,
+                error_summary       TEXT,
+                created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_source_document"
+            " ON catalogue_ingestion_runs(source_document_id)"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_parent"
+            " ON catalogue_ingestion_runs(parent_run_id)"
+        ))
+        conn.commit()
+
         # Users table — for JWT auth and edit attribution
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS users (

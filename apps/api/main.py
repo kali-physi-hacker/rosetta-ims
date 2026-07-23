@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, ORJSONResponse, RedirectResponse
 
 import models
 import database
+import v2.models  # noqa: F401 — registers v2 tables (e.g. IngestionRun) on Base.metadata
 from routers.v1 import include_routers as include_v1_routers
 from routers.v2 import include_routers as include_v2_routers
 
