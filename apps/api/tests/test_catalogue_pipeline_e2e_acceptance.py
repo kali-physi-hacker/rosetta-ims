@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from decimal import Decimal
 from io import BytesIO
@@ -12,6 +13,7 @@ from uuid import UUID
 
 import pytest
 import pypdf
+from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 os.environ.setdefault("PREFECT_API_MODE", "offline")
@@ -37,6 +39,15 @@ from services import extraction_service, tagging_service  # noqa: E402
 
 models.Base.metadata.create_all(bind=database.engine)
 database.run_migrations(database.engine)
+
+
+FIXTURE_TEXT_PATH = (
+    Path(__file__).parent
+    / "fixtures"
+    / "catalogue_pipeline"
+    / "e2e"
+    / "hills_cis104_acceptance_page1.txt"
+)
 
 
 class _CatalogueOnboardingAdmin:
@@ -93,6 +104,8 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     monkeypatch,
 ):
     source_bytes = _pdf_bytes()
+    expected_rows, _ = _acceptance_rows(b"", "fixture.pdf", "application/pdf")
+    _assert_rows_grounded_on_pdf_page(source_bytes, expected_rows, page_number=1)
 
     first_submission = _submit(client, source_bytes, idempotency_key="cis104-submit")
     assert first_submission.status_code == 202, first_submission.text
@@ -121,11 +134,12 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     source = db.query(v2_models.CatalogueSourceDocument).one()
     stored_path = Path(os.environ["CATALOGUE_UPLOAD_DIR"]) / source.source_ref
     assert stored_path.exists()
+    assert stored_path.read_bytes() == source_bytes
     assert source.source_checksum
     assert source.supplier_source_contract_id == "hills.price_list.v1"
     assert run.supplier_source_contract_id == source.supplier_source_contract_id
 
-    monkeypatch.setattr(extraction_service, "extract", _acceptance_rows)
+    monkeypatch.setattr(extraction_service, "extract", _source_grounded_acceptance_rows)
     flow_result = catalogue_ingestion_flow(ingestion_run_id=run_id)
 
     assert flow_result.terminal_status == "completed_with_warnings"
@@ -180,6 +194,10 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert issue.raw_observation_uuid in {row.raw_observation_uuid for row in raw_rows}
     assert issue_contract.raw_value == "By Quote"
     assert issue_contract.review_guidance
+    invalid_raw = db.query(v2_models.CatalogueRawObservation).filter_by(
+        raw_observation_uuid=issue.raw_observation_uuid
+    ).one()
+    _assert_text_contains(_pdf_page_text(stored_path.read_bytes(), page_number=1), invalid_raw.raw_text)
     with pytest.raises(stages.BlockingValidationIssues):
         stages.MasteringService(db).prepare_candidate(
             stages.PrepareMasteringCandidateCommand(
@@ -306,6 +324,7 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
         candidate=candidate,
         staging=valid_staging,
         raw_texts_before_review=raw_texts_before_review,
+        source_bytes=stored_path.read_bytes(),
     )
 
     replay_flow = catalogue_ingestion_flow(ingestion_run_id=run_id)
@@ -317,6 +336,16 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
         claim_queued_run(db, ingestion_run_id=run_id)
 
 
+def test_source_grounding_rejects_extraction_values_absent_from_pdf():
+    source_bytes = _pdf_bytes()
+    rows, _ = _acceptance_rows(b"", "fixture.pdf", "application/pdf")
+    mutated = [dict(row) for row in rows]
+    mutated[0]["cost_price"] = "99.99"
+
+    with pytest.raises(AssertionError, match="cost_price"):
+        _assert_rows_grounded_on_pdf_page(source_bytes, mutated, page_number=1)
+
+
 def _submit(client: TestClient, source_bytes: bytes, *, idempotency_key: str):
     return client.post(
         "/v2/catalogues/ingestions",
@@ -324,6 +353,12 @@ def _submit(client: TestClient, source_bytes: bytes, *, idempotency_key: str):
         files={"file": ("hills-cis104.pdf", source_bytes, "application/pdf")},
         headers={"Idempotency-Key": idempotency_key},
     )
+
+
+def _source_grounded_acceptance_rows(content, filename, content_type, contract=None):
+    rows, source_format = _acceptance_rows(content, filename, content_type, contract=contract)
+    _assert_rows_grounded_on_pdf_page(content, rows, page_number=1)
+    return rows, source_format
 
 
 def _acceptance_rows(_content, _filename, _content_type, contract=None):
@@ -339,7 +374,7 @@ def _acceptance_rows(_content, _filename, _content_type, contract=None):
                 "pack_size": "82g",
                 "variant": "82g",
                 "confidence": "0.96",
-                "_raw_text": "10447 Hill's Healthy Cuisine Chicken 82g HK$13.10",
+                "_raw_text": "10447 Hill's Healthy Cuisine Chicken 82g 82g HKD 13.10",
             },
             {
                 "description": "Quoted Special Order Item",
@@ -350,7 +385,7 @@ def _acceptance_rows(_content, _filename, _content_type, contract=None):
                 "pack_size": "1 unit",
                 "variant": "special order",
                 "confidence": "0.88",
-                "_raw_text": "Q-1 Quoted Special Order Item By Quote",
+                "_raw_text": "Q-1 Quoted Special Order Item 1 unit HKD By Quote",
             },
         ],
         "pdf",
@@ -366,6 +401,7 @@ def _assert_served_field_lineage(
     candidate: v2_models.CatalogueMasteringCandidate,
     staging: v2_models.CatalogueStagingItem,
     raw_texts_before_review: dict[str, str | None],
+    source_bytes: bytes,
 ) -> None:
     candidate_contract = persistence.mastering_candidate_to_contract(candidate)
     staging_contract = persistence.staging_item_to_contract(staging)
@@ -399,6 +435,18 @@ def _assert_served_field_lineage(
     assert raw_contract.source_location.source_object_key == "page:1:row:1"
     assert raw_row.raw_text == raw_texts_before_review[raw_row.raw_observation_uuid]
     assert "13.10" in raw_contract.raw_text
+    page_text = _pdf_page_text(source_bytes, page_number=raw_contract.source_location.page_number)
+    _assert_text_contains(page_text, raw_contract.raw_text)
+    _assert_text_contains(raw_contract.raw_text, serving.canonical_sku)
+    _assert_text_contains(raw_contract.raw_text, serving.supplier_offering.supplier_sku)
+    _assert_text_contains(raw_contract.raw_text, serving.product_variant_name)
+    _assert_decimal_grounded(raw_contract.raw_text, serving.current_approved_cost.amount, label="approved cost")
+    _assert_text_contains(raw_contract.raw_text, serving.current_approved_cost.currency)
+    _assert_text_contains(
+        raw_contract.raw_text,
+        f"{serving.purchasing_packaging.content_amount.normalize()}"
+        f"{serving.purchasing_packaging.content_uom.code.value.lower()}",
+    )
 
     lineage = json.loads(db.query(v2_models.CatalogueServingPublication).one().lineage_json)
     assert lineage["mastering_candidate_id"] == candidate.mastering_candidate_uuid
@@ -463,10 +511,70 @@ def _seed_product_variant(session):
 
 
 def _pdf_bytes(*, label: str = "acceptance") -> bytes:
+    fixture_text = FIXTURE_TEXT_PATH.read_text()
     writer = pypdf.PdfWriter()
-    page = writer.add_blank_page(width=72, height=72)
-    page.compress_content_streams()
+    page = writer.add_blank_page(width=612, height=792)
+    _write_text_to_page(writer, page, fixture_text)
     writer.add_metadata({"/Title": f"CIS-104 {label}"})
     output = BytesIO()
     writer.write(output)
     return output.getvalue()
+
+
+def _write_text_to_page(writer: pypdf.PdfWriter, page, text: str) -> None:
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+    font_ref = writer._add_object(font)
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font_ref})}
+    )
+    parts = ["BT", "/F1 10 Tf", "36 750 Td", "14 TL"]
+    for line in text.splitlines():
+        parts.append(f"({_escape_pdf_text(line)}) Tj")
+        parts.append("T*")
+    parts.append("ET")
+    stream = DecodedStreamObject()
+    stream.set_data("\n".join(parts).encode("utf-8"))
+    page[NameObject("/Contents")] = writer._add_object(stream)
+
+
+def _escape_pdf_text(text: str) -> str:
+    return text.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
+
+
+def _assert_rows_grounded_on_pdf_page(pdf_bytes: bytes, rows: list[dict], *, page_number: int) -> None:
+    page_text = _pdf_page_text(pdf_bytes, page_number=page_number)
+    for index, row in enumerate(rows, start=1):
+        raw_text = row.get("_raw_text") or row.get("raw_text")
+        assert raw_text, f"row {index} must expose raw evidence text"
+        _assert_text_contains(page_text, raw_text, label=f"row {index} raw_text")
+        for field_name in ("supplier_sku", "description", "pack_size", "cost_price"):
+            value = row.get(field_name)
+            if value is not None:
+                _assert_text_contains(page_text, str(value), label=f"row {index} {field_name}")
+
+
+def _pdf_page_text(pdf_bytes: bytes, *, page_number: int) -> str:
+    reader = pypdf.PdfReader(BytesIO(pdf_bytes))
+    assert 1 <= page_number <= len(reader.pages), f"cited page {page_number} does not exist"
+    return reader.pages[page_number - 1].extract_text() or ""
+
+
+def _assert_text_contains(container: str, expected: str, *, label: str = "source evidence") -> None:
+    assert _fold_text(expected) in _fold_text(container), f"{label} not found on cited source page: {expected!r}"
+
+
+def _assert_decimal_grounded(container: str, expected: Decimal, *, label: str) -> None:
+    for match in re.findall(r"\d+(?:\.\d+)?", container):
+        if Decimal(match) == expected:
+            return
+    raise AssertionError(f"{label} not found on cited source page as decimal value: {expected!r}")
+
+
+def _fold_text(value: str) -> str:
+    return re.sub(r"\s+", " ", str(value)).strip().casefold()

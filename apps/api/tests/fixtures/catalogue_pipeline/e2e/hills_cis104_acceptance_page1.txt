@@ -1,0 +1,4 @@
+CIS-104 Hill's acceptance catalogue fixture
+Supplier SKU | Description | Pack | Currency | Cost
+10447 Hill's Healthy Cuisine Chicken 82g 82g HKD 13.10
+Q-1 Quoted Special Order Item 1 unit HKD By Quote
