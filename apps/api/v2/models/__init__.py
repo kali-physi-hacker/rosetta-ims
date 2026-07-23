@@ -1,3 +1,35 @@
 from .ingestion_run import IngestionRun, IngestionRunStatus, IngestionRunMetrics
+from .catalogue_pipeline import (
+    CatalogueMasteringCandidate,
+    CataloguePackagingConfiguration,
+    CatalogueProductFamily,
+    CatalogueRawObservation,
+    CatalogueReviewDecision,
+    CatalogueServingPublication,
+    CatalogueSourceDocument,
+    CatalogueStagingItem,
+    CatalogueStagingRawObservation,
+    CatalogueSupplierMbbTerm,
+    CatalogueSupplierPrice,
+    CatalogueSupplierProduct,
+    CatalogueValidationIssue,
+)
 
-__all__ = ["IngestionRun", "IngestionRunStatus", "IngestionRunMetrics"]
+__all__ = [
+    "IngestionRun",
+    "IngestionRunStatus",
+    "IngestionRunMetrics",
+    "CatalogueSourceDocument",
+    "CatalogueRawObservation",
+    "CatalogueStagingItem",
+    "CatalogueStagingRawObservation",
+    "CatalogueValidationIssue",
+    "CatalogueMasteringCandidate",
+    "CatalogueReviewDecision",
+    "CatalogueProductFamily",
+    "CatalogueSupplierProduct",
+    "CataloguePackagingConfiguration",
+    "CatalogueSupplierPrice",
+    "CatalogueSupplierMbbTerm",
+    "CatalogueServingPublication",
+]

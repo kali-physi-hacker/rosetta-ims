@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timezone
+from uuid import uuid4
 from sqlalchemy import create_engine, text, event
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
@@ -34,6 +35,7 @@ def _sqlite_pragmas(dbapi_conn, _record):
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         cur = dbapi_conn.cursor()
         cur.execute("PRAGMA journal_mode=WAL")
+        cur.execute("PRAGMA foreign_keys=ON")
         cur.execute("PRAGMA busy_timeout=30000")
         cur.execute("PRAGMA synchronous=NORMAL")
         cur.close()
@@ -58,6 +60,12 @@ def run_migrations(engine):
     SQLite-only incremental steps (raw ALTER/DROP DDL) are skipped."""
     if not _is_sqlite:
         return
+    # Register additive v2 catalogue pipeline tables even in tests/scripts that only
+    # imported `database` + legacy `models` before calling run_migrations().
+    import models  # noqa: F401
+    import v2.models  # noqa: F401
+    Base.metadata.create_all(bind=engine)
+
     stmts = [
         # User-account management: account-change + login timestamps
         "ALTER TABLE users ADD COLUMN updated_at TEXT",
@@ -300,6 +308,21 @@ def run_migrations(engine):
         " eff_cost_before REAL, eff_cost_after REAL,"
         " status TEXT NOT NULL DEFAULT 'pending', confirmed_by TEXT, confirmed_at TEXT)",
         "CREATE INDEX IF NOT EXISTS ix_reparse_change_batch ON reparse_change(batch_id)",
+        # ── Catalogue logical persistence foundation ───────────────────────────
+        # CIS-104.1 created catalogue_ingestion_runs with an integer id. The
+        # logical catalogue pipeline keeps that key and adds stable UUID plus
+        # exact supplier-source contract identity. Additive and nullable for
+        # existing rows; run_uuid is backfilled below before the unique index.
+        "ALTER TABLE catalogue_ingestion_runs ADD COLUMN run_uuid TEXT",
+        "ALTER TABLE catalogue_ingestion_runs ADD COLUMN catalogue_source_document_id INTEGER REFERENCES catalogue_source_documents(id)",
+        "ALTER TABLE catalogue_ingestion_runs ADD COLUMN supplier_source_contract_id TEXT",
+        "ALTER TABLE catalogue_ingestion_runs ADD COLUMN supplier_source_contract_version TEXT",
+        "ALTER TABLE catalogue_ingestion_runs ADD COLUMN document_type TEXT",
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_source_document_uuid ON catalogue_ingestion_runs(run_uuid)",
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_supplier_contract "
+        "ON catalogue_ingestion_runs(supplier_id, supplier_source_contract_id, supplier_source_contract_version)",
+        "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_pipeline_source_document "
+        "ON catalogue_ingestion_runs(catalogue_source_document_id)",
     ]
     with engine.connect() as conn:
         for sql in stmts:
@@ -308,6 +331,24 @@ def run_migrations(engine):
                 conn.commit()
             except Exception:
                 pass  # column / index already exists
+
+        try:
+            rows = conn.execute(text(
+                "SELECT id FROM catalogue_ingestion_runs WHERE run_uuid IS NULL OR trim(run_uuid) = ''"
+            )).fetchall()
+            for row in rows:
+                conn.execute(
+                    text("UPDATE catalogue_ingestion_runs SET run_uuid = :uuid WHERE id = :id"),
+                    {"uuid": str(uuid4()), "id": row[0]},
+                )
+            conn.commit()
+            conn.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_catalogue_ingestion_runs_run_uuid "
+                "ON catalogue_ingestion_runs(run_uuid)"
+            ))
+            conn.commit()
+        except Exception:
+            pass
 
         # catalogue_cost_staging — OCR writes here; humans approve before costs go to product_suppliers
         conn.execute(text("""
