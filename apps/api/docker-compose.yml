@@ -59,6 +59,31 @@ services:
       default:                       # reached by caddy (unchanged)
       edge:                          # reach the algo-dashboard Postgres (algo-dashboard-db-1) for POST /sync/algo
 
+  catalogue-worker:
+    build: .
+    image: rosetta-ims-api:latest
+    profiles: ["catalogue-worker"]
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/ims.db}
+      GOOGLE_SA_KEY_PATH: /secrets/google-sa.json
+      CATALOGUE_DISPATCH_INTERVAL_SECONDS: ${CATALOGUE_DISPATCH_INTERVAL_SECONDS:-30}
+      CATALOGUE_DISPATCH_BATCH_SIZE: ${CATALOGUE_DISPATCH_BATCH_SIZE:-10}
+    command:
+      - sh
+      - -c
+      - >-
+        python -m orchestration.catalogue_dispatch --loop
+        --interval-seconds $${CATALOGUE_DISPATCH_INTERVAL_SECONDS}
+        --batch-size $${CATALOGUE_DISPATCH_BATCH_SIZE}
+    volumes:
+      - ./data:/data
+      - ./secrets:/secrets:ro
+    networks:
+      default:
+      edge:
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
