@@ -16,6 +16,7 @@ Lives at `apps/api/` in the repo. The frontend lives at `apps/web/` and talks to
 | DB (prod) | SQLite on the droplet today; Postgres-ready | Set `DATABASE_URL` env var to cut over |
 | Auth | JWT (HS256) + legacy API key gate | `auth.py` router, middleware in `main.py` |
 | OCR / extraction | Claude Haiku via Anthropic SDK | `services/extraction_service.py` |
+| Catalogue orchestration | Prefect 3.3.x | `orchestration/catalogue_flows.py`; worker is an optional Docker Compose profile |
 | Deployment | DigitalOcean droplet | Docker Compose + Caddy; GitHub Actions syncs `apps/api/` and restarts the containers |
 
 ---
@@ -44,6 +45,21 @@ pip install -r requirements.txt
 
 API v1 is now at `http://localhost:8001/v1`. Swagger UI at `http://localhost:8001/v1/docs`.
 
+### Run queued catalogue ingestion locally
+
+The v2 catalogue submission endpoint only creates a durable queued run. To have
+a local worker claim queued runs and execute the machine ingestion stages:
+
+```bash
+cd apps/api
+python -m orchestration.catalogue_dispatch --batch-size 10
+python -m orchestration.catalogue_dispatch --loop --interval-seconds 30 --batch-size 10
+```
+
+The Prefect path stops at pending human review. It does not approve, apply
+supplier commercial state, publish serving snapshots, or replace the v1
+synchronous import route.
+
 ### Run both backend + frontend together
 
 From the **project root**:
@@ -65,6 +81,12 @@ Starts the backend on `:8001` and the frontend on `:3001`.
 | `IMS_API_KEY` | optional | (empty) | Legacy API key gate. If unset, only JWT auth is required. If set, requests must include either `X-API-Key: <key>` or a Bearer JWT. |
 | `JWT_SECRET` | yes (prod) | `dev-only-secret-change-me` | HS256 signing key for JWT tokens (see `routers/auth.py`) |
 | `ANTHROPIC_API_KEY` | yes for OCR | (empty) | Used by `services/extraction_service.py` to call Claude Haiku |
+| `CATALOGUE_UPLOAD_DIR` | optional | `/data/catalogue_uploads` | Durable upload root used by v2 catalogue submission and Prefect source verification |
+| `CATALOGUE_SUBMISSION_MAX_BYTES` | optional | `26214400` | Maximum upload size accepted by the v2 catalogue submission endpoint |
+| `CATALOGUE_ORCHESTRATION_MAX_SOURCE_BYTES` | optional | `26214400` | Maximum source size the Prefect orchestration loader will verify/read |
+| `CATALOGUE_DISPATCH_BATCH_SIZE` | optional | `10` | Bounded queued-run batch size for the catalogue worker profile |
+| `CATALOGUE_DISPATCH_INTERVAL_SECONDS` | optional | `30` | Sleep interval for the catalogue worker dispatcher loop |
+| `PREFECT_API_URL` | optional | (empty) | Optional Prefect server URL; local one-shot flows can run without external credentials |
 | `RESEND_API_KEY` | yes for access-request emails | (empty) | Used by `services/email_service.py` to send /tech-stack access-request emails. Free tier at [resend.com](https://resend.com) gives 100 emails/day. If unset, requests are still recorded in the DB; only the email is skipped. |
 | `EMAIL_FROM` | optional | `Rosetta IMS <onboarding@resend.dev>` | Sender for transactional emails. Switch to a verified `algogroup.io` sender once DNS is configured on Resend. |
 | `ADMIN_EMAIL` | optional | `chris@algogroup.io` | Who receives the /tech-stack access-request emails. Requestor is cc'd. |
@@ -78,6 +100,13 @@ ssh root@178.128.127.5
 cd /root/rosetta-ims/backend
 nano .env
 docker compose up -d --build api caddy
+```
+
+To run the catalogue dispatcher on the droplet:
+
+```bash
+docker compose --profile catalogue-worker up -d catalogue-worker
+docker compose logs -f catalogue-worker
 ```
 
 ---
@@ -118,12 +147,13 @@ apps/api/
 ├── database.py              # Engine, session, migrations, user seeding
 ├── models.py                # SQLAlchemy ORM — current v1 runtime/compatibility schema
 ├── v2/models/               # Additive v2 persistence foundations registered by import v2.models
+├── orchestration/            # Prefect catalogue ingestion flows, tasks and queued-run dispatcher
 ├── dependencies.py          # FastAPI dependency injection (get_db, etc.)
 ├── seed.py                  # Initial SKU seed (legacy — kept for reference)
 ├── seed_from_sheet.py       # Pull SKUs from Google Sheet on demand
 ├── requirements.txt
 ├── Dockerfile               # API container image
-├── docker-compose.yml       # api + caddy + optional postgres profile
+├── docker-compose.yml       # api + caddy + optional postgres/catalogue-worker profiles
 ├── Caddyfile                # HTTPS reverse proxy for the droplet
 ├── ims.db                   # SQLite (gitignored)
 │
@@ -142,6 +172,9 @@ apps/api/
 │
 ├── services/                # Business logic — pure Python, no HTTP
 │   ├── extraction_service.py    # OCR pipeline (Claude Haiku)
+│   ├── catalogue_submission.py  # v2 durable submission service
+│   ├── catalogue_pipeline_stages.py      # framework-neutral catalogue stage services
+│   ├── catalogue_pipeline_persistence.py # Pydantic/SQLAlchemy mapping helpers
 │   ├── pricing_service.py       # GP calculations, margin checks
 │   ├── sheet_sync.py            # Google Sheet → IMS sync
 │   └── sku_service.py           # SKU manipulation

@@ -37,9 +37,11 @@ Runtime ingestion now uses `services/supplier_source_contract_runtime.py` as a s
 
 Supplier-only selection is allowed only when exactly one `SUPPORTED` declaration exists for the supplier. If no supported contract exists, runtime falls back to generic extraction only through the current compatibility wrapper. If multiple supported formats exist for a supplier, the resolver raises an ambiguity error and requires an explicit contract identity or a later document-format detection path.
 
-Current public upload and reparse callers still pass only the numeric supplier ID. Hill's and Alfamedic therefore remain compatible because each has exactly one supported registered format. Vetapet and KPN/Kangaroo declarations are not production-selected because they still need row fixtures, supplier-id reconciliation, or per-section parser rules. The current public API does not yet expose `contract_id` or `contract_version`; that integration point is intentionally deferred until the upload workflow can transport an explicit source-format identity.
+The v1 compatibility upload and reparse callers still pass only the numeric supplier ID. Hill's and Alfamedic therefore remain compatible there because each has exactly one supported registered format. The v2 queued submission boundary accepts optional explicit `contract_id` and `contract_version` and stores the exact selected identity on the source document and ingestion run. Prefect orchestration later resolves that recorded identity exactly and does not use supplier-only fallback.
 
-Future integration should:
+Vetapet and KPN/Kangaroo declarations are not production-selected because they still need row fixtures, supplier-id reconciliation, or per-section parser rules.
+
+Runtime integration should continue to:
 
 1. Select a supplier-source contract by explicit `contract_id` and `contract_version`.
 2. Validate the declaration through `SupplierSourceContractV1`.

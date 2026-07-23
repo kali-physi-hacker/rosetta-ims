@@ -6,8 +6,8 @@ The boundary records a durable source file, creates a compatibility
 queued `IngestionRun`, and returns a stable run UUID for polling.
 
 The request does not run OCR, extraction, raw capture, staging, mastering,
-review, publication, FastAPI background tasks, or Prefect orchestration. A
-queued run remains queued until a later orchestrator starts it.
+review, publication, FastAPI background tasks, or Prefect orchestration inline.
+A queued run remains queued until the catalogue Prefect dispatcher claims it.
 
 ## Pre-edit Audit
 
@@ -22,7 +22,7 @@ queued run remains queued until a later orchestrator starts it.
 | Ingestion run | `IngestionRun` stores run UUID and supplier-source contract identity. | `started_at` was not truthful for queued submissions when non-null. | Allow `started_at = null` and migrate old SQLite shape safely. |
 | Contract selection | `resolve_supplier_contract` supports exact and supplier-only supported resolution. | HTTP input needs explicit pairing and ambiguity-safe behavior. | Accept optional `contract_id` and `contract_version`; require both or neither. |
 | Supported suppliers | Runtime-supported contracts are Hill's `hills.price_list.v1` and Alfamedic `alfamedic.price_list.v1`. | Vetapet and Kangaroo remain partial/unverified technical debt. | Reject unsupported/unverified contracts at submission time. |
-| Queued dispatch | No code dispatches queued runs. | Prefect is deferred. | Do not schedule work; document queued handoff. |
+| Queued dispatch | Prefect orchestration now scans queued runs through `orchestration.catalogue_dispatch`. | The HTTP request still must not dispatch or wait for pipeline work. | Return the durable queued run and let the worker/reconciler pick it up. |
 
 ## HTTP Contract
 
@@ -200,13 +200,14 @@ sequenceDiagram
 `/v1/catalogues/import` remains the synchronous compatibility path and still
 performs extraction/review staging in the legacy tables. The v2 submission route
 does not call extraction services, stage services, `BackgroundTasks`, queues, or
-Prefect.
+Prefect inline. Prefect orchestration can claim the queued run through the
+separate dispatcher/reconciler documented in
+`catalogue-prefect-orchestration.md`.
 
 Deferred work:
 
-- Prefect orchestration for starting queued runs;
 - upload UI integration;
-- adapter from orchestration into raw-capture stage services;
-- status transitions from queued to running/terminal;
 - HITL endpoints;
+- review-decision orchestration after human review;
+- applying approved supplier commercial state;
 - serving-read cutover from legacy inventory reads to publication snapshots.

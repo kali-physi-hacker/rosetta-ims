@@ -1,9 +1,9 @@
 # Catalogue Pipeline Stage Services
 
 This document defines the framework-neutral services that execute the persisted
-catalogue pipeline one stage at a time. These services sit between later FastAPI
-or Prefect callers and the CIS-103 Pydantic contracts plus SQLAlchemy
-persistence foundation.
+catalogue pipeline one stage at a time. These services sit between FastAPI,
+Prefect orchestration, later HITL callers and the CIS-103 Pydantic contracts
+plus SQLAlchemy persistence foundation.
 
 The services do not start the full pipeline, parse multipart requests, schedule
 background jobs, or switch public read APIs to the new publication tables.
@@ -13,7 +13,7 @@ background jobs, or switch public read APIs to the new publication tables.
 | Pipeline concept | Pydantic contract | Persistence entity | Existing service | Gap/action |
 |---|---|---|---|---|
 | Source asset | `ExtractionProfileReference` plus supplier-source contract identity | `CatalogueSourceDocument` | Legacy upload creates `CatalogueImport`; no stage boundary service | Stage services validate run/source/contract identity before capture. |
-| Ingestion run | `PipelineTrace.ingestion_run_id` | `IngestionRun` / `catalogue_ingestion_runs` | CIS-104.1 model only | Raw capture updates only minimal running state; orchestration remains deferred. |
+| Ingestion run | `PipelineTrace.ingestion_run_id` | `IngestionRun` / `catalogue_ingestion_runs` | CIS-104.1 model plus v2 submission and Prefect lifecycle services | Orchestration claims queued runs and records terminal machine-ingestion state. |
 | Raw Observation | `RawObservationV1` | `CatalogueRawObservation` | Mapper only | `RawObservationService.capture` creates immutable evidence records. |
 | Staging Catalogue Item | `StagingCatalogueItemV1` | `CatalogueStagingItem`, `CatalogueStagingRawObservation` | Mapper only | `StagingCatalogueService.build_item` preserves raw lineage and proposals. |
 | Validation Issue | `ValidationIssueV1` | `CatalogueValidationIssue`, `CatalogueReviewDecision` | Mapper only | `CatalogueValidationService` deduplicates open issues and records resolutions. |
@@ -26,9 +26,10 @@ background jobs, or switch public read APIs to the new publication tables.
 
 Current extraction and reparse runtime still write legacy `CatalogueItem` and
 legacy product/supplier rows. The stage services are callable beside that
-runtime and are not yet invoked by upload endpoints or orchestration. The v2
-FastAPI submission boundary records source files and queued runs only; it does
-not call these stage services.
+runtime. The v2 FastAPI submission boundary records source files and queued runs
+only; it does not call these stage services inline. Prefect orchestration now
+invokes Raw, Staging, Validation and Mastering Candidate services after a queued
+run is claimed, then stops for human review.
 
 ## Service Responsibilities
 
@@ -96,7 +97,7 @@ not call these stage services.
 
 ```mermaid
 sequenceDiagram
-    participant Caller as Later FastAPI/Prefect caller
+    participant Caller as Prefect or later HITL caller
     participant Raw as RawObservationService
     participant Stage as StagingCatalogueService
     participant Validate as CatalogueValidationService
@@ -200,18 +201,15 @@ distinction:
 ## Legacy Compatibility
 
 Existing upload, extraction, catalogue review, reparse, All Inventory, and SKU
-Details behavior remains unchanged. Current runtime extraction still writes
+Details behavior remains unchanged. Current v1 runtime extraction still writes
 legacy `CatalogueItem` rows. The new services do not replace public routes or
 serving reads in this task.
 
 ## Deferred Work
 
-- Prefect or application orchestration that calls these services after v2
-  submission creates a queued run.
-- Prefect flow/task orchestration and retries.
-- Runtime adapter from all real supplier extraction outputs into raw-capture
-  commands.
 - HITL API/UI for review decisions and validation issue resolution.
+- Review-decision orchestration after human action.
+- Runtime adapter expansion for future supported supplier extraction outputs.
 - Public read cutover from legacy inventory views to `ServingItemV1`
   publications.
 - Additional supplier-specific validation rules as evidence is confirmed.
