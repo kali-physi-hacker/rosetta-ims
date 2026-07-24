@@ -1469,9 +1469,41 @@ def _publication_key(contract: ServingItemV1) -> str:
     return f"sku:{contract.canonical_sku}:supplier:{contract.supplier_offering.supplier_id}:{contract.supplier_offering.supplier_product_id}"
 
 
+# Attempt metadata describes one extraction ATTEMPT, never the observed
+# evidence itself. Explicit allowlist (Option B of the replay-safety design):
+# identical evidence must reuse the immutable first observation when only
+# these per-call operational keys differ. Everything else in source_metadata
+# stays material. Extraction-attempt history is tracked as focused debt in
+# docs/technical-debt/extraction-attempt-history.md.
+_VOLATILE_ATTEMPT_METADATA_KEYS = (
+    "provider_request_id",
+    "provider_trace_id",
+    "attempt_number",
+    "request_timestamp",
+    "latency_ms",
+    "extraction_warnings",
+)
+
+
 def _raw_material(contract: RawObservationV1) -> dict[str, Any]:
+    """Material equality for extracted-evidence replay.
+
+    Excluded from equality (replay-safe): ``captured_at``, the volatile
+    attempt-metadata keys above, and ``extraction_confidence`` (a replay with
+    a different confidence reuses the immutable first observation — it is
+    never overwritten). Material (conflict or distinct identity on change):
+    raw text, raw cells, source location + bounding box, extraction method,
+    provider/model identity, and all stable source metadata.
+    """
+
     payload = contract.model_dump(mode="json")
     payload.pop("captured_at", None)
+    payload.pop("extraction_confidence", None)
+    metadata = payload.get("source_metadata")
+    if isinstance(metadata, dict):
+        payload["source_metadata"] = {
+            key: value for key, value in metadata.items() if key not in _VOLATILE_ATTEMPT_METADATA_KEYS
+        }
     return payload
 
 

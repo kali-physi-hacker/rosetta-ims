@@ -644,3 +644,126 @@ def test_stage4_replay_reuses_observations_and_material_conflict_is_controlled(d
     )
     with pytest.raises(stages.IdempotencyConflict):
         service.capture(conflict)
+
+
+# ── Fix 2: replay-safe attempt metadata through the REAL mapping path ───────
+
+from decimal import Decimal as _Decimal  # noqa: E402
+
+from orchestration.catalogue_stage_adapter import raw_input_from_extracted_evidence  # noqa: E402
+from schemas.catalogue_pipeline.raw_observation_v1 import BoundingBox, SourceLocation  # noqa: E402
+from services.catalogue_evidence_extraction import ExtractedEvidence  # noqa: E402
+
+
+def _vision_evidence(
+    *,
+    key: str = "page:1:obs:abc123def456:1",
+    text: str = "SCANNED-1 | Scanned Product 500g | HK$99.00",
+    request_id: str = "msg_a",
+    confidence: str = "0.91",
+    page: int = 1,
+    box: tuple = (5, 40, 300, 20),
+    warnings: tuple = (),
+) -> ExtractedEvidence:
+    return ExtractedEvidence(
+        observation_key=key,
+        source_location=SourceLocation(
+            page_number=page,
+            bounding_box=BoundingBox(x=box[0], y=box[1], width=box[2], height=box[3], unit="px"),
+            source_object_key=key,
+        ),
+        raw_text=text,
+        extraction_method="MODEL_VISION",
+        provider="anthropic",
+        provider_request_id=request_id,
+        model="claude-haiku-4-5-20251001",
+        model_version="claude-haiku-4-5-20251001",
+        confidence=_Decimal(confidence),
+        warnings=warnings,
+    )
+
+
+def _capture_evidence(db, evidence_items):
+    return stages.RawObservationService(db).capture(
+        stages.CaptureRawObservationsCommand(
+            ingestion_run_id=RUN_ID,
+            supplier_catalogue_id=SOURCE_ID,
+            source_file_id=FILE_ID,
+            supplier_id=14,
+            observations=tuple(raw_input_from_extracted_evidence(item) for item in evidence_items),
+        )
+    )
+
+
+def test_replay_with_new_provider_request_id_reuses_the_immutable_observation(db):
+    _seed_context(db)
+
+    first = _capture_evidence(db, [_vision_evidence(request_id="msg_a", confidence="0.91")])
+    assert first.metrics.created_count == 1
+
+    # Same evidence, new attempt: different request id, confidence and warnings.
+    replay = _capture_evidence(
+        db,
+        [_vision_evidence(request_id="msg_b", confidence="0.87", warnings=("provider retried",))],
+    )
+
+    assert replay.metrics.reused_count == 1
+    assert replay.metrics.created_count == 0
+    assert replay.output_ids == first.output_ids
+    assert db.query(models.CatalogueRawObservation).count() == 1
+
+    # The first-persisted observation is immutable: original request id and
+    # confidence are retained; the replay's values are never written over it.
+    row = db.query(models.CatalogueRawObservation).one()
+    contract = persistence.raw_observation_to_contract(row)
+    assert contract.source_metadata["provider_request_id"] == "msg_a"
+    assert contract.extraction_confidence == _Decimal("0.91")
+
+
+def test_changed_raw_text_under_same_identity_is_a_controlled_conflict(db):
+    _seed_context(db)
+    _capture_evidence(db, [_vision_evidence(text="SCANNED-1 | Scanned Product 500g | HK$99.00")])
+
+    with pytest.raises(stages.IdempotencyConflict):
+        _capture_evidence(db, [_vision_evidence(text="SCANNED-1 | Scanned Product 500g | HK$1.00")])
+
+
+def test_bounding_box_and_location_changes_are_material(db):
+    _seed_context(db)
+    _capture_evidence(db, [_vision_evidence()])
+
+    # Real provider output would mint a different content+location digest for
+    # a moved row; a changed bounding box is therefore a DISTINCT observation
+    # identity, never a silent merge.
+    moved = _vision_evidence(key="page:1:obs:abc123def456:2", box=(5, 400, 300, 20))
+    result = _capture_evidence(db, [moved])
+    assert result.metrics.created_count == 1
+    assert db.query(models.CatalogueRawObservation).count() == 2
+
+    # Same text on a different page is likewise distinct.
+    other_page = _vision_evidence(key="page:2:obs:abc123def456:1", page=2)
+    result = _capture_evidence(db, [other_page])
+    assert result.metrics.created_count == 1
+    assert db.query(models.CatalogueRawObservation).count() == 3
+
+
+def test_reordered_replay_batch_is_fully_reused(db):
+    _seed_context(db)
+    row_a = _vision_evidence(key="page:1:obs:aaaa:1", text="ROW-A | Product A | HK$1.00", box=(5, 40, 300, 20))
+    row_b = _vision_evidence(key="page:1:obs:bbbb:1", text="ROW-B | Product B | HK$2.00", box=(5, 70, 300, 20))
+
+    first = _capture_evidence(db, [row_a, row_b])
+    assert first.metrics.created_count == 2
+
+    replay = _capture_evidence(
+        db,
+        [
+            _vision_evidence(key="page:1:obs:bbbb:1", text="ROW-B | Product B | HK$2.00", box=(5, 70, 300, 20), request_id="msg_z"),
+            _vision_evidence(key="page:1:obs:aaaa:1", text="ROW-A | Product A | HK$1.00", box=(5, 40, 300, 20), request_id="msg_z"),
+        ],
+    )
+
+    assert replay.metrics.reused_count == 2
+    assert replay.metrics.created_count == 0
+    assert set(replay.output_ids) == set(first.output_ids)
+    assert db.query(models.CatalogueRawObservation).count() == 2

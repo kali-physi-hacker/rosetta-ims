@@ -330,15 +330,15 @@ def _escape_pdf_text(text: str) -> str:
 from pypdf.generic import NumberObject  # noqa: E402
 
 
-def _add_image_xobject(writer: pypdf.PdfWriter, page) -> None:
+def _add_image_xobject(writer: pypdf.PdfWriter, page, *, width: int = 1700, height: int = 2200) -> None:
     image = DecodedStreamObject()
     image.set_data(b"\x00")
     image.update(
         {
             NameObject("/Type"): NameObject("/XObject"),
             NameObject("/Subtype"): NameObject("/Image"),
-            NameObject("/Width"): NumberObject(1),
-            NameObject("/Height"): NumberObject(1),
+            NameObject("/Width"): NumberObject(width),
+            NameObject("/Height"): NumberObject(height),
             NameObject("/ColorSpace"): NameObject("/DeviceGray"),
             NameObject("/BitsPerComponent"): NumberObject(8),
         }
@@ -360,7 +360,7 @@ def _pdf_pages(pages: list[dict]) -> bytes:
         if spec.get("text"):
             _write_text_to_page(writer, page, spec["text"])
         if spec.get("image"):
-            _add_image_xobject(writer, page)
+            _add_image_xobject(writer, page, width=spec.get("image_width", 1700), height=spec.get("image_height", 2200))
     output = io.BytesIO()
     writer.write(output)
     return output.getvalue()
@@ -686,3 +686,160 @@ def test_anthropic_is_reachable_only_through_the_stage3_provider_seam():
         for alias in node.names
     }
     assert "anthropic" not in top_level_imports, "provider client must stay behind the function-level seam"
+
+
+# ── Fix 1 follow-up: typed page modes, decorative vs material images ────────
+
+from services.catalogue_evidence_extraction import PdfPageMode  # noqa: E402
+
+
+def _first_page_decision(content: bytes):
+    reader = pypdf.PdfReader(io.BytesIO(content))
+    page = reader.pages[0]
+    return evidence_service._classify_pdf_page(page, page.extract_text() or "")
+
+
+_RICH_TEXT = (
+    "Supplier Catalogue 2026\n"
+    "Wholesale Price List Terms and Conditions\n"
+    "All prices quoted exclude delivery charges\n"
+    "Contact your account manager for volume enquiries"
+)
+
+
+def test_text_page_with_meaningful_lines_and_no_images_is_text_mode(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+
+    def forbidden_vision(*_a, **_k):
+        raise AssertionError("text-mode page must not call vision")
+
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", forbidden_vision)
+    content = _pdf_pages([{"text": _RICH_TEXT}])
+
+    decision = _first_page_decision(content)
+    assert decision.mode == PdfPageMode.TEXT
+    assert decision.reason == "RELIABLE_TEXT_NO_MATERIAL_IMAGES"
+    assert decision.vision_required is False
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "text.pdf", "application/pdf")
+    assert result.status == ExtractionStatus.COMPLETE
+
+
+def test_text_page_with_tiny_decorative_logo_stays_text_only(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+
+    def forbidden_vision(*_a, **_k):
+        raise AssertionError("decorative logo must not force vision on a complete text page")
+
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", forbidden_vision)
+    content = _pdf_pages([{"text": _RICH_TEXT, "image": True, "image_width": 64, "image_height": 64}])
+
+    decision = _first_page_decision(content)
+    assert decision.mode == PdfPageMode.TEXT
+    assert decision.reason == "RELIABLE_TEXT_NO_MATERIAL_IMAGES"
+    assert decision.metrics["decorative_images"] == 1
+    assert decision.metrics["material_images"] == 0
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "logo.pdf", "application/pdf")
+    assert result.status == ExtractionStatus.COMPLETE
+    assert all(o.extraction_method == ExtractionMethod.PDF_TEXT for o in result.observations)
+
+
+def test_rich_text_page_with_material_image_is_hybrid_and_calls_vision(monkeypatch):
+    # Title + column header + footer + full-page image table: three or more
+    # valid text lines must NOT mark the page complete from text alone.
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, calls = _vision_stub([_EVIDENCE_PAYLOAD])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+    content = _pdf_pages([{"text": _RICH_TEXT, "image": True}])  # default: material scan-size image
+
+    decision = _first_page_decision(content)
+    assert decision.mode == PdfPageMode.HYBRID
+    assert decision.reason == "TEXT_WITH_MATERIAL_IMAGES"
+    assert decision.keep_text is True and decision.vision_required is True
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "hybrid-rich.pdf", "application/pdf")
+
+    assert calls["count"] == 1, "three text lines must not suppress vision on a material-image page"
+    assert result.status == ExtractionStatus.COMPLETE
+    methods = {o.extraction_method for o in result.observations}
+    assert methods == {ExtractionMethod.PDF_TEXT, ExtractionMethod.MODEL_VISION}
+    assert any("hybrid" in warning for warning in result.warnings)
+
+
+def test_rich_text_page_with_material_image_cannot_complete_without_vision(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    content = _pdf_pages([{"text": _RICH_TEXT, "image": True}])
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "hybrid-nokey.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.PARTIAL
+    assert result.units_completed == 0
+    assert result.errors[0].code == "EXTRACTION_CONFIGURATION_ERROR"
+    # Text evidence is retained, but the page is honestly not complete.
+    assert [o.raw_text for o in result.observations] == _RICH_TEXT.splitlines()
+
+
+def test_image_with_unknown_dimensions_is_uncertain_and_requires_vision(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    # Build a page whose image XObject has no /Width//Height: coverage unknowable.
+    writer = pypdf.PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    _write_text_to_page(writer, page, _RICH_TEXT)
+    image = DecodedStreamObject()
+    image.set_data(b"\x00")
+    image.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Image"),
+        }
+    )
+    reference = writer._add_object(image)
+    resources = page.get(NameObject("/Resources"))
+    resources[NameObject("/XObject")] = DictionaryObject({NameObject("/Im1"): reference})
+    output = io.BytesIO()
+    writer.write(output)
+    content = output.getvalue()
+
+    decision = _first_page_decision(content)
+    assert decision.mode == PdfPageMode.UNCERTAIN
+    assert decision.reason == "IMAGE_COVERAGE_UNKNOWN"
+    assert decision.vision_required is True
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "unknown.pdf", "application/pdf")
+    # Three meaningful text lines cannot silently complete the page.
+    assert result.status != ExtractionStatus.COMPLETE
+    assert result.units_completed == 0
+
+
+def test_mid_size_image_is_treated_as_coverage_unknown(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    content = _pdf_pages([{"text": _RICH_TEXT, "image": True, "image_width": 450, "image_height": 450}])
+
+    decision = _first_page_decision(content)
+    assert decision.mode == PdfPageMode.UNCERTAIN
+    assert decision.reason == "IMAGE_COVERAGE_UNKNOWN"
+
+
+def test_mixed_document_decorative_hybrid_and_scanned_pages(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, calls = _vision_stub([_EVIDENCE_PAYLOAD])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+    content = _pdf_pages(
+        [
+            {"text": _RICH_TEXT},                                                        # text-only
+            {"text": _RICH_TEXT, "image": True, "image_width": 64, "image_height": 64},  # decorative logo
+            {"text": _RICH_TEXT, "image": True},                                         # hybrid (material)
+            {"text": None, "image": True},                                               # scanned
+        ]
+    )
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "mixed-modes.pdf", "application/pdf")
+
+    assert calls["count"] == 2  # hybrid + scanned only
+    assert result.status == ExtractionStatus.COMPLETE
+    assert result.units_attempted == result.units_completed == 4
+    vision_count = sum(1 for o in result.observations if o.extraction_method == ExtractionMethod.MODEL_VISION)
+    text_count = sum(1 for o in result.observations if o.extraction_method == ExtractionMethod.PDF_TEXT)
+    assert vision_count == 2
+    assert text_count == 12  # 4 rich-text lines on each of three text-bearing pages

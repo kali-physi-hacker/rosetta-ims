@@ -460,8 +460,9 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
         if decision.keep_text:
             page_text_observations = _pdf_text_observations(page_text, page_number=page_number)
             observations.extend(page_text_observations)
-        if decision.note:
-            warnings.append(f"page {page_number}: {decision.note}")
+        decision_warning = _decision_warning(page_number, decision)
+        if decision_warning:
+            warnings.append(decision_warning)
         if not decision.vision_required:
             completed += 1
             continue
@@ -948,23 +949,29 @@ def _pdf_text_is_reliable(text: str) -> bool:
 
 
 # ── PDF page extraction policy (document-level, never semantic) ──────────────
-# A page is classified by text QUALITY and meaningful text COVERAGE plus
-# structural image presence — a few valid characters (page number, footer,
-# watermark) must never mark an image-bearing page as completely observed:
+# A page is classified by text QUALITY plus a STRUCTURAL image summary.
+# Text-line count alone can never suppress vision: if material (or
+# unknown-coverage) visual content may hold uncaptured evidence, vision runs.
 #
-#   no text / garbled text                          -> VISION (scanned page)
-#   reliable text, >= 3 meaningful lines            -> TEXT only
-#   reliable but sparse text + page images present  -> HYBRID (text + vision)
-#   reliable sparse text, no images                 -> TEXT only (nothing
-#                                                      visual to miss)
+#   no text                                   -> VISION      (NO_TEXT)
+#   garbled text                              -> VISION      (UNRELIABLE_TEXT)
+#   reliable text, no/decorative-only images  -> TEXT        (RELIABLE_TEXT_NO_MATERIAL_IMAGES)
+#   reliable text + material image(s)         -> HYBRID      (TEXT_WITH_MATERIAL_IMAGES or
+#                                                             SPARSE_TEXT_WITH_MATERIAL_IMAGES)
+#   reliable text + undeterminable coverage   -> UNCERTAIN   (IMAGE_COVERAGE_UNKNOWN, vision runs)
 #
-# Hybrid pages keep BOTH evidence sets: text-line and vision observations are
-# distinguishable by extraction method, observation key shape and source
-# location, and no deduplication happens at this layer — legitimate repeated
-# supplier rows must survive verbatim. Overlap resolution is interpretation's
-# job, downstream.
+# Structural metrics only — pixel dimensions of image XObjects, never decoded
+# content, never business-field detection. Rendered coverage requires the
+# content-stream CTM, which is deliberately not parsed: mid-size or
+# dimensionless images are UNCERTAIN and vision runs rather than risking
+# silent evidence loss. Vision does not guarantee absolute completeness; the
+# decision, reason code and metrics are recorded honestly. Hybrid pages keep
+# BOTH evidence sets (distinguishable by method/key/location, no dedup here);
+# overlap resolution is interpretation's job downstream.
 
 _MIN_MEANINGFUL_TEXT_LINES = 3
+_DECORATIVE_MAX_DIMENSION_PX = 200      # small logos / icons
+_MATERIAL_MIN_PIXEL_AREA = 250_000      # ~500x500+: scans, photographed tables
 
 _NOISE_LINE_PATTERNS = (
     re.compile(r"^\d{1,4}$"),                                   # bare page number
@@ -974,30 +981,121 @@ _NOISE_LINE_PATTERNS = (
 )
 
 
-class _PageDecision:
-    __slots__ = ("keep_text", "vision_required", "note")
+class PdfPageMode(str, Enum):
+    TEXT = "text"
+    VISION = "vision"
+    HYBRID = "hybrid"
+    UNCERTAIN = "uncertain"
 
-    def __init__(self, keep_text: bool, vision_required: bool, note: str | None = None):
+
+class _PageImageSummary:
+    __slots__ = ("image_count", "decorative_count", "material_count", "unknown_count", "largest_pixel_area", "unreadable")
+
+    def __init__(self):
+        self.image_count = 0
+        self.decorative_count = 0
+        self.material_count = 0
+        self.unknown_count = 0
+        self.largest_pixel_area = 0
+        self.unreadable = False
+
+
+class _PageDecision:
+    __slots__ = ("mode", "keep_text", "vision_required", "reason", "metrics")
+
+    def __init__(self, mode: PdfPageMode, keep_text: bool, vision_required: bool, reason: str, metrics: dict | None = None):
+        self.mode = mode
         self.keep_text = keep_text
         self.vision_required = vision_required
-        self.note = note
+        self.reason = reason
+        self.metrics = metrics or {}
 
 
 def _classify_pdf_page(page, page_text: str) -> _PageDecision:
     has_text = bool(page_text.strip())
     if not has_text:
-        return _PageDecision(keep_text=False, vision_required=True)
+        return _PageDecision(PdfPageMode.VISION, keep_text=False, vision_required=True, reason="NO_TEXT")
     if not _pdf_text_is_reliable(page_text):
-        return _PageDecision(keep_text=False, vision_required=True, note="text layer unreliable; using vision")
-    if _meaningful_line_count(page_text) >= _MIN_MEANINGFUL_TEXT_LINES:
-        return _PageDecision(keep_text=True, vision_required=False)
-    if _page_has_images(page):
+        return _PageDecision(PdfPageMode.VISION, keep_text=False, vision_required=True, reason="UNRELIABLE_TEXT")
+
+    images = _summarize_page_images(page)
+    meaningful = _meaningful_line_count(page_text)
+    metrics = {
+        "meaningful_lines": meaningful,
+        "image_count": images.image_count,
+        "decorative_images": images.decorative_count,
+        "material_images": images.material_count,
+        "unknown_images": images.unknown_count,
+        "largest_pixel_area": images.largest_pixel_area,
+    }
+    if images.unreadable or images.unknown_count:
         return _PageDecision(
-            keep_text=True,
-            vision_required=True,
-            note="sparse text layer alongside page images; using text and vision (hybrid)",
+            PdfPageMode.UNCERTAIN, keep_text=True, vision_required=True,
+            reason="IMAGE_COVERAGE_UNKNOWN", metrics=metrics,
         )
-    return _PageDecision(keep_text=True, vision_required=False)
+    if images.material_count:
+        reason = (
+            "TEXT_WITH_MATERIAL_IMAGES"
+            if meaningful >= _MIN_MEANINGFUL_TEXT_LINES
+            else "SPARSE_TEXT_WITH_MATERIAL_IMAGES"
+        )
+        return _PageDecision(PdfPageMode.HYBRID, keep_text=True, vision_required=True, reason=reason, metrics=metrics)
+    return _PageDecision(
+        PdfPageMode.TEXT, keep_text=True, vision_required=False,
+        reason="RELIABLE_TEXT_NO_MATERIAL_IMAGES", metrics=metrics,
+    )
+
+
+def _summarize_page_images(page) -> _PageImageSummary:
+    """Structural image summary — XObject pixel dimensions only, no decoding.
+
+    An image is decorative when both dimensions are small (logo/icon scale),
+    material when its pixel area is scan/photo scale, and unknown when its
+    dimensions are missing or in between (rendered coverage cannot be
+    determined without parsing the content-stream CTM).
+    """
+
+    summary = _PageImageSummary()
+    try:
+        resources = page.get("/Resources")
+        if resources is None:
+            return summary
+        xobjects = resources.get_object().get("/XObject")
+        if xobjects is None:
+            return summary
+        xobjects = xobjects.get_object()
+        for name in xobjects:
+            candidate = xobjects[name].get_object()
+            if candidate.get("/Subtype") != "/Image":
+                continue
+            summary.image_count += 1
+            try:
+                width = int(candidate["/Width"])
+                height = int(candidate["/Height"])
+            except Exception:
+                summary.unknown_count += 1
+                continue
+            area = width * height
+            summary.largest_pixel_area = max(summary.largest_pixel_area, area)
+            if width <= _DECORATIVE_MAX_DIMENSION_PX and height <= _DECORATIVE_MAX_DIMENSION_PX:
+                summary.decorative_count += 1
+            elif area >= _MATERIAL_MIN_PIXEL_AREA:
+                summary.material_count += 1
+            else:
+                summary.unknown_count += 1
+    except Exception:
+        summary.unreadable = True
+    return summary
+
+
+def _decision_warning(page_number: int, decision: _PageDecision) -> str | None:
+    if decision.mode == PdfPageMode.HYBRID:
+        return f"page {page_number}: {decision.reason} — using text and vision (hybrid)"
+    if decision.mode == PdfPageMode.UNCERTAIN:
+        return f"page {page_number}: {decision.reason} — image coverage undeterminable; using text and vision"
+    if decision.reason == "UNRELIABLE_TEXT":
+        return f"page {page_number}: text layer unreliable; using vision"
+    return None
 
 
 def _meaningful_line_count(text: str) -> int:
@@ -1009,25 +1107,6 @@ def _is_noise_line(line: str) -> bool:
     if len(line) < 4:
         return True
     return any(pattern.match(line) for pattern in _NOISE_LINE_PATTERNS)
-
-
-def _page_has_images(page) -> bool:
-    """Structural check for image XObjects — no decoding, no OCR."""
-
-    try:
-        resources = page.get("/Resources")
-        if resources is None:
-            return False
-        xobjects = resources.get_object().get("/XObject")
-        if xobjects is None:
-            return False
-        for name in xobjects.get_object():
-            candidate = xobjects.get_object()[name].get_object()
-            if candidate.get("/Subtype") == "/Image":
-                return True
-    except Exception:
-        return False
-    return False
 
 
 def _anthropic_api_key() -> str:
