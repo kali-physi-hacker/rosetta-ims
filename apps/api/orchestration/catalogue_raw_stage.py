@@ -15,7 +15,10 @@ State model (documented and tested):
   failure can never erase the record of an earlier successful verification.
 - The mutable fields on ``CatalogueSourceDocument`` (``raw_stage_status``,
   ``raw_stage_completed_at``, ``byte_size``, ``page_count``) mirror the MOST
-  RECENT attempt only, for cheap status queries.
+  RECENT attempt only, for cheap status queries — ALL of them, so state can
+  never read ambiguously: a failed latest attempt clears the completion
+  timestamp and carries only what that attempt actually observed. The
+  earlier successful verification stays in the attempt history.
 
 This module must never import or reach an AI provider, OCR, document parsing,
 extraction, interpretation, normalization or business validation. Anything
@@ -159,7 +162,13 @@ def _record_failed_attempt(
         db.rollback()
         source = _source_row(db, ingestion_run_id=ingestion_run_id)
         now = _now_iso()
+        # Current state mirrors this (most recent, failed) attempt completely:
+        # no stale completion timestamp or structural metrics from an earlier
+        # success may coexist with a failed status.
         source.raw_stage_status = "failed"
+        source.raw_stage_completed_at = None
+        source.byte_size = asset.size_bytes if asset else None
+        source.page_count = None
         source.updated_at = now
         db.add(
             models.CatalogueRawStageAttempt(

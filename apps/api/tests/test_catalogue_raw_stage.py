@@ -377,6 +377,9 @@ def test_raw_stage_failed_first_execution_appends_sanitized_failed_attempt(db, f
     assert "checksum" in attempt.failure_message
     assert os.environ["CATALOGUE_UPLOAD_DIR"] not in attempt.failure_message
     assert attempt.checksum_sha256 is None  # verification never produced a trusted asset
+    source = _source_row(db, submitted.ingestion_run_id)
+    assert source.raw_stage_status == "failed"
+    assert source.raw_stage_completed_at is None
 
 
 def test_raw_stage_success_then_failed_reverification_preserves_both_attempts(db, forbid_understanding):
@@ -391,10 +394,17 @@ def test_raw_stage_success_then_failed_reverification_preserves_both_attempts(db
     db.expire_all()
     attempts = db.query(models.CatalogueRawStageAttempt).order_by(models.CatalogueRawStageAttempt.id).all()
     assert [attempt.status for attempt in attempts] == ["completed", "failed"]
-    # Current state mirrors the most recent attempt; history preserves the
+    # Current state mirrors the most recent attempt COMPLETELY — no ambiguous
+    # "failed but completed_at populated" hybrid — while history preserves the
     # earlier completed verification instead of silently erasing it.
-    assert _source_row(db, submitted.ingestion_run_id).raw_stage_status == "failed"
+    source = _source_row(db, submitted.ingestion_run_id)
+    assert source.raw_stage_status == "failed"
+    assert source.raw_stage_completed_at is None
+    assert source.byte_size is None
+    assert source.page_count is None
     assert attempts[0].checksum_sha256 == hashlib.sha256(content).hexdigest()
+    assert attempts[0].byte_size == len(content)
+    assert attempts[0].page_count == 1
 
 
 def test_raw_stage_attempt_rows_contain_only_file_level_facts():
@@ -418,8 +428,15 @@ def test_raw_stage_attempt_rows_contain_only_file_level_facts():
 
 
 def test_raw_stage_module_import_boundary():
-    """Architectural regression test: raw-stage modules must not depend on
-    AI providers, OCR, extraction, interpretation, tagging or stage persistence."""
+    """Architectural regression test over the TRANSITIVE import closure.
+
+    Walks every project-local module reachable from the raw-stage modules and
+    fails if any of them (or any name they import) depends on AI providers,
+    OCR, extraction, interpretation, tagging or stage persistence. Also pins
+    that the raw stage no longer depends on the submission service module —
+    the shared capability policy lives in the dependency-free
+    services.source_capability instead.
+    """
 
     import ast
 
@@ -436,21 +453,45 @@ def test_raw_stage_module_import_boundary():
         "services.catalogue_pipeline_stages",
     )
     backend_root = Path(__file__).resolve().parent.parent
-    for module in ("catalogue_raw_stage.py", "catalogue_source_loader.py"):
-        source_path = backend_root / "orchestration" / module
-        tree = ast.parse(source_path.read_text())
-        imported: set[str] = set()
-        for node in ast.walk(tree):
+
+    def _local_path(module_name: str) -> Path | None:
+        as_file = backend_root / (module_name.replace(".", "/") + ".py")
+        if as_file.exists():
+            return as_file
+        as_package = backend_root / module_name.replace(".", "/") / "__init__.py"
+        return as_package if as_package.exists() else None
+
+    def _imports_of(path: Path, module_name: str) -> set[str]:
+        package = module_name if path.name == "__init__.py" else module_name.rsplit(".", 1)[0]
+        names: set[str] = set()
+        for node in ast.walk(ast.parse(path.read_text())):
             if isinstance(node, ast.Import):
-                imported.update(alias.name for alias in node.names)
+                names.update(alias.name for alias in node.names)
             elif isinstance(node, ast.ImportFrom):
                 if node.level:
-                    imported.add("orchestration." + (node.module or ""))
+                    names.add(f"{package}.{node.module}" if node.module else package)
                 elif node.module:
-                    imported.add(node.module)
-        offending = {
-            name
-            for name in imported
-            if any(name == item or name.startswith(item + ".") for item in forbidden)
-        }
-        assert not offending, f"{module} imports forbidden dependencies: {sorted(offending)}"
+                    names.add(node.module)
+        return names
+
+    seeds = ["orchestration.catalogue_raw_stage", "orchestration.catalogue_source_loader"]
+    visited: set[str] = set()
+    offending: dict[str, set[str]] = {}
+    queue = list(seeds)
+    while queue:
+        module_name = queue.pop()
+        if module_name in visited:
+            continue
+        visited.add(module_name)
+        path = _local_path(module_name)
+        if path is None:
+            continue  # stdlib / third-party leaf; its name was already screened
+        for imported in _imports_of(path, module_name):
+            if any(imported == item or imported.startswith(item + ".") for item in forbidden):
+                offending.setdefault(module_name, set()).add(imported)
+            queue.append(imported)
+
+    assert not offending, f"raw-stage dependency closure contains forbidden imports: {offending}"
+    # The transitive submission-service dependency is gone by construction.
+    assert "services.catalogue_submission" not in visited
+    assert "services.source_capability" in visited

@@ -10,7 +10,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 import models
-from services.catalogue_submission import DEFAULT_UPLOAD_ROOT, signature_matches
+from services.source_capability import DEFAULT_UPLOAD_ROOT, signature_matches
 
 from .catalogue_types import RunIdentity, RunNotFound, SourceVerificationError, VerifiedSourceAsset
 
@@ -119,6 +119,6 @@ def _resolve_source_path(root: Path, source_ref: str) -> Path:
     return resolved
 
 
-# Signature policy lives in services.catalogue_submission (the central
-# source-capability authority); raw verification imports signature_matches
-# from there so the rules cannot drift apart.
+# Signature policy lives in services.source_capability (the central,
+# dependency-free capability authority); raw verification imports
+# signature_matches from there so the rules cannot drift apart.

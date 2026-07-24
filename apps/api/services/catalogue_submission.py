@@ -22,10 +22,14 @@ from sqlalchemy.orm import Session
 
 import models
 from services import supplier_source_contract_runtime
+from services.source_capability import (
+    DEFAULT_UPLOAD_ROOT,
+    SUPPORTED_SOURCE_SUFFIXES,
+    signature_matches,
+)
 from schemas.catalogue_pipeline.enums import SourceFormat
 
 
-DEFAULT_UPLOAD_ROOT = "/data/catalogue_uploads"
 DEFAULT_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 CHUNK_SIZE = 1024 * 1024
 
@@ -482,37 +486,6 @@ def _safe_original_filename(filename: str) -> str:
     if not cleaned or not Path(cleaned).suffix:
         raise MalformedFilenameError("Catalogue filename must include a supported extension")
     return cleaned[:180]
-
-
-# ── Central source-capability policy ────────────────────────────────────────
-# The single authority for which file types the pipeline can actually process.
-# Submission enforces it at the gate; raw verification re-checks stored files
-# against it (orchestration/catalogue_source_loader imports these). Legacy
-# `.xls` (OLE) is deliberately ABSENT: the configured extraction stage has no
-# production `.xls` adapter (it returns UNSUPPORTED_LEGACY_XLS), so accepting
-# it at submission would queue runs that are guaranteed to fail downstream.
-
-SUPPORTED_SOURCE_SUFFIXES = {
-    ".pdf": "PDF",
-    ".xlsx": "SPREADSHEET",
-    ".csv": "CSV",
-}
-
-
-def signature_matches(source_format: str, header: bytes) -> bool:
-    """File-signature check for the supported capability set.
-
-    SPREADSHEET means modern XLSX (zip container) only — OLE signatures are
-    rejected in line with the `.xls` capability decision above.
-    """
-
-    if source_format in {"PDF", "PDF_TABLE"}:
-        return header.startswith(b"%PDF")
-    if source_format == "SPREADSHEET":
-        return header.startswith(b"PK\x03\x04")
-    if source_format == "CSV":
-        return b"\x00" not in header
-    return False
 
 
 def _source_format_from_suffix(suffix: str) -> str | None:
