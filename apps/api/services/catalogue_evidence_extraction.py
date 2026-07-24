@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import csv
+import hashlib
 import io
 import json
 import os
@@ -17,7 +18,7 @@ import re
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import openpyxl
 import pypdf
@@ -88,7 +89,13 @@ class ExtractedEvidence(BaseModel):
 
 
 class ExtractionResult(BaseModel):
-    """Typed extraction envelope with explicit completeness accounting."""
+    """Typed extraction envelope with explicit completeness accounting.
+
+    A source unit (PDF page, XLSX worksheet, CSV parse, image) only counts as
+    completed when it was fully observed or the provider EXPLICITLY classified
+    it as containing no catalogue evidence (``empty_units``). "The provider
+    call returned" is never equated with "the unit was completely observed".
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -97,6 +104,7 @@ class ExtractionResult(BaseModel):
     observations: tuple[ExtractedEvidence, ...] = ()
     units_attempted: int = Field(..., ge=0)
     units_completed: int = Field(..., ge=0)
+    empty_units: int = Field(0, ge=0, description="Units explicitly classified as containing no catalogue evidence.")
     warnings: tuple[str, ...] = ()
     errors: tuple[ExtractionError, ...] = ()
 
@@ -104,14 +112,16 @@ class ExtractionResult(BaseModel):
     def _status_matches_contents(self):
         if self.units_completed > self.units_attempted:
             raise ValueError("units_completed cannot exceed units_attempted")
+        if self.empty_units > self.units_completed:
+            raise ValueError("empty_units cannot exceed units_completed")
         if self.status == ExtractionStatus.COMPLETE:
-            if not self.observations:
-                raise ValueError("COMPLETE extraction requires at least one observation")
+            if not self.observations and not self.empty_units:
+                raise ValueError("COMPLETE extraction requires observations or explicit empty-unit accounting")
             if self.errors or self.units_completed != self.units_attempted:
                 raise ValueError("COMPLETE extraction cannot contain errors or incomplete units")
         elif self.status == ExtractionStatus.PARTIAL:
-            if not self.observations or not self.errors:
-                raise ValueError("PARTIAL extraction requires observations and errors")
+            if not (self.observations or self.empty_units) or not self.errors:
+                raise ValueError("PARTIAL extraction requires observed/empty units and errors")
         elif self.status == ExtractionStatus.FAILED:
             if self.observations or not self.errors:
                 raise ValueError("FAILED extraction requires errors and cannot contain observations")
@@ -144,9 +154,26 @@ class _VisionObservation(BaseModel):
 
 
 class _VisionEnvelope(BaseModel):
+    """Typed page-level provider outcome.
+
+    ``page_outcome`` is REQUIRED: an empty observation array is only
+    acceptable when the provider explicitly classifies the page as containing
+    no catalogue evidence. Empty-without-classification and
+    evidence-with-empty-array are both malformed — they may hide truncation.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
-    observations: tuple[_VisionObservation, ...]
+    page_outcome: Literal["evidence", "no_catalogue_evidence"]
+    observations: tuple[_VisionObservation, ...] = ()
+
+    @model_validator(mode="after")
+    def _outcome_matches_observations(self):
+        if self.page_outcome == "evidence" and not self.observations:
+            raise ValueError("page_outcome 'evidence' requires at least one observation")
+        if self.page_outcome == "no_catalogue_evidence" and self.observations:
+            raise ValueError("page_outcome 'no_catalogue_evidence' cannot carry observations")
+        return self
 
 
 class _VisionResponse(BaseModel):
@@ -164,6 +191,7 @@ duplicates. Preserve repeated rows at their separate source locations.
 
 Return one JSON object with exactly this shape:
 {
+  "page_outcome": "evidence",
   "observations": [
     {
       "raw_text": "the complete row exactly as printed, or null",
@@ -187,6 +215,12 @@ Return one JSON object with exactly this shape:
     }
   ]
 }
+
+page_outcome is REQUIRED and must be exactly one of:
+- "evidence" — the page contains catalogue rows; observations must list every
+  visible row without omission.
+- "no_catalogue_evidence" — the page genuinely contains no catalogue rows
+  (blank page, cover page, pure artwork); observations must be [].
 
 Use strings for confidence values. Omit no visible catalogue row. Use null for
 unknown optional values. Return only the JSON object, without Markdown fences.
@@ -413,22 +447,29 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
     warnings: list[str] = []
     errors: list[ExtractionError] = []
     completed = 0
+    empty_units = 0
     for page_number, page in enumerate(reader.pages, start=1):
+        page_key = f"page:{page_number}"
         try:
             page_text = page.extract_text() or ""
         except Exception:
             page_text = ""
             warnings.append(f"page {page_number} text layer could not be decoded; vision fallback required")
-        if _pdf_text_is_reliable(page_text):
-            observations.extend(_pdf_text_observations(page_text, page_number=page_number))
+        decision = _classify_pdf_page(page, page_text)
+        page_text_observations: list[ExtractedEvidence] = []
+        if decision.keep_text:
+            page_text_observations = _pdf_text_observations(page_text, page_number=page_number)
+            observations.extend(page_text_observations)
+        if decision.note:
+            warnings.append(f"page {page_number}: {decision.note}")
+        if not decision.vision_required:
             completed += 1
             continue
-        page_key = f"page:{page_number}"
         if not _anthropic_api_key():
             errors.append(
                 ExtractionError(
                     code="EXTRACTION_CONFIGURATION_ERROR",
-                    message="Scanned or unreadable PDF page requires a configured vision provider",
+                    message="Scanned or image-bearing PDF page requires a configured vision provider",
                     unit_key=page_key,
                     provider="anthropic",
                 )
@@ -440,14 +481,24 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
                 page_content,
                 media_type="application/pdf",
             )
-            observations.extend(
-                _vision_observations(
-                    response,
-                    extraction_method=ExtractionMethod.MODEL_VISION,
-                    unit_key=page_key,
-                    page_number=page_number,
-                )
+            vision_observations, page_outcome = _vision_observations(
+                response,
+                extraction_method=ExtractionMethod.MODEL_VISION,
+                unit_key=page_key,
+                page_number=page_number,
             )
+            if page_outcome == "no_catalogue_evidence":
+                if page_text_observations:
+                    warnings.append(
+                        f"page {page_number}: vision provider classified the page as containing "
+                        "no catalogue evidence; text-layer evidence retained"
+                    )
+                else:
+                    warnings.append(
+                        f"page {page_number}: provider classified page as containing no catalogue evidence"
+                    )
+                    empty_units += 1
+            observations.extend(vision_observations)
             completed += 1
         except _VisionExtractionFailure as exc:
             errors.append(
@@ -475,6 +526,7 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
         observations=observations,
         units_attempted=len(reader.pages),
         units_completed=completed,
+        empty_units=empty_units,
         warnings=warnings,
         errors=errors,
     )
@@ -496,7 +548,7 @@ def _extract_image(
         )
     try:
         response = _call_anthropic_vision(content, media_type=media_type)
-        observations = _vision_observations(
+        observations, page_outcome = _vision_observations(
             response,
             extraction_method=ExtractionMethod.MODEL_VISION,
             unit_key="image:1",
@@ -512,11 +564,18 @@ def _extract_image(
             retryable=exc.retryable,
             units_attempted=1,
         )
+    warnings: list[str] = []
+    empty_units = 0
+    if page_outcome == "no_catalogue_evidence":
+        warnings.append("image:1: provider classified image as containing no catalogue evidence")
+        empty_units = 1
     return _build_result(
         source_format,
         observations=observations,
         units_attempted=1,
         units_completed=1,
+        empty_units=empty_units,
+        warnings=warnings,
     )
 
 
@@ -548,7 +607,20 @@ def _vision_observations(
     extraction_method: ExtractionMethod,
     unit_key: str,
     page_number: int | None,
-) -> list[ExtractedEvidence]:
+) -> tuple[list[ExtractedEvidence], Literal["evidence", "no_catalogue_evidence"]]:
+    """Validate the typed provider envelope and mint stable observation keys.
+
+    Identity policy: vision observation keys are derived from the observed
+    CONTENT plus SOURCE LOCATION (sha256 of raw_text/raw_cells/bounding box),
+    with a per-digest occurrence ordinal — so identical evidence keeps the
+    same identity across provider retries regardless of response ORDER, and
+    legitimate duplicate rows remain distinct (different bounding boxes yield
+    different digests; byte-identical duplicates get interchangeable
+    ordinals). Materially changed provider output yields different digests
+    and is surfaced downstream as an idempotency conflict rather than
+    silently corrupting persisted evidence.
+    """
+
     try:
         payload = _strict_json_object(response.text)
         envelope = _VisionEnvelope.model_validate(payload)
@@ -559,10 +631,17 @@ def _vision_observations(
             retryable=False,
         ) from exc
 
+    if envelope.page_outcome == "no_catalogue_evidence":
+        return [], "no_catalogue_evidence"
+
     try:
         observations: list[ExtractedEvidence] = []
-        for index, item in enumerate(envelope.observations, start=1):
-            key = f"{unit_key}:observation:{index}"
+        digest_counts: dict[str, int] = {}
+        for item in envelope.observations:
+            digest = _observation_digest(item)
+            ordinal = digest_counts.get(digest, 0) + 1
+            digest_counts[digest] = ordinal
+            key = f"{unit_key}:obs:{digest}:{ordinal}"
             observations.append(
                 ExtractedEvidence(
                     observation_key=key,
@@ -587,7 +666,19 @@ def _vision_observations(
             public_message="Vision provider returned invalid source evidence",
             retryable=False,
         ) from exc
-    return observations
+    return observations, "evidence"
+
+
+def _observation_digest(item: _VisionObservation) -> str:
+    material = {
+        "raw_text": item.raw_text,
+        "raw_cells": [
+            [cell.cell_reference, cell.row_number, cell.column_name, cell.column_index, str(cell.raw_value)]
+            for cell in item.raw_cells
+        ],
+        "bounding_box": item.bounding_box.model_dump(mode="json") if item.bounding_box else None,
+    }
+    return hashlib.sha256(json.dumps(material, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
 
 
 def _call_anthropic_vision(content: bytes, *, media_type: str) -> _VisionResponse:
@@ -630,16 +721,64 @@ def _call_anthropic_vision(content: bytes, *, media_type: str) -> _VisionRespons
     except _VisionExtractionFailure:
         raise
     except Exception as exc:
-        retryable = _looks_transient(exc)
-        raise _VisionExtractionFailure(
-            code="TRANSIENT_PROVIDER_ERROR" if retryable else "PROVIDER_ERROR",
-            public_message=(
-                "Vision provider failed temporarily"
-                if retryable
-                else "Vision provider could not extract source evidence"
-            ),
-            retryable=retryable,
-        ) from exc
+        raise _classify_provider_failure(exc) from exc
+
+
+def _classify_provider_failure(exc: Exception) -> "_VisionExtractionFailure":
+    """Typed retry classification for the Anthropic provider seam.
+
+    Timeouts, connection failures, rate limits, overloads and 5xx responses
+    are retryable. Authentication/permission failures are configuration
+    errors (never retried as transient). Bad requests and schema violations
+    are non-retryable provider errors. Falls back to a conservative string
+    heuristic only for non-SDK exceptions. Raw provider details are never
+    propagated — messages stay sanitized.
+    """
+
+    try:
+        import anthropic
+
+        if isinstance(exc, (anthropic.APITimeoutError, anthropic.APIConnectionError)):
+            return _VisionExtractionFailure(
+                code="TRANSIENT_PROVIDER_ERROR",
+                public_message="Vision provider failed temporarily",
+                retryable=True,
+            )
+        if isinstance(exc, anthropic.RateLimitError):
+            return _VisionExtractionFailure(
+                code="TRANSIENT_PROVIDER_ERROR",
+                public_message="Vision provider rate limited the request",
+                retryable=True,
+            )
+        if isinstance(exc, (anthropic.AuthenticationError, anthropic.PermissionDeniedError)):
+            return _VisionExtractionFailure(
+                code="EXTRACTION_CONFIGURATION_ERROR",
+                public_message="Vision provider rejected the configured credentials",
+                retryable=False,
+            )
+        if isinstance(exc, anthropic.APIStatusError):
+            retryable = exc.status_code in {408, 409, 429} or exc.status_code >= 500
+            return _VisionExtractionFailure(
+                code="TRANSIENT_PROVIDER_ERROR" if retryable else "PROVIDER_ERROR",
+                public_message=(
+                    "Vision provider failed temporarily"
+                    if retryable
+                    else "Vision provider could not extract source evidence"
+                ),
+                retryable=retryable,
+            )
+    except ImportError:
+        pass
+    retryable = _looks_transient(exc)
+    return _VisionExtractionFailure(
+        code="TRANSIENT_PROVIDER_ERROR" if retryable else "PROVIDER_ERROR",
+        public_message=(
+            "Vision provider failed temporarily"
+            if retryable
+            else "Vision provider could not extract source evidence"
+        ),
+        retryable=retryable,
+    )
 
 
 class _VisionExtractionFailure(Exception):
@@ -674,21 +813,25 @@ def _build_result(
     observations: list[ExtractedEvidence],
     units_attempted: int,
     units_completed: int,
+    empty_units: int = 0,
     warnings: list[str] | None = None,
     errors: list[ExtractionError] | None = None,
 ) -> ExtractionResult:
     warnings = list(warnings or [])
     errors = list(errors or [])
-    if not observations and not errors:
+    # No observations, no explicit empty-unit classification and no recorded
+    # errors can never read as success — that combination is NO_EVIDENCE.
+    if not observations and not empty_units and not errors:
         errors.append(
             ExtractionError(
                 code="NO_EVIDENCE",
                 message="Extraction completed without any non-empty source observations",
             )
         )
-    if observations and errors:
+    observed_or_empty = bool(observations) or empty_units > 0
+    if observed_or_empty and errors:
         status = ExtractionStatus.PARTIAL
-    elif observations:
+    elif observed_or_empty:
         status = ExtractionStatus.COMPLETE
     else:
         status = ExtractionStatus.FAILED
@@ -698,6 +841,7 @@ def _build_result(
         observations=tuple(observations),
         units_attempted=units_attempted,
         units_completed=units_completed,
+        empty_units=empty_units,
         warnings=tuple(warnings),
         errors=tuple(errors),
     )
@@ -801,6 +945,89 @@ def _pdf_text_is_reliable(text: str) -> bool:
 
     suspicious = sum(1 for character in chars if not expected(character))
     return Decimal(suspicious) / Decimal(len(chars)) < Decimal("0.12")
+
+
+# ── PDF page extraction policy (document-level, never semantic) ──────────────
+# A page is classified by text QUALITY and meaningful text COVERAGE plus
+# structural image presence — a few valid characters (page number, footer,
+# watermark) must never mark an image-bearing page as completely observed:
+#
+#   no text / garbled text                          -> VISION (scanned page)
+#   reliable text, >= 3 meaningful lines            -> TEXT only
+#   reliable but sparse text + page images present  -> HYBRID (text + vision)
+#   reliable sparse text, no images                 -> TEXT only (nothing
+#                                                      visual to miss)
+#
+# Hybrid pages keep BOTH evidence sets: text-line and vision observations are
+# distinguishable by extraction method, observation key shape and source
+# location, and no deduplication happens at this layer — legitimate repeated
+# supplier rows must survive verbatim. Overlap resolution is interpretation's
+# job, downstream.
+
+_MIN_MEANINGFUL_TEXT_LINES = 3
+
+_NOISE_LINE_PATTERNS = (
+    re.compile(r"^\d{1,4}$"),                                   # bare page number
+    re.compile(r"^page\s*\d+(\s*(of|/)\s*\d+)?$", re.IGNORECASE),
+    re.compile(r"^[-–—•·.*_=~|]+$"),                            # ruler / separator noise
+    re.compile(r"^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$"),           # bare date footer
+)
+
+
+class _PageDecision:
+    __slots__ = ("keep_text", "vision_required", "note")
+
+    def __init__(self, keep_text: bool, vision_required: bool, note: str | None = None):
+        self.keep_text = keep_text
+        self.vision_required = vision_required
+        self.note = note
+
+
+def _classify_pdf_page(page, page_text: str) -> _PageDecision:
+    has_text = bool(page_text.strip())
+    if not has_text:
+        return _PageDecision(keep_text=False, vision_required=True)
+    if not _pdf_text_is_reliable(page_text):
+        return _PageDecision(keep_text=False, vision_required=True, note="text layer unreliable; using vision")
+    if _meaningful_line_count(page_text) >= _MIN_MEANINGFUL_TEXT_LINES:
+        return _PageDecision(keep_text=True, vision_required=False)
+    if _page_has_images(page):
+        return _PageDecision(
+            keep_text=True,
+            vision_required=True,
+            note="sparse text layer alongside page images; using text and vision (hybrid)",
+        )
+    return _PageDecision(keep_text=True, vision_required=False)
+
+
+def _meaningful_line_count(text: str) -> int:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return sum(1 for line in lines if not _is_noise_line(line))
+
+
+def _is_noise_line(line: str) -> bool:
+    if len(line) < 4:
+        return True
+    return any(pattern.match(line) for pattern in _NOISE_LINE_PATTERNS)
+
+
+def _page_has_images(page) -> bool:
+    """Structural check for image XObjects — no decoding, no OCR."""
+
+    try:
+        resources = page.get("/Resources")
+        if resources is None:
+            return False
+        xobjects = resources.get_object().get("/XObject")
+        if xobjects is None:
+            return False
+        for name in xobjects.get_object():
+            candidate = xobjects.get_object()[name].get_object()
+            if candidate.get("/Subtype") == "/Image":
+                return True
+    except Exception:
+        return False
+    return False
 
 
 def _anthropic_api_key() -> str:

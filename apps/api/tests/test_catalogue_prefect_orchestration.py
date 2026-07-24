@@ -555,3 +555,117 @@ def test_dispatcher_uses_bounded_batches_and_duplicate_dispatch_is_harmless(db, 
     assert result.queued_count == 1
     assert result.submitted_count == 1
     assert called == [first.ingestion_run_id]
+
+
+# ── Fix 5: a claimed run must never remain `running` ───────────────────────
+
+from orchestration import catalogue_flows  # noqa: E402
+from orchestration import catalogue_tasks  # noqa: E402
+from services import catalogue_pipeline_stages as stages  # noqa: E402
+
+
+def _run_status(db, run_id):
+    db.expire_all()
+    return db.query(models.IngestionRun).filter_by(run_uuid=str(run_id)).one().status
+
+
+def _no_downstream(db):
+    assert db.query(models.CatalogueStagingItem).count() == 0
+    assert db.query(models.CatalogueMasteringCandidate).count() == 0
+
+
+def test_stage_error_during_capture_fails_the_run_not_running(db, monkeypatch):
+    result = _submit(db, content=_text_pdf_bytes([HILLS_ROW_TEXT]))
+
+    def boom(_self, _command):
+        raise stages.IdempotencyConflict("Raw Observation already exists with different material input")
+
+    monkeypatch.setattr(stages.RawObservationService, "capture", boom)
+
+    flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
+
+    assert flow_result.terminal_status == "failed"
+    assert flow_result.error_code == "IDEMPOTENCY_CONFLICT"
+    assert _run_status(db, result.ingestion_run_id) == "failed"
+    _no_downstream(db)
+
+
+def test_unexpected_persistence_error_fails_the_run_with_sanitized_status(db, monkeypatch):
+    result = _submit(db, content=_text_pdf_bytes([HILLS_ROW_TEXT]))
+
+    def kaboom(*_a, **_k):
+        raise RuntimeError("psycopg2 connection reset: secret-dsn=postgres://user:pw@host/db")
+
+    monkeypatch.setattr(catalogue_flows, "capture_raw_observations_task", kaboom)
+
+    flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
+
+    assert flow_result.terminal_status == "failed"
+    assert flow_result.error_code == "INTERNAL_PIPELINE_ERROR"
+    assert _run_status(db, result.ingestion_run_id) == "failed"
+    # The sanitized status surfaced to clients carries no internal detail.
+    db.expire_all()
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(result.ingestion_run_id)).one()
+    assert "psycopg2" not in (run.error_summary or "")
+    assert "secret-dsn" not in (run.error_summary or "")
+    _no_downstream(db)
+
+
+def test_envelope_validation_error_during_interpretation_fails_the_run(db, monkeypatch):
+    result = _submit(db, content=_text_pdf_bytes([HILLS_ROW_TEXT]))
+
+    def bad_interpret(*_a, **_k):
+        raise ValueError("evidence envelope invalid")
+
+    monkeypatch.setattr(catalogue_flows, "interpret_raw_evidence_task", bad_interpret)
+
+    flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
+
+    assert flow_result.terminal_status == "failed"
+    assert _run_status(db, result.ingestion_run_id) == "failed"
+    # Evidence captured before the failure is transactionally consistent
+    # (its own atomic batch), and nothing downstream was created.
+    _no_downstream(db)
+
+
+def test_failure_recording_failure_is_logged_and_does_not_mask_original(db, monkeypatch, caplog):
+    import logging as _logging
+
+    result = _submit(db, content=_text_pdf_bytes([HILLS_ROW_TEXT]))
+
+    def boom(*_a, **_k):
+        raise RuntimeError("extraction blew up")
+
+    monkeypatch.setattr(catalogue_flows, "extract_source_evidence_task", boom)
+    monkeypatch.setattr(
+        catalogue_flows,
+        "record_run_failure_task",
+        lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("failure store down")),
+    )
+
+    with caplog.at_level(_logging.ERROR, logger="orchestration.catalogue_flows"):
+        flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
+
+    assert flow_result.terminal_status == "failed"
+    assert flow_result.error_code == "INTERNAL_PIPELINE_ERROR"
+    assert any("could not be recorded" in record.getMessage() for record in caplog.records)
+
+
+def test_transient_provider_error_is_typed_and_retryable_non_transient_is_not(db, monkeypatch):
+    # A transient provider failure surfaced from extraction retries via the
+    # task's typed retry condition; a non-transient one does not.
+    from orchestration.catalogue_types import TransientProviderError as _Transient
+
+    transient = ExtractionResult(
+        status=ExtractionStatus.FAILED,
+        source_format=SourceFormat.PDF,
+        units_attempted=1,
+        units_completed=0,
+        errors=(ExtractionError(code="TRANSIENT_PROVIDER_ERROR", message="throttled", retryable=True),),
+    )
+    monkeypatch.setattr(extraction_adapter, "extract_evidence", lambda *a, **k: transient)
+    asset_run = _submit(db, content=_text_pdf_bytes([HILLS_ROW_TEXT]))
+    with pytest.raises(_Transient):
+        extract_source_evidence(
+            load_and_verify_source_asset(db, ingestion_run_id=asset_run.ingestion_run_id)
+        )

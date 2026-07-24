@@ -499,3 +499,148 @@ def test_review_rejects_stale_candidate_revision_and_staging_key_conflicts(db):
                 idempotency_key="stage-row-1",
             )
         )
+
+
+# ── Stage 4: extracted-evidence persistence boundary ───────────────────────
+
+from services import catalogue_pipeline_persistence as persistence  # noqa: E402
+
+
+def _cell_input(key, *, column_name, raw_value, row_number, page=1):
+    return stages.RawObservationInput(
+        idempotency_key=key,
+        source_location={"page_number": page, "source_object_key": key},
+        raw_cells=(
+            {
+                "cell_reference": f"{column_name}{row_number}",
+                "row_number": row_number,
+                "column_name": column_name,
+                "column_index": 1,
+                "raw_value": raw_value,
+            },
+            {
+                "cell_reference": f"B{row_number}",
+                "row_number": row_number,
+                "column_name": "Empty",
+                "column_index": 2,
+                "raw_value": "",
+            },
+        ),
+        extraction_method="MODEL_VISION",
+        extraction_model="claude-haiku-4-5-20251001",
+        extraction_model_version="claude-haiku-4-5-20251001",
+        extraction_confidence="0.91",
+        source_metadata={"provider_request_id": "msg_batch_1", "observation_key": key},
+    )
+
+
+def test_stage4_persists_verbatim_evidence_metadata_and_lineage(db):
+    _seed_context(db)
+
+    result = stages.RawObservationService(db).capture(
+        stages.CaptureRawObservationsCommand(
+            ingestion_run_id=RUN_ID,
+            supplier_catalogue_id=SOURCE_ID,
+            source_file_id=FILE_ID,
+            supplier_id=14,
+            observations=(_cell_input("page:1:obs:aa:1", column_name="A", raw_value="13.10", row_number=1),),
+        )
+    )
+
+    row = db.query(models.CatalogueRawObservation).one()
+    contract = persistence.raw_observation_to_contract(row)
+    # Lineage survives persistence + reconstruction.
+    assert contract.ingestion_run_id == RUN_ID
+    assert contract.supplier_catalogue_id == SOURCE_ID
+    assert contract.source_file_id == FILE_ID
+    assert contract.raw_observation_id == result.output_ids[0]
+    # Provider/model metadata retained.
+    assert contract.extraction_model == "claude-haiku-4-5-20251001"
+    assert contract.source_metadata.get("provider_request_id") == "msg_batch_1"
+    # Cells preserved verbatim, including the empty cell that is part of the row.
+    values = [(cell.column_name, cell.raw_value) for cell in contract.raw_cells]
+    assert values == [("A", "13.10"), ("Empty", "")]
+    # No interpreted/canonical business fields leaked onto the evidence record.
+    dumped = contract.model_dump()
+    for semantic in ("cost", "currency", "price_basis", "supplier_sku", "product_name", "packaging"):
+        assert semantic not in dumped
+
+
+def test_stage4_keeps_duplicate_rows_at_different_locations_distinct(db):
+    _seed_context(db)
+
+    result = stages.RawObservationService(db).capture(
+        stages.CaptureRawObservationsCommand(
+            ingestion_run_id=RUN_ID,
+            supplier_catalogue_id=SOURCE_ID,
+            source_file_id=FILE_ID,
+            supplier_id=14,
+            observations=(
+                _raw_input(key="page:1:line:5", text="10447 Chicken 82g HK$13.10"),
+                _raw_input(key="page:1:line:9", text="10447 Chicken 82g HK$13.10"),
+            ),
+        )
+    )
+
+    # Byte-identical supplier rows at different source locations remain two
+    # distinct persisted observations — never deduplicated by text.
+    assert result.metrics.created_count == 2
+    assert len(set(result.output_ids)) == 2
+    texts = [row.raw_text for row in db.query(models.CatalogueRawObservation).all()]
+    assert texts == ["10447 Chicken 82g HK$13.10", "10447 Chicken 82g HK$13.10"]
+
+
+def test_stage4_batch_is_atomic_no_partial_persistence_on_failure(db):
+    _seed_context(db)
+
+    # Second observation in the batch is structurally invalid (bad source
+    # location) and raises during contract construction.
+    bad = stages.RawObservationInput(
+        idempotency_key="page:1:line:2",
+        source_location={"page_number": "not-an-int", "source_object_key": "page:1:line:2"},
+        raw_text="10448 Second HK$14.00",
+        extraction_method="MODEL_TEXT",
+    )
+    with pytest.raises(Exception):
+        stages.RawObservationService(db).capture(
+            stages.CaptureRawObservationsCommand(
+                ingestion_run_id=RUN_ID,
+                supplier_catalogue_id=SOURCE_ID,
+                source_file_id=FILE_ID,
+                supplier_id=14,
+                observations=(_raw_input(key="page:1:line:1", text="10447 First HK$13.10"), bad),
+            )
+        )
+
+    db.rollback()
+    # The earlier observation in the same batch must not remain committed.
+    assert db.query(models.CatalogueRawObservation).count() == 0
+
+
+def test_stage4_replay_reuses_observations_and_material_conflict_is_controlled(db):
+    _seed_context(db)
+    command = stages.CaptureRawObservationsCommand(
+        ingestion_run_id=RUN_ID,
+        supplier_catalogue_id=SOURCE_ID,
+        source_file_id=FILE_ID,
+        supplier_id=14,
+        observations=(_raw_input(key="page:1:obs:zz:1", text="10447 Chicken HK$13.10"),),
+    )
+    service = stages.RawObservationService(db)
+
+    first = service.capture(command)
+    replay = service.capture(command)
+    assert first.output_ids == replay.output_ids
+    assert replay.metrics.reused_count == 1
+    assert db.query(models.CatalogueRawObservation).count() == 1
+
+    # Same identity, materially different evidence -> controlled conflict.
+    conflict = stages.CaptureRawObservationsCommand(
+        ingestion_run_id=RUN_ID,
+        supplier_catalogue_id=SOURCE_ID,
+        source_file_id=FILE_ID,
+        supplier_id=14,
+        observations=(_raw_input(key="page:1:obs:zz:1", text="10447 Chicken HK$99.99"),),
+    )
+    with pytest.raises(stages.IdempotencyConflict):
+        service.capture(conflict)

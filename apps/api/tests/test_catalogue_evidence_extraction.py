@@ -146,6 +146,7 @@ def test_vision_extraction_records_actual_provider_metadata_and_png_media_type(m
         return evidence_service._VisionResponse(
             text=json.dumps(
                 {
+                    "page_outcome": "evidence",
                     "observations": [
                         {
                             "raw_text": "ALF-10 | Syringe 10ml | HK$12.50",
@@ -188,6 +189,7 @@ def test_vision_response_rejects_semantic_product_fields(monkeypatch):
         return evidence_service._VisionResponse(
             text=json.dumps(
                 {
+                    "page_outcome": "evidence",
                     "observations": [
                         {
                             "raw_text": "10447 | Product | HK$13.10",
@@ -218,6 +220,7 @@ def test_vision_response_rejects_normalized_numeric_raw_cells(monkeypatch):
         return evidence_service._VisionResponse(
             text=json.dumps(
                 {
+                    "page_outcome": "evidence",
                     "observations": [
                         {
                             "raw_text": None,
@@ -320,3 +323,366 @@ def _write_text_to_page(writer: pypdf.PdfWriter, page, text: str) -> None:
 
 def _escape_pdf_text(text: str) -> str:
     return text.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
+
+
+# ── Page extraction policy (Fix 1) + typed vision outcomes (Fix 2) ──────────
+
+from pypdf.generic import NumberObject  # noqa: E402
+
+
+def _add_image_xobject(writer: pypdf.PdfWriter, page) -> None:
+    image = DecodedStreamObject()
+    image.set_data(b"\x00")
+    image.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Image"),
+            NameObject("/Width"): NumberObject(1),
+            NameObject("/Height"): NumberObject(1),
+            NameObject("/ColorSpace"): NameObject("/DeviceGray"),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+        }
+    )
+    reference = writer._add_object(image)
+    resources = page.get(NameObject("/Resources"))
+    if resources is None:
+        resources = DictionaryObject()
+        page[NameObject("/Resources")] = resources
+    resources[NameObject("/XObject")] = DictionaryObject({NameObject("/Im1"): reference})
+
+
+def _pdf_pages(pages: list[dict]) -> bytes:
+    """Build a PDF from page specs: {"text": str | None, "image": bool}."""
+
+    writer = pypdf.PdfWriter()
+    for spec in pages:
+        page = writer.add_blank_page(width=612, height=792)
+        if spec.get("text"):
+            _write_text_to_page(writer, page, spec["text"])
+        if spec.get("image"):
+            _add_image_xobject(writer, page)
+    output = io.BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def _vision_stub(payloads_by_call: list[dict]):
+    calls = {"count": 0}
+
+    def fake_vision(_content: bytes, *, media_type: str):
+        index = min(calls["count"], len(payloads_by_call) - 1)
+        calls["count"] += 1
+        return evidence_service._VisionResponse(
+            text=json.dumps(payloads_by_call[index]), request_id=f"msg_{calls['count']}"
+        )
+
+    return fake_vision, calls
+
+
+_EVIDENCE_PAYLOAD = {
+    "page_outcome": "evidence",
+    "observations": [
+        {
+            "raw_text": "SCANNED-1 | Scanned Product 500g | HK$99.00",
+            "raw_cells": [],
+            "bounding_box": {"x": 5, "y": 40, "width": 300, "height": 20, "unit": "px"},
+            "confidence": "0.9",
+        }
+    ],
+}
+
+
+def test_hybrid_page_with_only_page_number_still_uses_vision(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, calls = _vision_stub([_EVIDENCE_PAYLOAD])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+    content = _pdf_pages([{"text": "3", "image": True}])
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "hybrid.pdf", "application/pdf")
+
+    assert calls["count"] == 1, "sparse incidental text must not suppress vision"
+    assert result.status == ExtractionStatus.COMPLETE
+    vision_texts = [o.raw_text for o in result.observations if o.extraction_method == ExtractionMethod.MODEL_VISION]
+    assert vision_texts == ["SCANNED-1 | Scanned Product 500g | HK$99.00"]
+    text_lines = [o.raw_text for o in result.observations if o.extraction_method == ExtractionMethod.PDF_TEXT]
+    assert text_lines == ["3"]  # incidental text is still verbatim evidence
+    assert any("hybrid" in warning for warning in result.warnings)
+
+
+def test_hybrid_page_with_short_footer_is_not_silently_completed_without_vision(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    content = _pdf_pages([{"text": "Page 1 of 3", "image": True}])
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "footer.pdf", "application/pdf")
+
+    # The footer is kept as verbatim evidence, but the image-bearing page must
+    # NOT be marked completed without vision — so the page surfaces as
+    # incomplete (units_completed == 0) with a config error, never as a
+    # silently completed page missing its image-based rows.
+    assert result.status == ExtractionStatus.PARTIAL
+    assert result.units_completed == 0
+    assert result.errors[0].code == "EXTRACTION_CONFIGURATION_ERROR"
+    assert result.errors[0].unit_key == "page:1"
+    assert [o.raw_text for o in result.observations] == ["Page 1 of 3"]
+
+
+def test_short_but_meaningful_text_page_without_images_stays_text_only(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+
+    def forbidden_vision(*_a, **_k):
+        raise AssertionError("text-only page must not call vision")
+
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", forbidden_vision)
+    content = _pdf_pages([{"text": "10447 Healthy Cuisine Chicken 82g HK$13.10", "image": False}])
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "short.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert [o.raw_text for o in result.observations] == ["10447 Healthy Cuisine Chicken 82g HK$13.10"]
+
+
+def test_garbled_or_unreliable_text_layer_is_classified_for_vision():
+    # A text layer dominated by unexpected code points is unreliable and must
+    # route to vision with the text discarded — tested directly on the page
+    # policy because a synthetic PDF writer cannot reliably round-trip a
+    # genuinely garbled glyph stream.
+    garbled = chr(0x0450) * 40  # Cyrillic block, outside the expected ranges
+    assert evidence_service._pdf_text_is_reliable(garbled) is False
+    decision = evidence_service._classify_pdf_page(None, garbled)
+    assert decision.keep_text is False
+    assert decision.vision_required is True
+
+    empty_decision = evidence_service._classify_pdf_page(None, "   \n  ")
+    assert empty_decision.keep_text is False
+    assert empty_decision.vision_required is True
+
+
+def test_multi_page_mixture_of_text_scanned_and_hybrid_pages(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, calls = _vision_stub([_EVIDENCE_PAYLOAD])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+    content = _pdf_pages(
+        [
+            {"text": "SKU | Description | Price\nA-1 | First Product | HK$1.00\nA-2 | Second Product | HK$2.00"},
+            {"text": None, "image": True},
+            {"text": "7", "image": True},
+        ]
+    )
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "mixture.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert result.units_attempted == result.units_completed == 3
+    assert calls["count"] == 2  # scanned + hybrid pages
+    by_method: dict = {}
+    for observation in result.observations:
+        by_method[observation.extraction_method] = by_method.get(observation.extraction_method, 0) + 1
+    assert by_method[ExtractionMethod.PDF_TEXT] == 4  # 3 lines + incidental "7"
+    assert by_method[ExtractionMethod.MODEL_VISION] == 2
+
+
+def test_empty_vision_array_without_outcome_fails_the_page(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, _ = _vision_stub([{"observations": []}])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+    content = _pdf_pages([{"text": None, "image": True}])
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "empty.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.FAILED
+    assert result.units_completed == 0
+    assert result.errors[0].code == "MALFORMED_PROVIDER_RESPONSE"
+    assert result.errors[0].unit_key == "page:1"
+
+
+def test_evidence_outcome_with_empty_array_is_malformed_not_empty_page(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, _ = _vision_stub([{"page_outcome": "evidence", "observations": []}])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+
+    result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
+
+    assert result.status == ExtractionStatus.FAILED
+    assert result.errors[0].code == "MALFORMED_PROVIDER_RESPONSE"
+
+
+def test_one_empty_vision_page_in_multipage_pdf_is_partial_not_complete(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, _ = _vision_stub([{"observations": []}])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+    content = _pdf_pages(
+        [
+            {"text": "SKU | Description | Price\nB-1 | Product One | HK$5.00\nB-2 | Product Two | HK$6.00"},
+            {"text": None, "image": True},
+        ]
+    )
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "partial.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.PARTIAL
+    assert result.units_attempted == 2
+    assert result.units_completed == 1
+    assert result.errors[0].unit_key == "page:2"
+
+
+def test_explicit_no_catalogue_evidence_page_is_accounted_without_fake_observations(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    fake_vision, _ = _vision_stub([{"page_outcome": "no_catalogue_evidence", "observations": []}])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+    content = _pdf_pages([{"text": None, "image": True}])
+
+    result = catalogue_evidence_extraction.extract_evidence(content, "cover.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert result.observations == ()
+    assert result.units_attempted == result.units_completed == 1
+    assert result.empty_units == 1
+    assert any("no catalogue evidence" in warning for warning in result.warnings)
+
+
+def test_no_catalogue_evidence_with_observations_is_malformed(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    payload = {"page_outcome": "no_catalogue_evidence", "observations": _EVIDENCE_PAYLOAD["observations"]}
+    fake_vision, _ = _vision_stub([payload])
+    monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
+
+    result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
+
+    assert result.status == ExtractionStatus.FAILED
+    assert result.errors[0].code == "MALFORMED_PROVIDER_RESPONSE"
+
+
+def test_vision_observation_identity_is_stable_across_reordered_retries():
+    def _payload(rows):
+        return json.dumps(
+            {
+                "page_outcome": "evidence",
+                "observations": [
+                    {"raw_text": row, "raw_cells": [], "bounding_box": None, "confidence": "0.9"} for row in rows
+                ],
+            }
+        )
+
+    rows = ["ROW-A | Product A | HK$1.00", "ROW-B | Product B | HK$2.00", "ROW-B | Product B | HK$2.00"]
+    first = evidence_service._VisionResponse(text=_payload(rows), request_id="msg_a")
+    reordered = evidence_service._VisionResponse(text=_payload(list(reversed(rows))), request_id="msg_b")
+
+    observations_a, _ = evidence_service._vision_observations(
+        first, extraction_method=ExtractionMethod.MODEL_VISION, unit_key="page:1", page_number=1
+    )
+    observations_b, _ = evidence_service._vision_observations(
+        reordered, extraction_method=ExtractionMethod.MODEL_VISION, unit_key="page:1", page_number=1
+    )
+
+    keys_a = {o.observation_key for o in observations_a}
+    keys_b = {o.observation_key for o in observations_b}
+    assert keys_a == keys_b, "identical evidence must keep identical identities across reordered retries"
+    assert len(keys_a) == 3  # the duplicate row keeps a distinct ordinal identity
+
+
+def test_provider_failure_classification_uses_typed_sdk_exceptions():
+    import anthropic
+    import httpx
+
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+
+    timeout = evidence_service._classify_provider_failure(anthropic.APITimeoutError(request=request))
+    assert timeout.retryable is True
+
+    rate_limited = evidence_service._classify_provider_failure(
+        anthropic.RateLimitError("rate limited", response=httpx.Response(429, request=request), body=None)
+    )
+    assert rate_limited.retryable is True
+
+    unauthorized = evidence_service._classify_provider_failure(
+        anthropic.AuthenticationError("bad key", response=httpx.Response(401, request=request), body=None)
+    )
+    assert unauthorized.retryable is False
+    assert unauthorized.code == "EXTRACTION_CONFIGURATION_ERROR"
+
+    bad_request = evidence_service._classify_provider_failure(
+        anthropic.BadRequestError("schema violation", response=httpx.Response(400, request=request), body=None)
+    )
+    assert bad_request.retryable is False
+
+
+# ── Stage 3 architectural boundary: extraction must not reach interpretation
+#    or any later stage; Anthropic is allowed only in the provider seam. ─────
+
+import ast  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+
+def _import_closure(seed_modules: list[str]) -> set[str]:
+    backend_root = Path(__file__).resolve().parent.parent
+
+    def _local_path(module_name: str) -> Path | None:
+        as_file = backend_root / (module_name.replace(".", "/") + ".py")
+        if as_file.exists():
+            return as_file
+        as_package = backend_root / module_name.replace(".", "/") / "__init__.py"
+        return as_package if as_package.exists() else None
+
+    def _imports_of(path: Path, module_name: str) -> set[str]:
+        package = module_name if path.name == "__init__.py" else module_name.rsplit(".", 1)[0]
+        names: set[str] = set()
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                names.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:
+                    names.add(f"{package}.{node.module}" if node.module else package)
+                elif node.module:
+                    names.add(node.module)
+        return names
+
+    visited: set[str] = set()
+    queue = list(seed_modules)
+    while queue:
+        module_name = queue.pop()
+        if module_name in visited:
+            continue
+        visited.add(module_name)
+        path = _local_path(module_name)
+        if path is None:
+            continue
+        queue.extend(_imports_of(path, module_name))
+    return visited
+
+
+def test_stage3_extraction_import_boundary():
+    closure = _import_closure(
+        [
+            "services.catalogue_evidence_extraction",
+            "orchestration.catalogue_extraction_adapter",
+        ]
+    )
+    forbidden = {
+        "services.catalogue_interpretation",       # Intermediate layer
+        "services.extraction_service",             # legacy semantic extraction
+        "services.catalogue_pipeline_stages",      # staging/validation/mastering/serving services
+        "services.tagging_service",
+        "services.sku_service",
+        "services.pricing_service",
+    }
+    hits = forbidden & closure
+    assert not hits, f"Stage 3 extraction closure reaches forbidden modules: {sorted(hits)}"
+
+
+def test_anthropic_is_reachable_only_through_the_stage3_provider_seam():
+    # The extraction ENVELOPE/adapter must not import anthropic directly; the
+    # provider client lives behind the seam inside catalogue_evidence_extraction.
+    adapter_closure = _import_closure(["orchestration.catalogue_extraction_adapter"])
+    assert "services.catalogue_evidence_extraction" in adapter_closure
+
+    backend_root = Path(__file__).resolve().parent.parent
+    seam = (backend_root / "services" / "catalogue_evidence_extraction.py").read_text()
+    # anthropic is imported lazily inside the provider functions, never at module top level.
+    module_level = ast.parse(seam)
+    top_level_imports = {
+        alias.name
+        for node in module_level.body
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    assert "anthropic" not in top_level_imports, "provider client must stay behind the function-level seam"

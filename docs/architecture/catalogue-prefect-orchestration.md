@@ -149,6 +149,56 @@ Runtime-supported source contracts remain:
 
 No supplier contract was promoted by this orchestration task.
 
+## Staging-Layer Hardening (Stage 3 / Stage 4)
+
+**PDF page extraction policy.** Each page is classified document-level (never
+semantically) by text quality AND meaningful-text coverage plus structural
+image presence: no/garbled text → vision; reliable text with ≥3 meaningful
+lines → text-only; reliable but sparse text with page images → hybrid (text +
+vision); reliable sparse text with no images → text-only. Noise lines (bare
+page numbers, footers, rulers, dates) do not count toward coverage, so a
+watermark or page number can never mark an image-bearing page complete. Hybrid
+pages keep BOTH evidence sets — no deduplication at this layer; legitimate
+repeated supplier rows survive verbatim.
+
+**Vision provider outcome contract.** The provider returns a typed page
+envelope with a required `page_outcome` of `evidence` or
+`no_catalogue_evidence`. An empty observation array is accepted ONLY with an
+explicit `no_catalogue_evidence` classification (counted in `empty_units`,
+never as a fake observation); an empty array without classification, or
+`evidence` with no observations, is a malformed-provider error carrying the
+page/unit key. This prevents provider truncation from masquerading as an empty
+page.
+
+**Completeness accounting.** A unit (PDF page, XLSX sheet, CSV parse, image)
+counts as completed only when fully observed or explicitly classified empty.
+No observations + no explicit empty classification + no errors is `NO_EVIDENCE`
+(failed), never `COMPLETE`. Any unit error downgrades the result to `PARTIAL`.
+
+**Provider seam + retry classification.** `_call_anthropic_vision` is the only
+place the Anthropic client is instantiated (imported lazily, function-level).
+Failures are classified by typed SDK exception: timeouts/connection/rate-limit/
+5xx → retryable; auth/permission → non-retryable configuration error;
+bad-request/schema → non-retryable provider error. Raw provider text is never
+persisted or returned.
+
+**Observation identity.** Vision observation keys are `page:<n>:obs:<digest>:<ordinal>`
+where digest = sha256(raw_text + raw_cells + bounding_box). Identical evidence
+keeps identical identity across reordered provider retries; duplicate rows get
+distinct ordinals; materially changed evidence yields a different digest and
+surfaces as a controlled `IdempotencyConflict` at capture rather than
+corrupting persisted evidence. Stage 4 capture is an atomic batch (commit only
+after all observations are staged); a mid-batch failure leaves nothing
+committed.
+
+**Run failure lifecycle.** Once a run is claimed, every terminal failure in
+Stage 3/4 moves it to `failed` with a sanitized code: `CatalogueOrchestrationError`
+and `CatalogueStageError` map to stable codes; anything unexpected maps to
+`INTERNAL_PIPELINE_ERROR` with full diagnostics logged internally only. A
+run can never remain `running`. A failure-recording failure is logged and
+never masks the original error; retries still occur only for typed transient
+provider errors.
+
 ## Typed Evidence Extraction, then Post-Raw Interpretation
 
 Extraction and interpretation are now separate pipeline boundaries. The legacy

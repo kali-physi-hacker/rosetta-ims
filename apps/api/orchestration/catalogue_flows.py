@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+import re
 from uuid import UUID
 
 from prefect import flow
+
+from services import catalogue_pipeline_stages as stages
 
 from .catalogue_tasks import (
     build_staging_items_task,
@@ -29,6 +33,8 @@ from .catalogue_types import (
     RunNotFound,
     TerminalRunReplay,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @flow(name="catalogue-ingestion")
@@ -94,5 +100,56 @@ def catalogue_ingestion_flow(*, ingestion_run_id: UUID) -> CatalogueFlowResult:
         return finalized
     except CatalogueOrchestrationError as exc:
         if not isinstance(exc, RunNotFound):
-            record_run_failure_task(run_id, exc.error_code, exc.public_message())
+            _record_failure_safely(run_id, exc.error_code, exc.public_message())
         return failure_result(run_id, exc)
+    except stages.CatalogueStageError as exc:
+        # Expected persistence/idempotency failures: once claimed, the run
+        # must never remain `running`. Map to a stable, sanitized stage code.
+        code = _stage_error_code(exc)
+        message = _stage_error_message(exc, code)
+        _record_failure_safely(run_id, code, message)
+        return CatalogueFlowResult(
+            ingestion_run_id=ingestion_run_id,
+            terminal_status="failed",
+            warnings=(message,),
+            human_review_required=False,
+            error_code=code,
+        )
+    except Exception:
+        # Unexpected failure: log full diagnostics internally, persist only a
+        # sanitized failure state, and never leave the run `running`.
+        logger.exception("catalogue ingestion run %s failed unexpectedly", run_id)
+        message = "Catalogue ingestion failed unexpectedly"
+        _record_failure_safely(run_id, "INTERNAL_PIPELINE_ERROR", message)
+        return CatalogueFlowResult(
+            ingestion_run_id=ingestion_run_id,
+            terminal_status="failed",
+            warnings=(message,),
+            human_review_required=False,
+            error_code="INTERNAL_PIPELINE_ERROR",
+        )
+
+
+def _record_failure_safely(run_id: str, error_code: str, message: str) -> None:
+    """Durably fail the run; a failure-recording failure is logged, never masked."""
+
+    try:
+        record_run_failure_task(run_id, error_code, message)
+    except Exception:
+        logger.exception(
+            "catalogue ingestion run %s failed (%s) but the failure state could not be recorded",
+            run_id,
+            error_code,
+        )
+
+
+def _stage_error_code(exc: stages.CatalogueStageError) -> str:
+    name = type(exc).__name__
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).upper()
+
+
+def _stage_error_message(exc: stages.CatalogueStageError, code: str) -> str:
+    # ConcurrentModification wraps raw database driver text — never expose it.
+    if isinstance(exc, stages.ConcurrentModification):
+        return "Concurrent modification detected while persisting catalogue evidence"
+    return str(exc) or code
