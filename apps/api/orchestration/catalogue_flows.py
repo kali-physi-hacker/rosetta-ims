@@ -13,10 +13,11 @@ from .catalogue_tasks import (
     extract_source_evidence_task,
     failure_result,
     finalize_run_task,
+    interpret_raw_evidence_task,
     load_and_claim_run_task,
-    load_and_verify_source_task,
     log_flow_result,
     prepare_eligible_candidates_task,
+    raw_stage_task,
     record_run_failure_task,
     resolve_recorded_contract_task,
     terminal_replay_result_task,
@@ -53,26 +54,29 @@ def catalogue_ingestion_flow(*, ingestion_run_id: UUID) -> CatalogueFlowResult:
         return failure_result(run_id, exc)
 
     try:
-        source = load_and_verify_source_task(run_id)
+        # Raw stage completes (file preserved, verified and audited) before any
+        # stage that tries to understand the file becomes reachable.
+        raw = raw_stage_task(run_id)
         runtime_contract = resolve_recorded_contract_task(run_id)
-        rows, rejected_count, extraction_warnings = extract_source_evidence_task(source, runtime_contract)
-        raw_ids, raw_created, raw_reused = capture_raw_observations_task(source, rows)
-        staging_ids, staging_created, staging_reused = build_staging_items_task(rows, raw_ids, runtime_contract)
+        evidence = extract_source_evidence_task(run_id)
+        raw_ids, raw_created, raw_reused = capture_raw_observations_task(raw.run_identity, evidence.observations)
+        interpretation = interpret_raw_evidence_task(evidence.observations, raw_ids, runtime_contract)
+        staging_ids, staging_created, staging_reused = build_staging_items_task(interpretation)
         validation_created, validation_reused, blocking_count = evaluate_staging_items_task(staging_ids)
         candidate_created, candidate_reused, candidate_warnings = prepare_eligible_candidates_task(
-            source,
-            rows,
+            raw.run_identity,
             staging_ids,
+            interpretation,
         )
-        warnings = tuple(extraction_warnings) + tuple(candidate_warnings)
-        if rejected_count or blocking_count or validation_created or validation_reused or warnings:
+        warnings = tuple(evidence.warnings) + tuple(interpretation.warnings) + tuple(candidate_warnings)
+        if evidence.rejected_units or blocking_count or validation_created or validation_reused or warnings:
             terminal_status = "completed_with_warnings"
         else:
             terminal_status = "completed"
         result = CatalogueFlowResult(
             ingestion_run_id=ingestion_run_id,
             terminal_status=terminal_status,
-            rows_extracted=len(rows),
+            rows_extracted=len(evidence.observations),
             raw_observations_created=raw_created,
             raw_observations_reused=raw_reused,
             staging_items_created=staging_created,
@@ -81,7 +85,7 @@ def catalogue_ingestion_flow(*, ingestion_run_id: UUID) -> CatalogueFlowResult:
             validation_issues_reused=validation_reused,
             mastering_candidates_created=candidate_created,
             mastering_candidates_reused=candidate_reused,
-            rows_rejected=rejected_count,
+            rows_rejected=evidence.rejected_units,
             warnings=warnings,
             human_review_required=True,
         )

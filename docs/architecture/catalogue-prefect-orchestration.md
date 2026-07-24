@@ -57,10 +57,11 @@ Task sequence:
 | Task | Responsibility | Retry policy |
 |---|---|---|
 | `load-and-claim-catalogue-run` | Atomically move `queued` to `running`. | No retry. Duplicate claim is a typed result. |
-| `load-and-verify-catalogue-source` | Load the durable source and verify size, path safety, signature and checksum. | No retry for deterministic source errors. |
+| `complete-raw-stage` | File-only raw stage: verify the stored original (existence, size, path safety, signature, checksum), reject password-protected PDFs, record byte size / structural page count / durable completed-or-failed marker, and return a typed `RawStageResult` with identifiers and file metadata but no content. No AI, OCR, parsing or extraction is reachable here. | No retry for deterministic source errors. |
 | `resolve-recorded-supplier-contract` | Resolve exact supplier contract ID/version recorded on the run. | No retry. |
-| `extract-source-located-evidence` | Produce source-located row evidence. | Two retries only for transient provider/network failures. |
+| `extract-source-evidence` | Extraction stage: reload the stored original through its durable `source_ref` (re-verified), then produce verbatim, source-located observations (no semantic parsing). File bytes never cross a task boundary. | Two retries only for transient provider/network failures. |
 | `capture-raw-observations` | Persist `RawObservationV1` records through the stage service. | No retry; idempotency handles replay. |
+| `interpret-raw-evidence` | Propose typed fields from persisted evidence using the recorded contract. Non-catalogue lines (titles, headers) are skipped from Staging; provider outages degrade to unproposed fields routed to review. | Two retries only for transient provider failures. |
 | `build-staging-items` | Persist `StagingCatalogueItemV1` records linked to raw observations. | No retry; idempotency handles replay. |
 | `evaluate-staging-items` | Persist durable validation issues. | No retry; issue keys deduplicate. |
 | `prepare-pending-review-candidates` | Create pending-review mastering candidates for unblocked staging items. | No retry; blocking issues are expected business outcomes. |
@@ -86,12 +87,15 @@ sequenceDiagram
     Dispatch->>DB: scan bounded queued runs
     Dispatch->>Flow: run UUID
     Flow->>DB: claim queued -> running
-    Flow->>Store: load source_ref below upload root
-    Store-->>Flow: bytes + verified checksum
+    Flow->>Store: RAW STAGE - verify stored original (size, signature, checksum, encryption)
+    Flow->>DB: persist raw completion (byte size, page count, status) - no content
     Flow->>DB: resolve recorded supplier contract
-    Flow->>Extract: extract source-located rows
-    Extract-->>Flow: page-located evidence rows
+    Flow->>Extract: EXTRACTION STAGE - reload original via durable source_ref
+    Flow->>Extract: extract verbatim source evidence
+    Extract-->>Flow: typed, source-located observations
     Flow->>Stage: capture raw observations
+    Flow->>Extract: interpret persisted evidence (contract-guided)
+    Extract-->>Flow: staged-row proposals with per-field evidence
     Flow->>Stage: build staging items
     Flow->>Stage: evaluate validation issues
     Flow->>Stage: prepare pending-review candidates
@@ -145,34 +149,41 @@ Runtime-supported source contracts remain:
 
 No supplier contract was promoted by this orchestration task.
 
-## Source-Evidence Extraction Adapter
+## Typed Evidence Extraction, then Post-Raw Interpretation
 
-The orchestration path adds a source-evidence adapter instead of weakening the
-Raw Observation contract for legacy extraction output.
+Extraction and interpretation are now separate pipeline boundaries. The legacy
+combined extract-and-interpret path (`services.extraction_service.extract`)
+serves only v1 endpoints and is not reachable from orchestration.
 
-For current PDF/PDF-table contracts, the adapter processes one verified PDF page
-at a time and calls the existing extraction service with that page payload. The
-page number is therefore the 1-based page index from the processing boundary,
-not an unverified model claim.
+**Extraction** (`services.catalogue_evidence_extraction` behind the
+`catalogue_extraction_adapter` policy) is contract-independent and records only
+what the source contains and where: spreadsheet cells, CSV rows, PDF text lines
+(with a vision fallback for scanned pages), each as a typed
+`ExtractedEvidence` observation with a stable observation key, source location,
+provider metadata and optional Decimal confidence. `FAILED` results fail the
+run (retryable provider errors retry); `PARTIAL` results carry per-unit errors
+into run warnings with rejected-unit accounting. Every observation is persisted
+as a Raw Observation — including titles and column headers, which are evidence
+even when they are not items.
 
-Each emitted `ExtractedCatalogueRow` contains:
+**Interpretation** (`services.catalogue_interpretation`) runs after Raw
+persistence and is the only place evidence becomes proposals:
 
-- `source_location` with page number and a stable source object key;
-- raw text and optional raw cells;
-- extracted field values;
-- extraction method;
-- model/provider metadata where applicable;
-- Decimal-compatible confidence only when supplied;
-- row warnings.
+- cell-backed observations map deterministically through the contract's
+  declared source columns; rows repeating the declared headers are recognized
+  as header rows and skipped from Staging;
+- text-backed observations are interpreted by the model provider against the
+  contract's prompt section, keyed by observation, with verdicts: a fields
+  object, or null for non-catalogue lines (titles, banners, footers);
+- every proposal carries `FieldEvidence` pointing at its supporting Raw
+  Observation;
+- a missing or failed provider degrades safely: observations stage with raw
+  strings preserved and no proposals, routing to human review. Nothing is
+  invented and the run does not fail.
 
-The adapter rejects legacy stub/error placeholders, empty extractions,
-malformed rows and rows without truthful raw evidence. It does not fabricate
-page numbers, row numbers, bounding boxes, raw text, price basis, packaging
-quantities, sellable-unit counts or MBB semantics.
-
-Hill's and Alfamedic have focused adapter coverage proving page evidence,
-Decimal confidence conversion, raw text preservation, content-measure separation
-and unresolved MBB preservation.
+Interpretation does not fabricate price basis, packaging quantities,
+sellable-unit counts or MBB semantics; ambiguous source text stays verbatim in
+`StagingRawFields` and unresolved semantics surface as validation issues.
 
 ## Raw to Staging to Validation to Candidate
 
@@ -293,7 +304,7 @@ to `0.0.0.0`.
 | `CATALOGUE_ORCHESTRATION_MAX_SOURCE_BYTES` | `26214400` | Max verified source size for orchestration reads. |
 | `CATALOGUE_DISPATCH_BATCH_SIZE` | `10` | Docker worker bounded queued-run batch size. |
 | `CATALOGUE_DISPATCH_INTERVAL_SECONDS` | `30` | Docker worker loop sleep between dispatch scans. |
-| `ANTHROPIC_API_KEY` | unset | Required only when the extraction provider is used. Disabled extraction is treated as non-truthful evidence in the Prefect path. |
+| `ANTHROPIC_API_KEY` | unset | Used by the vision fallback for scanned pages (missing key fails those pages as configuration errors) and by post-Raw interpretation (missing key degrades to unproposed fields routed to review). |
 | `PREFECT_API_URL` | `http://prefect-server:4200/api` in Docker | Prefect API URL used by the catalogue worker. Tests and local one-shot flows can still run with Prefect's local/ephemeral mode. |
 | `PREFECT_UI_BIND` | `127.0.0.1` | Host interface for the Prefect UI port. |
 | `PREFECT_UI_PORT` | `4200` | Host port for the Prefect UI. |

@@ -5,13 +5,13 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
-from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 from uuid import UUID
 
 import pytest
 import pypdf
+from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 os.environ.setdefault("PREFECT_API_MODE", "offline")
@@ -23,18 +23,29 @@ os.environ.setdefault("PREFECT_SERVER_LOGGING_LEVEL", "ERROR")
 import database  # noqa: E402
 import models  # noqa: E402
 import v2.models as v2_models  # noqa: E402
+from orchestration import catalogue_extraction_adapter as extraction_adapter  # noqa: E402
 from orchestration.catalogue_contract_resolution import resolve_recorded_supplier_contract  # noqa: E402
 from orchestration.catalogue_dispatch import dispatch_queued_runs  # noqa: E402
-from orchestration.catalogue_extraction_adapter import (  # noqa: E402
-    ExtractionEvidenceError,
-    extract_source_evidence,
-    staging_payload_from_extracted_row,
-)
+from orchestration.catalogue_extraction_adapter import extract_source_evidence  # noqa: E402
 from orchestration.catalogue_flows import catalogue_ingestion_flow  # noqa: E402
 from orchestration.catalogue_run_lifecycle import claim_queued_run, terminal_result_for_replay  # noqa: E402
 from orchestration.catalogue_source_loader import SourceVerificationError, load_and_verify_source_asset  # noqa: E402
-from orchestration.catalogue_types import DuplicateRunClaim, RecordedContractError  # noqa: E402
-from services import extraction_service  # noqa: E402
+from orchestration.catalogue_types import (  # noqa: E402
+    DuplicateRunClaim,
+    ExtractionEvidenceError,
+    RecordedContractError,
+    TransientProviderError,
+)
+from schemas.catalogue_pipeline.enums import ExtractionMethod, SourceFormat  # noqa: E402
+from schemas.catalogue_pipeline.raw_observation_v1 import SourceLocation  # noqa: E402
+from services import catalogue_interpretation  # noqa: E402
+from services.catalogue_evidence_extraction import (  # noqa: E402
+    ExtractedEvidence,
+    ExtractionError,
+    ExtractionResult,
+    ExtractionStatus,
+)
+from services.catalogue_interpretation import interpret_observations  # noqa: E402
 from services.catalogue_submission import CatalogueSubmissionCommand, CatalogueSubmissionService  # noqa: E402
 
 
@@ -42,10 +53,26 @@ models.Base.metadata.create_all(bind=database.engine)
 database.run_migrations(database.engine)
 
 
+HILLS_ROW_TEXT = "10447 Healthy Cuisine Chicken 82g HK$13.10"
+HILLS_FIELDS = {
+    "description": "Hill's Healthy Cuisine Chicken 82g",
+    "brand": "Hill's",
+    "category": "Food",
+    "supplier_sku": "10447",
+    "barcode": "052742104470",
+    "cost_price": 13.1,
+    "pack_size": "82g",
+    "variant": "82g",
+    "confidence": "0.96",
+    "bulk_buy_tiers": "ambiguous offer text",
+}
+
+
 @pytest.fixture()
 def db(tmp_path, monkeypatch):
     monkeypatch.setenv("CATALOGUE_UPLOAD_DIR", str(tmp_path / "uploads"))
     monkeypatch.setenv("CATALOGUE_ORCHESTRATION_MAX_SOURCE_BYTES", str(1024 * 1024))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     session = database.SessionLocal()
     try:
         _reset(session)
@@ -105,7 +132,42 @@ def _pdf_bytes(page_count: int = 1) -> bytes:
     return output.getvalue()
 
 
-def _submit(session, *, supplier_id: int = 14, contract_id: str | None = None, contract_version: str | None = None):
+def _text_pdf_bytes(lines: list[str]) -> bytes:
+    writer = pypdf.PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+    font_ref = writer._add_object(font)
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font_ref})}
+    )
+    parts = ["BT", "/F1 10 Tf", "36 750 Td", "14 TL"]
+    for line in lines:
+        escaped = line.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
+        parts.append(f"({escaped}) Tj")
+        parts.append("T*")
+    parts.append("ET")
+    stream = DecodedStreamObject()
+    stream.set_data("\n".join(parts).encode("utf-8"))
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def _submit(
+    session,
+    *,
+    supplier_id: int = 14,
+    contract_id: str | None = None,
+    contract_version: str | None = None,
+    content: bytes | None = None,
+):
     service = CatalogueSubmissionService(
         session,
         upload_root=os.environ["CATALOGUE_UPLOAD_DIR"],
@@ -116,7 +178,7 @@ def _submit(session, *, supplier_id: int = 14, contract_id: str | None = None, c
             supplier_id=supplier_id,
             original_filename="fixture.pdf",
             content_type="application/pdf",
-            stream=BytesIO(_pdf_bytes()),
+            stream=BytesIO(content if content is not None else _pdf_bytes()),
             contract_id=contract_id,
             contract_version=contract_version,
             idempotency_key=None,
@@ -130,42 +192,18 @@ def _source_path(session) -> Path:
     return Path(os.environ["CATALOGUE_UPLOAD_DIR"]) / source.source_ref
 
 
-def _hills_rows(_content, _filename, _content_type, contract=None):
-    return (
-        [
-            {
-                "description": "Hill's Healthy Cuisine Chicken 82g",
-                "brand": "Hill's",
-                "category": "Food",
-                "supplier_sku": "10447",
-                "barcode": "052742104470",
-                "cost_price": 13.1,
-                "pack_size": "82g",
-                "variant": "82g",
-                "confidence": 0.96,
-                "_raw_text": "10447 Healthy Cuisine Chicken 82g HK$13.10",
-                "bulk_buy_tiers": "ambiguous offer text",
-            }
-        ],
-        "pdf",
-    )
-
-
-def _alfamedic_rows(_content, _filename, _content_type, contract=None):
-    return (
-        [
-            {
-                "description": "Syringe 10ml",
-                "brand": "Alfamedic",
-                "supplier_sku": "ALF-10",
-                "cost_price": "12.50",
-                "pack_size": "10 pieces",
-                "order_increment_qty": "10",
-                "confidence": "0.91",
-                "_raw_text": "ALF-10 Syringe 10ml 10 pieces HK$12.50",
-            }
-        ],
-        "pdf",
+def _evidence(
+    *,
+    key: str = "page:1:line:1",
+    text: str | None = HILLS_ROW_TEXT,
+    page: int = 1,
+) -> ExtractedEvidence:
+    return ExtractedEvidence(
+        observation_key=key,
+        source_location=SourceLocation(page_number=page, source_object_key=key),
+        raw_text=text,
+        extraction_method=ExtractionMethod.PDF_TEXT,
+        provider="pypdf",
     )
 
 
@@ -254,68 +292,122 @@ def test_recorded_contract_resolution_rejects_unsupported_unknown_mismatch_and_d
         resolve_recorded_supplier_contract(db, ingestion_run_id=result.ingestion_run_id)
 
 
-def test_extraction_adapter_preserves_hills_page_evidence_and_unresolved_mbb(db, monkeypatch):
+def test_real_pdf_text_extraction_produces_line_observations(db):
+    result = _submit(db, content=_text_pdf_bytes(["Hill's price list", HILLS_ROW_TEXT]))
+    asset = load_and_verify_source_asset(db, ingestion_run_id=result.ingestion_run_id)
+
+    outcome = extract_source_evidence(asset)
+
+    assert outcome.rejected_units == 0
+    assert outcome.warnings == ()
+    assert [observation.observation_key for observation in outcome.observations] == [
+        "page:1:line:1",
+        "page:1:line:2",
+    ]
+    assert outcome.observations[1].raw_text == HILLS_ROW_TEXT
+    assert outcome.observations[1].extraction_method == ExtractionMethod.PDF_TEXT
+    assert outcome.observations[1].source_location.page_number == 1
+
+
+def test_extraction_policy_maps_partial_and_failed_results(db, monkeypatch):
     result = _submit(db)
     asset = load_and_verify_source_asset(db, ingestion_run_id=result.ingestion_run_id)
-    contract = resolve_recorded_supplier_contract(db, ingestion_run_id=result.ingestion_run_id)
-    monkeypatch.setattr(extraction_service, "extract", _hills_rows)
 
-    extracted = extract_source_evidence(asset, contract)
-
-    assert extracted.rejected_count == 0
-    row = extracted.rows[0]
-    assert row.source_location["page_number"] == 1
-    assert row.raw_text == "10447 Healthy Cuisine Chicken 82g HK$13.10"
-    assert row.extraction_confidence == Decimal("0.96")
-
-    raw_fields, proposed = staging_payload_from_extracted_row(
-        row,
-        raw_observation_id=UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
-        runtime_contract=contract,
+    partial = ExtractionResult(
+        status=ExtractionStatus.PARTIAL,
+        source_format=SourceFormat.PDF,
+        observations=(_evidence(),),
+        units_attempted=2,
+        units_completed=1,
+        errors=(ExtractionError(code="SOURCE_PAGE_READ_ERROR", message="page 2 could not be read", unit_key="page:2"),),
     )
-    assert raw_fields["mbb_text"] == "ambiguous offer text"
-    assert proposed["mbb_terms"] == []
-    assert "sellable_units_per_purchase_unit" not in proposed["packaging"]
-    assert proposed["packaging"]["content_amount"] == "82"
+    monkeypatch.setattr(extraction_adapter, "extract_evidence", lambda *a, **k: partial)
+    outcome = extract_source_evidence(asset)
+    assert outcome.rejected_units == 1
+    assert outcome.warnings == ("page:2: page 2 could not be read",)
+    assert len(outcome.observations) == 1
+
+    transient = ExtractionResult(
+        status=ExtractionStatus.FAILED,
+        source_format=SourceFormat.PDF,
+        units_attempted=1,
+        units_completed=0,
+        errors=(ExtractionError(code="TRANSIENT_PROVIDER_ERROR", message="provider throttled", retryable=True),),
+    )
+    monkeypatch.setattr(extraction_adapter, "extract_evidence", lambda *a, **k: transient)
+    with pytest.raises(TransientProviderError, match="throttled"):
+        extract_source_evidence(asset)
+
+    failed = ExtractionResult(
+        status=ExtractionStatus.FAILED,
+        source_format=SourceFormat.PDF,
+        units_attempted=1,
+        units_completed=0,
+        errors=(ExtractionError(code="MALFORMED_PDF", message="PDF source could not be read"),),
+    )
+    monkeypatch.setattr(extraction_adapter, "extract_evidence", lambda *a, **k: failed)
+    with pytest.raises(ExtractionEvidenceError, match="could not be read"):
+        extract_source_evidence(asset)
 
 
-def test_extraction_adapter_preserves_alfamedic_page_evidence(db, monkeypatch):
-    result = _submit(db, supplier_id=1, contract_id="alfamedic.price_list.v1", contract_version="v1")
-    asset = load_and_verify_source_asset(db, ingestion_run_id=result.ingestion_run_id)
-    contract = resolve_recorded_supplier_contract(db, ingestion_run_id=result.ingestion_run_id)
-    monkeypatch.setattr(extraction_service, "extract", _alfamedic_rows)
-
-    row = extract_source_evidence(asset, contract).rows[0]
-
-    assert row.source_location["page_number"] == 1
-    assert row.extracted_fields["supplier_sku"] == "ALF-10"
-    assert row.extraction_confidence == Decimal("0.91")
-
-
-def test_extraction_adapter_rejects_stub_errors_empty_and_missing_evidence(db, monkeypatch):
+def test_interpretation_maps_hills_row_and_preserves_unresolved_mbb(db, monkeypatch):
     result = _submit(db)
-    asset = load_and_verify_source_asset(db, ingestion_run_id=result.ingestion_run_id)
     contract = resolve_recorded_supplier_contract(db, ingestion_run_id=result.ingestion_run_id)
+    observation = _evidence()
+    raw_id = UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+    monkeypatch.setattr(
+        catalogue_interpretation,
+        "_model_interpret_rows",
+        lambda rows, _contract: {observation.observation_key: dict(HILLS_FIELDS)},
+    )
+
+    outcome = interpret_observations((observation,), (raw_id,), contract)
+
+    assert outcome.skipped_count == 0
+    item = outcome.items[0]
+    assert item.observation_key == observation.observation_key
+    assert item.raw_fields["mbb_text"] == "ambiguous offer text"
+    assert item.raw_fields["cost"] == "13.1"
+    assert item.proposed_fields["mbb_terms"] == []
+    assert item.proposed_fields["supplier_sku"]["value"] == "10447"
+    assert item.proposed_fields["supplier_sku"]["evidence"]["raw_observation_id"] == str(raw_id)
+    assert item.proposed_fields["supplier_sku"]["evidence"]["field_path"] == "/raw_text"
+    assert item.proposed_fields["cost"]["amount"] == "13.1"
+    assert item.proposed_fields["packaging"]["content_amount"] == "82"
+    assert "sellable_units_per_purchase_unit" not in item.proposed_fields["packaging"]
+
+
+def test_interpretation_skips_non_catalogue_rows(db, monkeypatch):
+    result = _submit(db)
+    contract = resolve_recorded_supplier_contract(db, ingestion_run_id=result.ingestion_run_id)
+    header = _evidence(key="page:1:line:1", text="Supplier SKU | Description | Cost")
+    row = _evidence(key="page:1:line:2")
+    ids = (UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"), UUID("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"))
 
     monkeypatch.setattr(
-        extraction_service,
-        "extract",
-        lambda *_a, **_k: ([{"_stub": True, "description": "[AI extraction disabled] fixture"}], "pdf"),
+        catalogue_interpretation,
+        "_model_interpret_rows",
+        lambda rows, _contract: {header.observation_key: None, row.observation_key: dict(HILLS_FIELDS)},
     )
-    with pytest.raises(ExtractionEvidenceError, match="no truthful rows"):
-        extract_source_evidence(asset, contract)
+    outcome = interpret_observations((header, row), ids, contract)
+    assert outcome.skipped_count == 1
+    assert [item.observation_key for item in outcome.items] == [row.observation_key]
 
-    monkeypatch.setattr(extraction_service, "extract", lambda *_a, **_k: ([], "pdf"))
-    with pytest.raises(ExtractionEvidenceError, match="no rows"):
-        extract_source_evidence(asset, contract)
 
-    monkeypatch.setattr(
-        extraction_service,
-        "extract",
-        lambda *_a, **_k: ([{"description": "No evidence", "confidence": "0.9"}], "pdf"),
-    )
-    with pytest.raises(ExtractionEvidenceError, match="no truthful rows"):
-        extract_source_evidence(asset, contract)
+def test_interpretation_degrades_without_provider(db):
+    # Without a configured provider the real seam degrades: nothing is skipped,
+    # nothing is invented, and every observation stages for manual review.
+    result = _submit(db)
+    contract = resolve_recorded_supplier_contract(db, ingestion_run_id=result.ingestion_run_id)
+    header = _evidence(key="page:1:line:1", text="Supplier SKU | Description | Cost")
+    row = _evidence(key="page:1:line:2")
+    ids = (UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"), UUID("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"))
+
+    degraded = interpret_observations((header, row), ids, contract)
+    assert degraded.skipped_count == 0
+    assert len(degraded.items) == 2
+    assert all(item.proposed_fields.get("cost") is None for item in degraded.items)
+    assert any("not configured" in warning for warning in degraded.warnings)
 
 
 def test_lifecycle_claim_and_terminal_replay_are_safe(db):
@@ -349,8 +441,12 @@ def test_flow_unknown_run_returns_sanitized_failure_result(db):
 
 
 def test_flow_runs_machine_pipeline_and_stops_at_pending_review(db, monkeypatch):
-    result = _submit(db)
-    monkeypatch.setattr(extraction_service, "extract", _hills_rows)
+    result = _submit(db, content=_text_pdf_bytes([HILLS_ROW_TEXT]))
+    monkeypatch.setattr(
+        catalogue_interpretation,
+        "_model_interpret_rows",
+        lambda rows, _contract: {key: dict(HILLS_FIELDS) for key in rows},
+    )
 
     flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
 
@@ -379,24 +475,28 @@ def test_flow_runs_machine_pipeline_and_stops_at_pending_review(db, monkeypatch)
 
 
 def test_flow_records_blocking_validation_and_skips_candidate(db, monkeypatch):
-    result = _submit(db, supplier_id=1, contract_id="alfamedic.price_list.v1", contract_version="v1")
-
-    def by_quote(_content, _filename, _content_type, contract=None):
-        return (
-            [
-                {
-                    "description": "Quoted item",
-                    "supplier_sku": "Q-1",
-                    "cost_price": "By Quote",
-                    "pack_size": "1 piece",
-                    "confidence": "0.8",
-                    "_raw_text": "Q-1 Quoted item By Quote",
-                }
-            ],
-            "pdf",
-        )
-
-    monkeypatch.setattr(extraction_service, "extract", by_quote)
+    quoted_row = "Q-1 Quoted item By Quote"
+    result = _submit(
+        db,
+        supplier_id=1,
+        contract_id="alfamedic.price_list.v1",
+        contract_version="v1",
+        content=_text_pdf_bytes([quoted_row]),
+    )
+    monkeypatch.setattr(
+        catalogue_interpretation,
+        "_model_interpret_rows",
+        lambda rows, _contract: {
+            key: {
+                "description": "Quoted item",
+                "supplier_sku": "Q-1",
+                "cost_price": "By Quote",
+                "pack_size": "1 piece",
+                "confidence": "0.8",
+            }
+            for key in rows
+        },
+    )
 
     flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
 
@@ -406,6 +506,20 @@ def test_flow_records_blocking_validation_and_skips_candidate(db, monkeypatch):
     issue = db.query(v2_models.CatalogueValidationIssue).one()
     assert issue.issue_code == "STAGING_COST_BASIS_UNRESOLVED"
     assert issue.publish_blocking == 1
+
+
+def test_flow_without_interpretation_provider_stages_everything_for_review(db):
+    result = _submit(db, content=_text_pdf_bytes([HILLS_ROW_TEXT]))
+
+    flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
+
+    assert flow_result.terminal_status == "completed_with_warnings"
+    assert flow_result.rows_extracted == 1
+    assert flow_result.staging_items_created == 1
+    assert flow_result.mastering_candidates_created == 1
+    assert any("not configured" in warning for warning in flow_result.warnings)
+    staging = db.query(v2_models.CatalogueStagingItem).one()
+    assert staging.review_requirement in {"NOT_REQUIRED", "RECOMMENDED", "REQUIRED"}
 
 
 def test_flow_failure_is_sanitized_and_durable(db, monkeypatch):

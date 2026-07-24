@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -46,8 +45,10 @@ class ExtractionEvidenceError(CatalogueOrchestrationError):
     error_code = "EXTRACTION_EVIDENCE_ERROR"
 
 
-class TransientExtractionError(CatalogueOrchestrationError):
-    error_code = "TRANSIENT_EXTRACTION_ERROR"
+class TransientProviderError(CatalogueOrchestrationError):
+    """Retryable extraction/interpretation provider failure."""
+
+    error_code = "TRANSIENT_PROVIDER_ERROR"
     retryable = True
 
 
@@ -80,6 +81,26 @@ class VerifiedSourceAsset:
 
 
 @dataclass(frozen=True)
+class RawStageResult:
+    """File-only outcome of the raw stage: identity plus integrity metadata.
+
+    Deliberately carries no file content and nothing interpreted from it —
+    no rows, text, tables, products, model output or confidence values.
+    """
+
+    run_identity: RunIdentity
+    catalogue_import_id: int | None
+    original_filename: str
+    content_type: str | None
+    byte_size: int
+    checksum_sha256: str
+    source_ref: str
+    page_count: int | None
+    received_at: str | None
+    status: str = "completed"
+
+
+@dataclass(frozen=True)
 class RecordedSupplierContract:
     """Exact supplier-source contract identity resolved from persistence."""
 
@@ -91,27 +112,15 @@ class RecordedSupplierContract:
 
 
 @dataclass(frozen=True)
-class ExtractedCatalogueRow:
-    """One source-located row emitted by the orchestration extraction adapter."""
+class EvidenceOutcome:
+    """Typed observations plus completeness accounting from evidence extraction.
 
-    row_key: str
-    source_location: dict[str, Any]
-    raw_text: str | None
-    raw_cells: tuple[dict[str, Any], ...]
-    extracted_fields: dict[str, Any]
-    extraction_method: str
-    extraction_model: str | None = None
-    extraction_model_version: str | None = None
-    extraction_confidence: Decimal | None = None
-    warnings: tuple[str, ...] = ()
+    ``observations`` holds ``services.catalogue_evidence_extraction.ExtractedEvidence``
+    instances; kept untyped here so this module stays import-light for Prefect.
+    """
 
-
-@dataclass(frozen=True)
-class ExtractionEvidenceResult:
-    """Rows plus rejected-row accounting from the extraction adapter."""
-
-    rows: tuple[ExtractedCatalogueRow, ...]
-    rejected_count: int = 0
+    observations: tuple[Any, ...]
+    rejected_units: int = 0
     warnings: tuple[str, ...] = ()
 
 

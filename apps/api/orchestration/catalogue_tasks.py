@@ -8,21 +8,29 @@ from prefect import get_run_logger, task
 
 import database
 from services import catalogue_pipeline_stages as stages
+from services.catalogue_interpretation import (
+    InterpretationOutcome,
+    InterpretationTransientError,
+    interpret_observations,
+)
 
 from .catalogue_contract_resolution import resolve_recorded_supplier_contract
 from .catalogue_extraction_adapter import extract_source_evidence
+from .catalogue_raw_stage import complete_raw_stage
 from .catalogue_run_lifecycle import claim_queued_run, complete_run, fail_run, terminal_result_for_replay
 from .catalogue_source_loader import load_and_verify_source_asset
 from .catalogue_stage_adapter import (
     mastering_command_for_staging,
-    raw_input_from_extracted_row,
-    staging_command_from_extracted_row,
+    raw_input_from_extracted_evidence,
+    staging_command_from_interpretation,
 )
 from .catalogue_types import (
     CatalogueFlowResult,
     CatalogueOrchestrationError,
-    TransientExtractionError,
-    VerifiedSourceAsset,
+    EvidenceOutcome,
+    RawStageResult,
+    RunIdentity,
+    TransientProviderError,
 )
 
 
@@ -44,11 +52,17 @@ def terminal_replay_result_task(ingestion_run_id: str) -> CatalogueFlowResult:
         db.close()
 
 
-@task(name="load-and-verify-catalogue-source", retries=0)
-def load_and_verify_source_task(ingestion_run_id: str) -> VerifiedSourceAsset:
+@task(name="complete-raw-stage", retries=0)
+def raw_stage_task(ingestion_run_id: str) -> RawStageResult:
+    """File-only raw stage: verify, audit and describe the stored original.
+
+    Returns identifiers and integrity metadata without file content. No
+    extraction, parsing or AI provider is reachable from this task.
+    """
+
     db = database.SessionLocal()
     try:
-        return load_and_verify_source_asset(db, ingestion_run_id=UUID(ingestion_run_id))
+        return complete_raw_stage(db, ingestion_run_id=UUID(ingestion_run_id))
     finally:
         db.close()
 
@@ -62,34 +76,48 @@ def resolve_recorded_contract_task(ingestion_run_id: str):
         db.close()
 
 
-def _retry_transient_extraction(_task, _run, state) -> bool:
+def _retry_transient_provider(_task, _run, state) -> bool:
     return _is_transient_failure(state)
 
 
 @task(
-    name="extract-source-located-evidence",
+    name="extract-source-evidence",
     retries=2,
     retry_delay_seconds=10,
-    retry_condition_fn=_retry_transient_extraction,
+    retry_condition_fn=_retry_transient_provider,
 )
-def extract_source_evidence_task(source: VerifiedSourceAsset, runtime_contract) -> tuple:
-    result = extract_source_evidence(source, runtime_contract)
-    return result.rows, result.rejected_count, result.warnings
+def extract_source_evidence_task(ingestion_run_id: str) -> EvidenceOutcome:
+    """Extraction stage: consumes the raw stage's durable source reference.
+
+    Loads (and re-verifies) the stored original itself, so no file bytes ever
+    cross a task boundary and extraction never depends on an in-memory upload
+    surviving beyond the raw stage.
+    """
+
+    db = database.SessionLocal()
+    try:
+        asset = load_and_verify_source_asset(db, ingestion_run_id=UUID(ingestion_run_id))
+    finally:
+        db.close()
+    return extract_source_evidence(asset)
 
 
 @task(name="capture-raw-observations", retries=0)
-def capture_raw_observations_task(source: VerifiedSourceAsset, rows: tuple) -> tuple[tuple[UUID, ...], int, int]:
+def capture_raw_observations_task(
+    identity: RunIdentity,
+    observations: tuple,
+) -> tuple[tuple[UUID, ...], int, int]:
     db = database.SessionLocal()
     try:
         result = stages.RawObservationService(db).capture(
             stages.CaptureRawObservationsCommand(
-                ingestion_run_id=source.run_identity.run_uuid,
-                supplier_catalogue_id=source.run_identity.supplier_catalogue_id,
-                source_file_id=source.run_identity.source_file_id,
-                supplier_id=source.run_identity.supplier_id,
-                contract_id=source.run_identity.contract_id,
-                contract_version=source.run_identity.contract_version,
-                observations=tuple(raw_input_from_extracted_row(row) for row in rows),
+                ingestion_run_id=identity.run_uuid,
+                supplier_catalogue_id=identity.supplier_catalogue_id,
+                source_file_id=identity.source_file_id,
+                supplier_id=identity.supplier_id,
+                contract_id=identity.contract_id,
+                contract_version=identity.contract_version,
+                observations=tuple(raw_input_from_extracted_evidence(observation) for observation in observations),
             )
         )
         return (
@@ -101,26 +129,35 @@ def capture_raw_observations_task(source: VerifiedSourceAsset, rows: tuple) -> t
         db.close()
 
 
-@task(name="build-staging-items", retries=0)
-def build_staging_items_task(
-    rows: tuple,
+@task(
+    name="interpret-raw-evidence",
+    retries=2,
+    retry_delay_seconds=10,
+    retry_condition_fn=_retry_transient_provider,
+)
+def interpret_raw_evidence_task(
+    observations: tuple,
     raw_observation_ids: tuple[UUID, ...],
     runtime_contract,
+) -> InterpretationOutcome:
+    try:
+        return interpret_observations(observations, raw_observation_ids, runtime_contract)
+    except InterpretationTransientError as exc:
+        raise TransientProviderError(str(exc)) from exc
+
+
+@task(name="build-staging-items", retries=0)
+def build_staging_items_task(
+    interpretation: InterpretationOutcome,
 ) -> tuple[tuple[UUID, ...], int, int]:
     db = database.SessionLocal()
     try:
         service = stages.StagingCatalogueService(db)
         output_ids: list[UUID] = []
         created = reused = 0
-        for row, raw_id in zip(rows, raw_observation_ids, strict=True):
-            result = service.build_item(
-                staging_command_from_extracted_row(
-                    row,
-                    raw_observation_id=raw_id,
-                    runtime_contract=runtime_contract,
-                )
-            )
-            output_ids.extend(UUID(str(item)) for item in result.output_ids)
+        for item in interpretation.items:
+            result = service.build_item(staging_command_from_interpretation(item))
+            output_ids.extend(UUID(str(output_id)) for output_id in result.output_ids)
             created += result.metrics.created_count
             reused += result.metrics.reused_count
         return tuple(output_ids), created, reused
@@ -146,22 +183,22 @@ def evaluate_staging_items_task(staging_ids: tuple[UUID, ...]) -> tuple[int, int
 
 @task(name="prepare-pending-review-candidates", retries=0)
 def prepare_eligible_candidates_task(
-    source: VerifiedSourceAsset,
-    rows: tuple,
+    identity: RunIdentity,
     staging_ids: tuple[UUID, ...],
+    interpretation: InterpretationOutcome,
 ) -> tuple[int, int, tuple[str, ...]]:
     db = database.SessionLocal()
     try:
         service = stages.MasteringService(db)
         created = reused = 0
         warnings: list[str] = []
-        for row, staging_id in zip(rows, staging_ids, strict=True):
+        for staging_id, item in zip(staging_ids, interpretation.items, strict=True):
             try:
                 result = service.prepare_candidate(
                     mastering_command_for_staging(
-                        run_identity=source.run_identity,
+                        run_identity=identity,
                         catalogue_item_id=staging_id,
-                        row=row,
+                        item=item,
                     )
                 )
                 created += result.metrics.created_count
@@ -224,7 +261,7 @@ def _is_transient_failure(state) -> bool:
         value = state.result(raise_on_failure=False)
     except Exception:
         return False
-    return isinstance(value, TransientExtractionError)
+    return isinstance(value, TransientProviderError)
 
 
 __all__ = [
@@ -232,10 +269,11 @@ __all__ = [
     "TerminalRunReplay",
     "load_and_claim_run_task",
     "terminal_replay_result_task",
-    "load_and_verify_source_task",
+    "raw_stage_task",
     "resolve_recorded_contract_task",
     "extract_source_evidence_task",
     "capture_raw_observations_task",
+    "interpret_raw_evidence_task",
     "build_staging_items_task",
     "evaluate_staging_items_task",
     "prepare_eligible_candidates_task",

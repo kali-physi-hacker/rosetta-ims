@@ -17,7 +17,7 @@ from pypdf.generic import (
 from orchestration.catalogue_stage_adapter import raw_input_from_extracted_evidence
 from schemas.catalogue_pipeline.enums import ExtractionMethod, SourceFormat
 from services import catalogue_evidence_extraction as evidence_service
-from services import extraction_service
+from services import catalogue_evidence_extraction
 from services.catalogue_evidence_extraction import ExtractionStatus
 
 
@@ -31,7 +31,7 @@ def test_pdf_text_extraction_is_verbatim_source_located_and_keeps_duplicates(mon
         ]
     )
 
-    result = extraction_service.extract_evidence(content, "hills.pdf", "application/pdf")
+    result = catalogue_evidence_extraction.extract_evidence(content, "hills.pdf", "application/pdf")
 
     assert result.status == ExtractionStatus.COMPLETE
     assert result.source_format == SourceFormat.PDF
@@ -52,7 +52,7 @@ def test_pdf_reports_partial_extraction_when_one_page_needs_unconfigured_vision(
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     content = _pdf_with_pages(["10447 | Product | HK$13.10", None])
 
-    result = extraction_service.extract_evidence(content, "mixed.pdf", "application/pdf")
+    result = catalogue_evidence_extraction.extract_evidence(content, "mixed.pdf", "application/pdf")
 
     assert result.status == ExtractionStatus.PARTIAL
     assert result.units_attempted == 2
@@ -66,7 +66,7 @@ def test_pdf_reports_partial_extraction_when_one_page_needs_unconfigured_vision(
 def test_scanned_pdf_failure_is_operational_error_not_fake_catalogue_row(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
-    result = extraction_service.extract_evidence(
+    result = catalogue_evidence_extraction.extract_evidence(
         _pdf_with_pages([None]),
         "scan.pdf",
         "application/pdf",
@@ -89,7 +89,7 @@ def test_spreadsheet_preserves_all_sheets_rows_cells_formulas_and_duplicates():
     output = io.BytesIO()
     workbook.save(output)
 
-    result = extraction_service.extract_evidence(
+    result = catalogue_evidence_extraction.extract_evidence(
         output.getvalue(),
         "catalogue.xlsx",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -119,7 +119,7 @@ def test_csv_preserves_coordinates_raw_values_empty_cells_and_duplicate_rows():
         "10447,Healthy Cuisine 82g,HK$13.10,\r\n"
     ).encode()
 
-    result = extraction_service.extract_evidence(content, "catalogue.csv", "text/csv")
+    result = catalogue_evidence_extraction.extract_evidence(content, "catalogue.csv", "text/csv")
 
     assert result.status == ExtractionStatus.COMPLETE
     assert result.source_format == SourceFormat.CSV
@@ -167,7 +167,7 @@ def test_vision_extraction_records_actual_provider_metadata_and_png_media_type(m
 
     monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
 
-    result = extraction_service.extract_evidence(b"png-bytes", "catalogue.png", "image/png")
+    result = catalogue_evidence_extraction.extract_evidence(b"png-bytes", "catalogue.png", "image/png")
 
     assert result.status == ExtractionStatus.COMPLETE
     assert called["media_type"] == "image/png"
@@ -203,7 +203,7 @@ def test_vision_response_rejects_semantic_product_fields(monkeypatch):
 
     monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
 
-    result = extraction_service.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
+    result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
 
     assert result.status == ExtractionStatus.FAILED
     assert result.observations == ()
@@ -240,14 +240,14 @@ def test_vision_response_rejects_normalized_numeric_raw_cells(monkeypatch):
 
     monkeypatch.setattr(evidence_service, "_call_anthropic_vision", fake_vision)
 
-    result = extraction_service.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
+    result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
 
     assert result.status == ExtractionStatus.FAILED
     assert result.errors[0].code == "MALFORMED_PROVIDER_RESPONSE"
 
 
 def test_one_extracted_evidence_maps_to_one_raw_input_without_semantic_mutation():
-    result = extraction_service.extract_evidence(
+    result = catalogue_evidence_extraction.extract_evidence(
         b"Code,Description,Wholesale\n10447,Healthy Cuisine 82g,HK$13.10\n",
         "catalogue.csv",
         "text/csv",
@@ -266,10 +266,10 @@ def test_one_extracted_evidence_maps_to_one_raw_input_without_semantic_mutation(
 
 
 def test_empty_unknown_and_legacy_xls_sources_fail_explicitly():
-    empty = extraction_service.extract_evidence(b"", "empty.csv", "text/csv")
-    unknown = extraction_service.extract_evidence(b"data", "catalogue.bin", "application/octet-stream")
-    legacy_xls = extraction_service.extract_evidence(b"data", "catalogue.xls", "application/vnd.ms-excel")
-    mislabeled_csv = extraction_service.extract_evidence(
+    empty = catalogue_evidence_extraction.extract_evidence(b"", "empty.csv", "text/csv")
+    unknown = catalogue_evidence_extraction.extract_evidence(b"data", "catalogue.bin", "application/octet-stream")
+    legacy_xls = catalogue_evidence_extraction.extract_evidence(b"data", "catalogue.xls", "application/vnd.ms-excel")
+    mislabeled_csv = catalogue_evidence_extraction.extract_evidence(
         b"Code,Description\n10447,Product\n",
         "catalogue.csv",
         "application/vnd.ms-excel",

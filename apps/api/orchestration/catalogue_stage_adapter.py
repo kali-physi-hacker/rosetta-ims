@@ -1,4 +1,4 @@
-"""Adapters from extracted source evidence into existing stage service commands."""
+"""Adapters from evidence and interpretation results into stage service commands."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ from uuid import UUID
 
 from services import catalogue_pipeline_stages as stages
 from services.catalogue_evidence_extraction import ExtractedEvidence
+from services.catalogue_interpretation import InterpretedItem
 
-from .catalogue_extraction_adapter import staging_payload_from_extracted_row
-from .catalogue_types import ExtractedCatalogueRow, RunIdentity
+from .catalogue_types import RunIdentity
 
 
 def raw_input_from_extracted_evidence(evidence: ExtractedEvidence) -> stages.RawObservationInput:
@@ -35,42 +35,16 @@ def raw_input_from_extracted_evidence(evidence: ExtractedEvidence) -> stages.Raw
     )
 
 
-def raw_input_from_extracted_row(row: ExtractedCatalogueRow) -> stages.RawObservationInput:
-    """Compatibility adapter for the legacy combined extraction/parsing row."""
+def staging_command_from_interpretation(item: InterpretedItem) -> stages.BuildStagingItemCommand:
+    """Create a Staging command from one post-Raw interpreted observation."""
 
-    return stages.RawObservationInput(
-        idempotency_key=row.row_key,
-        source_location=row.source_location,
-        raw_text=row.raw_text,
-        raw_cells=row.raw_cells,
-        extraction_method=row.extraction_method,
-        extraction_model=row.extraction_model,
-        extraction_model_version=row.extraction_model_version,
-        extraction_confidence=str(row.extraction_confidence) if row.extraction_confidence is not None else None,
-        source_metadata={"row_key": row.row_key},
-    )
-
-
-def staging_command_from_extracted_row(
-    row: ExtractedCatalogueRow,
-    *,
-    raw_observation_id: UUID,
-    runtime_contract,
-) -> stages.BuildStagingItemCommand:
-    """Create a Staging command while keeping raw and proposed fields separate."""
-
-    raw_fields, proposed_fields = staging_payload_from_extracted_row(
-        row,
-        raw_observation_id=raw_observation_id,
-        runtime_contract=runtime_contract,
-    )
     return stages.BuildStagingItemCommand(
-        raw_observation_ids=(raw_observation_id,),
-        raw_fields=raw_fields,
-        proposed_fields=proposed_fields,
-        idempotency_key=row.row_key,
+        raw_observation_ids=(item.raw_observation_id,),
+        raw_fields=item.raw_fields,
+        proposed_fields=item.proposed_fields,
+        idempotency_key=item.observation_key,
         review_requirement=None,
-        metadata={"source_row_key": row.row_key},
+        metadata={"source_observation_key": item.observation_key},
     )
 
 
@@ -78,18 +52,24 @@ def mastering_command_for_staging(
     *,
     run_identity: RunIdentity,
     catalogue_item_id: UUID,
-    row: ExtractedCatalogueRow,
+    item: InterpretedItem,
 ) -> stages.PrepareMasteringCandidateCommand:
-    """Create a pending-review mastering command without approval/application semantics."""
+    """Create a pending-review mastering command from post-Raw interpretation.
 
-    fields = row.extracted_fields
-    supplier_sku = _text(fields.get("supplier_sku"))
-    product_name = _text(fields.get("description"))
-    barcode = _text(fields.get("barcode"))
+    Supplier identity comes from the persisted run; sku/name/barcode come from
+    the same interpreted fields that produced the staging item. No approval or
+    application semantics are implied here.
+    """
+
+    supplier_sku = _proposal_or_raw(item, "supplier_sku")
+    product_name = _proposal_or_raw(item, "product_name")
+    barcode = _proposal_or_raw(item, "barcode")
     supplier_resolution = {
         "state": "PROPOSED_CREATE" if supplier_sku else "UNRESOLVED",
         "supplier_id": run_identity.supplier_id,
-        "supplier_product_id": f"supplier:{run_identity.supplier_id}:offer:{supplier_sku}" if supplier_sku else None,
+        "supplier_product_id": (
+            f"supplier:{run_identity.supplier_id}:offer:{supplier_sku}" if supplier_sku else None
+        ),
         "supplier_sku": supplier_sku,
         "barcode": barcode,
     }
@@ -103,15 +83,20 @@ def mastering_command_for_staging(
     }
     return stages.PrepareMasteringCandidateCommand(
         catalogue_item_id=catalogue_item_id,
-        idempotency_key=row.row_key,
+        idempotency_key=item.observation_key,
         supplier_product_resolution=supplier_resolution,
         product_variant_resolution=product_resolution,
-        metadata={"source_row_key": row.row_key, "human_review_required": True},
+        metadata={"source_observation_key": item.observation_key, "human_review_required": True},
     )
 
 
-def _text(value) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
+def _proposal_or_raw(item: InterpretedItem, field: str) -> str | None:
+    proposal = item.proposed_fields.get(field)
+    if isinstance(proposal, dict):
+        value = proposal.get("value")
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    raw = item.raw_fields.get(field)
+    if raw is not None and str(raw).strip():
+        return str(raw).strip()
+    return None

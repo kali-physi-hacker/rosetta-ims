@@ -32,6 +32,7 @@ from orchestration.catalogue_flows import catalogue_ingestion_flow  # noqa: E402
 from orchestration.catalogue_run_lifecycle import claim_queued_run  # noqa: E402
 from orchestration.catalogue_types import TerminalRunReplay  # noqa: E402
 from schemas.catalogue_pipeline.enums import ReviewStatus  # noqa: E402
+from services import catalogue_interpretation  # noqa: E402
 from services import catalogue_pipeline_persistence as persistence  # noqa: E402
 from services import catalogue_pipeline_stages as stages  # noqa: E402
 from services import extraction_service, tagging_service  # noqa: E402
@@ -139,12 +140,14 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert source.supplier_source_contract_id == "hills.price_list.v1"
     assert run.supplier_source_contract_id == source.supplier_source_contract_id
 
-    monkeypatch.setattr(extraction_service, "extract", _source_grounded_acceptance_rows)
+    # Evidence extraction runs for real against the text-layer PDF; only the
+    # post-Raw interpretation model is stubbed, keyed by verbatim row text.
+    monkeypatch.setattr(catalogue_interpretation, "_model_interpret_rows", _grounded_interpretation_verdicts)
     flow_result = catalogue_ingestion_flow(ingestion_run_id=run_id)
 
     assert flow_result.terminal_status == "completed_with_warnings"
-    assert flow_result.rows_extracted == 2
-    assert flow_result.raw_observations_created == 2
+    assert flow_result.rows_extracted == 4
+    assert flow_result.raw_observations_created == 4
     assert flow_result.staging_items_created == 2
     assert flow_result.validation_issues_created == 1
     assert flow_result.mastering_candidates_created == 1
@@ -157,17 +160,17 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert status_payload["status"] == "completed_with_warnings"
     assert status_payload["started_at"] is not None
     assert status_payload["completed_at"] is not None
-    assert status_payload["items_extracted"] == 2
+    assert status_payload["items_extracted"] == 4
 
     raw_rows = db.query(v2_models.CatalogueRawObservation).order_by(v2_models.CatalogueRawObservation.id).all()
     staging_rows = db.query(v2_models.CatalogueStagingItem).order_by(v2_models.CatalogueStagingItem.id).all()
-    assert len(raw_rows) == 2
+    assert len(raw_rows) == 4
     assert len(staging_rows) == 2
     for raw_row in raw_rows:
         raw_contract = persistence.raw_observation_to_contract(raw_row)
         assert raw_contract.raw_text
         assert raw_contract.source_location.page_number == 1
-        assert raw_contract.source_location.source_object_key.startswith("page:1:row:")
+        assert raw_contract.source_location.source_object_key.startswith("page:1:line:")
         assert raw_row.ingestion_run_uuid == str(run_id)
 
     raw_texts_before_review = {row.raw_observation_uuid: row.raw_text for row in raw_rows}
@@ -329,7 +332,7 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
 
     replay_flow = catalogue_ingestion_flow(ingestion_run_id=run_id)
     assert replay_flow.terminal_status == "completed_with_warnings"
-    assert db.query(v2_models.CatalogueRawObservation).count() == 2
+    assert db.query(v2_models.CatalogueRawObservation).count() == 4
     assert db.query(v2_models.CatalogueStagingItem).count() == 2
     assert db.query(v2_models.CatalogueMasteringCandidate).count() == 1
     with pytest.raises(TerminalRunReplay):
@@ -355,10 +358,19 @@ def _submit(client: TestClient, source_bytes: bytes, *, idempotency_key: str):
     )
 
 
-def _source_grounded_acceptance_rows(content, filename, content_type, contract=None):
-    rows, source_format = _acceptance_rows(content, filename, content_type, contract=contract)
-    _assert_rows_grounded_on_pdf_page(content, rows, page_number=1)
-    return rows, source_format
+def _grounded_interpretation_verdicts(rows: dict[str, str], runtime_contract) -> dict[str, dict | None]:
+    """Interpretation stub: verdicts keyed by verbatim row text, null for non-rows."""
+
+    acceptance_rows, _ = _acceptance_rows(b"", "fixture.pdf", "application/pdf")
+    by_text = {_fold_text(row["_raw_text"]): row for row in acceptance_rows}
+    verdicts: dict[str, dict | None] = {}
+    for observation_key, raw_text in rows.items():
+        match = by_text.get(_fold_text(raw_text))
+        if match is None:
+            verdicts[observation_key] = None
+            continue
+        verdicts[observation_key] = {k: v for k, v in match.items() if not k.startswith("_")}
+    return verdicts
 
 
 def _acceptance_rows(_content, _filename, _content_type, contract=None):
@@ -432,7 +444,7 @@ def _assert_served_field_lineage(
     assert raw_contract.supplier_catalogue_id == UUID(source.supplier_catalogue_uuid)
     assert raw_contract.source_file_id == UUID(source.source_file_uuid)
     assert raw_contract.source_location.page_number == 1
-    assert raw_contract.source_location.source_object_key == "page:1:row:1"
+    assert raw_contract.source_location.source_object_key == "page:1:line:3"
     assert raw_row.raw_text == raw_texts_before_review[raw_row.raw_observation_uuid]
     assert "13.10" in raw_contract.raw_text
     page_text = _pdf_page_text(source_bytes, page_number=raw_contract.source_location.page_number)

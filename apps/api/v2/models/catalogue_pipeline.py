@@ -59,6 +59,12 @@ class CatalogueSourceDocument(Base):
     document_type = Column(String, nullable=True)
     status = Column(String, nullable=False, default="active")
     source_metadata_json = Column(Text, nullable=True)
+    # Raw-stage completion metadata — file-level facts only, written by the
+    # raw stage after verifying the stored original against its checksum.
+    byte_size = Column(Integer, nullable=True)
+    page_count = Column(Integer, nullable=True)          # lightweight structural count; PDFs only
+    raw_stage_status = Column(String, nullable=True)     # 'completed' | 'failed'
+    raw_stage_completed_at = Column(String, nullable=True)
     created_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=True)
 

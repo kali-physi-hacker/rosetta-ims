@@ -322,6 +322,14 @@ def run_migrations(engine):
         "ON catalogue_ingestion_runs(supplier_id, supplier_source_contract_id, supplier_source_contract_version)",
         "CREATE INDEX IF NOT EXISTS ix_ingestion_runs_pipeline_source_document "
         "ON catalogue_ingestion_runs(catalogue_source_document_id)",
+        # ── Raw-stage completion metadata (file-level only) ────────────────────
+        # The raw stage persists what was received and verified: exact size,
+        # structural page count for PDFs, and a durable completed/failed marker.
+        # Additive and nullable for existing rows.
+        "ALTER TABLE catalogue_source_documents ADD COLUMN byte_size INTEGER",
+        "ALTER TABLE catalogue_source_documents ADD COLUMN page_count INTEGER",
+        "ALTER TABLE catalogue_source_documents ADD COLUMN raw_stage_status TEXT",
+        "ALTER TABLE catalogue_source_documents ADD COLUMN raw_stage_completed_at TEXT",
     ]
     with engine.connect() as conn:
         for sql in stmts:
