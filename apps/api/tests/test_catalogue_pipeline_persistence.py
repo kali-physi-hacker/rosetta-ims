@@ -18,7 +18,6 @@ os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 
 import database  # noqa: E402
 import models  # noqa: E402
-import v2.models as v2_models  # noqa: E402
 from schemas.catalogue_pipeline import (  # noqa: E402
     MasteringCandidateV1,
     RawObservationV1,
@@ -62,19 +61,19 @@ def db():
 
 def _reset(session) -> None:
     for model in (
-        v2_models.CatalogueServingPublication,
-        v2_models.CatalogueSupplierMbbTerm,
-        v2_models.CatalogueSupplierPrice,
-        v2_models.CataloguePackagingConfiguration,
-        v2_models.CatalogueSupplierProduct,
-        v2_models.CatalogueReviewDecision,
-        v2_models.CatalogueMasteringCandidate,
-        v2_models.CatalogueValidationIssue,
-        v2_models.CatalogueStagingRawObservation,
-        v2_models.CatalogueStagingItem,
-        v2_models.CatalogueRawObservation,
-        v2_models.IngestionRun,
-        v2_models.CatalogueSourceDocument,
+        models.CatalogueServingPublication,
+        models.CatalogueSupplierMbbTerm,
+        models.CatalogueSupplierPrice,
+        models.CataloguePackagingConfiguration,
+        models.CatalogueSupplierProduct,
+        models.CatalogueReviewDecision,
+        models.CatalogueMasteringCandidate,
+        models.CatalogueValidationIssue,
+        models.CatalogueStagingRawObservation,
+        models.CatalogueStagingItem,
+        models.CatalogueRawObservation,
+        models.IngestionRun,
+        models.CatalogueSourceDocument,
     ):
         session.query(model).delete()
     session.commit()
@@ -128,7 +127,7 @@ def _seed_context(session) -> None:
     )
     session.add(catalogue_import)
     session.flush()
-    source_document = v2_models.CatalogueSourceDocument(
+    source_document = models.CatalogueSourceDocument(
         supplier_catalogue_uuid=raw["supplier_catalogue_id"],
         source_file_uuid=raw["source_file_id"],
         legacy_import_id=catalogue_import.id,
@@ -144,7 +143,7 @@ def _seed_context(session) -> None:
     )
     session.add(source_document)
     session.flush()
-    run = v2_models.IngestionRun(
+    run = models.IngestionRun(
         run_uuid=raw["ingestion_run_id"],
         source_document_id=catalogue_import.id,
         catalogue_source_document_id=source_document.id,
@@ -367,7 +366,7 @@ def test_pipeline_contracts_round_trip_through_persistence(db):
     assert _model_json(persistence.serving_item_to_contract(serving_row)) == _model_json(serving)
 
     assert raw_row.extraction_confidence == Decimal("0.9600")
-    assert db.query(v2_models.CatalogueReviewDecision).filter_by(review_decision_uuid="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").count() == 1
+    assert db.query(models.CatalogueReviewDecision).filter_by(review_decision_uuid="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").count() == 1
 
 
 def test_cross_run_raw_observation_lineage_is_rejected(db):
@@ -404,18 +403,18 @@ def test_open_blocking_issue_prevents_mastering_approval_and_publication(db):
 def test_approved_serving_item_persists_commercial_history_and_supersedes(db):
     *_, serving, first_publication = _persist_happy_path(db)
 
-    supplier_product = db.query(v2_models.CatalogueSupplierProduct).one()
+    supplier_product = db.query(models.CatalogueSupplierProduct).one()
     assert supplier_product.product_family_id is None
-    price = db.query(v2_models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).one()
+    price = db.query(models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).one()
     assert price.amount == Decimal("13.1000")
     assert price.currency == "HKD"
     assert price.price_basis_uom_code == "CAN"
-    packaging = db.query(v2_models.CataloguePackagingConfiguration).filter_by(supplier_product_id=supplier_product.id).one()
+    packaging = db.query(models.CataloguePackagingConfiguration).filter_by(supplier_product_id=supplier_product.id).one()
     assert packaging.sellable_units_per_purchase_unit == Decimal("24.000000")
     assert packaging.content_amount == Decimal("82.000000")
     assert packaging.content_uom_code == "G"
     assert packaging.order_increment_amount == Decimal("24.000000")
-    mbb = db.query(v2_models.CatalogueSupplierMbbTerm).filter_by(supplier_product_id=supplier_product.id).one()
+    mbb = db.query(models.CatalogueSupplierMbbTerm).filter_by(supplier_product_id=supplier_product.id).one()
     assert mbb.condition_type == "minimum_quantity"
     assert mbb.benefit_type == "discounted_unit_price"
     assert mbb.discounted_price_amount == Decimal("12.0000")
@@ -432,12 +431,12 @@ def test_approved_serving_item_persists_commercial_history_and_supersedes(db):
     assert first_publication.is_current == 0
     assert first_publication.superseded_at == "2026-07-23T02:00:00+00:00"
     assert second_publication.is_current == 1
-    assert db.query(v2_models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).count() == 1
+    assert db.query(models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).count() == 1
 
 
 def test_database_constraints_reject_invalid_commercial_values(db):
     _seed_context(db)
-    supplier_product = v2_models.CatalogueSupplierProduct(
+    supplier_product = models.CatalogueSupplierProduct(
         supplier_product_key="supplier:14:offer:bad-price",
         supplier_id=14,
         supplier_sku="BAD",
@@ -446,7 +445,7 @@ def test_database_constraints_reject_invalid_commercial_values(db):
     db.add(supplier_product)
     db.flush()
     db.add(
-        v2_models.CatalogueSupplierPrice(
+        models.CatalogueSupplierPrice(
             supplier_product_id=supplier_product.id,
             amount=Decimal("-1.00"),
             currency="HKD",

@@ -30,7 +30,6 @@ os.environ.setdefault("PREFECT_SERVER_LOGGING_LEVEL", "ERROR")
 import anthropic  # noqa: E402
 import database  # noqa: E402
 import models  # noqa: E402
-import v2.models as v2_models  # noqa: E402
 from orchestration.catalogue_extraction_adapter import extract_source_evidence  # noqa: E402
 from orchestration.catalogue_flows import catalogue_ingestion_flow  # noqa: E402
 from orchestration.catalogue_raw_stage import complete_raw_stage  # noqa: E402
@@ -87,20 +86,20 @@ def forbid_understanding(monkeypatch):
 
 def _reset(session):
     for model in (
-        v2_models.CatalogueSubmissionIdempotency,
-        v2_models.CatalogueServingPublication,
-        v2_models.CatalogueSupplierMbbTerm,
-        v2_models.CatalogueSupplierPrice,
-        v2_models.CataloguePackagingConfiguration,
-        v2_models.CatalogueSupplierProduct,
-        v2_models.CatalogueReviewDecision,
-        v2_models.CatalogueMasteringCandidate,
-        v2_models.CatalogueValidationIssue,
-        v2_models.CatalogueStagingRawObservation,
-        v2_models.CatalogueStagingItem,
-        v2_models.CatalogueRawObservation,
-        v2_models.IngestionRun,
-        v2_models.CatalogueSourceDocument,
+        models.CatalogueSubmissionIdempotency,
+        models.CatalogueServingPublication,
+        models.CatalogueSupplierMbbTerm,
+        models.CatalogueSupplierPrice,
+        models.CataloguePackagingConfiguration,
+        models.CatalogueSupplierProduct,
+        models.CatalogueReviewDecision,
+        models.CatalogueMasteringCandidate,
+        models.CatalogueValidationIssue,
+        models.CatalogueStagingRawObservation,
+        models.CatalogueStagingItem,
+        models.CatalogueRawObservation,
+        models.IngestionRun,
+        models.CatalogueSourceDocument,
     ):
         session.query(model).delete()
     session.query(models.CatalogueItem).delete()
@@ -171,9 +170,9 @@ def _submit(session, content: bytes):
     )
 
 
-def _source_row(session, run_id: UUID) -> v2_models.CatalogueSourceDocument:
-    run = session.query(v2_models.IngestionRun).filter_by(run_uuid=str(run_id)).one()
-    return session.get(v2_models.CatalogueSourceDocument, run.catalogue_source_document_id)
+def _source_row(session, run_id: UUID) -> models.CatalogueSourceDocument:
+    run = session.query(models.IngestionRun).filter_by(run_uuid=str(run_id)).one()
+    return session.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
 
 
 def _stored_path(session, run_id: UUID) -> Path:
@@ -222,8 +221,8 @@ def test_raw_stage_preserves_original_and_persists_metadata(db, forbid_understan
     assert source.page_count == 1
     assert source.raw_stage_status == "completed"
     assert source.raw_stage_completed_at is not None
-    assert db.query(v2_models.CatalogueRawObservation).count() == 0
-    assert db.query(v2_models.CatalogueStagingItem).count() == 0
+    assert db.query(models.CatalogueRawObservation).count() == 0
+    assert db.query(models.CatalogueStagingItem).count() == 0
 
 
 def test_raw_stage_is_idempotent(db, forbid_understanding):
@@ -233,8 +232,8 @@ def test_raw_stage_is_idempotent(db, forbid_understanding):
     second = complete_raw_stage(db, ingestion_run_id=submitted.ingestion_run_id)
 
     assert first == second
-    assert db.query(v2_models.CatalogueSourceDocument).count() == 1
-    assert db.query(v2_models.IngestionRun).count() == 1
+    assert db.query(models.CatalogueSourceDocument).count() == 1
+    assert db.query(models.IngestionRun).count() == 1
 
 
 def test_raw_stage_rejects_password_protected_pdf(db, forbid_understanding):
@@ -313,12 +312,12 @@ def test_flow_never_reaches_extraction_when_raw_stage_fails(db, monkeypatch):
 
     assert flow_result.terminal_status == "failed"
     db.expire_all()
-    run = db.query(v2_models.IngestionRun).one()
+    run = db.query(models.IngestionRun).one()
     assert run.status == "failed"
     assert "checksum" in run.error_summary
     assert _source_row(db, submitted.ingestion_run_id).raw_stage_status == "failed"
-    assert db.query(v2_models.CatalogueRawObservation).count() == 0
-    assert db.query(v2_models.CatalogueStagingItem).count() == 0
+    assert db.query(models.CatalogueRawObservation).count() == 0
+    assert db.query(models.CatalogueStagingItem).count() == 0
 
 
 def test_extraction_consumes_durable_reference_after_raw_completes(db):

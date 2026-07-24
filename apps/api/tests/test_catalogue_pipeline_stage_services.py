@@ -13,7 +13,6 @@ os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 
 import database  # noqa: E402
 import models  # noqa: E402
-import v2.models as v2_models  # noqa: E402
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus  # noqa: E402
 from services import catalogue_pipeline_stages as stages  # noqa: E402
 
@@ -44,19 +43,19 @@ def db():
 
 def _reset(session):
     for model in (
-        v2_models.CatalogueServingPublication,
-        v2_models.CatalogueSupplierMbbTerm,
-        v2_models.CatalogueSupplierPrice,
-        v2_models.CataloguePackagingConfiguration,
-        v2_models.CatalogueSupplierProduct,
-        v2_models.CatalogueReviewDecision,
-        v2_models.CatalogueMasteringCandidate,
-        v2_models.CatalogueValidationIssue,
-        v2_models.CatalogueStagingRawObservation,
-        v2_models.CatalogueStagingItem,
-        v2_models.CatalogueRawObservation,
-        v2_models.IngestionRun,
-        v2_models.CatalogueSourceDocument,
+        models.CatalogueServingPublication,
+        models.CatalogueSupplierMbbTerm,
+        models.CatalogueSupplierPrice,
+        models.CataloguePackagingConfiguration,
+        models.CatalogueSupplierProduct,
+        models.CatalogueReviewDecision,
+        models.CatalogueMasteringCandidate,
+        models.CatalogueValidationIssue,
+        models.CatalogueStagingRawObservation,
+        models.CatalogueStagingItem,
+        models.CatalogueRawObservation,
+        models.IngestionRun,
+        models.CatalogueSourceDocument,
     ):
         session.query(model).delete()
     session.query(models.CatalogueImport).filter(models.CatalogueImport.filename.like("stage-services-%")).delete()
@@ -94,7 +93,7 @@ def _seed_context(
     )
     session.add(legacy_import)
     session.flush()
-    source = v2_models.CatalogueSourceDocument(
+    source = models.CatalogueSourceDocument(
         supplier_catalogue_uuid=str(source_id),
         source_file_uuid=str(file_id),
         legacy_import_id=legacy_import.id,
@@ -109,7 +108,7 @@ def _seed_context(
     )
     session.add(source)
     session.flush()
-    run = v2_models.IngestionRun(
+    run = models.IngestionRun(
         run_uuid=str(run_id),
         source_document_id=legacy_import.id,
         catalogue_source_document_id=source.id,
@@ -269,8 +268,8 @@ def test_raw_capture_uses_supported_contract_and_is_idempotent(db):
 
     assert first.metrics.created_count == 1
     assert second.metrics.reused_count == 1
-    assert db.query(v2_models.CatalogueRawObservation).count() == 1
-    row = db.query(v2_models.CatalogueRawObservation).one()
+    assert db.query(models.CatalogueRawObservation).count() == 1
+    row = db.query(models.CatalogueRawObservation).one()
     assert row.raw_text == '10447 Healthy Cuisine 24/2.9 oz HK$13.10'
     assert row.extraction_profile_id == "hills.price_list.v1"
     assert row.extraction_confidence == Decimal("0.9600")
@@ -322,9 +321,9 @@ def test_staging_preserves_lineage_and_rejects_cross_run_grouping(db):
     )
 
     assert result.metrics.created_count == 1
-    staging = db.query(v2_models.CatalogueStagingItem).one()
+    staging = db.query(models.CatalogueStagingItem).one()
     assert staging.raw_fields_json != staging.proposed_fields_json
-    assert db.query(v2_models.CatalogueStagingRawObservation).filter_by(raw_observation_uuid=str(raw_1)).count() == 1
+    assert db.query(models.CatalogueStagingRawObservation).filter_by(raw_observation_uuid=str(raw_1)).count() == 1
 
     with pytest.raises(stages.MissingOrIncompatibleLineage, match="different ingestion runs"):
         stages.StagingCatalogueService(db).build_item(
@@ -359,12 +358,12 @@ def test_validation_dedupes_resolves_and_blocks_mastering_until_resolved(db):
     assert first.metrics.created_count == 2
     assert second.metrics.reused_count == 2
     assert first.metrics.blocking_issue_count == 1
-    assert db.query(v2_models.CatalogueValidationIssue).count() == 2
+    assert db.query(models.CatalogueValidationIssue).count() == 2
     with pytest.raises(stages.BlockingValidationIssues):
         _prepare_candidate(db, staging_id)
 
     blocking = (
-        db.query(v2_models.CatalogueValidationIssue)
+        db.query(models.CatalogueValidationIssue)
         .filter_by(issue_code="STAGING_COST_BASIS_UNRESOLVED")
         .one()
     )
@@ -379,7 +378,7 @@ def test_validation_dedupes_resolves_and_blocks_mastering_until_resolved(db):
     )
     candidate_id = _prepare_candidate(db, staging_id)
     assert candidate_id
-    assert db.query(v2_models.CatalogueReviewDecision).filter_by(validation_issue_uuid=blocking.validation_issue_uuid).count() == 1
+    assert db.query(models.CatalogueReviewDecision).filter_by(validation_issue_uuid=blocking.validation_issue_uuid).count() == 1
 
 
 def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
@@ -437,13 +436,13 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
 
     assert applied.metrics.created_count == 1
     assert applied_again.metrics.reused_count == 1
-    supplier_product = db.query(v2_models.CatalogueSupplierProduct).one()
+    supplier_product = db.query(models.CatalogueSupplierProduct).one()
     assert supplier_product.product_family_id is None
     assert supplier_product.supplier_product_key == "supplier:14:offer:10447"
-    price = db.query(v2_models.CatalogueSupplierPrice).one()
+    price = db.query(models.CatalogueSupplierPrice).one()
     assert price.amount == Decimal("13.1000")
     assert price.price_basis_uom_code == "CAN"
-    packaging = db.query(v2_models.CataloguePackagingConfiguration).one()
+    packaging = db.query(models.CataloguePackagingConfiguration).one()
     assert packaging.sellable_units_per_purchase_unit == Decimal("24.000000")
     assert packaging.content_amount == Decimal("82.000000")
     assert packaging.content_uom_code == "G"
@@ -468,7 +467,7 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
 
     assert publication.metrics.created_count == 1
     assert repeated_publication.metrics.reused_count == 1
-    serving = db.query(v2_models.CatalogueServingPublication).one()
+    serving = db.query(models.CatalogueServingPublication).one()
     assert serving.review_status == "APPROVED"
     assert serving.cost_per_sellable_unit_amount == Decimal("13.1000")
     assert serving.is_current == 1

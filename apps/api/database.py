@@ -82,10 +82,9 @@ def run_migrations(engine):
                 except Exception:
                     conn.rollback()
         return
-    # Register additive v2 catalogue pipeline tables even in tests/scripts that only
-    # imported `database` + legacy `models` before calling run_migrations().
+    # Register every table (legacy + catalogue pipeline) even in tests/scripts
+    # that only imported `database` before calling run_migrations().
     import models  # noqa: F401
-    import v2.models  # noqa: F401
     Base.metadata.create_all(bind=engine)
 
     stmts = [

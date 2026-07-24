@@ -19,7 +19,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import models
-import v2.models as v2_models
 from schemas.catalogue_pipeline import (
     MasteringCandidateV1,
     RawObservationV1,
@@ -427,9 +426,9 @@ class CatalogueValidationService(_TransactionalService):
                 or f"{command.resolution_status.value}:{command.resolver_id}:{_iso(resolved_at)}",
             },
         )
-        if self.db.query(v2_models.CatalogueReviewDecision).filter_by(review_decision_uuid=str(decision_id)).first() is None:
+        if self.db.query(models.CatalogueReviewDecision).filter_by(review_decision_uuid=str(decision_id)).first() is None:
             self.db.add(
-                v2_models.CatalogueReviewDecision(
+                models.CatalogueReviewDecision(
                     review_decision_uuid=str(decision_id),
                     validation_issue_uuid=str(command.validation_issue_id),
                     decision_type="validation_issue_resolution",
@@ -659,7 +658,7 @@ class ReviewDecisionService(_TransactionalService):
                 or f"{command.review_status.value}:{command.actor_id}:{_iso(decided_at)}",
             },
         )
-        existing_decision = self.db.query(v2_models.CatalogueReviewDecision).filter_by(review_decision_uuid=str(decision_id)).first()
+        existing_decision = self.db.query(models.CatalogueReviewDecision).filter_by(review_decision_uuid=str(decision_id)).first()
         if existing_decision is not None:
             if candidate.review_decision_uuid == str(decision_id) and candidate.review_status == command.review_status.value:
                 return StageResult(
@@ -683,7 +682,7 @@ class ReviewDecisionService(_TransactionalService):
 
         snapshot = persistence.mastering_candidate_to_contract(candidate).model_dump(mode="json")
         self.db.add(
-            v2_models.CatalogueReviewDecision(
+            models.CatalogueReviewDecision(
                 review_decision_uuid=str(decision_id),
                 mastering_candidate_uuid=str(command.mastering_candidate_id),
                 decision_type="mastering_review",
@@ -728,13 +727,13 @@ class ApprovedCommercialStateService(_TransactionalService):
         applied_at = command.applied_at or _now()
 
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        existing_supplier_product = self.db.query(v2_models.CatalogueSupplierProduct).filter_by(
+        existing_supplier_product = self.db.query(models.CatalogueSupplierProduct).filter_by(
             supplier_product_key=supplier_product_key
         ).first()
         current_price = None
         if existing_supplier_product is not None:
             current_price = (
-                self.db.query(v2_models.CatalogueSupplierPrice)
+                self.db.query(models.CatalogueSupplierPrice)
                 .filter_by(
                     supplier_product_id=existing_supplier_product.id,
                     mastering_candidate_uuid=str(candidate.mastering_candidate_id),
@@ -767,14 +766,14 @@ class ApprovedCommercialStateService(_TransactionalService):
         candidate: MasteringCandidateV1,
         supplier_product_key: str,
         applied_at: datetime,
-    ) -> v2_models.CatalogueSupplierProduct:
+    ) -> models.CatalogueSupplierProduct:
         supplier_resolution = candidate.supplier_product_resolution
         product_resolution = candidate.product_variant_resolution
         supplier_id = supplier_resolution.supplier_id or _supplier_id_from_source(self.db, candidate.trace.supplier_catalogue_id)
         if supplier_id is None:
             raise AmbiguousSupplierOffer("Supplier Product application requires supplier_id")
         product_id = _product_id_for_sku(self.db, product_resolution.canonical_sku)
-        row = v2_models.CatalogueSupplierProduct(
+        row = models.CatalogueSupplierProduct(
             supplier_product_key=supplier_product_key,
             supplier_id=supplier_id,
             product_variant_id=product_id,
@@ -791,7 +790,7 @@ class ApprovedCommercialStateService(_TransactionalService):
 
     def _update_supplier_product(
         self,
-        supplier_product: v2_models.CatalogueSupplierProduct,
+        supplier_product: models.CatalogueSupplierProduct,
         candidate: MasteringCandidateV1,
         applied_at: datetime,
     ) -> None:
@@ -804,21 +803,21 @@ class ApprovedCommercialStateService(_TransactionalService):
     def _persist_packaging(
         self,
         candidate: MasteringCandidateV1,
-        supplier_product: v2_models.CatalogueSupplierProduct,
+        supplier_product: models.CatalogueSupplierProduct,
         applied_at: datetime,
     ) -> None:
         packaging = candidate.packaging_resolution.packaging
         if packaging is None:
             raise InvalidStageTransition("Approved commercial application requires resolved packaging")
         for current in (
-            self.db.query(v2_models.CataloguePackagingConfiguration)
+            self.db.query(models.CataloguePackagingConfiguration)
             .filter_by(supplier_product_id=supplier_product.id, superseded_at=None)
             .all()
         ):
             current.superseded_at = _iso(applied_at)
             current.effective_to = current.effective_to or _iso(applied_at)
         self.db.add(
-            v2_models.CataloguePackagingConfiguration(
+            models.CataloguePackagingConfiguration(
                 supplier_product_id=supplier_product.id,
                 purchase_uom_code=_uom_code(packaging.purchase_uom),
                 purchase_uom_label=_uom_label(packaging.purchase_uom),
@@ -849,20 +848,20 @@ class ApprovedCommercialStateService(_TransactionalService):
     def _persist_price(
         self,
         candidate: MasteringCandidateV1,
-        supplier_product: v2_models.CatalogueSupplierProduct,
+        supplier_product: models.CatalogueSupplierProduct,
         applied_at: datetime,
-    ) -> v2_models.CatalogueSupplierPrice:
+    ) -> models.CatalogueSupplierPrice:
         cost = candidate.supplier_price_resolution.current_cost
         if cost is None:
             raise InvalidStageTransition("Approved commercial application requires resolved supplier cost")
-        for current in self.db.query(v2_models.CatalogueSupplierPrice).filter_by(
+        for current in self.db.query(models.CatalogueSupplierPrice).filter_by(
             supplier_product_id=supplier_product.id,
             is_current=1,
         ):
             current.is_current = 0
             current.effective_to = current.effective_to or _iso(applied_at)
             current.superseded_at = _iso(applied_at)
-        row = v2_models.CatalogueSupplierPrice(
+        row = models.CatalogueSupplierPrice(
             supplier_product_id=supplier_product.id,
             amount=cost.amount,
             currency=cost.currency,
@@ -884,13 +883,13 @@ class ApprovedCommercialStateService(_TransactionalService):
     def _persist_mbb(
         self,
         candidate: MasteringCandidateV1,
-        supplier_product: v2_models.CatalogueSupplierProduct,
+        supplier_product: models.CatalogueSupplierProduct,
         applied_at: datetime,
     ) -> int:
         terms = candidate.mbb_resolution.terms
         if not terms:
             return 0
-        for current in self.db.query(v2_models.CatalogueSupplierMbbTerm).filter_by(
+        for current in self.db.query(models.CatalogueSupplierMbbTerm).filter_by(
             supplier_product_id=supplier_product.id,
             is_active=1,
         ):
@@ -912,13 +911,13 @@ class ServingPublicationService(_TransactionalService):
         _raise_if_open_blocking(self.db, catalogue_item_uuid=candidate_row.catalogue_item_uuid)
         candidate = persistence.mastering_candidate_to_contract(candidate_row)
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        supplier_product = self.db.query(v2_models.CatalogueSupplierProduct).filter_by(
+        supplier_product = self.db.query(models.CatalogueSupplierProduct).filter_by(
             supplier_product_key=supplier_product_key
         ).first()
         if supplier_product is None:
             raise PublicationIneligible("Serving publication requires applied Supplier Offer state")
         price = (
-            self.db.query(v2_models.CatalogueSupplierPrice)
+            self.db.query(models.CatalogueSupplierPrice)
             .filter_by(
                 supplier_product_id=supplier_product.id,
                 mastering_candidate_uuid=str(candidate.mastering_candidate_id),
@@ -929,9 +928,9 @@ class ServingPublicationService(_TransactionalService):
         if price is None:
             raise PublicationIneligible("Serving publication requires applied current supplier price")
         packaging = (
-            self.db.query(v2_models.CataloguePackagingConfiguration)
+            self.db.query(models.CataloguePackagingConfiguration)
             .filter_by(supplier_product_id=supplier_product.id, superseded_at=None)
-            .order_by(v2_models.CataloguePackagingConfiguration.id.desc())
+            .order_by(models.CataloguePackagingConfiguration.id.desc())
             .first()
         )
         if packaging is None:
@@ -969,11 +968,11 @@ class ServingPublicationService(_TransactionalService):
             )
 
         publication_key = _publication_key(contract)
-        for current in self.db.query(v2_models.CatalogueServingPublication).filter_by(publication_key=publication_key, is_current=1).all():
+        for current in self.db.query(models.CatalogueServingPublication).filter_by(publication_key=publication_key, is_current=1).all():
             current.is_current = 0
             current.superseded_at = _iso(published_at)
         self.db.add(
-            v2_models.CatalogueServingPublication(
+            models.CatalogueServingPublication(
                 serving_item_uuid=str(contract.serving_item_id),
                 contract_version=contract.contract_version,
                 publication_key=publication_key,
@@ -1015,11 +1014,11 @@ class ServingPublicationService(_TransactionalService):
 def _resolve_run_source_contract(
     db: Session,
     command: CaptureRawObservationsCommand,
-) -> tuple[v2_models.IngestionRun, v2_models.CatalogueSourceDocument, supplier_source_contract_runtime.SupplierSourceRuntimeContract]:
-    run = db.query(v2_models.IngestionRun).filter_by(run_uuid=str(command.ingestion_run_id)).first()
+) -> tuple[models.IngestionRun, models.CatalogueSourceDocument, supplier_source_contract_runtime.SupplierSourceRuntimeContract]:
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(command.ingestion_run_id)).first()
     if run is None:
         raise UpstreamRecordNotFound(f"Ingestion Run {command.ingestion_run_id} does not exist")
-    source_document = db.query(v2_models.CatalogueSourceDocument).filter_by(
+    source_document = db.query(models.CatalogueSourceDocument).filter_by(
         supplier_catalogue_uuid=str(command.supplier_catalogue_id)
     ).first()
     if source_document is None:
@@ -1220,9 +1219,9 @@ def _serving_contract_from_state(
     *,
     serving_item_id: UUID,
     candidate: MasteringCandidateV1,
-    supplier_product: v2_models.CatalogueSupplierProduct,
-    price: v2_models.CatalogueSupplierPrice,
-    packaging_row: v2_models.CataloguePackagingConfiguration,
+    supplier_product: models.CatalogueSupplierProduct,
+    price: models.CatalogueSupplierPrice,
+    packaging_row: models.CataloguePackagingConfiguration,
     publication_version: str,
     published_at: datetime,
 ) -> ServingItemV1:
@@ -1278,7 +1277,7 @@ def _serving_contract_from_state(
     )
 
 
-def _packaging_from_row(row: v2_models.CataloguePackagingConfiguration) -> PackagingConfiguration:
+def _packaging_from_row(row: models.CataloguePackagingConfiguration) -> PackagingConfiguration:
     return PackagingConfiguration.model_validate(
         {
             "purchase_uom": _uom_from_row(row.purchase_uom_code, row.purchase_uom_label),
@@ -1368,38 +1367,38 @@ def _mbb_row(term: MbbTerm, candidate: MasteringCandidateV1, supplier_product_id
                 "free_quantity_uom_label": benefit.quantity.uom.label,
             }
         )
-    return v2_models.CatalogueSupplierMbbTerm(**kwargs)
+    return models.CatalogueSupplierMbbTerm(**kwargs)
 
 
-def _raw_observation_row(db: Session, raw_id: UUID) -> v2_models.CatalogueRawObservation:
+def _raw_observation_row(db: Session, raw_id: UUID) -> models.CatalogueRawObservation:
     row = persistence._raw_observation(db, raw_id)  # noqa: SLF001
     if row is None:
         raise UpstreamRecordNotFound(f"Raw Observation {raw_id} does not exist")
     return row
 
 
-def _staging_row(db: Session, catalogue_item_id: UUID) -> v2_models.CatalogueStagingItem:
+def _staging_row(db: Session, catalogue_item_id: UUID) -> models.CatalogueStagingItem:
     row = persistence._staging_item(db, catalogue_item_id)  # noqa: SLF001
     if row is None:
         raise UpstreamRecordNotFound(f"Staging Catalogue Item {catalogue_item_id} does not exist")
     return row
 
 
-def _validation_issue_row(db: Session, issue_id: UUID) -> v2_models.CatalogueValidationIssue:
+def _validation_issue_row(db: Session, issue_id: UUID) -> models.CatalogueValidationIssue:
     row = persistence._validation_issue(db, issue_id)  # noqa: SLF001
     if row is None:
         raise UpstreamRecordNotFound(f"Validation Issue {issue_id} does not exist")
     return row
 
 
-def _candidate_row(db: Session, candidate_id: UUID) -> v2_models.CatalogueMasteringCandidate:
+def _candidate_row(db: Session, candidate_id: UUID) -> models.CatalogueMasteringCandidate:
     row = persistence._mastering_candidate(db, candidate_id)  # noqa: SLF001
     if row is None:
         raise UpstreamRecordNotFound(f"Mastering Candidate {candidate_id} does not exist")
     return row
 
 
-def _assert_same_raw_context(observations: list[v2_models.CatalogueRawObservation]) -> None:
+def _assert_same_raw_context(observations: list[models.CatalogueRawObservation]) -> None:
     first = observations[0]
     for row in observations:
         if row.ingestion_run_uuid != first.ingestion_run_uuid:
@@ -1417,7 +1416,7 @@ def _assert_same_raw_context(observations: list[v2_models.CatalogueRawObservatio
 
 def _raise_if_open_blocking(db: Session, *, catalogue_item_uuid: str) -> None:
     issue = (
-        db.query(v2_models.CatalogueValidationIssue)
+        db.query(models.CatalogueValidationIssue)
         .filter_by(
             catalogue_item_uuid=catalogue_item_uuid,
             severity=IssueSeverity.BLOCKING.value,
@@ -1430,12 +1429,12 @@ def _raise_if_open_blocking(db: Session, *, catalogue_item_uuid: str) -> None:
 
 
 def _source_document_id(db: Session, supplier_catalogue_id: UUID) -> int | None:
-    source = db.query(v2_models.CatalogueSourceDocument).filter_by(supplier_catalogue_uuid=str(supplier_catalogue_id)).first()
+    source = db.query(models.CatalogueSourceDocument).filter_by(supplier_catalogue_uuid=str(supplier_catalogue_id)).first()
     return source.id if source else None
 
 
 def _supplier_id_from_source(db: Session, supplier_catalogue_id: UUID) -> int | None:
-    source = db.query(v2_models.CatalogueSourceDocument).filter_by(supplier_catalogue_uuid=str(supplier_catalogue_id)).first()
+    source = db.query(models.CatalogueSourceDocument).filter_by(supplier_catalogue_uuid=str(supplier_catalogue_id)).first()
     return source.supplier_id if source else None
 
 

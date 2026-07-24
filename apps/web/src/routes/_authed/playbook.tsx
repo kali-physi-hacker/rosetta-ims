@@ -783,9 +783,9 @@ function PlaybookPage() {
                         <EndpointRow method="GET" path="/catalogues/queue/pending" desc="Cross-catalogue pending queue, ordered by confidence score" />
                         <EndpointRow method="POST" path="/catalogues/items/{id}/match" desc="Confirm match to existing internal SKU" />
                         <EndpointRow method="POST" path="/catalogues/items/bulk-match" desc="Batch-confirm multiple matches in one call" />
-                        <EndpointRow method="GET" path="/api/v1/products" desc="Full inventory with cost confidence" />
-                        <EndpointRow method="PATCH" path="/api/v1/products/{sku}" desc="Update cost, category, supplier, UOM" />
-                        <EndpointRow method="GET" path="/api/v1/pricing" desc="GP matrix across all channels" />
+                        <EndpointRow method="GET" path="/api/products" desc="Full inventory with cost confidence" />
+                        <EndpointRow method="PATCH" path="/api/products/{sku}" desc="Update cost, category, supplier, UOM" />
+                        <EndpointRow method="GET" path="/api/pricing" desc="GP matrix across all channels" />
                       </EndpointGrid>
                     </div>
                   </div>

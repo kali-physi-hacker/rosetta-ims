@@ -6,7 +6,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-import v2.models as v2_models
+import models
 from services import supplier_source_contract_runtime
 
 from .catalogue_types import RecordedContractError, RecordedSupplierContract, RunNotFound
@@ -15,12 +15,12 @@ from .catalogue_types import RecordedContractError, RecordedSupplierContract, Ru
 def resolve_recorded_supplier_contract(db: Session, *, ingestion_run_id: UUID):
     """Resolve the exact supplier-source contract recorded on the queued run."""
 
-    run = db.query(v2_models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
     if run is None:
         raise RunNotFound(f"Ingestion run {ingestion_run_id} was not found")
     source = run.pipeline_source_document
     if source is None and run.catalogue_source_document_id:
-        source = db.get(v2_models.CatalogueSourceDocument, run.catalogue_source_document_id)
+        source = db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
     if source is None:
         raise RecordedContractError("Queued run has no canonical source document")
     if not run.supplier_id or not run.supplier_source_contract_id or not run.supplier_source_contract_version:

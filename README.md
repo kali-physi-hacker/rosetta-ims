@@ -45,7 +45,7 @@ cp apps/web/.env.example apps/web/.env   # optional; defaults work against the l
 pnpm dev                                 # → http://localhost:3001
 ```
 
-By default the dev server calls `/api/v1/*` and proxies `/api/*` to the deployed backend
+By default the dev server calls `/api/*` (one unversioned API surface) and proxies it to the deployed backend
 (`https://178.128.127.5.nip.io`), so the frontend runs on its own with no local
 backend needed. Point it elsewhere with `VITE_API_PROXY_TARGET` in `apps/web/.env`.
 
@@ -67,12 +67,12 @@ backend's live OpenAPI schema and committed. Refresh it after backend API change
 
 ```bash
 pnpm types                                   # uses the deployed backend
-VITE_API_URL=http://localhost:8001 pnpm types  # reads http://localhost:8001/v1/openapi.json
+VITE_API_URL=http://localhost:8001 pnpm types  # reads http://localhost:8001/openapi.json
 ```
 
 ## How auth works
 
-The backend issues a JWT on `POST /v1/auth/login`. The SPA stores it in the
+The backend issues a JWT on `POST /auth/login`. The SPA stores it in the
 `ims_token` cookie (and the user in `ims_user`), reads it client-side, and sends it
 as a `Bearer` token on every request. The `/_authed` layout route guards every
 authenticated screen and redirects to `/login` when the cookie is absent — the

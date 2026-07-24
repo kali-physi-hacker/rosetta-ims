@@ -756,7 +756,7 @@ def already_verified_candidates(import_id: Optional[int] = Query(None),
     banner so reviewers can clear duplicates instead of re-verifying them. Declared before
     GET /{import_id} so the literal path isn't shadowed by it."""
     from sqlalchemy import or_
-    from routers.v1.audit import _verified_sku_set
+    from routers.audit import _verified_sku_set
     verified = _verified_sku_set(db)
     if not verified:
         return {"count": 0, "min_confidence": min_confidence, "items": []}
@@ -799,7 +799,7 @@ def skip_already_verified(body: SkipVerifiedBody, request: Request, db: Session 
     a stale client list can't skip something that isn't genuinely already verified. Conservative:
     does not re-apply the scan's costs to the already-onboarded product."""
     from sqlalchemy import or_
-    from routers.v1.audit import _verified_sku_set
+    from routers.audit import _verified_sku_set
     verified = _verified_sku_set(db)
     now = NOW()
     CI = models.CatalogueItem

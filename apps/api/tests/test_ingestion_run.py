@@ -16,8 +16,7 @@ os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 
 import database  # noqa: E402
 import models    # noqa: E402
-import v2.models as v2_models  # noqa: E402
-from v2.models import IngestionRun, IngestionRunStatus, IngestionRunMetrics  # noqa: E402
+from models import IngestionRun, IngestionRunStatus, IngestionRunMetrics  # noqa: E402
 
 models.Base.metadata.create_all(bind=database.engine)
 

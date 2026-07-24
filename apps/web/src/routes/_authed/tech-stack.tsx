@@ -95,7 +95,7 @@ function TechStackPage() {
               { layer: 'Database',  choice: 'SQLite today — Postgres-ready via DATABASE_URL',                               host: 'Droplet volume' },
               { layer: 'Auth',      choice: 'JWT (HS256) + legacy API-key gate (transitional)',                            host: '—' },
               { layer: 'OCR / AI',  choice: 'Anthropic SDK (Claude Haiku for catalogue extraction)',                       host: 'Anthropic API' },
-              { layer: 'Schema',    choice: 'OpenAPI 3.1 auto-published; TypeScript types auto-generated',                 host: '/v1/openapi.json' },
+              { layer: 'Schema',    choice: 'OpenAPI 3.1 auto-published; TypeScript types auto-generated',                 host: '/openapi.json' },
             ].map((r, i) => (
               <div key={r.layer} style={{
                 display: 'grid', gridTemplateColumns: '120px 1fr 130px',
@@ -283,16 +283,16 @@ function TechStackPage() {
         <Section title="Live endpoints">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <RepoLink
-              href={`${API}/v1/docs`}
+              href={`${API}/docs`}
               title="Swagger UI (interactive)"
-              desc="Browse + try every API endpoint. Authentication: legacy API key or JWT (POST /v1/auth/login to obtain a token)."
-              monoUrl={`${API}/v1/docs`}
+              desc="Browse + try every API endpoint. Authentication: legacy API key or JWT (POST /auth/login to obtain a token)."
+              monoUrl={`${API}/docs`}
             />
             <RepoLink
-              href={`${API}/v1/openapi.json`}
+              href={`${API}/openapi.json`}
               title="OpenAPI 3.1 schema (raw)"
               desc="JSON spec — feed this to any code-generator (openapi-typescript, openapi-generator) to produce a typed client in any language."
-              monoUrl={`${API}/v1/openapi.json`}
+              monoUrl={`${API}/openapi.json`}
             />
             <RepoLink
               href={`${API}/health`}
@@ -302,7 +302,7 @@ function TechStackPage() {
             />
           </div>
           <p style={{ fontSize: '11px', color: C.faint, marginTop: '8px', fontStyle: 'italic' }}>
-            Note: <code>/docs</code> and <code>/openapi.json</code> redirect to the current v1 endpoints. The canonical schema is <code>/v1/openapi.json</code>.
+            Note: the API is one unversioned surface — <code>/docs</code> and <code>/openapi.json</code> are canonical; legacy <code>/v1</code>/<code>/v2</code> paths remain as deprecated aliases until removal.
           </p>
         </Section>
 
@@ -311,7 +311,7 @@ function TechStackPage() {
           <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
             {[
               { q: 'The data model',                                 a: 'apps/api/SCHEMA.md (ER diagram)' },
-              { q: 'The API surface',                                a: `${API}/v1/docs (Swagger) — or apps/web/src/lib/api/generated.ts in the repo` },
+              { q: 'The API surface',                                a: `${API}/docs (Swagger) — or apps/web/src/lib/api/generated.ts in the repo` },
               { q: 'How the frontend talks to the backend',          a: 'apps/web/src/lib/api.ts (all calls live here)' },
               { q: 'How auth works',                                 a: 'apps/api/main.py (middleware) + apps/api/routers/v1/auth.py + apps/web/src/lib/auth.ts' },
               { q: 'What the business logic is',                     a: 'apps/api/services/*.py — pricing_service, extraction_service (OCR), sheet_sync, sku_service' },

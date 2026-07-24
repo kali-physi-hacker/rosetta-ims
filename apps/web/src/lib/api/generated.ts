@@ -1730,6 +1730,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogues/ingestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Catalogue Ingestion */
+        post: operations["submit_catalogue_ingestion_catalogues_ingestions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Catalogue Ingestion Status */
+        get: operations["get_catalogue_ingestion_status_catalogues_ingestions__run_uuid__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/stock/import": {
         parameters: {
             query?: never;
@@ -2822,6 +2856,20 @@ export interface components {
             /** As Of Date */
             as_of_date?: string | null;
         };
+        /** Body_submit_catalogue_ingestion_catalogues_ingestions_post */
+        Body_submit_catalogue_ingestion_catalogues_ingestions_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+            /** Supplier Id */
+            supplier_id: number;
+            /** Contract Id */
+            contract_id?: string | null;
+            /** Contract Version */
+            contract_version?: string | null;
+        };
         /** BrandCreate */
         BrandCreate: {
             /** Name */
@@ -2869,6 +2917,96 @@ export interface components {
             reason?: string | null;
             /** Reviewed By */
             reviewed_by?: string | null;
+        };
+        /** CatalogueIngestionStatusResponse */
+        CatalogueIngestionStatusResponse: {
+            /**
+             * Ingestion Run Id
+             * Format: uuid
+             */
+            ingestion_run_id: string;
+            /** Supplier Catalogue Id */
+            supplier_catalogue_id?: string | null;
+            /** Source File Id */
+            source_file_id?: string | null;
+            /** Supplier Id */
+            supplier_id?: number | null;
+            /** Contract Id */
+            contract_id?: string | null;
+            /** Contract Version */
+            contract_version?: string | null;
+            /** Document Type */
+            document_type?: string | null;
+            /** Status */
+            status: string;
+            /** Submitted At */
+            submitted_at: string;
+            /** Started At */
+            started_at?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Items Extracted */
+            items_extracted?: number | null;
+            /** Metrics */
+            metrics?: Record<string, never> | null;
+            /** Error Summary */
+            error_summary?: Record<string, never> | string | null;
+        };
+        /** CatalogueSubmissionResponse */
+        CatalogueSubmissionResponse: {
+            /**
+             * Ingestion Run Id
+             * Format: uuid
+             * @description Stable ingestion run UUID.
+             */
+            ingestion_run_id: string;
+            /**
+             * Supplier Catalogue Id
+             * Format: uuid
+             * @description Stable source catalogue UUID.
+             */
+            supplier_catalogue_id: string;
+            /**
+             * Source File Id
+             * Format: uuid
+             * @description Stable source file UUID.
+             */
+            source_file_id: string;
+            /**
+             * Supplier Id
+             * @description Supplier ID submitted by the client.
+             */
+            supplier_id: number;
+            /**
+             * Contract Id
+             * @description Resolved supplier-source contract ID.
+             */
+            contract_id: string;
+            /**
+             * Contract Version
+             * @description Resolved supplier-source contract version.
+             */
+            contract_version: string;
+            /**
+             * Document Type
+             * @description Resolved supplier document type.
+             */
+            document_type: string;
+            /**
+             * Status
+             * @description Queued ingestion run status.
+             */
+            status: string;
+            /**
+             * Submitted At
+             * @description Timezone-aware submission timestamp.
+             */
+            submitted_at: string;
+            /**
+             * Status Url
+             * @description Polling URL for this queued run.
+             */
+            status_url: string;
         };
         /** ChangePassword */
         ChangePassword: {
@@ -6344,6 +6482,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_catalogue_ingestion_catalogues_ingestions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_submit_catalogue_ingestion_catalogues_ingestions_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueSubmissionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalogue_ingestion_status_catalogues_ingestions__run_uuid__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueIngestionStatusResponse"];
                 };
             };
             /** @description Validation Error */

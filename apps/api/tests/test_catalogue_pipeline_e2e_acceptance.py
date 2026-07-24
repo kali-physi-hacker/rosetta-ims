@@ -25,7 +25,6 @@ os.environ.setdefault("PREFECT_SERVER_LOGGING_LEVEL", "ERROR")
 import database  # noqa: E402
 import main  # noqa: E402
 import models  # noqa: E402
-import v2.models as v2_models  # noqa: E402
 from dependencies import require_user  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from orchestration.catalogue_flows import catalogue_ingestion_flow  # noqa: E402
@@ -61,9 +60,9 @@ class _CatalogueOnboardingAdmin:
 @pytest.fixture(autouse=True)
 def _auth_and_no_inline_work(monkeypatch):
     previous_root = main.app.dependency_overrides.get(require_user)
-    previous_v2 = main.api_v2.dependency_overrides.get(require_user)
+    previous_v2 = main.alias_app.dependency_overrides.get(require_user)
     main.app.dependency_overrides[require_user] = lambda: _CatalogueOnboardingAdmin()
-    main.api_v2.dependency_overrides[require_user] = lambda: _CatalogueOnboardingAdmin()
+    main.alias_app.dependency_overrides[require_user] = lambda: _CatalogueOnboardingAdmin()
     monkeypatch.setattr(extraction_service, "extract", lambda *a, **k: pytest.fail("submission must not extract"))
     monkeypatch.setattr(tagging_service, "suggest_tags", lambda *a, **k: pytest.fail("submission must not tag"))
     yield
@@ -72,9 +71,9 @@ def _auth_and_no_inline_work(monkeypatch):
     else:
         main.app.dependency_overrides[require_user] = previous_root
     if previous_v2 is None:
-        main.api_v2.dependency_overrides.pop(require_user, None)
+        main.alias_app.dependency_overrides.pop(require_user, None)
     else:
-        main.api_v2.dependency_overrides[require_user] = previous_v2
+        main.alias_app.dependency_overrides[require_user] = previous_v2
 
 
 @pytest.fixture()
@@ -123,16 +122,16 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert conflict_submission.json()["detail"]["code"] == "IDEMPOTENCY_CONFLICT"
 
     db.expire_all()
-    run = db.query(v2_models.IngestionRun).filter_by(run_uuid=str(run_id)).one()
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(run_id)).one()
     assert run.status == "queued"
     assert run.started_at is None
     assert db.query(models.CatalogueImport).count() == 1
-    assert db.query(v2_models.CatalogueSourceDocument).count() == 1
-    assert db.query(v2_models.CatalogueRawObservation).count() == 0
-    assert db.query(v2_models.CatalogueStagingItem).count() == 0
-    assert db.query(v2_models.CatalogueMasteringCandidate).count() == 0
+    assert db.query(models.CatalogueSourceDocument).count() == 1
+    assert db.query(models.CatalogueRawObservation).count() == 0
+    assert db.query(models.CatalogueStagingItem).count() == 0
+    assert db.query(models.CatalogueMasteringCandidate).count() == 0
 
-    source = db.query(v2_models.CatalogueSourceDocument).one()
+    source = db.query(models.CatalogueSourceDocument).one()
     stored_path = Path(os.environ["CATALOGUE_UPLOAD_DIR"]) / source.source_ref
     assert stored_path.exists()
     assert stored_path.read_bytes() == source_bytes
@@ -162,8 +161,8 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert status_payload["completed_at"] is not None
     assert status_payload["items_extracted"] == 4
 
-    raw_rows = db.query(v2_models.CatalogueRawObservation).order_by(v2_models.CatalogueRawObservation.id).all()
-    staging_rows = db.query(v2_models.CatalogueStagingItem).order_by(v2_models.CatalogueStagingItem.id).all()
+    raw_rows = db.query(models.CatalogueRawObservation).order_by(models.CatalogueRawObservation.id).all()
+    staging_rows = db.query(models.CatalogueStagingItem).order_by(models.CatalogueStagingItem.id).all()
     assert len(raw_rows) == 4
     assert len(staging_rows) == 2
     for raw_row in raw_rows:
@@ -175,21 +174,21 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
 
     raw_texts_before_review = {row.raw_observation_uuid: row.raw_text for row in raw_rows}
 
-    candidate = db.query(v2_models.CatalogueMasteringCandidate).one()
+    candidate = db.query(models.CatalogueMasteringCandidate).one()
     candidate_contract = persistence.mastering_candidate_to_contract(candidate)
     assert candidate_contract.review_status == ReviewStatus.PENDING_REVIEW
     assert candidate_contract.product_variant_resolution.product_family_id is None
     assert candidate_contract.supplier_product_resolution.supplier_id == 14
     assert candidate_contract.supplier_product_resolution.supplier_sku == "10447"
 
-    valid_staging = db.query(v2_models.CatalogueStagingItem).filter_by(
+    valid_staging = db.query(models.CatalogueStagingItem).filter_by(
         catalogue_item_uuid=candidate.catalogue_item_uuid
     ).one()
     invalid_staging = [row for row in staging_rows if row.catalogue_item_uuid != valid_staging.catalogue_item_uuid][0]
     invalid_staging_contract = persistence.staging_item_to_contract(invalid_staging)
     assert invalid_staging_contract.raw_fields.supplier_sku == "Q-1"
 
-    issue = db.query(v2_models.CatalogueValidationIssue).one()
+    issue = db.query(models.CatalogueValidationIssue).one()
     issue_contract = persistence.validation_issue_to_contract(issue)
     assert issue.issue_code == "STAGING_COST_BASIS_UNRESOLVED"
     assert issue.publish_blocking == 1
@@ -197,7 +196,7 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert issue.raw_observation_uuid in {row.raw_observation_uuid for row in raw_rows}
     assert issue_contract.raw_value == "By Quote"
     assert issue_contract.review_guidance
-    invalid_raw = db.query(v2_models.CatalogueRawObservation).filter_by(
+    invalid_raw = db.query(models.CatalogueRawObservation).filter_by(
         raw_observation_uuid=issue.raw_observation_uuid
     ).one()
     _assert_text_contains(_pdf_page_text(stored_path.read_bytes(), page_number=1), invalid_raw.raw_text)
@@ -269,16 +268,16 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert applied.metrics.created_count == 1
     assert applied_again.metrics.reused_count == 1
 
-    supplier_product = db.query(v2_models.CatalogueSupplierProduct).one()
+    supplier_product = db.query(models.CatalogueSupplierProduct).one()
     assert supplier_product.product_variant_id == db.query(models.Product).filter_by(sku_code="10447").one().id
     assert supplier_product.supplier_sku == "10447"
     assert supplier_product.product_family_id is None
-    price = db.query(v2_models.CatalogueSupplierPrice).one()
+    price = db.query(models.CatalogueSupplierPrice).one()
     assert price.amount == Decimal("13.1000")
     assert price.currency == "HKD"
     assert price.price_basis_uom_code == "UNIT"
     assert price.ingestion_run_uuid == str(run_id)
-    packaging = db.query(v2_models.CataloguePackagingConfiguration).one()
+    packaging = db.query(models.CataloguePackagingConfiguration).one()
     assert packaging.content_amount == Decimal("82.000000")
     assert packaging.content_uom_code == "G"
     assert packaging.sellable_units_per_purchase_unit is None
@@ -301,9 +300,9 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     )
     assert publication.metrics.created_count == 1
     assert repeated_publication.metrics.reused_count == 1
-    assert db.query(v2_models.CatalogueServingPublication).count() == 1
+    assert db.query(models.CatalogueServingPublication).count() == 1
 
-    serving_row = db.query(v2_models.CatalogueServingPublication).one()
+    serving_row = db.query(models.CatalogueServingPublication).one()
     serving_contract = persistence.serving_item_to_contract(serving_row)
     assert serving_contract.contract_version == "catalogue.serving_item.v1"
     assert serving_contract.review_status == ReviewStatus.APPROVED
@@ -332,9 +331,9 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
 
     replay_flow = catalogue_ingestion_flow(ingestion_run_id=run_id)
     assert replay_flow.terminal_status == "completed_with_warnings"
-    assert db.query(v2_models.CatalogueRawObservation).count() == 4
-    assert db.query(v2_models.CatalogueStagingItem).count() == 2
-    assert db.query(v2_models.CatalogueMasteringCandidate).count() == 1
+    assert db.query(models.CatalogueRawObservation).count() == 4
+    assert db.query(models.CatalogueStagingItem).count() == 2
+    assert db.query(models.CatalogueMasteringCandidate).count() == 1
     with pytest.raises(TerminalRunReplay):
         claim_queued_run(db, ingestion_run_id=run_id)
 
@@ -351,7 +350,7 @@ def test_source_grounding_rejects_extraction_values_absent_from_pdf():
 
 def _submit(client: TestClient, source_bytes: bytes, *, idempotency_key: str):
     return client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files={"file": ("hills-cis104.pdf", source_bytes, "application/pdf")},
         headers={"Idempotency-Key": idempotency_key},
@@ -408,10 +407,10 @@ def _assert_served_field_lineage(
     db,
     *,
     run_id: UUID,
-    source: v2_models.CatalogueSourceDocument,
+    source: models.CatalogueSourceDocument,
     serving,
-    candidate: v2_models.CatalogueMasteringCandidate,
-    staging: v2_models.CatalogueStagingItem,
+    candidate: models.CatalogueMasteringCandidate,
+    staging: models.CatalogueStagingItem,
     raw_texts_before_review: dict[str, str | None],
     source_bytes: bytes,
 ) -> None:
@@ -419,8 +418,8 @@ def _assert_served_field_lineage(
     staging_contract = persistence.staging_item_to_contract(staging)
     raw_ids = [str(raw_id) for raw_id in serving.lineage.raw_observation_ids]
     raw_rows = (
-        db.query(v2_models.CatalogueRawObservation)
-        .filter(v2_models.CatalogueRawObservation.raw_observation_uuid.in_(raw_ids))
+        db.query(models.CatalogueRawObservation)
+        .filter(models.CatalogueRawObservation.raw_observation_uuid.in_(raw_ids))
         .all()
     )
     assert raw_rows
@@ -460,7 +459,7 @@ def _assert_served_field_lineage(
         f"{serving.purchasing_packaging.content_uom.code.value.lower()}",
     )
 
-    lineage = json.loads(db.query(v2_models.CatalogueServingPublication).one().lineage_json)
+    lineage = json.loads(db.query(models.CatalogueServingPublication).one().lineage_json)
     assert lineage["mastering_candidate_id"] == candidate.mastering_candidate_uuid
     assert lineage["catalogue_item_id"] == staging.catalogue_item_uuid
     assert lineage["raw_observation_ids"] == raw_ids
@@ -468,20 +467,20 @@ def _assert_served_field_lineage(
 
 def _reset(session):
     for model in (
-        v2_models.CatalogueSubmissionIdempotency,
-        v2_models.CatalogueServingPublication,
-        v2_models.CatalogueSupplierMbbTerm,
-        v2_models.CatalogueSupplierPrice,
-        v2_models.CataloguePackagingConfiguration,
-        v2_models.CatalogueSupplierProduct,
-        v2_models.CatalogueReviewDecision,
-        v2_models.CatalogueMasteringCandidate,
-        v2_models.CatalogueValidationIssue,
-        v2_models.CatalogueStagingRawObservation,
-        v2_models.CatalogueStagingItem,
-        v2_models.CatalogueRawObservation,
-        v2_models.IngestionRun,
-        v2_models.CatalogueSourceDocument,
+        models.CatalogueSubmissionIdempotency,
+        models.CatalogueServingPublication,
+        models.CatalogueSupplierMbbTerm,
+        models.CatalogueSupplierPrice,
+        models.CataloguePackagingConfiguration,
+        models.CatalogueSupplierProduct,
+        models.CatalogueReviewDecision,
+        models.CatalogueMasteringCandidate,
+        models.CatalogueValidationIssue,
+        models.CatalogueStagingRawObservation,
+        models.CatalogueStagingItem,
+        models.CatalogueRawObservation,
+        models.IngestionRun,
+        models.CatalogueSourceDocument,
     ):
         session.query(model).delete()
     session.query(models.CatalogueItem).delete()

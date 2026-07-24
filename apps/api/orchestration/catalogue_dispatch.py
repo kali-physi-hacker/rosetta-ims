@@ -11,8 +11,8 @@ from prefect import flow
 from sqlalchemy.orm import Session
 
 import database
-import v2.models as v2_models
-from v2.models import IngestionRunStatus
+import models
+from models import IngestionRunStatus
 
 from .catalogue_flows import catalogue_ingestion_flow
 
@@ -28,9 +28,9 @@ def find_queued_run_ids(db: Session, *, limit: int = 10) -> tuple[UUID, ...]:
     """Return a bounded deterministic batch of queued run UUIDs."""
 
     rows = (
-        db.query(v2_models.IngestionRun)
+        db.query(models.IngestionRun)
         .filter_by(status=IngestionRunStatus.QUEUED.value)
-        .order_by(v2_models.IngestionRun.created_at.asc(), v2_models.IngestionRun.id.asc())
+        .order_by(models.IngestionRun.created_at.asc(), models.IngestionRun.id.asc())
         .limit(max(1, int(limit)))
         .all()
     )

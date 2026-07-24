@@ -15,7 +15,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
 
-import v2.models as v2_models
+import models
 from schemas.catalogue_pipeline import (
     MasteringCandidateV1,
     RawObservationV1,
@@ -39,7 +39,7 @@ class CataloguePublicationError(CataloguePersistenceError):
     """Raised when an unapproved or blocked item is being published."""
 
 
-def persist_raw_observation(db: Session, contract: RawObservationV1) -> v2_models.CatalogueRawObservation:
+def persist_raw_observation(db: Session, contract: RawObservationV1) -> models.CatalogueRawObservation:
     """Persist a Raw Observation contract as immutable source evidence."""
 
     existing = _raw_observation(db, contract.raw_observation_id)
@@ -49,7 +49,7 @@ def persist_raw_observation(db: Session, contract: RawObservationV1) -> v2_model
     run = _ingestion_run(db, contract.ingestion_run_id)
     source_document = _source_document(db, contract.supplier_catalogue_id)
     location = contract.source_location.model_dump(mode="json")
-    row = v2_models.CatalogueRawObservation(
+    row = models.CatalogueRawObservation(
         raw_observation_uuid=str(contract.raw_observation_id),
         contract_version=contract.contract_version,
         ingestion_run_uuid=str(contract.ingestion_run_id),
@@ -80,7 +80,7 @@ def persist_raw_observation(db: Session, contract: RawObservationV1) -> v2_model
     return row
 
 
-def raw_observation_to_contract(row: v2_models.CatalogueRawObservation) -> RawObservationV1:
+def raw_observation_to_contract(row: models.CatalogueRawObservation) -> RawObservationV1:
     """Reconstruct a Raw Observation contract from persistence."""
 
     return RawObservationV1.model_validate(
@@ -107,7 +107,7 @@ def raw_observation_to_contract(row: v2_models.CatalogueRawObservation) -> RawOb
     )
 
 
-def persist_staging_item(db: Session, contract: StagingCatalogueItemV1) -> v2_models.CatalogueStagingItem:
+def persist_staging_item(db: Session, contract: StagingCatalogueItemV1) -> models.CatalogueStagingItem:
     """Persist a Staging Catalogue Item and its raw-observation lineage."""
 
     existing = _staging_item(db, contract.catalogue_item_id)
@@ -117,7 +117,7 @@ def persist_staging_item(db: Session, contract: StagingCatalogueItemV1) -> v2_mo
     observations = _require_raw_observations(db, contract.raw_observation_ids)
     _assert_observations_match_trace(observations, str(contract.trace.ingestion_run_id), str(contract.trace.supplier_catalogue_id))
 
-    row = v2_models.CatalogueStagingItem(
+    row = models.CatalogueStagingItem(
         catalogue_item_uuid=str(contract.catalogue_item_id),
         contract_version=contract.contract_version,
         ingestion_run_uuid=str(contract.trace.ingestion_run_id),
@@ -137,7 +137,7 @@ def persist_staging_item(db: Session, contract: StagingCatalogueItemV1) -> v2_mo
     db.flush()
     for index, observation in enumerate(observations):
         db.add(
-            v2_models.CatalogueStagingRawObservation(
+            models.CatalogueStagingRawObservation(
                 staging_item_id=row.id,
                 raw_observation_id=observation.id,
                 raw_observation_uuid=observation.raw_observation_uuid,
@@ -148,7 +148,7 @@ def persist_staging_item(db: Session, contract: StagingCatalogueItemV1) -> v2_mo
     return row
 
 
-def staging_item_to_contract(row: v2_models.CatalogueStagingItem) -> StagingCatalogueItemV1:
+def staging_item_to_contract(row: models.CatalogueStagingItem) -> StagingCatalogueItemV1:
     """Reconstruct a Staging Catalogue Item contract from persistence."""
 
     raw_ids = [link.raw_observation_uuid for link in sorted(row.raw_observation_links, key=lambda item: item.sort_order)]
@@ -176,14 +176,14 @@ def staging_item_to_contract(row: v2_models.CatalogueStagingItem) -> StagingCata
     )
 
 
-def persist_validation_issue(db: Session, contract: ValidationIssueV1) -> v2_models.CatalogueValidationIssue:
+def persist_validation_issue(db: Session, contract: ValidationIssueV1) -> models.CatalogueValidationIssue:
     """Persist a durable validation/HITL issue."""
 
     existing = _validation_issue(db, contract.validation_issue_id)
     if existing is not None:
         return existing
 
-    row = v2_models.CatalogueValidationIssue(
+    row = models.CatalogueValidationIssue(
         validation_issue_uuid=str(contract.validation_issue_id),
         contract_version=contract.contract_version,
         ingestion_run_uuid=str(contract.ingestion_run_id),
@@ -210,7 +210,7 @@ def persist_validation_issue(db: Session, contract: ValidationIssueV1) -> v2_mod
     return row
 
 
-def validation_issue_to_contract(row: v2_models.CatalogueValidationIssue) -> ValidationIssueV1:
+def validation_issue_to_contract(row: models.CatalogueValidationIssue) -> ValidationIssueV1:
     """Reconstruct a Validation Issue contract from persistence."""
 
     return ValidationIssueV1.model_validate(
@@ -238,7 +238,7 @@ def validation_issue_to_contract(row: v2_models.CatalogueValidationIssue) -> Val
     )
 
 
-def persist_mastering_candidate(db: Session, contract: MasteringCandidateV1) -> v2_models.CatalogueMasteringCandidate:
+def persist_mastering_candidate(db: Session, contract: MasteringCandidateV1) -> models.CatalogueMasteringCandidate:
     """Persist a Mastering Candidate after lineage and blocking checks."""
 
     existing = _mastering_candidate(db, contract.mastering_candidate_id)
@@ -256,7 +256,7 @@ def persist_mastering_candidate(db: Session, contract: MasteringCandidateV1) -> 
     if contract.review_status in {ReviewStatus.APPROVED, ReviewStatus.APPROVED_WITH_OVERRIDE}:
         _raise_for_open_blocking_issues(db, catalogue_item_uuid=str(contract.catalogue_item_id))
 
-    row = v2_models.CatalogueMasteringCandidate(
+    row = models.CatalogueMasteringCandidate(
         mastering_candidate_uuid=str(contract.mastering_candidate_id),
         contract_version=contract.contract_version,
         ingestion_run_uuid=str(contract.trace.ingestion_run_id),
@@ -290,7 +290,7 @@ def persist_mastering_candidate(db: Session, contract: MasteringCandidateV1) -> 
     return row
 
 
-def mastering_candidate_to_contract(row: v2_models.CatalogueMasteringCandidate) -> MasteringCandidateV1:
+def mastering_candidate_to_contract(row: models.CatalogueMasteringCandidate) -> MasteringCandidateV1:
     """Reconstruct a Mastering Candidate contract from persistence."""
 
     return MasteringCandidateV1.model_validate(
@@ -329,7 +329,7 @@ def mastering_candidate_to_contract(row: v2_models.CatalogueMasteringCandidate) 
     )
 
 
-def persist_serving_item(db: Session, contract: ServingItemV1) -> v2_models.CatalogueServingPublication:
+def persist_serving_item(db: Session, contract: ServingItemV1) -> models.CatalogueServingPublication:
     """Persist an approved Serving Item and approved commercial-history rows."""
 
     existing = _serving_publication(db, contract.serving_item_id)
@@ -350,11 +350,11 @@ def persist_serving_item(db: Session, contract: ServingItemV1) -> v2_models.Cata
 
     publication_key = _publication_key(contract)
     now = _aware_iso(contract.published_at)
-    for current in db.query(v2_models.CatalogueServingPublication).filter_by(publication_key=publication_key, is_current=1).all():
+    for current in db.query(models.CatalogueServingPublication).filter_by(publication_key=publication_key, is_current=1).all():
         current.is_current = 0
         current.superseded_at = now
 
-    row = v2_models.CatalogueServingPublication(
+    row = models.CatalogueServingPublication(
         serving_item_uuid=str(contract.serving_item_id),
         contract_version=contract.contract_version,
         publication_key=publication_key,
@@ -389,7 +389,7 @@ def persist_serving_item(db: Session, contract: ServingItemV1) -> v2_models.Cata
     return row
 
 
-def serving_item_to_contract(row: v2_models.CatalogueServingPublication) -> ServingItemV1:
+def serving_item_to_contract(row: models.CatalogueServingPublication) -> ServingItemV1:
     """Reconstruct a Serving Item from its approved publication snapshot."""
 
     return ServingItemV1.model_validate(_json_loads(row.snapshot_json))
@@ -401,10 +401,10 @@ def _persist_candidate_review_decision(db: Session, contract: MasteringCandidate
     if not (contract.reviewed_by and contract.reviewed_at):
         return
     review_decision_uuid = str(contract.review_decision_id or uuid4())
-    if db.query(v2_models.CatalogueReviewDecision).filter_by(review_decision_uuid=review_decision_uuid).first():
+    if db.query(models.CatalogueReviewDecision).filter_by(review_decision_uuid=review_decision_uuid).first():
         return
     db.add(
-        v2_models.CatalogueReviewDecision(
+        models.CatalogueReviewDecision(
             review_decision_uuid=review_decision_uuid,
             mastering_candidate_uuid=str(contract.mastering_candidate_id),
             decision_type="mastering_review",
@@ -421,9 +421,9 @@ def _persist_candidate_review_decision(db: Session, contract: MasteringCandidate
     db.flush()
 
 
-def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> v2_models.CatalogueSupplierProduct:
+def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> models.CatalogueSupplierProduct:
     key = contract.supplier_offering.supplier_product_id or _supplier_product_key(contract)
-    existing = db.query(v2_models.CatalogueSupplierProduct).filter_by(supplier_product_key=key).first()
+    existing = db.query(models.CatalogueSupplierProduct).filter_by(supplier_product_key=key).first()
     product_id = _product_id_for_sku(db, contract.canonical_sku)
     if existing:
         existing.supplier_sku = contract.supplier_offering.supplier_sku
@@ -431,7 +431,7 @@ def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> v2_models.
         existing.product_variant_id = product_id
         return existing
 
-    row = v2_models.CatalogueSupplierProduct(
+    row = models.CatalogueSupplierProduct(
         supplier_product_key=key,
         supplier_id=contract.supplier_offering.supplier_id,
         product_variant_id=product_id,
@@ -447,9 +447,9 @@ def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> v2_models.
     return row
 
 
-def _persist_packaging_configuration(db: Session, contract: ServingItemV1, supplier_product: v2_models.CatalogueSupplierProduct) -> None:
+def _persist_packaging_configuration(db: Session, contract: ServingItemV1, supplier_product: models.CatalogueSupplierProduct) -> None:
     packaging = contract.purchasing_packaging
-    row = v2_models.CataloguePackagingConfiguration(
+    row = models.CataloguePackagingConfiguration(
         supplier_product_id=supplier_product.id,
         **_uom_columns("purchase", packaging.purchase_uom),
         **_uom_columns("price_basis", packaging.price_basis),
@@ -469,13 +469,13 @@ def _persist_packaging_configuration(db: Session, contract: ServingItemV1, suppl
     db.flush()
 
 
-def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_product: v2_models.CatalogueSupplierProduct) -> None:
+def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_product: models.CatalogueSupplierProduct) -> None:
     now = _aware_iso(contract.published_at)
-    for current in db.query(v2_models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).all():
+    for current in db.query(models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).all():
         current.is_current = 0
         current.superseded_at = now
         current.effective_to = current.effective_to or now
-    row = v2_models.CatalogueSupplierPrice(
+    row = models.CatalogueSupplierPrice(
         supplier_product_id=supplier_product.id,
         amount=contract.current_approved_cost.amount,
         currency=contract.current_approved_cost.currency,
@@ -492,13 +492,13 @@ def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_produ
     db.flush()
 
 
-def _persist_mbb_terms(db: Session, contract: ServingItemV1, supplier_product: v2_models.CatalogueSupplierProduct) -> None:
+def _persist_mbb_terms(db: Session, contract: ServingItemV1, supplier_product: models.CatalogueSupplierProduct) -> None:
     if not contract.active_mbb_terms:
         return
     now = _aware_iso(contract.published_at)
     for term in contract.active_mbb_terms:
         db.add(
-            v2_models.CatalogueSupplierMbbTerm(
+            models.CatalogueSupplierMbbTerm(
                 supplier_product_id=supplier_product.id,
                 contract_mbb_term_uuid=str(term.mbb_term_id),
                 scope=term.scope.value,
@@ -558,8 +558,8 @@ def _mbb_benefit_columns(term: MbbTerm) -> dict[str, Any]:
     }
 
 
-def _require_raw_observations(db: Session, raw_observation_ids: list[UUID]) -> list[v2_models.CatalogueRawObservation]:
-    rows: list[v2_models.CatalogueRawObservation] = []
+def _require_raw_observations(db: Session, raw_observation_ids: list[UUID]) -> list[models.CatalogueRawObservation]:
+    rows: list[models.CatalogueRawObservation] = []
     for raw_id in raw_observation_ids:
         row = _raw_observation(db, raw_id)
         if row is None:
@@ -569,7 +569,7 @@ def _require_raw_observations(db: Session, raw_observation_ids: list[UUID]) -> l
 
 
 def _assert_observations_match_trace(
-    observations: list[v2_models.CatalogueRawObservation],
+    observations: list[models.CatalogueRawObservation],
     ingestion_run_uuid: str,
     supplier_catalogue_uuid: str,
 ) -> None:
@@ -582,7 +582,7 @@ def _assert_observations_match_trace(
 
 def _raise_for_open_blocking_issues(db: Session, *, catalogue_item_uuid: UUID | str) -> None:
     issue = (
-        db.query(v2_models.CatalogueValidationIssue)
+        db.query(models.CatalogueValidationIssue)
         .filter_by(
             catalogue_item_uuid=str(catalogue_item_uuid),
             severity=IssueSeverity.BLOCKING.value,
@@ -595,31 +595,31 @@ def _raise_for_open_blocking_issues(db: Session, *, catalogue_item_uuid: UUID | 
 
 
 def _ingestion_run(db: Session, ingestion_run_id: UUID):
-    return db.query(v2_models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
+    return db.query(models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
 
 
 def _source_document(db: Session, supplier_catalogue_id: UUID):
-    return db.query(v2_models.CatalogueSourceDocument).filter_by(supplier_catalogue_uuid=str(supplier_catalogue_id)).first()
+    return db.query(models.CatalogueSourceDocument).filter_by(supplier_catalogue_uuid=str(supplier_catalogue_id)).first()
 
 
 def _raw_observation(db: Session, raw_observation_id: UUID):
-    return db.query(v2_models.CatalogueRawObservation).filter_by(raw_observation_uuid=str(raw_observation_id)).first()
+    return db.query(models.CatalogueRawObservation).filter_by(raw_observation_uuid=str(raw_observation_id)).first()
 
 
 def _staging_item(db: Session, catalogue_item_id: UUID):
-    return db.query(v2_models.CatalogueStagingItem).filter_by(catalogue_item_uuid=str(catalogue_item_id)).first()
+    return db.query(models.CatalogueStagingItem).filter_by(catalogue_item_uuid=str(catalogue_item_id)).first()
 
 
 def _validation_issue(db: Session, validation_issue_id: UUID):
-    return db.query(v2_models.CatalogueValidationIssue).filter_by(validation_issue_uuid=str(validation_issue_id)).first()
+    return db.query(models.CatalogueValidationIssue).filter_by(validation_issue_uuid=str(validation_issue_id)).first()
 
 
 def _mastering_candidate(db: Session, mastering_candidate_id: UUID):
-    return db.query(v2_models.CatalogueMasteringCandidate).filter_by(mastering_candidate_uuid=str(mastering_candidate_id)).first()
+    return db.query(models.CatalogueMasteringCandidate).filter_by(mastering_candidate_uuid=str(mastering_candidate_id)).first()
 
 
 def _serving_publication(db: Session, serving_item_id: UUID):
-    return db.query(v2_models.CatalogueServingPublication).filter_by(serving_item_uuid=str(serving_item_id)).first()
+    return db.query(models.CatalogueServingPublication).filter_by(serving_item_uuid=str(serving_item_id)).first()
 
 
 def _product_id_for_sku(db: Session, canonical_sku: str) -> int | None:

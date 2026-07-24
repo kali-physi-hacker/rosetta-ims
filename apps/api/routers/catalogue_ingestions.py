@@ -1,17 +1,18 @@
-"""v2 catalogue submission boundary."""
+"""Queued catalogue ingestion boundary (evidence-first pipeline)."""
 
 from __future__ import annotations
 
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 import database
 import models
 from permissions import require_capability
+from services import audit_log
 from services.catalogue_submission import (
     CatalogueIngestionStatus,
     CatalogueSubmissionCommand,
@@ -73,6 +74,7 @@ class CatalogueIngestionStatusResponse(BaseModel):
     status_code=status.HTTP_202_ACCEPTED,
 )
 def submit_catalogue_ingestion(
+    request: Request,
     file: UploadFile = File(...),
     supplier_id: int = Form(..., gt=0),
     contract_id: str | None = Form(None),
@@ -97,6 +99,22 @@ def submit_catalogue_ingestion(
         )
     except Exception as exc:
         raise _http_error(exc) from exc
+    audit_log.record(
+        db,
+        action="catalogue.ingestion_submit",
+        actor=user,
+        entity_type="ingestion_run",
+        entity_id=str(result.ingestion_run_id),
+        entity_label=file.filename,
+        details={
+            "supplier_id": result.supplier_id,
+            "contract_id": result.contract_id,
+            "contract_version": result.contract_version,
+            "status": result.status,
+        },
+        request=request,
+        commit=True,
+    )
     return _submission_response(result)
 
 

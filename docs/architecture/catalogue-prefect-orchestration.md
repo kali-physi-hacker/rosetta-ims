@@ -19,7 +19,7 @@ The implementation builds on the current persistence and service foundations:
 
 | Foundation | Current implementation | Use in orchestration |
 |---|---|---|
-| v2 submission boundary | `CatalogueSubmissionService` and `/v2/catalogues/ingestions` create durable source documents and queued runs. | The flow accepts only the stable run UUID returned by submission. |
+| Submission boundary | `CatalogueSubmissionService` and `/catalogues/ingestions` create durable source documents and queued runs. | The flow accepts only the stable run UUID returned by submission. |
 | Source asset persistence | `CatalogueSourceDocument` stores source UUIDs, checksum, source ref, supplier, contract ID/version, document type and source format. | The source loader verifies path safety, file signature and SHA-256 before extraction. |
 | Run lifecycle | `IngestionRun` supports `queued`, `running`, `completed`, `completed_with_warnings`, `failed` and `cancelled`; `started_at` is nullable for queued runs. | The lifecycle service atomically claims queued runs and writes truthful terminal state. |
 | Supplier-source contracts | `supplier_source_contract_runtime.resolve_supplier_contract` rejects unknown, ambiguous and unsupported contracts. | Orchestration resolves the exact recorded ID/version only. |
@@ -338,7 +338,7 @@ must point to the same `DATABASE_URL`.
 ## Existing Compatibility
 
 - `/v1/catalogues/import` remains synchronous and legacy-table based.
-- `/v2/catalogues/ingestions` still returns after durable submission only.
+- `/catalogues/ingestions` still returns after durable submission only.
 - The v2 status endpoint reads the run state written by orchestration.
 - Stage services stay framework-neutral.
 - Public inventory reads are not cut over to serving publications here.

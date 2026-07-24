@@ -17,7 +17,6 @@ os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 import database  # noqa: E402
 import main  # noqa: E402
 import models  # noqa: E402
-import v2.models as v2_models  # noqa: E402
 from dependencies import require_user  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from services import catalogue_submission, extraction_service, tagging_service  # noqa: E402
@@ -46,9 +45,9 @@ class _Admin:
 @pytest.fixture(autouse=True)
 def _auth(monkeypatch):
     previous_root = main.app.dependency_overrides.get(require_user)
-    previous_v2 = main.api_v2.dependency_overrides.get(require_user)
+    previous_v2 = main.alias_app.dependency_overrides.get(require_user)
     main.app.dependency_overrides[require_user] = lambda: _Admin()
-    main.api_v2.dependency_overrides[require_user] = lambda: _Admin()
+    main.alias_app.dependency_overrides[require_user] = lambda: _Admin()
     monkeypatch.setattr(extraction_service, "extract", lambda *a, **k: pytest.fail("v2 submission must not extract"))
     monkeypatch.setattr(tagging_service, "suggest_tags", lambda *a, **k: pytest.fail("v2 submission must not tag"))
     yield
@@ -57,9 +56,9 @@ def _auth(monkeypatch):
     else:
         main.app.dependency_overrides[require_user] = previous_root
     if previous_v2 is None:
-        main.api_v2.dependency_overrides.pop(require_user, None)
+        main.alias_app.dependency_overrides.pop(require_user, None)
     else:
-        main.api_v2.dependency_overrides[require_user] = previous_v2
+        main.alias_app.dependency_overrides[require_user] = previous_v2
 
 
 @pytest.fixture()
@@ -86,20 +85,20 @@ def client(tmp_path, monkeypatch, db):
 
 def _reset(session):
     for model in (
-        v2_models.CatalogueSubmissionIdempotency,
-        v2_models.CatalogueServingPublication,
-        v2_models.CatalogueSupplierMbbTerm,
-        v2_models.CatalogueSupplierPrice,
-        v2_models.CataloguePackagingConfiguration,
-        v2_models.CatalogueSupplierProduct,
-        v2_models.CatalogueReviewDecision,
-        v2_models.CatalogueMasteringCandidate,
-        v2_models.CatalogueValidationIssue,
-        v2_models.CatalogueStagingRawObservation,
-        v2_models.CatalogueStagingItem,
-        v2_models.CatalogueRawObservation,
-        v2_models.IngestionRun,
-        v2_models.CatalogueSourceDocument,
+        models.CatalogueSubmissionIdempotency,
+        models.CatalogueServingPublication,
+        models.CatalogueSupplierMbbTerm,
+        models.CatalogueSupplierPrice,
+        models.CataloguePackagingConfiguration,
+        models.CatalogueSupplierProduct,
+        models.CatalogueReviewDecision,
+        models.CatalogueMasteringCandidate,
+        models.CatalogueValidationIssue,
+        models.CatalogueStagingRawObservation,
+        models.CatalogueStagingItem,
+        models.CatalogueRawObservation,
+        models.IngestionRun,
+        models.CatalogueSourceDocument,
     ):
         session.query(model).delete()
     session.query(models.CatalogueItem).delete()
@@ -147,15 +146,15 @@ def test_submission_service_registers_source_import_and_queued_run(db, tmp_path)
     assert result.document_type == "PRICE_LIST"
     assert db.query(models.CatalogueImport).count() == 1
     assert db.query(models.CatalogueItem).count() == 0
-    assert db.query(v2_models.CatalogueSourceDocument).count() == 1
-    assert db.query(v2_models.IngestionRun).count() == 1
-    assert db.query(v2_models.CatalogueRawObservation).count() == 0
-    assert db.query(v2_models.CatalogueStagingItem).count() == 0
-    assert db.query(v2_models.CatalogueMasteringCandidate).count() == 0
-    assert db.query(v2_models.CatalogueServingPublication).count() == 0
+    assert db.query(models.CatalogueSourceDocument).count() == 1
+    assert db.query(models.IngestionRun).count() == 1
+    assert db.query(models.CatalogueRawObservation).count() == 0
+    assert db.query(models.CatalogueStagingItem).count() == 0
+    assert db.query(models.CatalogueMasteringCandidate).count() == 0
+    assert db.query(models.CatalogueServingPublication).count() == 0
 
-    source = db.query(v2_models.CatalogueSourceDocument).one()
-    run = db.query(v2_models.IngestionRun).one()
+    source = db.query(models.CatalogueSourceDocument).one()
+    run = db.query(models.IngestionRun).one()
     legacy = db.query(models.CatalogueImport).one()
 
     assert source.source_checksum and len(source.source_checksum) == 64
@@ -181,13 +180,13 @@ def test_submission_idempotency_replays_same_result_and_conflicts_on_changed_mat
 
     assert second == first
     assert db.query(models.CatalogueImport).count() == 1
-    assert db.query(v2_models.CatalogueSourceDocument).count() == 1
-    assert db.query(v2_models.IngestionRun).count() == 1
+    assert db.query(models.CatalogueSourceDocument).count() == 1
+    assert db.query(models.IngestionRun).count() == 1
     assert len(list((tmp_path / "v2").iterdir())) == 1
 
     with pytest.raises(SubmissionIdempotencyConflict):
         service.submit(_command(BytesIO(b"%PDF-1.4\nchanged"), key="same-key"))
-    assert db.query(v2_models.IngestionRun).count() == 1
+    assert db.query(models.IngestionRun).count() == 1
     assert len(list((tmp_path / "v2").iterdir())) == 1
 
 
@@ -199,8 +198,8 @@ def test_submission_without_idempotency_key_creates_distinct_runs(db, tmp_path):
 
     assert second.ingestion_run_id != first.ingestion_run_id
     assert db.query(models.CatalogueImport).count() == 2
-    assert db.query(v2_models.CatalogueSourceDocument).count() == 2
-    assert db.query(v2_models.IngestionRun).count() == 2
+    assert db.query(models.CatalogueSourceDocument).count() == 2
+    assert db.query(models.IngestionRun).count() == 2
 
 
 def test_submission_file_validation_and_cleanup(db, tmp_path):
@@ -229,7 +228,7 @@ def test_submission_storage_failure_commits_no_database_rows(db, tmp_path):
         service.submit(_command(BytesIO(b"%PDF-1.4\nsample"), key="storage-failure"))
 
     assert db.query(models.CatalogueImport).count() == 0
-    assert db.query(v2_models.IngestionRun).count() == 0
+    assert db.query(models.IngestionRun).count() == 0
 
 
 def test_submission_database_failure_cleans_new_file(db, tmp_path, monkeypatch):
@@ -249,7 +248,7 @@ def test_submission_database_failure_cleans_new_file(db, tmp_path, monkeypatch):
 
 def test_v2_submission_endpoint_accepts_and_status_polls(client, db, tmp_path):
     response = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files=_pdf(),
         headers={"Idempotency-Key": "api-submit-1"},
@@ -260,7 +259,7 @@ def test_v2_submission_endpoint_accepts_and_status_polls(client, db, tmp_path):
     assert body["status"] == "queued"
     assert body["contract_id"] == "hills.price_list.v1"
     assert body["contract_version"] == "v1"
-    assert body["status_url"] == f"/v2/catalogues/ingestions/{body['ingestion_run_id']}"
+    assert body["status_url"] == f"/catalogues/ingestions/{body['ingestion_run_id']}"
 
     status_response = client.get(body["status_url"])
     assert status_response.status_code == 200, status_response.text
@@ -271,14 +270,14 @@ def test_v2_submission_endpoint_accepts_and_status_polls(client, db, tmp_path):
     assert status_body["started_at"] is None
     assert status_body["completed_at"] is None
 
-    source = db.query(v2_models.CatalogueSourceDocument).one()
+    source = db.query(models.CatalogueSourceDocument).one()
     assert Path(tmp_path / "uploads" / source.source_ref).exists()
     assert db.query(models.CatalogueItem).count() == 0
 
 
 def test_v2_submission_endpoint_contract_and_file_errors(client):
     partial = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14", "contract_id": "hills.price_list.v1"},
         files=_pdf(),
     )
@@ -286,14 +285,14 @@ def test_v2_submission_endpoint_contract_and_file_errors(client):
     assert partial.json()["detail"]["code"] == "INVALID_CONTRACT_PARAMETERS"
 
     unknown_version = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14", "contract_id": "hills.price_list.v1", "contract_version": "v2"},
         files=_pdf(),
     )
     assert unknown_version.status_code == 422
 
     mismatch = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "1", "contract_id": "hills.price_list.v1", "contract_version": "v1"},
         files=_pdf(),
     )
@@ -301,21 +300,21 @@ def test_v2_submission_endpoint_contract_and_file_errors(client):
     assert mismatch.json()["detail"]["code"] == "SUPPLIER_CONTRACT_MISMATCH"
 
     unsupported = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "91", "contract_id": "vetapet.vet_price_list.v1", "contract_version": "v1"},
         files=_pdf("vetapet.pdf"),
     )
     assert unsupported.status_code == 422
 
     unsupported_type = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files={"file": ("fake.txt", b"%PDF-1.4\nsample", "application/pdf")},
     )
     assert unsupported_type.status_code == 415
 
     traversal = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files={"file": ("../evil.pdf", b"%PDF-1.4\nsample", "application/pdf")},
     )
@@ -324,19 +323,19 @@ def test_v2_submission_endpoint_contract_and_file_errors(client):
 
 def test_v2_submission_endpoint_idempotency_conflict_and_unknown_status(client):
     first = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files=_pdf(body=b"%PDF-1.4\nsame"),
         headers={"Idempotency-Key": "api-same"},
     )
     replay = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files=_pdf(body=b"%PDF-1.4\nsame"),
         headers={"Idempotency-Key": "api-same"},
     )
     conflict = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files=_pdf(body=b"%PDF-1.4\nchanged"),
         headers={"Idempotency-Key": "api-same"},
@@ -348,30 +347,29 @@ def test_v2_submission_endpoint_idempotency_conflict_and_unknown_status(client):
     assert conflict.status_code == 409
     assert conflict.json()["detail"]["code"] == "IDEMPOTENCY_CONFLICT"
 
-    missing = client.get("/v2/catalogues/ingestions/99999999-9999-4999-8999-999999999999")
+    missing = client.get("/catalogues/ingestions/99999999-9999-4999-8999-999999999999")
     assert missing.status_code == 404
 
 
-def test_v2_submission_auth_and_openapi_contract(db, tmp_path, monkeypatch):
+def test_submission_auth_and_openapi_contract(db, tmp_path, monkeypatch):
     main.app.dependency_overrides.pop(require_user, None)
-    main.api_v2.dependency_overrides.pop(require_user, None)
+    main.alias_app.dependency_overrides.pop(require_user, None)
     monkeypatch.setenv("CATALOGUE_UPLOAD_DIR", str(tmp_path / "uploads"))
     client = TestClient(main.app)
 
     unauthenticated = client.post(
-        "/v2/catalogues/ingestions",
+        "/catalogues/ingestions",
         data={"supplier_id": "14"},
         files=_pdf(),
     )
     assert unauthenticated.status_code == 401
 
     main.app.dependency_overrides[require_user] = lambda: _Admin()
-    main.api_v2.dependency_overrides[require_user] = lambda: _Admin()
-    schema = client.get("/v2/openapi.json").json()
+    main.alias_app.dependency_overrides[require_user] = lambda: _Admin()
+    schema = client.get("/openapi.json").json()
     assert "/catalogues/ingestions" in schema["paths"]
     assert "/catalogues/ingestions/{run_uuid}" in schema["paths"]
-    root_schema = client.get("/openapi.json", follow_redirects=True).json()
-    assert "/catalogues/ingestions" not in root_schema["paths"]
+    assert client.get("/v2/openapi.json").status_code == 404
 
 
 def test_submission_migration_relaxes_existing_started_at_not_null(tmp_path):

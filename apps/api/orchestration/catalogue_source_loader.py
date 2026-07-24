@@ -9,7 +9,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-import v2.models as v2_models
+import models
 from services.catalogue_submission import DEFAULT_UPLOAD_ROOT
 
 from .catalogue_types import RunIdentity, RunNotFound, SourceVerificationError, VerifiedSourceAsset
@@ -28,12 +28,12 @@ def load_and_verify_source_asset(
 ) -> VerifiedSourceAsset:
     """Load one persisted source file after path, size, signature and checksum checks."""
 
-    run = db.query(v2_models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
     if run is None:
         raise RunNotFound(f"Ingestion run {ingestion_run_id} was not found")
     source = run.pipeline_source_document
     if source is None and run.catalogue_source_document_id:
-        source = db.get(v2_models.CatalogueSourceDocument, run.catalogue_source_document_id)
+        source = db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
     if source is None:
         raise SourceVerificationError("Queued run has no canonical source document")
     if not source.source_ref:

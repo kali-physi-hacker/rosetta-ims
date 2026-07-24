@@ -21,7 +21,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import models
-import v2.models as v2_models
 from services import supplier_source_contract_runtime
 from schemas.catalogue_pipeline.enums import SourceFormat
 
@@ -239,12 +238,12 @@ class CatalogueSubmissionService:
     def get_status(self, run_uuid: UUID) -> CatalogueIngestionStatus:
         """Return a safe typed status payload for one ingestion run."""
 
-        run = self.db.query(v2_models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
+        run = self.db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
         if run is None:
             raise SubmissionNotFoundError(f"Ingestion run {run_uuid} was not found")
         source = run.pipeline_source_document
         if source is None and run.catalogue_source_document_id:
-            source = self.db.get(v2_models.CatalogueSourceDocument, run.catalogue_source_document_id)
+            source = self.db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
         metrics = _json_or_none(run.metrics)
         error_summary = _json_or_text(run.error_summary)
         return CatalogueIngestionStatus(
@@ -383,7 +382,7 @@ class CatalogueSubmissionService:
         self.db.add(import_row)
         self.db.flush()
 
-        source = v2_models.CatalogueSourceDocument(
+        source = models.CatalogueSourceDocument(
             supplier_catalogue_uuid=str(supplier_catalogue_id),
             source_file_uuid=str(stored.source_file_id),
             legacy_import_id=import_row.id,
@@ -413,7 +412,7 @@ class CatalogueSubmissionService:
         self.db.flush()
 
         run_uuid = uuid4()
-        run = v2_models.IngestionRun(
+        run = models.IngestionRun(
             run_uuid=str(run_uuid),
             source_document_id=import_row.id,
             catalogue_source_document_id=source.id,
@@ -424,7 +423,7 @@ class CatalogueSubmissionService:
             document_type=contract.declaration.document_type.value,
             extractor_name=self.extractor_name,
             extractor_version=self.extractor_version,
-            status=v2_models.IngestionRunStatus.QUEUED.value,
+            status=models.IngestionRunStatus.QUEUED.value,
             started_at=None,
             completed_at=None,
             items_extracted=None,
@@ -443,11 +442,11 @@ class CatalogueSubmissionService:
             document_type=contract.declaration.document_type.value,
             status=run.status,
             submitted_at=submitted_at,
-            status_url=f"/v2/catalogues/ingestions/{run_uuid}",
+            status_url=f"/catalogues/ingestions/{run_uuid}",
         )
         if command.idempotency_key:
             self.db.add(
-                v2_models.CatalogueSubmissionIdempotency(
+                models.CatalogueSubmissionIdempotency(
                     idempotency_key=command.idempotency_key,
                     material_fingerprint=material_fingerprint,
                     ingestion_run_uuid=str(run_uuid),
@@ -466,7 +465,7 @@ class CatalogueSubmissionService:
         return result
 
     def _idempotency_record(self, key: str):
-        return self.db.query(v2_models.CatalogueSubmissionIdempotency).filter_by(idempotency_key=key).first()
+        return self.db.query(models.CatalogueSubmissionIdempotency).filter_by(idempotency_key=key).first()
 
     def _cleanup_new_file(self, stored: StoredUpload) -> None:
         if not stored.existed_before:

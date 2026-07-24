@@ -22,7 +22,6 @@ os.environ.setdefault("PREFECT_SERVER_LOGGING_LEVEL", "ERROR")
 
 import database  # noqa: E402
 import models  # noqa: E402
-import v2.models as v2_models  # noqa: E402
 from orchestration import catalogue_extraction_adapter as extraction_adapter  # noqa: E402
 from orchestration.catalogue_contract_resolution import resolve_recorded_supplier_contract  # noqa: E402
 from orchestration.catalogue_dispatch import dispatch_queued_runs  # noqa: E402
@@ -88,20 +87,20 @@ def db(tmp_path, monkeypatch):
 
 def _reset(session):
     for model in (
-        v2_models.CatalogueSubmissionIdempotency,
-        v2_models.CatalogueServingPublication,
-        v2_models.CatalogueSupplierMbbTerm,
-        v2_models.CatalogueSupplierPrice,
-        v2_models.CataloguePackagingConfiguration,
-        v2_models.CatalogueSupplierProduct,
-        v2_models.CatalogueReviewDecision,
-        v2_models.CatalogueMasteringCandidate,
-        v2_models.CatalogueValidationIssue,
-        v2_models.CatalogueStagingRawObservation,
-        v2_models.CatalogueStagingItem,
-        v2_models.CatalogueRawObservation,
-        v2_models.IngestionRun,
-        v2_models.CatalogueSourceDocument,
+        models.CatalogueSubmissionIdempotency,
+        models.CatalogueServingPublication,
+        models.CatalogueSupplierMbbTerm,
+        models.CatalogueSupplierPrice,
+        models.CataloguePackagingConfiguration,
+        models.CatalogueSupplierProduct,
+        models.CatalogueReviewDecision,
+        models.CatalogueMasteringCandidate,
+        models.CatalogueValidationIssue,
+        models.CatalogueStagingRawObservation,
+        models.CatalogueStagingItem,
+        models.CatalogueRawObservation,
+        models.IngestionRun,
+        models.CatalogueSourceDocument,
     ):
         session.query(model).delete()
     session.query(models.CatalogueItem).delete()
@@ -188,7 +187,7 @@ def _submit(
 
 
 def _source_path(session) -> Path:
-    source = session.query(v2_models.CatalogueSourceDocument).one()
+    source = session.query(models.CatalogueSourceDocument).one()
     return Path(os.environ["CATALOGUE_UPLOAD_DIR"]) / source.source_ref
 
 
@@ -209,7 +208,7 @@ def _evidence(
 
 def test_source_loader_verifies_file_path_size_signature_and_checksum(db):
     result = _submit(db)
-    source = db.query(v2_models.CatalogueSourceDocument).one()
+    source = db.query(models.CatalogueSourceDocument).one()
 
     asset = load_and_verify_source_asset(db, ingestion_run_id=result.ingestion_run_id)
     assert asset.run_identity.run_uuid == result.ingestion_run_id
@@ -250,7 +249,7 @@ def test_exact_recorded_contract_resolution_has_no_supplier_only_fallback(db):
     resolved = resolve_recorded_supplier_contract(db, ingestion_run_id=result.ingestion_run_id)
     assert resolved.slug == "hills.price_list.v1"
 
-    run = db.query(v2_models.IngestionRun).one()
+    run = db.query(models.IngestionRun).one()
     run.supplier_source_contract_id = None
     run.supplier_source_contract_version = None
     db.commit()
@@ -260,8 +259,8 @@ def test_exact_recorded_contract_resolution_has_no_supplier_only_fallback(db):
 
 def test_recorded_contract_resolution_rejects_unsupported_unknown_mismatch_and_document_type(db):
     result = _submit(db)
-    run = db.query(v2_models.IngestionRun).one()
-    source = db.query(v2_models.CatalogueSourceDocument).one()
+    run = db.query(models.IngestionRun).one()
+    source = db.query(models.CatalogueSourceDocument).one()
 
     run.supplier_id = 91
     source.supplier_id = 91
@@ -414,7 +413,7 @@ def test_lifecycle_claim_and_terminal_replay_are_safe(db):
     result = _submit(db)
 
     claim_queued_run(db, ingestion_run_id=result.ingestion_run_id)
-    run = db.query(v2_models.IngestionRun).one()
+    run = db.query(models.IngestionRun).one()
     assert run.status == "running"
     assert run.started_at is not None
 
@@ -457,21 +456,21 @@ def test_flow_runs_machine_pipeline_and_stops_at_pending_review(db, monkeypatch)
     assert flow_result.mastering_candidates_created == 1
     assert flow_result.human_review_required is True
 
-    run = db.query(v2_models.IngestionRun).one()
+    run = db.query(models.IngestionRun).one()
     assert run.status == "completed"
     assert run.started_at is not None
     assert run.completed_at is not None
-    assert db.query(v2_models.CatalogueRawObservation).count() == 1
-    assert db.query(v2_models.CatalogueStagingItem).count() == 1
-    candidate = db.query(v2_models.CatalogueMasteringCandidate).one()
+    assert db.query(models.CatalogueRawObservation).count() == 1
+    assert db.query(models.CatalogueStagingItem).count() == 1
+    candidate = db.query(models.CatalogueMasteringCandidate).one()
     assert candidate.review_status == "PENDING_REVIEW"
-    assert db.query(v2_models.CatalogueReviewDecision).count() == 0
-    assert db.query(v2_models.CatalogueSupplierProduct).count() == 0
-    assert db.query(v2_models.CatalogueServingPublication).count() == 0
+    assert db.query(models.CatalogueReviewDecision).count() == 0
+    assert db.query(models.CatalogueSupplierProduct).count() == 0
+    assert db.query(models.CatalogueServingPublication).count() == 0
 
     replay = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
     assert replay.terminal_status == "completed"
-    assert db.query(v2_models.CatalogueRawObservation).count() == 1
+    assert db.query(models.CatalogueRawObservation).count() == 1
 
 
 def test_flow_records_blocking_validation_and_skips_candidate(db, monkeypatch):
@@ -503,7 +502,7 @@ def test_flow_records_blocking_validation_and_skips_candidate(db, monkeypatch):
     assert flow_result.terminal_status == "completed_with_warnings"
     assert flow_result.validation_issues_created == 1
     assert flow_result.mastering_candidates_created == 0
-    issue = db.query(v2_models.CatalogueValidationIssue).one()
+    issue = db.query(models.CatalogueValidationIssue).one()
     assert issue.issue_code == "STAGING_COST_BASIS_UNRESOLVED"
     assert issue.publish_blocking == 1
 
@@ -518,7 +517,7 @@ def test_flow_without_interpretation_provider_stages_everything_for_review(db):
     assert flow_result.staging_items_created == 1
     assert flow_result.mastering_candidates_created == 1
     assert any("not configured" in warning for warning in flow_result.warnings)
-    staging = db.query(v2_models.CatalogueStagingItem).one()
+    staging = db.query(models.CatalogueStagingItem).one()
     assert staging.review_requirement in {"NOT_REQUIRED", "RECOMMENDED", "REQUIRED"}
 
 
@@ -529,7 +528,7 @@ def test_flow_failure_is_sanitized_and_durable(db, monkeypatch):
     flow_result = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
 
     assert flow_result.terminal_status == "failed"
-    run = db.query(v2_models.IngestionRun).one()
+    run = db.query(models.IngestionRun).one()
     assert run.status == "failed"
     assert "checksum" in run.error_summary
     assert str(Path(os.environ["CATALOGUE_UPLOAD_DIR"])) not in run.error_summary

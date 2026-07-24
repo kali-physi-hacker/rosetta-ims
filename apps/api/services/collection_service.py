@@ -149,7 +149,7 @@ def tags_map(db) -> dict:
 
 def load_products(db):
     """[(id, product_dict)], tags_map — loaded once, reused across collections."""
-    from routers.v1.products import _base_query, _load_cat_rules
+    from routers.products import _base_query, _load_cat_rules
     from services.pricing_service import product_to_dict
     cat_rules = _load_cat_rules(db)
     prods = _base_query(db).all()

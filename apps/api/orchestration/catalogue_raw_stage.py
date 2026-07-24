@@ -25,7 +25,7 @@ from uuid import UUID
 import pypdf
 from sqlalchemy.orm import Session
 
-import v2.models as v2_models
+import models
 
 from .catalogue_source_loader import load_and_verify_source_asset
 from .catalogue_types import RawStageResult, SourceVerificationError
@@ -115,19 +115,19 @@ def _mark_raw_stage_failed(db: Session, *, ingestion_run_id: UUID) -> None:
     db.commit()
 
 
-def _source_row(db: Session, *, ingestion_run_id: UUID) -> v2_models.CatalogueSourceDocument:
-    run = db.query(v2_models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
+def _source_row(db: Session, *, ingestion_run_id: UUID) -> models.CatalogueSourceDocument:
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
     if run is None:
         raise SourceVerificationError("Queued run has no canonical source document")
     source = run.pipeline_source_document
     if source is None and run.catalogue_source_document_id:
-        source = db.get(v2_models.CatalogueSourceDocument, run.catalogue_source_document_id)
+        source = db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
     if source is None:
         raise SourceVerificationError("Queued run has no canonical source document")
     return source
 
 
-def _source_metadata(source: v2_models.CatalogueSourceDocument) -> dict:
+def _source_metadata(source: models.CatalogueSourceDocument) -> dict:
     try:
         metadata = json.loads(source.source_metadata_json or "{}")
     except (TypeError, ValueError):

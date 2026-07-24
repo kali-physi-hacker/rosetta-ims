@@ -10,9 +10,9 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-import v2.models as v2_models
-from v2.models import IngestionRunMetrics, IngestionRunStatus
-from v2.models.ingestion_run import TERMINAL_STATUSES
+import models
+from models import IngestionRunMetrics, IngestionRunStatus
+from models.ingestion_run import TERMINAL_STATUSES
 
 from .catalogue_types import (
     CatalogueFlowResult,
@@ -43,7 +43,7 @@ def claim_queued_run(db: Session, *, ingestion_run_id: UUID, started_at: datetim
     db.commit()
     if result.rowcount == 1:
         return
-    run = db.query(v2_models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
     if run is None:
         raise RunNotFound(f"Ingestion run {ingestion_run_id} was not found")
     if run.status in TERMINAL_STATUSES:
@@ -132,8 +132,8 @@ def terminal_result_for_replay(db: Session, *, ingestion_run_id: UUID) -> Catalo
     )
 
 
-def _run(db: Session, ingestion_run_id: UUID) -> v2_models.IngestionRun:
-    run = db.query(v2_models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
+def _run(db: Session, ingestion_run_id: UUID) -> models.IngestionRun:
+    run = db.query(models.IngestionRun).filter_by(run_uuid=str(ingestion_run_id)).first()
     if run is None:
         raise RunNotFound(f"Ingestion run {ingestion_run_id} was not found")
     return run
