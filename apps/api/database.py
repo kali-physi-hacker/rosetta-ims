@@ -52,12 +52,35 @@ def get_db():
         db.close()
 
 
+# Columns added to the models AFTER a Postgres database was first created from
+# create_all(). create_all() never alters existing tables, so without these the
+# ORM references columns Postgres doesn't have (the exact drift that broke the
+# legacy deployment on 2026-07-23). Idempotent via IF NOT EXISTS; every new
+# additive column on an existing table MUST be listed here as well as in the
+# SQLite stmts below.
+_POSTGRES_ADDITIVE_MIGRATIONS = [
+    # Raw-stage completion metadata (file-level only)
+    "ALTER TABLE catalogue_source_documents ADD COLUMN IF NOT EXISTS byte_size INTEGER",
+    "ALTER TABLE catalogue_source_documents ADD COLUMN IF NOT EXISTS page_count INTEGER",
+    "ALTER TABLE catalogue_source_documents ADD COLUMN IF NOT EXISTS raw_stage_status TEXT",
+    "ALTER TABLE catalogue_source_documents ADD COLUMN IF NOT EXISTS raw_stage_completed_at TEXT",
+]
+
+
 def run_migrations(engine):
     """Safe ALTER TABLE migrations for SQLite — idempotent, ignores 'column already exists'.
 
-    On Postgres the schema is built entirely from the models via create_all(), so these
-    SQLite-only incremental steps (raw ALTER/DROP DDL) are skipped."""
+    On Postgres the schema is created from the models via create_all(), which
+    only creates missing TABLES — so additive columns on existing tables are
+    applied from _POSTGRES_ADDITIVE_MIGRATIONS before returning."""
     if not _is_sqlite:
+        with engine.connect() as conn:
+            for sql in _POSTGRES_ADDITIVE_MIGRATIONS:
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
         return
     # Register additive v2 catalogue pipeline tables even in tests/scripts that only
     # imported `database` + legacy `models` before calling run_migrations().
