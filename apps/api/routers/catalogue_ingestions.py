@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -34,6 +35,8 @@ from services.catalogue_submission import (
     UploadTooLargeError,
 )
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/catalogues", tags=["catalogue-ingestions"])
 
@@ -99,22 +102,34 @@ def submit_catalogue_ingestion(
         )
     except Exception as exc:
         raise _http_error(exc) from exc
-    audit_log.record(
-        db,
-        action="catalogue.ingestion_submit",
-        actor=user,
-        entity_type="ingestion_run",
-        entity_id=str(result.ingestion_run_id),
-        entity_label=file.filename,
-        details={
-            "supplier_id": result.supplier_id,
-            "contract_id": result.contract_id,
-            "contract_version": result.contract_version,
-            "status": result.status,
-        },
-        request=request,
-        commit=True,
-    )
+    # The submission service has already committed the durable source, import
+    # and queued run. From here on, audit logging is post-commit observability:
+    # a failure here must NOT convert an accepted submission into a 500 (a
+    # keyless client retry would create a second run). It stays operationally
+    # visible through the application logger instead.
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.ingestion_submit",
+            actor=user,
+            entity_type="ingestion_run",
+            entity_id=str(result.ingestion_run_id),
+            entity_label=file.filename,
+            details={
+                "supplier_id": result.supplier_id,
+                "contract_id": result.contract_id,
+                "contract_version": result.contract_version,
+                "status": result.status,
+            },
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception(
+            "catalogue ingestion %s was durably submitted but audit logging failed",
+            result.ingestion_run_id,
+        )
     return _submission_response(result)
 
 

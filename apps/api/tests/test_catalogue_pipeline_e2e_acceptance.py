@@ -468,6 +468,7 @@ def _assert_served_field_lineage(
 def _reset(session):
     for model in (
         models.CatalogueSubmissionIdempotency,
+        models.CatalogueRawStageAttempt,
         models.CatalogueServingPublication,
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,

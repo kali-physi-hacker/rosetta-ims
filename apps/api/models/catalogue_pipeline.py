@@ -73,8 +73,51 @@ class CatalogueSourceDocument(Base):
     ingestion_runs = relationship("IngestionRun", back_populates="pipeline_source_document")
 
 
+class CatalogueRawStageAttempt(Base):
+    """Append-only raw-stage attempt history — file-level facts only.
+
+    One row per raw-stage execution (verification of the stored original).
+    Rows are never updated or deleted during normal service operation:
+    re-running raw appends another attempt, so a later integrity failure can
+    never erase the record of an earlier successful verification. The mutable
+    current-state fields on CatalogueSourceDocument mirror only the most
+    recent attempt. Never stores file content, extracted text, product rows,
+    prompts, model output or confidence values.
+    """
+
+    __tablename__ = "catalogue_raw_stage_attempts"
+    __table_args__ = (
+        UniqueConstraint("attempt_uuid", name="uq_raw_stage_attempts_attempt_uuid"),
+        Index("ix_raw_stage_attempts_run", "ingestion_run_uuid"),
+        Index("ix_raw_stage_attempts_source_document", "catalogue_source_document_id"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    attempt_uuid = Column(String(36), nullable=False, default=_uuid)
+    ingestion_run_uuid = Column(String(36), nullable=False)
+    catalogue_source_document_id = Column(Integer, ForeignKey("catalogue_source_documents.id"), nullable=True)
+    status = Column(String, nullable=False)              # 'completed' | 'failed'
+    attempted_at = Column(String, nullable=False)
+    completed_at = Column(String, nullable=True)
+    checksum_sha256 = Column(String, nullable=True)      # observed during this attempt
+    byte_size = Column(Integer, nullable=True)
+    source_format = Column(String, nullable=True)
+    page_count = Column(Integer, nullable=True)
+    failure_code = Column(String, nullable=True)         # sanitized machine code
+    failure_message = Column(String, nullable=True)      # sanitized public message
+    created_at = Column(String, nullable=False)
+
+
 class CatalogueRawObservation(Base):
-    """Immutable observed source evidence and exact source location."""
+    """Extracted evidence observation: verbatim evidence + exact source location.
+
+    Terminology: despite the historical name, this is the EXTRACTION stage's
+    output (verbatim text/cells with provider metadata and confidence), not
+    the file-only raw stage. The raw stage's records are CatalogueSourceDocument
+    and CatalogueRawStageAttempt. Prefer "extracted evidence observation" in
+    new code and docs; renaming this table is tracked as follow-up debt
+    (docs/technical-debt/rename-raw-observation-to-extracted-evidence.md).
+    """
 
     __tablename__ = "catalogue_raw_observations"
     __table_args__ = (

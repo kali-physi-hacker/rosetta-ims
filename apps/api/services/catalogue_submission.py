@@ -484,13 +484,39 @@ def _safe_original_filename(filename: str) -> str:
     return cleaned[:180]
 
 
+# ── Central source-capability policy ────────────────────────────────────────
+# The single authority for which file types the pipeline can actually process.
+# Submission enforces it at the gate; raw verification re-checks stored files
+# against it (orchestration/catalogue_source_loader imports these). Legacy
+# `.xls` (OLE) is deliberately ABSENT: the configured extraction stage has no
+# production `.xls` adapter (it returns UNSUPPORTED_LEGACY_XLS), so accepting
+# it at submission would queue runs that are guaranteed to fail downstream.
+
+SUPPORTED_SOURCE_SUFFIXES = {
+    ".pdf": "PDF",
+    ".xlsx": "SPREADSHEET",
+    ".csv": "CSV",
+}
+
+
+def signature_matches(source_format: str, header: bytes) -> bool:
+    """File-signature check for the supported capability set.
+
+    SPREADSHEET means modern XLSX (zip container) only — OLE signatures are
+    rejected in line with the `.xls` capability decision above.
+    """
+
+    if source_format in {"PDF", "PDF_TABLE"}:
+        return header.startswith(b"%PDF")
+    if source_format == "SPREADSHEET":
+        return header.startswith(b"PK\x03\x04")
+    if source_format == "CSV":
+        return b"\x00" not in header
+    return False
+
+
 def _source_format_from_suffix(suffix: str) -> str | None:
-    return {
-        ".pdf": "PDF",
-        ".xlsx": "SPREADSHEET",
-        ".xls": "SPREADSHEET",
-        ".csv": "CSV",
-    }.get(suffix)
+    return SUPPORTED_SOURCE_SUFFIXES.get(suffix)
 
 
 def _format_matches_contract(source_format: str, expected: SourceFormat) -> bool:
@@ -503,14 +529,7 @@ def _format_matches_contract(source_format: str, expected: SourceFormat) -> bool
     return expected == SourceFormat.OTHER
 
 
-def _signature_matches(source_format: str, header: bytes) -> bool:
-    if source_format == "PDF":
-        return header.startswith(b"%PDF")
-    if source_format == "SPREADSHEET":
-        return header.startswith(b"PK\x03\x04") or header.startswith(b"\xd0\xcf\x11\xe0")
-    if source_format == "CSV":
-        return b"\x00" not in header
-    return False
+_signature_matches = signature_matches
 
 
 def _material_fingerprint(

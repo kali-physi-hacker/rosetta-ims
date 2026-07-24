@@ -25,6 +25,7 @@ from models.catalogue_pipeline import (  # noqa: F401
     CataloguePackagingConfiguration,
     CatalogueProductFamily,
     CatalogueRawObservation,
+    CatalogueRawStageAttempt,
     CatalogueReviewDecision,
     CatalogueServingPublication,
     CatalogueSourceDocument,

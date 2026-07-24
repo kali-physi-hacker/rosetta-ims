@@ -86,6 +86,7 @@ def client(tmp_path, monkeypatch, db):
 def _reset(session):
     for model in (
         models.CatalogueSubmissionIdempotency,
+        models.CatalogueRawStageAttempt,
         models.CatalogueServingPublication,
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
@@ -419,3 +420,108 @@ def test_submission_migration_relaxes_existing_started_at_not_null(tmp_path):
             VALUES ('99999999-9999-4999-8999-999999999999', 1, 14, 'queued', 'v1', 'queued', NULL,
                     '2026-07-23T00:00:00+00:00')
         """))
+
+
+def test_post_commit_audit_failure_does_not_fail_the_durable_submission(client, db, monkeypatch, caplog):
+    import logging as _logging
+
+    from services import audit_log
+
+    def _audit_down(*_a, **_k):
+        raise RuntimeError("audit backend unavailable")
+
+    monkeypatch.setattr(audit_log, "record", _audit_down)
+
+    with caplog.at_level(_logging.ERROR, logger="routers.catalogue_ingestions"):
+        response = client.post(
+            "/catalogues/ingestions",
+            data={"supplier_id": "14"},
+            files=_pdf(),
+            headers={"Idempotency-Key": "audit-down-key"},
+        )
+
+    assert response.status_code == 202, response.text
+    body = response.json()
+    db.expire_all()
+    assert db.query(models.IngestionRun).count() == 1
+    run = db.query(models.IngestionRun).one()
+    assert run.status == "queued"
+    assert run.run_uuid == body["ingestion_run_id"]
+    source = db.query(models.CatalogueSourceDocument).one()
+    stored = Path(os.environ["CATALOGUE_UPLOAD_DIR"]) / source.source_ref
+    assert stored.exists() and stored.read_bytes().startswith(b"%PDF")
+    # The failure is observable, sanitized, and no audit row was half-written.
+    assert any("audit logging failed" in record.getMessage() for record in caplog.records)
+    assert "audit backend unavailable" not in response.text
+    assert (
+        db.query(models.AuditLog)
+        .filter_by(action="catalogue.ingestion_submit", entity_id=run.run_uuid)
+        .count()
+        == 0
+    )
+
+    # Retry with the same idempotency key stays safe: same run, still exactly one.
+    retry = client.post(
+        "/catalogues/ingestions",
+        data={"supplier_id": "14"},
+        files=_pdf(),
+        headers={"Idempotency-Key": "audit-down-key"},
+    )
+    assert retry.status_code == 202
+    assert retry.json()["ingestion_run_id"] == body["ingestion_run_id"]
+    db.expire_all()
+    assert db.query(models.IngestionRun).count() == 1
+
+
+def test_legacy_xls_is_rejected_at_submission_with_no_partial_state(client, db, monkeypatch):
+    from orchestration import catalogue_raw_stage
+    from services import catalogue_evidence_extraction
+
+    monkeypatch.setattr(
+        catalogue_raw_stage, "complete_raw_stage", lambda *a, **k: pytest.fail("raw must not run for rejected .xls")
+    )
+    monkeypatch.setattr(
+        catalogue_evidence_extraction,
+        "extract_evidence",
+        lambda *a, **k: pytest.fail("extraction must not run for rejected .xls"),
+    )
+
+    response = client.post(
+        "/catalogues/ingestions",
+        data={"supplier_id": "14"},
+        files={"file": ("legacy.xls", b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1 legacy", "application/vnd.ms-excel")},
+    )
+
+    assert response.status_code == 415, response.text
+    assert response.json()["detail"]["code"] == "UNSUPPORTED_SOURCE_TYPE"
+    db.expire_all()
+    assert db.query(models.IngestionRun).count() == 0
+    assert db.query(models.CatalogueSourceDocument).count() == 0
+    assert db.query(models.CatalogueImport).count() == 0
+    upload_root = Path(os.environ["CATALOGUE_UPLOAD_DIR"])
+    assert not any((upload_root / "v2").glob("*")) if (upload_root / "v2").exists() else True
+
+
+def test_xlsx_passes_the_capability_gate_and_ole_signatures_do_not(client, db):
+    # Capability policy: .xlsx is a supported format; legacy .xls is not.
+    assert catalogue_submission._source_format_from_suffix(".xlsx") == "SPREADSHEET"
+    assert catalogue_submission._source_format_from_suffix(".xls") is None
+    assert catalogue_submission.signature_matches("SPREADSHEET", b"PK\x03\x04rest")
+    assert not catalogue_submission.signature_matches("SPREADSHEET", b"\xd0\xcf\x11\xe0rest")
+
+    # Route level: an .xlsx upload clears the capability gate and is judged by
+    # the supplier contract instead (Hill's declares a PDF source), proving the
+    # rejection reason differs from the .xls capability rejection.
+    response = client.post(
+        "/catalogues/ingestions",
+        data={"supplier_id": "14"},
+        files={
+            "file": (
+                "catalogue.xlsx",
+                b"PK\x03\x04 fixture",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        },
+    )
+    assert response.status_code == 415
+    assert "does not match supplier contract" in response.json()["detail"]["message"]

@@ -87,6 +87,7 @@ def forbid_understanding(monkeypatch):
 def _reset(session):
     for model in (
         models.CatalogueSubmissionIdempotency,
+        models.CatalogueRawStageAttempt,
         models.CatalogueServingPublication,
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
@@ -334,3 +335,122 @@ def test_extraction_consumes_durable_reference_after_raw_completes(db):
     assert len(outcome.observations) == 1
     assert outcome.observations[0].raw_text == line
     assert outcome.observations[0].observation_key == "page:1:line:1"
+
+
+def test_raw_stage_appends_one_completed_attempt_per_execution(db, forbid_understanding):
+    content = _text_pdf_bytes(["attempt history row"])
+    submitted = _submit(db, content)
+
+    first = complete_raw_stage(db, ingestion_run_id=submitted.ingestion_run_id)
+    second = complete_raw_stage(db, ingestion_run_id=submitted.ingestion_run_id)
+    assert first == second  # business-record idempotency preserved
+
+    db.expire_all()
+    attempts = db.query(models.CatalogueRawStageAttempt).order_by(models.CatalogueRawStageAttempt.id).all()
+    assert len(attempts) == 2
+    assert db.query(models.CatalogueSourceDocument).count() == 1
+    expected_checksum = hashlib.sha256(content).hexdigest()
+    assert len({attempt.attempt_uuid for attempt in attempts}) == 2
+    for attempt in attempts:
+        assert attempt.status == "completed"
+        assert attempt.checksum_sha256 == expected_checksum
+        assert attempt.byte_size == len(content)
+        assert attempt.page_count == 1
+        assert attempt.attempted_at is not None
+        assert attempt.completed_at is not None
+        assert attempt.failure_code is None
+        assert attempt.ingestion_run_uuid == str(submitted.ingestion_run_id)
+
+
+def test_raw_stage_failed_first_execution_appends_sanitized_failed_attempt(db, forbid_understanding):
+    submitted = _submit(db, _text_pdf_bytes(["tamper me"]))
+    _stored_path(db, submitted.ingestion_run_id).write_bytes(b"%PDF-1.4\nchanged")
+
+    with pytest.raises(SourceVerificationError):
+        complete_raw_stage(db, ingestion_run_id=submitted.ingestion_run_id)
+
+    db.expire_all()
+    attempt = db.query(models.CatalogueRawStageAttempt).one()
+    assert attempt.status == "failed"
+    assert attempt.completed_at is None
+    assert attempt.failure_code == "SOURCE_VERIFICATION_ERROR"
+    assert "checksum" in attempt.failure_message
+    assert os.environ["CATALOGUE_UPLOAD_DIR"] not in attempt.failure_message
+    assert attempt.checksum_sha256 is None  # verification never produced a trusted asset
+
+
+def test_raw_stage_success_then_failed_reverification_preserves_both_attempts(db, forbid_understanding):
+    content = _text_pdf_bytes(["complete then tamper"])
+    submitted = _submit(db, content)
+
+    complete_raw_stage(db, ingestion_run_id=submitted.ingestion_run_id)
+    _stored_path(db, submitted.ingestion_run_id).write_bytes(b"%PDF-1.4\nchanged")
+    with pytest.raises(SourceVerificationError):
+        complete_raw_stage(db, ingestion_run_id=submitted.ingestion_run_id)
+
+    db.expire_all()
+    attempts = db.query(models.CatalogueRawStageAttempt).order_by(models.CatalogueRawStageAttempt.id).all()
+    assert [attempt.status for attempt in attempts] == ["completed", "failed"]
+    # Current state mirrors the most recent attempt; history preserves the
+    # earlier completed verification instead of silently erasing it.
+    assert _source_row(db, submitted.ingestion_run_id).raw_stage_status == "failed"
+    assert attempts[0].checksum_sha256 == hashlib.sha256(content).hexdigest()
+
+
+def test_raw_stage_attempt_rows_contain_only_file_level_facts():
+    columns = {column.name for column in models.CatalogueRawStageAttempt.__table__.columns}
+    assert columns == {
+        "id",
+        "attempt_uuid",
+        "ingestion_run_uuid",
+        "catalogue_source_document_id",
+        "status",
+        "attempted_at",
+        "completed_at",
+        "checksum_sha256",
+        "byte_size",
+        "source_format",
+        "page_count",
+        "failure_code",
+        "failure_message",
+        "created_at",
+    }
+
+
+def test_raw_stage_module_import_boundary():
+    """Architectural regression test: raw-stage modules must not depend on
+    AI providers, OCR, extraction, interpretation, tagging or stage persistence."""
+
+    import ast
+
+    forbidden = (
+        "anthropic",
+        "openai",
+        "google",
+        "pytesseract",
+        "PIL",
+        "services.extraction_service",
+        "services.catalogue_evidence_extraction",
+        "services.catalogue_interpretation",
+        "services.tagging_service",
+        "services.catalogue_pipeline_stages",
+    )
+    backend_root = Path(__file__).resolve().parent.parent
+    for module in ("catalogue_raw_stage.py", "catalogue_source_loader.py"):
+        source_path = backend_root / "orchestration" / module
+        tree = ast.parse(source_path.read_text())
+        imported: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imported.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:
+                    imported.add("orchestration." + (node.module or ""))
+                elif node.module:
+                    imported.add(node.module)
+        offending = {
+            name
+            for name in imported
+            if any(name == item or name.startswith(item + ".") for item in forbidden)
+        }
+        assert not offending, f"{module} imports forbidden dependencies: {sorted(offending)}"

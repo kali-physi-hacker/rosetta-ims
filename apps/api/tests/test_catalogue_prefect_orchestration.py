@@ -88,6 +88,7 @@ def db(tmp_path, monkeypatch):
 def _reset(session):
     for model in (
         models.CatalogueSubmissionIdempotency,
+        models.CatalogueRawStageAttempt,
         models.CatalogueServingPublication,
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,

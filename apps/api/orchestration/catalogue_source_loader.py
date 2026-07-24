@@ -10,7 +10,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 import models
-from services.catalogue_submission import DEFAULT_UPLOAD_ROOT
+from services.catalogue_submission import DEFAULT_UPLOAD_ROOT, signature_matches
 
 from .catalogue_types import RunIdentity, RunNotFound, SourceVerificationError, VerifiedSourceAsset
 
@@ -80,7 +80,7 @@ def load_and_verify_source_asset(
     if digest != source.source_checksum:
         raise SourceVerificationError("Durable source checksum does not match persisted checksum")
     source_format = (source.source_format or "").upper()
-    if not _signature_matches(source_format, header):
+    if not signature_matches(source_format, header):
         raise SourceVerificationError("Durable source signature does not match persisted source format")
 
     identity = RunIdentity(
@@ -119,11 +119,6 @@ def _resolve_source_path(root: Path, source_ref: str) -> Path:
     return resolved
 
 
-def _signature_matches(source_format: str, header: bytes) -> bool:
-    if source_format in {"PDF", "PDF_TABLE"}:
-        return header.startswith(b"%PDF")
-    if source_format == "SPREADSHEET":
-        return header.startswith(b"PK\x03\x04") or header.startswith(b"\xd0\xcf\x11\xe0")
-    if source_format == "CSV":
-        return b"\x00" not in header
-    return False
+# Signature policy lives in services.catalogue_submission (the central
+# source-capability authority); raw verification imports signature_matches
+# from there so the rules cannot drift apart.
