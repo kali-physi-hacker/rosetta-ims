@@ -16,7 +16,9 @@ concurrency:
 env:
   DROPLET_HOST: 178.128.127.5
   DROPLET_USER: root
-  DEPLOY_PATH: /root/rosetta-ims/backend
+  # v2 (rewrite) stack. The old deployment at /root/rosetta-ims/backend is FROZEN —
+  # it serves the legacy Vercel app and must never receive auto-deploys again.
+  DEPLOY_PATH: /root/rosetta-ims/backend-v2
 
 jobs:
   deploy:
@@ -74,10 +76,11 @@ jobs:
           set -euo pipefail
           ssh -i ~/.ssh/droplet_deploy_key "$DROPLET_USER@$DROPLET_HOST" <<'SSH'
             set -euo pipefail
-            cd /root/rosetta-ims/backend
+            cd /root/rosetta-ims/backend-v2
             mkdir -p data secrets
-            docker network inspect edge >/dev/null 2>&1 || docker network create edge
-            docker compose up -d --build api caddy
+            # No caddy here: the old stack's Caddy owns 80/443 and reverse-proxies
+            # v2.<ip>.nip.io to this stack's api container.
+            docker compose up -d --build api prefect-server catalogue-worker
             for i in $(seq 1 30); do
               if docker compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health', timeout=5)" >/dev/null 2>&1; then
                 docker compose ps

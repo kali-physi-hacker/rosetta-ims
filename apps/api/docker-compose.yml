@@ -35,7 +35,7 @@ services:
 
   api:
     build: .
-    image: rosetta-ims-api:latest
+    image: rosetta-ims-api-v2:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -55,13 +55,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    networks:
-      default:                       # reached by caddy (unchanged)
-      edge:                          # reach the algo-dashboard Postgres (algo-dashboard-db-1) for POST /sync/algo
+    # v2 stack: default project network only. The old deployment's api joined the shared
+    # `edge` network for the algo-dashboard sync; v2 must NOT — two containers with the
+    # `api` alias on one network would let the old Caddy round-robin across stacks.
 
   prefect-server:
     build: .
-    image: rosetta-ims-api:latest
+    image: rosetta-ims-api-v2:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -86,7 +86,7 @@ services:
 
   catalogue-worker:
     build: .
-    image: rosetta-ims-api:latest
+    image: rosetta-ims-api-v2:latest
     profiles: ["catalogue-worker"]
     restart: unless-stopped
     env_file: .env
@@ -129,9 +129,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    networks:
-      default:
-      edge:
 
   caddy:
     image: caddy:2-alpine
