@@ -1877,7 +1877,8 @@ export interface paths {
         };
         /**
          * Get Catalogue Mastering Candidate
-         * @description One candidate in full, with its append-only review-decision history.
+         * @description One candidate in full, with its verbatim source evidence and its
+         *     append-only review-decision history.
          */
         get: operations["get_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__get"];
         put?: never;
@@ -1997,8 +1998,34 @@ export interface paths {
          * Get Intermediate Layer
          * @description INTERMEDIATE layer (steps 5-9): contract-conformed normalized claims,
          *     validation issues and mastering candidates awaiting human review.
+         *
+         *     ``?view=summary`` returns one decision-ready row per candidate (states,
+         *     issue counts, price delta vs the current offering, family evidence,
+         *     channel selling price) instead of full contracts — the review UI's first
+         *     paint. Full contracts remain the default and load per candidate on open.
          */
         get: operations["get_intermediate_layer_catalogues_ingestions__run_uuid__intermediate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/variant-search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Catalogue Product Variants
+         * @description Product-variant picker for candidate corrections, scoped to the run's
+         *     supplier so each result carries its cost/margin sanity context.
+         */
+        get: operations["search_catalogue_product_variants_catalogues_ingestions__run_uuid__variant_search_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7790,7 +7817,45 @@ export interface operations {
     };
     get_intermediate_layer_catalogues_ingestions__run_uuid__intermediate_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description 'summary' returns the compact reviewer view instead of full contracts. */
+                view?: string | null;
+            };
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_catalogue_product_variants_catalogues_ingestions__run_uuid__variant_search_get: {
+        parameters: {
+            query: {
+                /** @description Matches sku_code, name, or brand (case-insensitive). */
+                q: string;
+                limit?: number;
+            };
             header?: never;
             path: {
                 run_uuid: string;

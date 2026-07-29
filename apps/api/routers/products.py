@@ -651,14 +651,15 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
                         _user: models.User = Depends(require_capability("product_edit"))):
     """Full per-supplier terms for the Manage Suppliers editor — includes the ordering-term columns
     (order/minimum increment + UOM, source, pricing note) and cost provenance the main product
-    serializer omits. Read-only; effective_unit_cost = basic_cost / cost-basis units."""
-    from services.pricing_service import get_unit_cost
+    serializer omits. Read-only; effective_unit_cost is offering-first (catalogue pipeline price
+    when one exists, else basic_cost / cost-basis units). basic_cost stays the raw editable field."""
+    from services.pricing_service import effective_cost_source, get_unit_cost
     product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     sups = list(product.product_suppliers)
-    costed = [s for s in sups if s.basic_cost is not None]
-    pref_id = min(costed, key=lambda s: s.basic_cost).id if costed else None
+    costed = [s for s in sups if get_unit_cost(s) is not None]
+    pref_id = min(costed, key=lambda s: get_unit_cost(s)).id if costed else None
     return {
         "sku_code": product.sku_code, "uom": product.uom,
         "suppliers": [{
@@ -667,6 +668,7 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
             "supplier_sku": s.supplier_sku, "barcode": s.barcode,
             "basic_cost": s.basic_cost, "units_per_pack": s.units_per_pack,
             "effective_unit_cost": get_unit_cost(s),
+            "cost_source_effective": effective_cost_source(s),
             "order_increment_qty": s.order_increment_qty, "order_increment_uom": s.order_increment_uom,
             "minimum_order_qty": s.minimum_order_qty, "minimum_order_uom": s.minimum_order_uom,
             "minimum_order_source": s.minimum_order_source, "pricing_note": s.pricing_note,

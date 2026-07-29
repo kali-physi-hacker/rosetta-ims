@@ -3,6 +3,7 @@ import json
 import re
 from datetime import datetime, timezone
 from models import ProductVariant, ProductChannel, ProductSupplier, StockLevel, SalesVelocity, CategoryRule
+from services import offering_costs
 from services import transform_engine as engine
 
 _STALE_DAYS = 90
@@ -31,8 +32,34 @@ def get_primary_supplier(product: ProductVariant) -> ProductSupplier | None:
 
 
 def get_primary_cost(product: ProductVariant) -> float | None:
-    ps = get_primary_supplier(product)
-    return ps.basic_cost if ps and ps.basic_cost else None
+    return effective_pack_cost(get_primary_supplier(product))
+
+
+def effective_pack_cost(ps: ProductSupplier | None) -> float | None:
+    """Whole-pack display cost, consistent with get_unit_cost (offering-first).
+
+    When a current offering price exists it is the truth; the whole-pack
+    equivalent keeps the on-screen relation ``pack cost / units_per_pack =
+    unit cost`` intact. Otherwise the legacy editable basic_cost shows.
+    """
+    if not ps:
+        return None
+    unit = offering_costs.unit_cost_for_link(ps)
+    if unit is None:
+        return ps.basic_cost if ps.basic_cost else None
+    if ps.units_per_pack and ps.units_per_pack > 1:
+        return round(unit * ps.units_per_pack, 4)
+    return unit
+
+
+def effective_cost_source(ps: ProductSupplier | None) -> str | None:
+    """'offering' when the cost shown comes from the catalogue pipeline's
+    supplier offering; otherwise the legacy row's own provenance."""
+    if not ps:
+        return None
+    if offering_costs.unit_cost_for_link(ps) is not None:
+        return "offering"
+    return ps.cost_source
 
 
 def _legacy_unit_cost(basic_cost, units_per_pack):
@@ -45,13 +72,18 @@ def _legacy_unit_cost(basic_cost, units_per_pack):
 
 
 def get_unit_cost(ps: ProductSupplier | None) -> float | None:
-    """Cost of ONE SELL-UNIT = supplier WHOLESALE (whole-pack) basic_cost / units_per_pack.
-    basic_cost is maintained as the whole-pack cost (Ops owns that data), so we ALWAYS divide
-    by the pack size to get the per-sell-unit cost that every GP / margin calculation runs on.
-    pack <= 1 (or unset) -> basic_cost is already the per-sell-unit cost.
-    The formula now lives in config (transform_engine 'unit_cost')."""
+    """Cost of ONE SELL-UNIT — offering-first, the single cost all margin math runs on.
+
+    The catalogue pipeline writes supplier cost to the SupplierOffering price
+    history (basis-aware, per-sell-unit derived); when a current offering
+    price exists for this (supplier, variant) link it IS the cost. Links with
+    no offering yet fall back to the legacy whole-pack basic_cost divided by
+    units_per_pack (formula in config, transform_engine 'unit_cost')."""
     if not ps:
         return None
+    from_offering = offering_costs.unit_cost_for_link(ps)
+    if from_offering is not None:
+        return from_offering
     return engine.evaluate("unit_cost", {"basic_cost": ps.basic_cost, "units_per_pack": ps.units_per_pack})
 
 
@@ -338,11 +370,15 @@ def margin_range(product: ProductVariant, cat_rules: dict) -> dict:
         for term in sorted((getattr(ps, "mbb_term_list", None) or []), key=lambda x: x.sort_order)
     ) if d]
 
-    # Per-SUPPLIER margins: each linked supplier (cheapest basic_cost first = preferred), with its
-    # own basic margin plus a margin for EACH of its MBB terms — so every MBB path is visible.
+    # Per-SUPPLIER margins: each linked supplier (cheapest effective unit cost first = preferred),
+    # with its own basic margin plus a margin for EACH of its MBB terms — so every MBB path is
+    # visible. Offering-first: a supplier costed only through the catalogue pipeline still ranks.
     supplier_blocks = []
-    for i, sup in enumerate(sorted((s for s in product.product_suppliers if s.basic_cost),
-                                   key=lambda s: s.basic_cost)):
+    costed_suppliers = sorted(
+        (s for s in product.product_suppliers if get_unit_cost(s) is not None),
+        key=lambda s: get_unit_cost(s),
+    )
+    for i, sup in enumerate(costed_suppliers):
         s_base = get_unit_cost(sup)
         if s_base is None:
             continue
@@ -465,7 +501,8 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
             "code":          sup.supplier.code  if sup.supplier else None,
             "supplier_sku":  sup.supplier_sku,
             "barcode":       sup.barcode,
-            "basic_cost":    sup.basic_cost,
+            "basic_cost":    effective_pack_cost(sup),
+            "cost_source_effective": effective_cost_source(sup),
             "mbb_term_list": [
                 {"id": t.id, "kind": t.kind, "min_qty": t.min_qty, "min_spend": t.min_spend,
                  "free_qty": t.free_qty, "discount_pct": t.discount_pct, "unit_cost": t.unit_cost,
@@ -488,9 +525,9 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
             ],
         }
         for sup in product.product_suppliers
-        if sup.supplier or sup.supplier_sku or sup.basic_cost
+        if sup.supplier or sup.supplier_sku or sup.basic_cost or offering_costs.unit_cost_for_link(sup) is not None
     ]
-    # Sort by basic_cost ascending (nulls last); lowest cost = preferred
+    # Sort by effective cost ascending (nulls last); lowest true cost = preferred
     _sup_list.sort(key=lambda s: (s["basic_cost"] is None, s["basic_cost"] or 0))
     if _sup_list:
         _sup_list[0]["is_preferred"] = True

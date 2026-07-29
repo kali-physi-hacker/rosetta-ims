@@ -36,6 +36,10 @@ import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients
 import { Route as AuthedItemsSplatRouteImport } from './routes/_authed/items/$'
 import { Route as AuthedCataloguesReparseIndexRouteImport } from './routes/_authed/catalogues/reparse/index'
 import { Route as AuthedCataloguesReparseBatchIdRouteImport } from './routes/_authed/catalogues/reparse/$batchId'
+import { Route as AuthedCataloguesReviewIndexRouteImport } from './routes/_authed/catalogues/review/index'
+import { Route as AuthedCataloguesReviewRunIdIndexRouteImport } from './routes/_authed/catalogues/review/$runId/index'
+import { Route as AuthedCataloguesReviewRunIdCommitRouteImport } from './routes/_authed/catalogues/review/$runId/commit'
+import { Route as AuthedCataloguesReviewRunIdRoomRouteImport } from './routes/_authed/catalogues/review/$runId/room'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -173,6 +177,30 @@ const AuthedCataloguesReparseBatchIdRoute =
     path: '/catalogues/reparse/$batchId',
     getParentRoute: () => AuthedRoute,
   } as any)
+const AuthedCataloguesReviewIndexRoute =
+  AuthedCataloguesReviewIndexRouteImport.update({
+    id: '/catalogues/review/',
+    path: '/catalogues/review/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedCataloguesReviewRunIdIndexRoute =
+  AuthedCataloguesReviewRunIdIndexRouteImport.update({
+    id: '/catalogues/review/$runId/',
+    path: '/catalogues/review/$runId/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedCataloguesReviewRunIdCommitRoute =
+  AuthedCataloguesReviewRunIdCommitRouteImport.update({
+    id: '/catalogues/review/$runId/commit',
+    path: '/catalogues/review/$runId/commit',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedCataloguesReviewRunIdRoomRoute =
+  AuthedCataloguesReviewRunIdRoomRouteImport.update({
+    id: '/catalogues/review/$runId/room',
+    path: '/catalogues/review/$runId/room',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -201,6 +229,10 @@ export interface FileRoutesByFullPath {
   '/clients/': typeof AuthedClientsIndexRoute
   '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
   '/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
+  '/catalogues/review/': typeof AuthedCataloguesReviewIndexRoute
+  '/catalogues/review/$runId/commit': typeof AuthedCataloguesReviewRunIdCommitRoute
+  '/catalogues/review/$runId/room': typeof AuthedCataloguesReviewRunIdRoomRoute
+  '/catalogues/review/$runId/': typeof AuthedCataloguesReviewRunIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -229,6 +261,10 @@ export interface FileRoutesByTo {
   '/clients': typeof AuthedClientsIndexRoute
   '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
   '/catalogues/reparse': typeof AuthedCataloguesReparseIndexRoute
+  '/catalogues/review': typeof AuthedCataloguesReviewIndexRoute
+  '/catalogues/review/$runId/commit': typeof AuthedCataloguesReviewRunIdCommitRoute
+  '/catalogues/review/$runId/room': typeof AuthedCataloguesReviewRunIdRoomRoute
+  '/catalogues/review/$runId': typeof AuthedCataloguesReviewRunIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -259,6 +295,10 @@ export interface FileRoutesById {
   '/_authed/clients/': typeof AuthedClientsIndexRoute
   '/_authed/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
   '/_authed/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
+  '/_authed/catalogues/review/': typeof AuthedCataloguesReviewIndexRoute
+  '/_authed/catalogues/review/$runId/commit': typeof AuthedCataloguesReviewRunIdCommitRoute
+  '/_authed/catalogues/review/$runId/room': typeof AuthedCataloguesReviewRunIdRoomRoute
+  '/_authed/catalogues/review/$runId/': typeof AuthedCataloguesReviewRunIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -289,6 +329,10 @@ export interface FileRouteTypes {
     | '/clients/'
     | '/catalogues/reparse/$batchId'
     | '/catalogues/reparse/'
+    | '/catalogues/review/'
+    | '/catalogues/review/$runId/commit'
+    | '/catalogues/review/$runId/room'
+    | '/catalogues/review/$runId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -317,6 +361,10 @@ export interface FileRouteTypes {
     | '/clients'
     | '/catalogues/reparse/$batchId'
     | '/catalogues/reparse'
+    | '/catalogues/review'
+    | '/catalogues/review/$runId/commit'
+    | '/catalogues/review/$runId/room'
+    | '/catalogues/review/$runId'
   id:
     | '__root__'
     | '/_authed'
@@ -346,6 +394,10 @@ export interface FileRouteTypes {
     | '/_authed/clients/'
     | '/_authed/catalogues/reparse/$batchId'
     | '/_authed/catalogues/reparse/'
+    | '/_authed/catalogues/review/'
+    | '/_authed/catalogues/review/$runId/commit'
+    | '/_authed/catalogues/review/$runId/room'
+    | '/_authed/catalogues/review/$runId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -547,6 +599,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCataloguesReparseBatchIdRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/catalogues/review/': {
+      id: '/_authed/catalogues/review/'
+      path: '/catalogues/review'
+      fullPath: '/catalogues/review/'
+      preLoaderRoute: typeof AuthedCataloguesReviewIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/catalogues/review/$runId/': {
+      id: '/_authed/catalogues/review/$runId/'
+      path: '/catalogues/review/$runId'
+      fullPath: '/catalogues/review/$runId/'
+      preLoaderRoute: typeof AuthedCataloguesReviewRunIdIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/catalogues/review/$runId/commit': {
+      id: '/_authed/catalogues/review/$runId/commit'
+      path: '/catalogues/review/$runId/commit'
+      fullPath: '/catalogues/review/$runId/commit'
+      preLoaderRoute: typeof AuthedCataloguesReviewRunIdCommitRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/catalogues/review/$runId/room': {
+      id: '/_authed/catalogues/review/$runId/room'
+      path: '/catalogues/review/$runId/room'
+      fullPath: '/catalogues/review/$runId/room'
+      preLoaderRoute: typeof AuthedCataloguesReviewRunIdRoomRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
@@ -573,6 +653,10 @@ interface AuthedRouteChildren {
   AuthedClientsIndexRoute: typeof AuthedClientsIndexRoute
   AuthedCataloguesReparseBatchIdRoute: typeof AuthedCataloguesReparseBatchIdRoute
   AuthedCataloguesReparseIndexRoute: typeof AuthedCataloguesReparseIndexRoute
+  AuthedCataloguesReviewIndexRoute: typeof AuthedCataloguesReviewIndexRoute
+  AuthedCataloguesReviewRunIdCommitRoute: typeof AuthedCataloguesReviewRunIdCommitRoute
+  AuthedCataloguesReviewRunIdRoomRoute: typeof AuthedCataloguesReviewRunIdRoomRoute
+  AuthedCataloguesReviewRunIdIndexRoute: typeof AuthedCataloguesReviewRunIdIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
@@ -598,6 +682,11 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedClientsIndexRoute: AuthedClientsIndexRoute,
   AuthedCataloguesReparseBatchIdRoute: AuthedCataloguesReparseBatchIdRoute,
   AuthedCataloguesReparseIndexRoute: AuthedCataloguesReparseIndexRoute,
+  AuthedCataloguesReviewIndexRoute: AuthedCataloguesReviewIndexRoute,
+  AuthedCataloguesReviewRunIdCommitRoute:
+    AuthedCataloguesReviewRunIdCommitRoute,
+  AuthedCataloguesReviewRunIdRoomRoute: AuthedCataloguesReviewRunIdRoomRoute,
+  AuthedCataloguesReviewRunIdIndexRoute: AuthedCataloguesReviewRunIdIndexRoute,
 }
 
 const AuthedRouteWithChildren =

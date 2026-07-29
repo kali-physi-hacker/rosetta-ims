@@ -59,6 +59,7 @@ from schemas.catalogue_pipeline.extracted_evidence_v1 import RawCell, SourceLoca
 from schemas.catalogue_pipeline.serving_item_v1 import PublicationLineage, SupplierOffering
 from schemas.catalogue_pipeline.normalized_row_v1 import NormalizedCatalogueFields, ClaimRawFields
 from services import catalogue_pipeline_persistence as persistence
+from services import offering_costs
 from services import supplier_source_contract_runtime
 
 
@@ -992,6 +993,9 @@ class ApprovedCommercialStateService(_TransactionalService):
         price = self._persist_price(candidate, supplier_product, applied_at)
         mbb_count = self._persist_mbb(candidate, supplier_product, applied_at)
         self._finish()
+        # Cost reads are offering-first with a per-session memo; a session that
+        # applies and then serializes must see the price it just wrote.
+        offering_costs.invalidate(self.db)
         return StageResult(
             stage="commercial_application",
             output_ids=(supplier_product_key,),

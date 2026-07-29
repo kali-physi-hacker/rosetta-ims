@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from permissions import require_capability
 from services import audit_log
 from services import catalogue_pipeline_persistence as persistence
 from services import catalogue_pipeline_stages as stages
+from services import catalogue_review_summary as review_summary
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus
 from services.catalogue_submission import (
     CatalogueIngestionStatus,
@@ -311,7 +312,8 @@ def get_catalogue_mastering_candidate(
     db: Session = Depends(database.get_db),
     _user: models.User = Depends(require_capability("catalogue_onboard")),
 ) -> dict[str, Any]:
-    """One candidate in full, with its append-only review-decision history."""
+    """One candidate in full, with its verbatim source evidence and its
+    append-only review-decision history."""
     _load_run_or_404(db, run_uuid)
     row = _load_run_candidate_or_404(db, run_uuid, mastering_candidate_id)
     decisions = (
@@ -326,6 +328,7 @@ def get_catalogue_mastering_candidate(
             **persistence.mastering_candidate_to_contract(row).model_dump(mode="json"),
             "superseded_by": row.superseded_by_uuid,
         },
+        "evidence": review_summary.candidate_evidence(db, row),
         "decisions": [
             {
                 "review_decision_id": decision.review_decision_uuid,
@@ -563,12 +566,21 @@ def _extraction_attempt_summary(
 @router.get("/ingestions/{run_uuid}/intermediate")
 def get_intermediate_layer(
     run_uuid: UUID,
+    view: str | None = Query(None, description="'summary' returns the compact reviewer view instead of full contracts."),
     db: Session = Depends(database.get_db),
     _user: models.User = Depends(require_capability("catalogue_onboard")),
 ) -> dict[str, Any]:
     """INTERMEDIATE layer (steps 5-9): contract-conformed normalized claims,
-    validation issues and mastering candidates awaiting human review."""
+    validation issues and mastering candidates awaiting human review.
+
+    ``?view=summary`` returns one decision-ready row per candidate (states,
+    issue counts, price delta vs the current offering, family evidence,
+    channel selling price) instead of full contracts — the review UI's first
+    paint. Full contracts remain the default and load per candidate on open.
+    """
     _load_run_or_404(db, run_uuid)
+    if view == "summary":
+        return review_summary.run_review_summary(db, run_uuid)
     run_filter = {"ingestion_run_uuid": str(run_uuid)}
     normalized_rows = [
         persistence.normalized_row_to_contract(r).model_dump(mode="json")
@@ -595,6 +607,20 @@ def get_intermediate_layer(
         "validation_issues": issues,
         "mastering_candidates": candidates,
     }
+
+
+@router.get("/ingestions/{run_uuid}/variant-search")
+def search_catalogue_product_variants(
+    run_uuid: UUID,
+    q: str = Query(..., min_length=2, description="Matches sku_code, name, or brand (case-insensitive)."),
+    limit: int = Query(8, ge=1, le=25),
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Product-variant picker for candidate corrections, scoped to the run's
+    supplier so each result carries its cost/margin sanity context."""
+    _load_run_or_404(db, run_uuid)
+    return review_summary.search_product_variants(db, run_uuid, q, limit)
 
 
 @router.get("/ingestions/{run_uuid}/serving")
