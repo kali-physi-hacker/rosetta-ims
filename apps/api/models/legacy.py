@@ -607,47 +607,6 @@ class CatalogueAuditEvent(Base):
     created_at   = Column(String, nullable=False, index=True)
 
 
-class ReparseBatch(Base):
-    """RP-2.1 — one re-parse run over a scope (a SKU / import / supplier). Its ReparseChange rows are
-    the reviewable diff; nothing writes to Product/ProductSupplier until a change is confirmed."""
-    __tablename__ = "reparse_batch"
-
-    id             = Column(Integer, primary_key=True, autoincrement=True)
-    scope_type     = Column(String, nullable=False)                    # 'item' | 'import' | 'supplier'
-    scope_ref      = Column(String, nullable=False)                    # sku_code / import_id / supplier_id
-    parser_version = Column(String, nullable=True)                     # version this run derived with
-    mode           = Column(String, nullable=False, default='text')    # 'text' | 'source'
-    status         = Column(String, nullable=False, default='open')    # 'open' | 'applied' | 'discarded'
-    item_count     = Column(Integer, nullable=True)
-    changed_count  = Column(Integer, nullable=True)
-    created_at     = Column(String, nullable=False)
-    created_by     = Column(String, nullable=True)
-
-    changes = relationship("ReparseChange", back_populates="batch")
-
-
-class ReparseChange(Base):
-    """RP-2.1 — one field diff (old -> new) for one catalogue item within a batch, awaiting confirm.
-    A confirmed change is applied via the normal commit path; cost-affecting writes are guarded."""
-    __tablename__ = "reparse_change"
-
-    id                = Column(Integer, primary_key=True, autoincrement=True)
-    batch_id          = Column(Integer, ForeignKey("reparse_batch.id"), nullable=False, index=True)
-    catalogue_item_id = Column(Integer, ForeignKey("catalogue_items.id"), nullable=False)
-    product_id        = Column(Integer, ForeignKey("products.id"), nullable=True)   # set once committed
-    field             = Column(String, nullable=False)
-    old_value         = Column(String, nullable=True)
-    new_value         = Column(String, nullable=True)
-    affects_cost      = Column(Integer, nullable=False, default=0)     # 1 if it moves effective unit cost
-    eff_cost_before   = Column(Float, nullable=True)
-    eff_cost_after    = Column(Float, nullable=True)
-    status            = Column(String, nullable=False, default='pending')   # pending|confirmed|rejected|stale
-    confirmed_by      = Column(String, nullable=True)
-    confirmed_at      = Column(String, nullable=True)
-
-    batch = relationship("ReparseBatch", back_populates="changes")
-
-
 class Tag(Base):
     """A free-form (Shopify-style) product tag. `slug` is the normalised key
     (lowercase, single-spaced) used for matching; `label` is the display form."""

@@ -1,10 +1,9 @@
 """Unified router registry — one API surface, no version namespaces.
 
-Legacy domains (auth, audit, products, suppliers, stock, pricing, tags,
-collections, categories, brands, users, config, client SSOT, synchronous
-catalogue import/reparse) live alongside the evidence-first catalogue
-ingestion boundary (``catalogue_ingestions``). The synchronous catalogue
-import remains only until the review UI consumes the pipeline end to end.
+Core domains (auth, audit, products, suppliers, stock, pricing, tags,
+collections, categories, brands, users, config, client SSOT) live alongside
+the evidence-first catalogue ingestion boundary (``catalogue_ingestions``),
+whose review flow replaced the synchronous catalogue import + matching UI.
 """
 
 from fastapi import FastAPI
@@ -16,14 +15,12 @@ from . import (
     auth,
     brands,
     catalogue_ingestions,
-    catalogues,
     categories,
     collections,
     competitors,
     config,
     pricing,
     products,
-    reparse,
     sku,
     stock,
     suppliers,
@@ -40,8 +37,6 @@ def include_routers(target: FastAPI, *, include_in_schema: bool = True) -> None:
     target.include_router(pricing.router, include_in_schema=include_in_schema)
     target.include_router(suppliers.router, include_in_schema=include_in_schema)
     target.include_router(sku.router, include_in_schema=include_in_schema)
-    target.include_router(reparse.router, include_in_schema=include_in_schema)
-    target.include_router(catalogues.router, include_in_schema=include_in_schema)
     target.include_router(catalogue_ingestions.router, include_in_schema=include_in_schema)
     target.include_router(stock.router, include_in_schema=include_in_schema)
     target.include_router(sync.router, include_in_schema=include_in_schema)

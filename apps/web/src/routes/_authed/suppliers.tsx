@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { authHeaders, can } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { confirmDialog } from '@/lib/confirm'
-import { ReparseButton } from '@/components/ReparseButton'
 import { API_BASE } from '@/lib/config'
 
 const API = API_BASE
@@ -205,8 +204,6 @@ function SuppliersPage() {
                           <button style={{ ...ghost, color: s.is_active ? C.redInk : C.green, borderColor: s.is_active ? '#FECACA' : '#BBF7D0' }} onClick={() => toggleActive(s)}>
                             {s.is_active ? 'Deactivate' : 'Reactivate'}
                           </button>
-                          <ReparseButton scope="supplier" refId={s.id} label="↻ Re-parse"
-                            title={`Re-parse all catalogue-sourced fields for ${s.name} and review the diff`} style={ghost} />
                         </div>
                       </td>
                     )}

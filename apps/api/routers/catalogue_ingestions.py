@@ -127,6 +127,20 @@ class PipelineActionResponse(BaseModel):
     metrics: dict[str, int]
 
 
+@router.post("/import", deprecated=True)
+def removed_v1_catalogue_import() -> None:
+    """Tombstone for the removed v1 synchronous import (and its matching UI):
+    an explicit 410 beats a bare 404 for any straggler client."""
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail=_detail(
+            "ENDPOINT_REMOVED",
+            "The synchronous v1 catalogue import was removed. Submit files to "
+            "/catalogues/ingestions and review them in the catalogue review UI.",
+        ),
+    )
+
+
 @router.post(
     "/ingestions",
     response_model=CatalogueSubmissionResponse,

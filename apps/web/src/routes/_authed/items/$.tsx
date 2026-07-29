@@ -8,7 +8,6 @@ import { skuToPath } from '@/lib/sku'
 import { toast } from '@/lib/toast'
 import { confirmDialog } from '@/lib/confirm'
 import { Spinner } from '@/components/Spinner'
-import { ReparseButton } from '@/components/ReparseButton'
 
 const API = API_BASE
 
@@ -548,7 +547,6 @@ function ItemDetailPage() {
             {p.shopify_status && p.shopify_status !== 'archived' &&
               <a className="btn" href={`https://petproject.hk/search?q=${encodeURIComponent(p.name)}`} target="_blank" rel="noreferrer">Open in Shopify</a>}
             {can('product_sensitive') && <StatusMenu current={p.status} saving={savingStatus} onPick={setStatus} />}
-            {can('catalogue_onboard') && <ReparseButton scope="item" refId={p.sku_code} label="↻ Re-parse from catalogue" className="btn" />}
             {can('product_edit') && <button className="btn" onClick={() => setEditing(true)}>Edit details</button>}
             {can('product_edit') && <button className="btn pri" onClick={() => setEditing(true)}>Verify data</button>}
           </div>

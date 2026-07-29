@@ -3,7 +3,7 @@
 One registry, two families:
 
 - ``models.legacy`` — the long-lived inventory/ops domain (users, auth, audit,
-  products, suppliers, stock, pricing, tags, reparse, legacy catalogue import).
+  products, suppliers, stock, pricing, tags).
 - catalogue pipeline modules — the evidence-first ingestion pipeline
   (source documents, ingestion runs, extracted evidence observations, staging, validation,
   mastering, serving) that superseded the legacy synchronous catalogue flow.

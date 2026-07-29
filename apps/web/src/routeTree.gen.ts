@@ -34,8 +34,6 @@ import { Route as AuthedCataloguesIndexRouteImport } from './routes/_authed/cata
 import { Route as AuthedClientsIndexRouteImport } from './routes/_authed/clients/index'
 import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients/guide'
 import { Route as AuthedItemsSplatRouteImport } from './routes/_authed/items/$'
-import { Route as AuthedCataloguesReparseIndexRouteImport } from './routes/_authed/catalogues/reparse/index'
-import { Route as AuthedCataloguesReparseBatchIdRouteImport } from './routes/_authed/catalogues/reparse/$batchId'
 import { Route as AuthedCataloguesReviewIndexRouteImport } from './routes/_authed/catalogues/review/index'
 import { Route as AuthedCataloguesReviewRunIdIndexRouteImport } from './routes/_authed/catalogues/review/$runId/index'
 import { Route as AuthedCataloguesReviewRunIdCommitRouteImport } from './routes/_authed/catalogues/review/$runId/commit'
@@ -165,18 +163,6 @@ const AuthedItemsSplatRoute = AuthedItemsSplatRouteImport.update({
   path: '/items/$',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedCataloguesReparseIndexRoute =
-  AuthedCataloguesReparseIndexRouteImport.update({
-    id: '/catalogues/reparse/',
-    path: '/catalogues/reparse/',
-    getParentRoute: () => AuthedRoute,
-  } as any)
-const AuthedCataloguesReparseBatchIdRoute =
-  AuthedCataloguesReparseBatchIdRouteImport.update({
-    id: '/catalogues/reparse/$batchId',
-    path: '/catalogues/reparse/$batchId',
-    getParentRoute: () => AuthedRoute,
-  } as any)
 const AuthedCataloguesReviewIndexRoute =
   AuthedCataloguesReviewIndexRouteImport.update({
     id: '/catalogues/review/',
@@ -227,8 +213,6 @@ export interface FileRoutesByFullPath {
   '/items/$': typeof AuthedItemsSplatRoute
   '/catalogues/': typeof AuthedCataloguesIndexRoute
   '/clients/': typeof AuthedClientsIndexRoute
-  '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
-  '/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
   '/catalogues/review/': typeof AuthedCataloguesReviewIndexRoute
   '/catalogues/review/$runId/commit': typeof AuthedCataloguesReviewRunIdCommitRoute
   '/catalogues/review/$runId/room': typeof AuthedCataloguesReviewRunIdRoomRoute
@@ -259,8 +243,6 @@ export interface FileRoutesByTo {
   '/items/$': typeof AuthedItemsSplatRoute
   '/catalogues': typeof AuthedCataloguesIndexRoute
   '/clients': typeof AuthedClientsIndexRoute
-  '/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
-  '/catalogues/reparse': typeof AuthedCataloguesReparseIndexRoute
   '/catalogues/review': typeof AuthedCataloguesReviewIndexRoute
   '/catalogues/review/$runId/commit': typeof AuthedCataloguesReviewRunIdCommitRoute
   '/catalogues/review/$runId/room': typeof AuthedCataloguesReviewRunIdRoomRoute
@@ -293,8 +275,6 @@ export interface FileRoutesById {
   '/_authed/items/$': typeof AuthedItemsSplatRoute
   '/_authed/catalogues/': typeof AuthedCataloguesIndexRoute
   '/_authed/clients/': typeof AuthedClientsIndexRoute
-  '/_authed/catalogues/reparse/$batchId': typeof AuthedCataloguesReparseBatchIdRoute
-  '/_authed/catalogues/reparse/': typeof AuthedCataloguesReparseIndexRoute
   '/_authed/catalogues/review/': typeof AuthedCataloguesReviewIndexRoute
   '/_authed/catalogues/review/$runId/commit': typeof AuthedCataloguesReviewRunIdCommitRoute
   '/_authed/catalogues/review/$runId/room': typeof AuthedCataloguesReviewRunIdRoomRoute
@@ -327,8 +307,6 @@ export interface FileRouteTypes {
     | '/items/$'
     | '/catalogues/'
     | '/clients/'
-    | '/catalogues/reparse/$batchId'
-    | '/catalogues/reparse/'
     | '/catalogues/review/'
     | '/catalogues/review/$runId/commit'
     | '/catalogues/review/$runId/room'
@@ -359,8 +337,6 @@ export interface FileRouteTypes {
     | '/items/$'
     | '/catalogues'
     | '/clients'
-    | '/catalogues/reparse/$batchId'
-    | '/catalogues/reparse'
     | '/catalogues/review'
     | '/catalogues/review/$runId/commit'
     | '/catalogues/review/$runId/room'
@@ -392,8 +368,6 @@ export interface FileRouteTypes {
     | '/_authed/items/$'
     | '/_authed/catalogues/'
     | '/_authed/clients/'
-    | '/_authed/catalogues/reparse/$batchId'
-    | '/_authed/catalogues/reparse/'
     | '/_authed/catalogues/review/'
     | '/_authed/catalogues/review/$runId/commit'
     | '/_authed/catalogues/review/$runId/room'
@@ -585,20 +559,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedItemsSplatRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/catalogues/reparse/': {
-      id: '/_authed/catalogues/reparse/'
-      path: '/catalogues/reparse'
-      fullPath: '/catalogues/reparse/'
-      preLoaderRoute: typeof AuthedCataloguesReparseIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/catalogues/reparse/$batchId': {
-      id: '/_authed/catalogues/reparse/$batchId'
-      path: '/catalogues/reparse/$batchId'
-      fullPath: '/catalogues/reparse/$batchId'
-      preLoaderRoute: typeof AuthedCataloguesReparseBatchIdRouteImport
-      parentRoute: typeof AuthedRoute
-    }
     '/_authed/catalogues/review/': {
       id: '/_authed/catalogues/review/'
       path: '/catalogues/review'
@@ -651,8 +611,6 @@ interface AuthedRouteChildren {
   AuthedItemsSplatRoute: typeof AuthedItemsSplatRoute
   AuthedCataloguesIndexRoute: typeof AuthedCataloguesIndexRoute
   AuthedClientsIndexRoute: typeof AuthedClientsIndexRoute
-  AuthedCataloguesReparseBatchIdRoute: typeof AuthedCataloguesReparseBatchIdRoute
-  AuthedCataloguesReparseIndexRoute: typeof AuthedCataloguesReparseIndexRoute
   AuthedCataloguesReviewIndexRoute: typeof AuthedCataloguesReviewIndexRoute
   AuthedCataloguesReviewRunIdCommitRoute: typeof AuthedCataloguesReviewRunIdCommitRoute
   AuthedCataloguesReviewRunIdRoomRoute: typeof AuthedCataloguesReviewRunIdRoomRoute
@@ -680,8 +638,6 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedItemsSplatRoute: AuthedItemsSplatRoute,
   AuthedCataloguesIndexRoute: AuthedCataloguesIndexRoute,
   AuthedClientsIndexRoute: AuthedClientsIndexRoute,
-  AuthedCataloguesReparseBatchIdRoute: AuthedCataloguesReparseBatchIdRoute,
-  AuthedCataloguesReparseIndexRoute: AuthedCataloguesReparseIndexRoute,
   AuthedCataloguesReviewIndexRoute: AuthedCataloguesReviewIndexRoute,
   AuthedCataloguesReviewRunIdCommitRoute:
     AuthedCataloguesReviewRunIdCommitRoute,

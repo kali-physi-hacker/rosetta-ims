@@ -20,12 +20,9 @@ ALLOWLIST = {
     "collections.py::preview",          # evaluates a rule, saves nothing
     "collections.py::suggest",          # returns AI draft collections, saves nothing
     "config.py::validate",              # dry-run validates a proposed config edit, saves nothing
+    "catalogue_ingestions.py::removed_v1_catalogue_import",  # static 410 tombstone for the removed v1 import; mutates nothing
     # Persist via a delegated, already-audited function — auditing here would double-log:
     "products.py::update_product_slash",  # -> update_product (audited)
-    "catalogues.py::match_confident",     # -> bulk_match (audits each item via log_event)
-    "catalogues.py::reject_brand",        # -> bulk_reject (audits each item via log_event)
-    "reparse.py::confirm_reparse",        # -> reparse_service.apply_change (audits each applied change)
-    "catalogues.py::import_catalogue_removed",  # static 410 tombstone for the removed v1 import; mutates nothing
 }
 
 _AUDIT_ATTRS = {"record", "log_event"}          # audit_log.record(...) / audit.log_event(...)
