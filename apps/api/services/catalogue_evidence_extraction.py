@@ -248,6 +248,26 @@ class _VisionRow(BaseModel):
         return self
 
 
+class _VisionTable(BaseModel):
+    """One visual table and its own printed header family."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    columns: tuple[str, ...]
+    rows: tuple[_VisionRow, ...]
+
+    @model_validator(mode="after")
+    def _rows_match_columns(self):
+        if not self.columns or not self.rows:
+            raise ValueError("vision table requires columns and rows")
+        for row in self.rows:
+            if row.text is not None:
+                raise ValueError("table rows must use cells; document text belongs in text_observations")
+            if len(row.cells) > len(self.columns):
+                raise ValueError("a row cannot carry more cells than its table columns")
+        return self
+
+
 class _VisionEnvelope(BaseModel):
     """Typed page-level provider outcome (compact form).
 
@@ -260,18 +280,29 @@ class _VisionEnvelope(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     page_outcome: Literal["evidence", "no_catalogue_evidence"]
+    tables: tuple[_VisionTable, ...] = ()
+    text_observations: tuple[_VisionRow, ...] = ()
+    # Backward-compatible reader for recorded compact-v1 envelopes. New provider
+    # requests use tables/text_observations so one page can carry multiple
+    # independent header families.
     columns: tuple[str, ...] = ()
     rows: tuple[_VisionRow, ...] = ()
 
     @model_validator(mode="after")
     def _outcome_matches_rows(self):
-        if self.page_outcome == "evidence" and not self.rows:
-            raise ValueError("page_outcome 'evidence' requires at least one row")
-        if self.page_outcome == "no_catalogue_evidence" and self.rows:
-            raise ValueError("page_outcome 'no_catalogue_evidence' cannot carry rows")
+        has_evidence = bool(self.tables or self.text_observations or self.rows)
+        if self.page_outcome == "evidence" and not has_evidence:
+            raise ValueError("page_outcome 'evidence' requires table or text evidence")
+        if self.page_outcome == "no_catalogue_evidence" and has_evidence:
+            raise ValueError("page_outcome 'no_catalogue_evidence' cannot carry evidence")
+        if self.tables and (self.columns or self.rows):
+            raise ValueError("use tables or legacy columns/rows, not both")
         for row in self.rows:
             if len(row.cells) > len(self.columns):
                 raise ValueError("a row cannot carry more cells than declared columns")
+        for row in self.text_observations:
+            if row.cells or not row.text:
+                raise ValueError("text_observations must contain text without cells")
         return self
 
 
@@ -291,14 +322,20 @@ duplicates. Preserve repeated rows at their separate source locations.
 Return one JSON object with exactly this shape:
 {
   "page_outcome": "evidence",
-  "columns": ["each printed column heading, once, in printed order"],
-  "rows": [
+  "tables": [
     {
-      "cells": ["cell value exactly as printed, aligned to columns, null when empty"],
-      "confidence": "0.95"
-    },
+      "columns": ["this table's printed headings, in printed order"],
+      "rows": [
+        {
+          "cells": ["cell value exactly as printed, aligned to this table's columns, null when empty"],
+          "confidence": "0.95"
+        }
+      ]
+    }
+  ],
+  "text_observations": [
     {
-      "text": "a non-tabular line exactly as printed (no cells)",
+      "text": "document-level evidence exactly as printed",
       "confidence": "0.9"
     }
   ]
@@ -308,16 +345,18 @@ page_outcome is REQUIRED and must be exactly one of:
 - "evidence" — the page contains catalogue rows; rows must list every visible
   row without omission.
 - "no_catalogue_evidence" — the page genuinely contains no catalogue rows
-  (blank page, cover page, pure artwork); columns and rows must be [].
+  and no relevant document-level text (blank page, pure artwork); tables and
+  text_observations must be [].
 
 Rules:
-- columns holds each printed column heading exactly as printed, ONCE — never
-  repeat headings inside rows.
-- Emit ONLY catalogue product/offer rows. Page furniture — document titles,
-  section banners, effective dates, policy footnotes, page numbers, contact
-  lines — is NOT a row; do not emit it.
-- Each tabular row's cells align by position to columns; use null for an empty
-  cell. A row never has more cells than columns.
+- Emit one tables entry per visually distinct table. Each table owns its
+  printed headings; never force two different header families into one array.
+- Product/offer rows belong in tables. Preserve commercially relevant
+  document-level text — effective dates, price-basis policies, promotion
+  periods, minimum-order rules and similar terms — in text_observations.
+- Decorative titles, page numbers and contact lines may be omitted.
+- Each tabular row's cells align by position to its table's columns; use null
+  for an empty cell. A row never has more cells than its table's columns.
 - Copy every value exactly as printed, including bilingual text, symbols and
   units. Never output computed, translated or normalized values.
 - A row may optionally include "box": [x, y, width, height] in pixels.
@@ -978,8 +1017,15 @@ def _vision_observations(
     try:
         observations: list[ExtractedEvidence] = []
         digest_counts: dict[str, int] = {}
-        for row in envelope.rows:
-            digest = _observation_digest(envelope.columns, row)
+        row_groups: list[tuple[tuple[str, ...], _VisionRow]] = []
+        for table in envelope.tables:
+            row_groups.extend((table.columns, row) for row in table.rows)
+        # Recorded compact-v1 fixtures remain readable.
+        row_groups.extend((envelope.columns, row) for row in envelope.rows)
+        row_groups.extend(((), row) for row in envelope.text_observations)
+
+        for columns, row in row_groups:
+            digest = _observation_digest(columns, row)
             ordinal = digest_counts.get(digest, 0) + 1
             digest_counts[digest] = ordinal
             key = f"{unit_key}:obs:{digest}:{ordinal}"
@@ -991,7 +1037,7 @@ def _vision_observations(
                 RawCell(
                     cell_reference=None,
                     row_number=None,
-                    column_name=envelope.columns[index],
+                    column_name=columns[index],
                     column_index=index + 1,
                     raw_value=value,
                 )
