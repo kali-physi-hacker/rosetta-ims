@@ -47,7 +47,7 @@ def _reset_and_seed(overrides=None):
     d = database.SessionLocal()
     try:
         for m in (models.CatalogueItem, models.CatalogueImport, models.ProductSupplier,
-                  models.Product, models.SupplierBrand, models.SupplierAlias, models.Supplier,
+                  models.ProductVariant, models.SupplierBrand, models.SupplierAlias, models.Supplier,
                   models.AuditLog):
             d.query(m).delete()
         d.commit()
@@ -56,7 +56,7 @@ def _reset_and_seed(overrides=None):
         pidn = 7100
         for psid, (name, uom, upp, _) in SEED.items():
             ov = overrides.get(psid, {})
-            d.add(models.Product(id=pidn, sku_code=f"SKU{psid}", name=ov.get("name", name), category="Supplement",
+            d.add(models.ProductVariant(id=pidn, sku_code=f"SKU{psid}", name=ov.get("name", name), category="Supplement",
                                  status="ACTIVE", storage_rule="any", uom=ov.get("uom", uom),
                                  created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00"))
             d.flush()

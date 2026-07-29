@@ -61,7 +61,7 @@ print(f"platform items: {len(items)} -> consolidated entries: {len(entries)} (ju
 
 # ── 2. Index the current rosetta inventory ────────────────────────────────────
 db = database.SessionLocal()
-products = db.query(models.Product).all()
+products = db.query(models.ProductVariant).all()
 sku_set = {nsku(p.sku_code) for p in products}
 nk_map = {nk(p.name): p for p in products}
 ak_map = {ak(p.name): p for p in products}
@@ -121,7 +121,7 @@ for e in to_create:
     if len(samples) < 12:
         samples.append(f"  {status:8} {sku:24.24} {name[:52]:52} [{'+'.join(sorted(set(e['sources'])))}] cat={heur.get('category') or 'Others'}")
     if APPLY:
-        db.add(models.Product(
+        db.add(models.ProductVariant(
             sku_code=sku,
             name=name[:300],
             brand=(e["brand"] or None),

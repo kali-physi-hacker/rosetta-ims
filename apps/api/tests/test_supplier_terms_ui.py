@@ -51,7 +51,7 @@ def _seed(sku, supcode):
     try:
         s = models.Supplier(code=supcode, name=f"{supcode} Ltd", created_at="2026-01-01")
         d.add(s); d.flush()
-        p = models.Product(sku_code=sku, name="Test Cans 400g", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code=sku, name="Test Cans 400g", category="Food", status="ACTIVE",
                            storage_rule="any", uom="can",
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.commit()

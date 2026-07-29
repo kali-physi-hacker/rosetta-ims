@@ -39,7 +39,7 @@ def _audit_rows():
 def _seed_competitor():
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="TEST-1", name="Test Widget", category="Medicine",
+        p = models.ProductVariant(sku_code="TEST-1", name="Test Widget", category="Medicine",
                            status="ACTIVE", storage_rule="any",
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()

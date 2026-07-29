@@ -9,7 +9,7 @@ One registry, two families:
   mastering, serving) that superseded the legacy synchronous catalogue flow.
 
 Every model is re-exported here so call sites use one import surface
-(``import models``; ``models.Product``, ``models.IngestionRun``, …) and all
+(``import models``; ``models.ProductVariant``, ``models.IngestionRun``, …) and all
 tables register on the single shared ``Base.metadata``.
 """
 
@@ -24,7 +24,6 @@ from models.catalogue_pipeline import (  # noqa: F401
     CatalogueMasteringCandidate,
     CatalogueExtractionAttempt,
     CataloguePackagingConfiguration,
-    CatalogueProductFamily,
     CatalogueExtractedEvidence,
     CatalogueRawStageAttempt,
     CatalogueReviewDecision,
@@ -34,6 +33,7 @@ from models.catalogue_pipeline import (  # noqa: F401
     CatalogueNormalizedRowEvidence,
     CatalogueSupplierMbbTerm,
     CatalogueSupplierPrice,
-    CatalogueSupplierProduct,
     CatalogueValidationIssue,
+    ProductFamily,
+    SupplierOffering,
 )

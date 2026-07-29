@@ -196,10 +196,10 @@ def suggest_collections(db, max_n: int = 8) -> list:
                   .join(models.ProductTag, models.ProductTag.tag_id == models.Tag.id)
                   .group_by(models.Tag.id).order_by(func.count(models.ProductTag.id).desc()).all())
     tag_counts = [(t, c) for t, c in tag_counts]
-    categories = [r[0] for r in db.query(models.Product.category).distinct().all() if r[0]]
-    brand_rows = (db.query(models.Product.brand, func.count(models.Product.id))
-                  .filter(models.Product.brand.isnot(None))
-                  .group_by(models.Product.brand).order_by(func.count(models.Product.id).desc()).all())
+    categories = [r[0] for r in db.query(models.ProductVariant.category).distinct().all() if r[0]]
+    brand_rows = (db.query(models.ProductVariant.brand, func.count(models.ProductVariant.id))
+                  .filter(models.ProductVariant.brand.isnot(None))
+                  .group_by(models.ProductVariant.brand).order_by(func.count(models.ProductVariant.id).desc()).all())
     brands = [b for b, _ in brand_rows]
 
     drafts = []

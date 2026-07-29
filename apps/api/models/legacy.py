@@ -148,7 +148,15 @@ class SupplierBrand(Base):
     __table_args__ = (UniqueConstraint("supplier_id", "normalized_brand", name="uq_supplier_brand"),)
 
 
-class Product(Base):
+class ProductVariant(Base):
+    """Canonical stock-identifiable SKU.
+
+    The historical class name ``Product`` collapsed product family, variant,
+    inventory and selling concerns.  The table name is retained during the
+    compatibility migration, but the ORM type now states what the row has
+    always represented: a concrete SKU variant.
+    """
+
     __tablename__ = "products"
     __table_args__ = (
         Index("ix_products_status", "status"),
@@ -157,6 +165,7 @@ class Product(Base):
     )
 
     id           = Column(Integer, primary_key=True, autoincrement=True)
+    product_family_id = Column(Integer, ForeignKey("catalogue_product_families.id"), nullable=True)
     sku_code     = Column(String, unique=True, nullable=False, index=True)
     name         = Column(String, nullable=False)
     brand        = Column(String)
@@ -198,6 +207,72 @@ class Product(Base):
     stock_adjustments = relationship("StockAdjustment", back_populates="product")
     catalogue_items   = relationship("CatalogueItem", back_populates="matched_product")
     tag_links         = relationship("ProductTag", back_populates="product", cascade="all, delete-orphan")
+    inventory_items   = relationship("InventoryItem", back_populates="product_variant")
+    selling_items     = relationship("SellingItem", back_populates="product_variant")
+    product_family    = relationship("ProductFamily")
+
+
+class InventoryItem(Base):
+    """Stock and valuation identity for a Product Variant.
+
+    A variant may have multiple inventory identities when operational systems
+    or ownership boundaries require it. Location quantities remain events/
+    balances linked through the compatibility variant until their dedicated
+    migration.
+    """
+
+    __tablename__ = "inventory_items"
+    __table_args__ = (
+        UniqueConstraint("inventory_key", name="uq_inventory_items_key"),
+        UniqueConstraint("legacy_product_id", name="uq_inventory_items_legacy_product"),
+        Index("ix_inventory_items_variant", "product_variant_id"),
+        Index("ix_inventory_items_status", "status"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    inventory_key = Column(String, nullable=False)
+    product_variant_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    legacy_product_id = Column(Integer, nullable=True)
+    valuation_uom = Column(String, nullable=True)
+    storage_rule = Column(String, nullable=False, default="any")
+    status = Column(String, nullable=False, default="ACTIVE")
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+
+    product_variant = relationship("ProductVariant", foreign_keys=[product_variant_id], back_populates="inventory_items")
+
+
+class SellingItem(Base):
+    """Channel-facing sellable/listing identity.
+
+    Price, listing status and listing pack size belong here rather than on the
+    canonical Product Variant.
+    """
+
+    __tablename__ = "selling_items"
+    __table_args__ = (
+        UniqueConstraint("selling_item_key", name="uq_selling_items_key"),
+        UniqueConstraint("product_variant_id", "channel", name="uq_selling_items_variant_channel"),
+        Index("ix_selling_items_variant", "product_variant_id"),
+        Index("ix_selling_items_inventory", "inventory_item_id"),
+        Index("ix_selling_items_channel_status", "channel", "status"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    selling_item_key = Column(String, nullable=False)
+    product_variant_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    inventory_item_id = Column(Integer, ForeignKey("inventory_items.id"), nullable=True)
+    channel = Column(String, nullable=False)
+    external_listing_id = Column(String, nullable=True)
+    sell_uom = Column(String, nullable=True)
+    units_per_listing = Column(Integer, nullable=True)
+    selling_price = Column(Float, nullable=True)
+    status = Column(String, nullable=False, default="ACTIVE")
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+
+    product_variant = relationship("ProductVariant", back_populates="selling_items")
+    inventory_item = relationship("InventoryItem")
 
 
 class ProductSupplier(Base):
@@ -254,7 +329,7 @@ class ProductSupplier(Base):
     minimum_order_source = Column(String, nullable=True)    # provenance of minimum_order_qty (app-level enum)
     pricing_note         = Column(String, nullable=True)    # free-text audit note (basis-fix provenance, human approval, etc.)
 
-    product  = relationship("Product", back_populates="product_suppliers")
+    product  = relationship("ProductVariant", back_populates="product_suppliers")
     supplier = relationship("Supplier", back_populates="product_suppliers")
     mbb_term_list = relationship("MbbTerm", back_populates="product_supplier",
                                  cascade="all, delete-orphan", order_by="MbbTerm.sort_order")
@@ -320,7 +395,7 @@ class ProductChannel(Base):
     units_per_listing   = Column(Integer, nullable=True)   # how many sell-units per HKTV listing (e.g. 12 for a case)
     updated_at          = Column(String, nullable=False)
 
-    product = relationship("Product", back_populates="channels")
+    product = relationship("ProductVariant", back_populates="channels")
 
 
 class StockLevel(Base):
@@ -338,7 +413,7 @@ class StockLevel(Base):
     source      = Column(String, nullable=False, default='import')  # 'import' | 'manual_adjustment'
     updated_at  = Column(String, nullable=False)
 
-    product = relationship("Product", back_populates="stock_levels")
+    product = relationship("ProductVariant", back_populates="stock_levels")
 
 
 class SalesVelocity(Base):
@@ -359,7 +434,7 @@ class SalesVelocity(Base):
     calculated_at = Column(String, nullable=False)
     source        = Column(String)   # 'shopify' | 'daysmart' | 'hktv' | 'algo_multichannel' | 'combined'
 
-    product = relationship("Product", back_populates="sales_velocity")
+    product = relationship("ProductVariant", back_populates="sales_velocity")
 
 
 class ExpiryTracking(Base):
@@ -373,7 +448,7 @@ class ExpiryTracking(Base):
     location    = Column(String)
     created_at  = Column(String, nullable=False)
 
-    product = relationship("Product", back_populates="expiry_tracking")
+    product = relationship("ProductVariant", back_populates="expiry_tracking")
 
 
 class CompetitorPrice(Base):
@@ -397,7 +472,7 @@ class CompetitorPrice(Base):
     created_at      = Column(String, nullable=False)
     updated_at      = Column(String, nullable=False)
 
-    product = relationship("Product", back_populates="competitor_prices")
+    product = relationship("ProductVariant", back_populates="competitor_prices")
 
 
 class StockAdjustment(Base):
@@ -411,7 +486,7 @@ class StockAdjustment(Base):
     adjusted_by = Column(String)
     adjusted_at = Column(String, nullable=False)
 
-    product = relationship("Product", back_populates="stock_adjustments")
+    product = relationship("ProductVariant", back_populates="stock_adjustments")
 
 
 class CatalogueImport(Base):
@@ -509,7 +584,7 @@ class CatalogueItem(Base):
     reparse_source     = Column(String, nullable=True)   # 'text' | 'source'
 
     catalogue_import  = relationship("CatalogueImport", back_populates="items")
-    matched_product   = relationship("Product", back_populates="catalogue_items")
+    matched_product   = relationship("ProductVariant", back_populates="catalogue_items")
 
 
 class CatalogueAuditEvent(Base):
@@ -602,7 +677,7 @@ class ProductTag(Base):
     )
 
     tag     = relationship("Tag", back_populates="product_links")
-    product = relationship("Product", back_populates="tag_links")
+    product = relationship("ProductVariant", back_populates="tag_links")
 
 
 class Collection(Base):

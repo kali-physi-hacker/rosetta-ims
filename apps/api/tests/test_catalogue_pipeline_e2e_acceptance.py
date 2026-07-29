@@ -297,8 +297,8 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     assert applied.metrics.created_count == 1
     assert applied_again.metrics.reused_count == 1
 
-    supplier_product = db.query(models.CatalogueSupplierProduct).one()
-    assert supplier_product.product_variant_id == db.query(models.Product).filter_by(sku_code="RIMS-HC-0447").one().id
+    supplier_product = db.query(models.SupplierOffering).one()
+    assert supplier_product.product_variant_id == db.query(models.ProductVariant).filter_by(sku_code="RIMS-HC-0447").one().id
     assert supplier_product.supplier_sku == "10447"
     assert supplier_product.product_family_id is None
     price = db.query(models.CatalogueSupplierPrice).one()
@@ -541,7 +541,7 @@ def _reset(session):
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
-        models.CatalogueSupplierProduct,
+        models.SupplierOffering,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,
@@ -554,7 +554,7 @@ def _reset(session):
         session.query(model).delete()
     session.query(models.CatalogueItem).delete()
     session.query(models.CatalogueImport).delete()
-    session.query(models.Product).filter_by(sku_code="RIMS-HC-0447").delete()
+    session.query(models.ProductVariant).filter_by(sku_code="RIMS-HC-0447").delete()
     session.commit()
 
 
@@ -579,9 +579,9 @@ def _seed_product_variant(session):
     Hill's supplier code (10447): mastering must resolve the product through
     the supplier mapping, never by assuming supplier SKU == canonical SKU.
     """
-    product = session.query(models.Product).filter_by(sku_code="RIMS-HC-0447").first()
+    product = session.query(models.ProductVariant).filter_by(sku_code="RIMS-HC-0447").first()
     if product is None:
-        product = models.Product(
+        product = models.ProductVariant(
             sku_code="RIMS-HC-0447",
             name="Hill's Healthy Cuisine Chicken 82g",
             brand="Hill's",
@@ -593,12 +593,12 @@ def _seed_product_variant(session):
         )
         session.add(product)
         session.commit()
-    mapping = session.query(models.CatalogueSupplierProduct).filter_by(
+    mapping = session.query(models.SupplierOffering).filter_by(
         supplier_id=14, supplier_sku="10447"
     ).first()
     if mapping is None:
         session.add(
-            models.CatalogueSupplierProduct(
+            models.SupplierOffering(
                 supplier_product_key="supplier:14:offer:10447",
                 supplier_id=14,
                 product_variant_id=product.id,

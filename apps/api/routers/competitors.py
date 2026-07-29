@@ -37,8 +37,8 @@ def _to_dict(cp: models.CompetitorPrice) -> dict:
     }
 
 
-def _product_by_sku(db: Session, sku: str) -> models.Product:
-    p = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+def _product_by_sku(db: Session, sku: str) -> models.ProductVariant:
+    p = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not p:
         raise HTTPException(status_code=404, detail="Product not found")
     return p
@@ -95,7 +95,7 @@ def delete_one(cid: int, request: Request, db: Session = Depends(database.get_db
     cp = db.query(models.CompetitorPrice).filter(models.CompetitorPrice.id == cid).first()
     if not cp:
         raise HTTPException(status_code=404, detail="Competitor link not found")
-    sku = db.query(models.Product.sku_code).filter(models.Product.id == cp.product_id).scalar()
+    sku = db.query(models.ProductVariant.sku_code).filter(models.ProductVariant.id == cp.product_id).scalar()
     audit_log.record(db, action="competitor.delete", actor=_user, entity_type="competitor_price",
                      entity_id=cp.id, entity_label=f"{cp.competitor_name} · {sku or cp.product_id}",
                      details={"sku": sku, "competitor": cp.competitor_name, "url": cp.url,
@@ -131,7 +131,7 @@ def refresh_product(body: RefreshBody, request: Request, db: Session = Depends(d
     """Re-scrape ONE product's competitor links synchronously (few URLs, fast) — the per-SKU
     'Refresh prices' button."""
     result = scraper.scrape_product(db, body.product_id)
-    sku = db.query(models.Product.sku_code).filter(models.Product.id == body.product_id).scalar()
+    sku = db.query(models.ProductVariant.sku_code).filter(models.ProductVariant.id == body.product_id).scalar()
     audit_log.record(db, action="competitor.refresh_product", actor=_user, entity_type="product",
                      entity_id=body.product_id, entity_label=sku, details=result,
                      request=request, commit=True)

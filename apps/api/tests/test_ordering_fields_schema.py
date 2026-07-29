@@ -34,7 +34,7 @@ def _cols():
 def _mk_link(session, code, sku, **ps_kwargs):
     s = models.Supplier(code=code, name=code, created_at="2026-01-01")
     session.add(s); session.flush()
-    p = models.Product(sku_code=sku, name="x", category="Food", status="ACTIVE",
+    p = models.ProductVariant(sku_code=sku, name="x", category="Food", status="ACTIVE",
                        storage_rule="any", created_at="2026-01-01T00:00:00",
                        updated_at="2026-01-01T00:00:00")
     session.add(p); session.flush()

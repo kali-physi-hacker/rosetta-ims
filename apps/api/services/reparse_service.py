@@ -136,7 +136,7 @@ def _current_value(db, item, field):
     committed (matched_product_id set), else the catalogue_item's own field. Returns (value, target_obj)."""
     kind, target_attr, item_attr = _RECAPTURE[field]
     if item.matched_product_id:
-        obj = db.get(models.Product, item.matched_product_id) if kind == "product" else _matched_ps(db, item)
+        obj = db.get(models.ProductVariant, item.matched_product_id) if kind == "product" else _matched_ps(db, item)
         return (getattr(obj, target_attr, None) if obj else None), obj
     # pending — diff against the catalogue_item itself (derived fields have no catalogue attr → None)
     return (getattr(item, item_attr, None) if item_attr else None), item
@@ -187,7 +187,7 @@ def _cost_rrp_swapped(item) -> bool:
 
 def _sku_and_name(db, item):
     if item.matched_product_id:
-        p = db.get(models.Product, item.matched_product_id)
+        p = db.get(models.ProductVariant, item.matched_product_id)
         if p:
             return p.sku_code, p.name
     return item.assigned_sku, (item.raw_description or "")
@@ -205,7 +205,7 @@ def item_snapshot(db, item: models.CatalogueItem) -> list[dict]:
     """Every display field for one item: Current (live source) vs Re-parsed (recapture candidate). All
     fields, changed or not — the card's context. Cost-affecting rows carry a before/after effective cost."""
     committed = bool(item.matched_product_id)
-    product = db.get(models.Product, item.matched_product_id) if committed else None
+    product = db.get(models.ProductVariant, item.matched_product_id) if committed else None
     ps = _matched_ps(db, item) if committed else None
     cand = derive(item, ps)
     contracted = supplier_source_contract_runtime.load_contract(getattr(item, "supplier_id", None)) is not None
@@ -387,7 +387,7 @@ def apply_change(db, change: models.ReparseChange, operator: str | None) -> str:
         if field == "order_increment_qty":
             # a captured order multiple needs a UOM + provenance (docs/product-vs-supplier-fields.md)
             if not target.order_increment_uom:
-                prod = db.get(models.Product, item.matched_product_id)
+                prod = db.get(models.ProductVariant, item.matched_product_id)
                 target.order_increment_uom = (prod.uom if prod and prod.uom else "sellable_unit")
             if not target.minimum_order_source:
                 target.minimum_order_source = "inferred_from_order_multiple"
@@ -395,10 +395,10 @@ def apply_change(db, change: models.ReparseChange, operator: str | None) -> str:
         # bump the parent Product's updated_at so the live inventory delta-feed surfaces this change
         # (/products/changes keys off Product.updated_at) — a supplier-only write (cost/pack/sku) is
         # otherwise invisible to the All-Inventory list until a hard reload.
-        parent = db.get(models.Product, item.matched_product_id)
+        parent = db.get(models.ProductVariant, item.matched_product_id)
         if parent is not None:
             parent.updated_at = now
-    elif isinstance(target, models.Product):
+    elif isinstance(target, models.ProductVariant):
         target.updated_at = now
     else:  # catalogue_item (pending)
         item.updated_at = now if hasattr(item, "updated_at") else None
@@ -406,7 +406,7 @@ def apply_change(db, change: models.ReparseChange, operator: str | None) -> str:
     item.reparsed_at = now
     item.reparse_source = "text"
     entity_type = ("product_supplier" if isinstance(target, models.ProductSupplier)
-                   else "product" if isinstance(target, models.Product) else "catalogue_item")
+                   else "product" if isinstance(target, models.ProductVariant) else "catalogue_item")
     audit_log.record(db, action="catalogue.reparse_apply", actor=None,
                      entity_type=entity_type, entity_id=getattr(target, "id", None),
                      entity_label=_sku_and_name(db, item)[0],

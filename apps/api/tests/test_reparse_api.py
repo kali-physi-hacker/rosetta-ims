@@ -43,7 +43,7 @@ def _reset():
     d = database.SessionLocal()
     try:
         for m in (models.ReparseChange, models.ReparseBatch, models.CatalogueItem, models.CatalogueImport,
-                  models.ProductSupplier, models.Product, models.Supplier, models.AuditLog):
+                  models.ProductSupplier, models.ProductVariant, models.Supplier, models.AuditLog):
             d.query(m).delete()
         d.commit()
         d.add(models.Supplier(id=SID, code="KANGAR", name="Kangaroo Pet", created_at="2026-01-01"))
@@ -58,7 +58,7 @@ def _seed_committed(sku="RP-4KG", upp=4000, name="Air-Dried Dog Food 4kg", basic
     """A matched SKU: Product + ProductSupplier(upp) + a CatalogueItem pointing at it."""
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code=sku, name=name, category="Food", status="ACTIVE", storage_rule="any",
+        p = models.ProductVariant(sku_code=sku, name=name, category="Food", status="ACTIVE", storage_rule="any",
                            uom="bag", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
         d.add(models.ProductSupplier(product_id=p.id, supplier_id=SID, supplier_sku="SD-1", basic_cost=basic,
@@ -79,7 +79,7 @@ def _seed_mismatch():
     / sku LI4607 — while the catalogue item actually captured cost 75 / pack 1 / sku LI4600."""
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="LIGNO-100", name="Lignocaine 2% Injection 100ml", category="Medicine",
+        p = models.ProductVariant(sku_code="LIGNO-100", name="Lignocaine 2% Injection 100ml", category="Medicine",
                            status="ACTIVE", storage_rule="any", uom="bottle",
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
@@ -102,7 +102,7 @@ def _seed_per_unit_priced(pack_source="manual"):
     so the effective unit cost is 25.2 — not 25.2 / 24."""
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="HILLS-ONC", name="Hill's ONC Care Stew 2.9oz (min 24)", category="Food",
+        p = models.ProductVariant(sku_code="HILLS-ONC", name="Hill's ONC Care Stew 2.9oz (min 24)", category="Food",
                            status="ACTIVE", storage_rule="any", uom="can",
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
@@ -148,7 +148,7 @@ def _seed_supplier2(sid2=52, desc="Vet Kibble 2kg", upp=2000, cost=300.0):
 def _ps_upp(sku):
     d = database.SessionLocal()
     try:
-        p = d.query(models.Product).filter_by(sku_code=sku).first()
+        p = d.query(models.ProductVariant).filter_by(sku_code=sku).first()
         return d.query(models.ProductSupplier).filter_by(product_id=p.id).first().units_per_pack
     finally:
         d.close()
@@ -355,7 +355,7 @@ def test_confirm_recaptured_cost_writes_basic_cost_manual():
         assert ps.basic_cost == 75.0 and ps.units_per_pack == 1 and ps.supplier_sku == "LI4600"
         assert ps.cost_source == "manual"          # confirmed cost is protected from Sheet re-sync
         # a supplier-only write must bump the parent product so the live inventory delta-feed surfaces it
-        prod = d.query(models.Product).filter_by(sku_code=sku).first()
+        prod = d.query(models.ProductVariant).filter_by(sku_code=sku).first()
         assert prod.updated_at != "2026-01-01T00:00:00"
         assert d.query(models.AuditLog).filter_by(action="catalogue.reparse_apply").count() >= 3
     finally:
@@ -392,7 +392,7 @@ def test_no_phantom_pending_field_without_a_change():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="PH-1", name="Shampoo", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code="PH-1", name="Shampoo", category="Food", status="ACTIVE",
                            storage_rule="any", uom="ml", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
         d.add(models.CatalogueItem(import_id=1, supplier_id=SID, raw_description="Shampoo 5L", pack_size="5L",
@@ -414,7 +414,7 @@ def test_manual_cost_not_recaptured():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="MC-1", name="Manual Cost SKU", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code="MC-1", name="Manual Cost SKU", category="Food", status="ACTIVE",
                            storage_rule="any", uom="unit", rrp=25.0,
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
@@ -436,7 +436,7 @@ def test_cost_rrp_swap_not_recaptured():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="SW-1", name="Swap SKU", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code="SW-1", name="Swap SKU", category="Food", status="ACTIVE",
                            storage_rule="any", uom="unit", rrp=24.0,
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
@@ -459,7 +459,7 @@ def test_captures_order_multiple_into_order_increment_qty():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="OM-1", name="Case SKU", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code="OM-1", name="Case SKU", category="Food", status="ACTIVE",
                            storage_rule="any", uom="can", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
         d.add(models.ProductSupplier(product_id=p.id, supplier_id=SID, supplier_sku="O1", basic_cost=25.2,
@@ -490,7 +490,7 @@ def test_reparse_dedupes_to_latest_catalogue_row_per_sku():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="DUP-1", name="Dup SKU", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code="DUP-1", name="Dup SKU", category="Food", status="ACTIVE",
                            storage_rule="any", uom="unit", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
         d.add(models.ProductSupplier(product_id=p.id, supplier_id=SID, supplier_sku="D1", basic_cost=10.0,
@@ -518,7 +518,7 @@ def test_over_matched_product_picks_its_own_row_not_the_newest():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="OWN-1", name="c/d Urinary", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code="OWN-1", name="c/d Urinary", category="Food", status="ACTIVE",
                            storage_rule="any", uom="can", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
         d.add(models.ProductSupplier(product_id=p.id, supplier_id=SID, supplier_sku="3386", basic_cost=17.6,
@@ -547,7 +547,7 @@ def test_single_mismatched_row_by_name_is_skipped():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="NM-1", name="Hill's Prescription Diet Canine c/d Urinary Care 1.5kg",
+        p = models.ProductVariant(sku_code="NM-1", name="Hill's Prescription Diet Canine c/d Urinary Care 1.5kg",
                            category="Food", status="ACTIVE", storage_rule="any", uom="bag",
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
@@ -571,7 +571,7 @@ def test_single_row_name_matches_trusts_the_sku_fix():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="NM-2", name="Hill's Prescription Diet Canine h/d Heart Care 1.5kg",
+        p = models.ProductVariant(sku_code="NM-2", name="Hill's Prescription Diet Canine h/d Heart Care 1.5kg",
                            category="Food", status="ACTIVE", storage_rule="any", uom="bag",
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
@@ -597,7 +597,7 @@ def test_ambiguous_over_match_is_skipped():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="AMB-1", name="c/d Urinary Multi", category="Food", status="ACTIVE",
+        p = models.ProductVariant(sku_code="AMB-1", name="c/d Urinary Multi", category="Food", status="ACTIVE",
                            storage_rule="any", uom="can", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
         d.add(models.ProductSupplier(product_id=p.id, supplier_id=SID, supplier_sku="3386", basic_cost=17.6,
@@ -697,7 +697,7 @@ def test_edit_onboards_missing_supplier_link():
     _reset()
     d = database.SessionLocal()
     try:
-        p = models.Product(sku_code="ONB-1", name="Disp. Needle 25G", category="Not-For-Sale",
+        p = models.ProductVariant(sku_code="ONB-1", name="Disp. Needle 25G", category="Not-For-Sale",
                            status="ACTIVE", storage_rule="any", uom="Box(es)",
                            created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
         d.add(p); d.flush()
@@ -718,7 +718,7 @@ def test_edit_onboards_missing_supplier_link():
     _client.post(f"/catalogues/reparse/{b['id']}/confirm", json={"change_ids": [upp["change_id"]]})
     d = database.SessionLocal()
     try:
-        p = d.query(models.Product).filter_by(sku_code="ONB-1").first()
+        p = d.query(models.ProductVariant).filter_by(sku_code="ONB-1").first()
         ps = d.query(models.ProductSupplier).filter_by(product_id=p.id, supplier_id=SID).first()
         assert ps is not None                                    # link onboarded
         assert ps.units_per_pack == 100                          # the edited pack

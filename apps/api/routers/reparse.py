@@ -137,7 +137,7 @@ def _batch_dict(db: Session, batch: models.ReparseBatch) -> dict:
 def _resolve_items(db: Session, scope: str, ref: str) -> List[models.CatalogueItem]:
     q = db.query(models.CatalogueItem)
     if scope == "item":
-        product = db.query(models.Product).filter(models.Product.sku_code == ref).first()
+        product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == ref).first()
         if not product:
             raise HTTPException(status_code=404, detail=f"No product with SKU {ref}")
         return q.filter(models.CatalogueItem.matched_product_id == product.id).all()
@@ -226,7 +226,7 @@ def _trusted_committed_row(db: Session, product_id, supplier_id, grp_newest_firs
         row = grp_newest_first[0]
         row_sku = (row.supplier_sku or "").strip()
         if live_sku and row_sku and row_sku != live_sku:   # would change a real live sku → corroborate by name
-            prod = db.get(models.Product, product_id)
+            prod = db.get(models.ProductVariant, product_id)
             if not _names_match(prod.name if prod else None, row.raw_description):
                 return None                                # single mis-matched row — don't overwrite the live SKU
         return row
@@ -374,7 +374,7 @@ def _search_open_items(db: Session, q: str, supplier=None) -> list:
         sku, name = reparse_service._sku_and_name(db, item)
         brand = category = None
         if item.matched_product_id:
-            p = db.get(models.Product, item.matched_product_id)
+            p = db.get(models.ProductVariant, item.matched_product_id)
             if p:
                 brand, category = p.brand, p.category
         hay = " ".join(str(x) for x in (sku, name, brand, category, item.raw_description, item.supplier_sku) if x).lower()

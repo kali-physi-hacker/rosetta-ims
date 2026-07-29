@@ -63,7 +63,7 @@ for e in entries.values():
         avail_by_name[a] = avail_by_name.get(a, False) or e["available"]
 
 db = database.SessionLocal()
-products = db.query(models.Product).all()
+products = db.query(models.ProductVariant).all()
 sku_set = {nsku(p.sku_code) for p in products}
 sku_map = {nsku(p.sku_code): p for p in products}
 by_id = {p.id: p for p in products}
@@ -149,7 +149,7 @@ if APPLY:
         used.add(sku)
         name = e["name"] or f"[{e['sources'][0]}] {sku}"
         heur = _heuristic({"description": name, "brand": e["brand"]})
-        db.add(models.Product(
+        db.add(models.ProductVariant(
             sku_code=sku, name=name[:300], brand=(e["brand"] or None),
             category=heur.get("category") or "Others", subcategory=heur.get("subcategory"),
             rrp=e["price"], storage_rule="any",

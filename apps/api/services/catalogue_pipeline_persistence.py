@@ -421,9 +421,9 @@ def _persist_candidate_review_decision(db: Session, contract: MasteringCandidate
     db.flush()
 
 
-def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> models.CatalogueSupplierProduct:
+def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> models.SupplierOffering:
     key = contract.supplier_offering.supplier_product_id or _supplier_product_key(contract)
-    existing = db.query(models.CatalogueSupplierProduct).filter_by(supplier_product_key=key).first()
+    existing = db.query(models.SupplierOffering).filter_by(supplier_product_key=key).first()
     product_id = _product_id_for_sku(db, contract.canonical_sku)
     if existing:
         existing.supplier_sku = contract.supplier_offering.supplier_sku
@@ -431,7 +431,7 @@ def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> models.Cat
         existing.product_variant_id = product_id
         return existing
 
-    row = models.CatalogueSupplierProduct(
+    row = models.SupplierOffering(
         supplier_product_key=key,
         supplier_id=contract.supplier_offering.supplier_id,
         product_variant_id=product_id,
@@ -447,7 +447,7 @@ def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> models.Cat
     return row
 
 
-def _persist_packaging_configuration(db: Session, contract: ServingItemV1, supplier_product: models.CatalogueSupplierProduct) -> None:
+def _persist_packaging_configuration(db: Session, contract: ServingItemV1, supplier_product: models.SupplierOffering) -> None:
     packaging = contract.purchasing_packaging
     row = models.CataloguePackagingConfiguration(
         supplier_product_id=supplier_product.id,
@@ -469,7 +469,7 @@ def _persist_packaging_configuration(db: Session, contract: ServingItemV1, suppl
     db.flush()
 
 
-def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_product: models.CatalogueSupplierProduct) -> None:
+def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_product: models.SupplierOffering) -> None:
     now = _aware_iso(contract.published_at)
     for current in db.query(models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).all():
         current.is_current = 0
@@ -492,7 +492,7 @@ def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_produ
     db.flush()
 
 
-def _persist_mbb_terms(db: Session, contract: ServingItemV1, supplier_product: models.CatalogueSupplierProduct) -> None:
+def _persist_mbb_terms(db: Session, contract: ServingItemV1, supplier_product: models.SupplierOffering) -> None:
     if not contract.active_mbb_terms:
         return
     now = _aware_iso(contract.published_at)
@@ -625,7 +625,7 @@ def _serving_publication(db: Session, serving_item_id: UUID):
 def _product_id_for_sku(db: Session, canonical_sku: str) -> int | None:
     import models
 
-    product = db.query(models.Product).filter_by(sku_code=canonical_sku).first()
+    product = db.query(models.ProductVariant).filter_by(sku_code=canonical_sku).first()
     return product.id if product else None
 
 

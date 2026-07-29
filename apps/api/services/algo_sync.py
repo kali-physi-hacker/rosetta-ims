@@ -36,7 +36,7 @@ def _now() -> str:
 
 
 def _sku_to_id(db) -> dict[str, int]:
-    return {r.sku_code: r.id for r in db.query(models.Product.sku_code, models.Product.id).all()}
+    return {r.sku_code: r.id for r in db.query(models.ProductVariant.sku_code, models.ProductVariant.id).all()}
 
 
 # ── Sales: 120d units per SKU per channel -> per-channel weekly demand ─────────────────

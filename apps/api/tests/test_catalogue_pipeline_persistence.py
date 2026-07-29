@@ -65,7 +65,7 @@ def _reset(session) -> None:
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
-        models.CatalogueSupplierProduct,
+        models.SupplierOffering,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,
@@ -86,7 +86,7 @@ def _cleanup_legacy_fixture_rows(session) -> None:
         for link in audit_links:
             session.query(models.MbbTerm).filter_by(product_supplier_id=link.id).delete()
         session.query(models.ProductSupplier).filter_by(supplier_id=914).delete()
-        product = session.query(models.Product).filter_by(sku_code="AUDIT-SKU").first()
+        product = session.query(models.ProductVariant).filter_by(sku_code="AUDIT-SKU").first()
         if product is not None:
             session.delete(product)
         session.delete(audit_supplier)
@@ -104,9 +104,9 @@ def _seed_context(session) -> None:
         supplier = models.Supplier(id=14, code="HILLS", name="Hill's", created_at="2026-07-22T00:00:00+00:00")
         session.add(supplier)
         session.flush()
-    product = session.query(models.Product).filter_by(sku_code="10010385").first()
+    product = session.query(models.ProductVariant).filter_by(sku_code="10010385").first()
     if product is None:
-        product = models.Product(
+        product = models.ProductVariant(
             sku_code="10010385",
             name="Hill's Science Diet Adult Chicken 2.9 oz",
             brand="Hill's",
@@ -260,9 +260,9 @@ def test_migration_audit_reports_legacy_rows_without_mutating(db):
         supplier = models.Supplier(id=914, code="AUDIT914", name="Audit Supplier", created_at="2026-07-22T00:00:00+00:00")
         db.add(supplier)
         db.flush()
-    product = db.query(models.Product).filter_by(sku_code="AUDIT-SKU").first()
+    product = db.query(models.ProductVariant).filter_by(sku_code="AUDIT-SKU").first()
     if product is None:
-        product = models.Product(
+        product = models.ProductVariant(
             sku_code="AUDIT-SKU",
             name="Audit Product",
             category="Food",
@@ -360,7 +360,7 @@ def test_open_blocking_issue_prevents_mastering_approval_and_publication(db):
 def test_approved_serving_item_persists_commercial_history_and_supersedes(db):
     *_, serving, first_publication = _persist_happy_path(db)
 
-    supplier_product = db.query(models.CatalogueSupplierProduct).one()
+    supplier_product = db.query(models.SupplierOffering).one()
     assert supplier_product.product_family_id is None
     price = db.query(models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).one()
     assert price.amount == Decimal("13.1000")
@@ -393,7 +393,7 @@ def test_approved_serving_item_persists_commercial_history_and_supersedes(db):
 
 def test_database_constraints_reject_invalid_commercial_values(db):
     _seed_context(db)
-    supplier_product = models.CatalogueSupplierProduct(
+    supplier_product = models.SupplierOffering(
         supplier_product_key="supplier:14:offer:bad-price",
         supplier_id=14,
         supplier_sku="BAD",

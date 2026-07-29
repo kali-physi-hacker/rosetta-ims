@@ -147,8 +147,8 @@ def report_drill(kind: str = Query(...),
             if lo: q = q.filter(CI.reviewed_at >= lo)
             if hi: q = q.filter(CI.reviewed_at <= hi)
         rows = q.order_by(CI.reviewed_at.desc(), CI.id.desc()).limit(limit).all()
-        prod_sku = {p.id: p.sku_code for p in db.query(models.Product.id, models.Product.sku_code)
-                    .filter(models.Product.id.in_([r.matched_product_id for r in rows if r.matched_product_id] or [0])).all()}
+        prod_sku = {p.id: p.sku_code for p in db.query(models.ProductVariant.id, models.ProductVariant.sku_code)
+                    .filter(models.ProductVariant.id.in_([r.matched_product_id for r in rows if r.matched_product_id] or [0])).all()}
         sup_names = {s.id: s.name for s in db.query(models.Supplier).all()}
         for r in rows:
             sku = r.assigned_sku or prod_sku.get(r.matched_product_id)
@@ -167,9 +167,9 @@ def report_drill(kind: str = Query(...),
 
     elif kind in ("to_verify", "verified"):
         verified = _verified_sku_set(db)
-        prods = (db.query(models.Product)
-                 .filter(models.Product.status == 'ACTIVE')
-                 .order_by(models.Product.name).all())
+        prods = (db.query(models.ProductVariant)
+                 .filter(models.ProductVariant.status == 'ACTIVE')
+                 .order_by(models.ProductVariant.name).all())
         want_verified = kind == "verified"
         for p in prods:
             is_v = str(p.sku_code) in verified
@@ -236,8 +236,8 @@ def onboarding_report(from_: str | None = Query(None, alias="from"),
     imports_total = imp_q.scalar() or 0
 
     verified = _verified_sku_set(db)
-    active_skus = {str(s[0]) for s in db.query(models.Product.sku_code)
-                   .filter(models.Product.status == 'ACTIVE').all()}
+    active_skus = {str(s[0]) for s in db.query(models.ProductVariant.sku_code)
+                   .filter(models.ProductVariant.status == 'ACTIVE').all()}
     verified_active = len(verified & active_skus)
     to_verify = len(active_skus) - verified_active
 

@@ -41,7 +41,7 @@ def _reset_and_seed() -> dict:
     d = database.SessionLocal()
     try:
         for m in (models.CatalogueItem, models.CatalogueImport, models.ProductSupplier,
-                  models.Product, models.SupplierBrand, models.SupplierAlias, models.Supplier,
+                  models.ProductVariant, models.SupplierBrand, models.SupplierAlias, models.Supplier,
                   models.AuditLog):
             d.query(m).delete()
         d.commit()
@@ -55,7 +55,7 @@ def _reset_and_seed() -> dict:
         ids = {"auto": [], "manual": [], "dry": None, "nonhills": None, "upp1": None, "hill_id": hill.id}
 
         def mk(name, sup, sku, ssku, upp, cost_source, basic=9.4, uom="Can(s)", cat_upp=None, mpq=None):
-            p = models.Product(sku_code=sku, name=name, category="Food", status="ACTIVE",
+            p = models.ProductVariant(sku_code=sku, name=name, category="Food", status="ACTIVE",
                                storage_rule="any", uom=uom, min_purchase_qty=mpq,
                                created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00")
             d.add(p); d.flush()

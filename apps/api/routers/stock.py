@@ -104,12 +104,12 @@ def _match_product(
     raw_id: Optional[str],
     raw_name: Optional[str],
     db: Session,
-) -> tuple[Optional[models.Product], Optional[str]]:
+) -> tuple[Optional[models.ProductVariant], Optional[str]]:
     """Return (product, match_type) or (None, None)."""
 
     if raw_id:
         # 1. Internal SKU exact match
-        p = db.query(models.Product).filter(models.Product.sku_code == raw_id).first()
+        p = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == raw_id).first()
         if p:
             return p, "sku"
 
@@ -118,7 +118,7 @@ def _match_product(
             models.ProductSupplier.supplier_sku == raw_id
         ).first()
         if ps:
-            p = db.query(models.Product).filter(models.Product.id == ps.product_id).first()
+            p = db.query(models.ProductVariant).filter(models.ProductVariant.id == ps.product_id).first()
             if p:
                 return p, "supplier_sku"
 
@@ -127,12 +127,12 @@ def _match_product(
         words = {w for w in raw_name.lower().split() if len(w) > 3}
         if words:
             candidates = (
-                db.query(models.Product)
-                .filter(models.Product.status == "ACTIVE")
+                db.query(models.ProductVariant)
+                .filter(models.ProductVariant.status == "ACTIVE")
                 .limit(300)
                 .all()
             )
-            best: Optional[models.Product] = None
+            best: Optional[models.ProductVariant] = None
             best_score = 0.0
             for p in candidates:
                 p_words = set(p.name.lower().split())
@@ -253,8 +253,8 @@ def stock_status(db: Session = Depends(database.get_db)):
         .filter(models.StockLevel.location == "warehouse")
         .scalar()
     )
-    total_products = db.query(func.count(models.Product.id)).filter(
-        models.Product.status == "ACTIVE"
+    total_products = db.query(func.count(models.ProductVariant.id)).filter(
+        models.ProductVariant.status == "ACTIVE"
     ).scalar() or 0
 
     return {

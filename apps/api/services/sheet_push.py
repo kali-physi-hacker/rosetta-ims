@@ -117,7 +117,7 @@ def _open_ws(gid: int):
 def _rows_for_push(db) -> list[dict]:
     """One dict per product, keyed by sheet field name. Sorted by sku_id."""
     import models
-    products = db.query(models.Product).all()
+    products = db.query(models.ProductVariant).all()
     all_ps = db.query(models.ProductSupplier).all()
     primary, alts = {}, {}
     for r in all_ps:

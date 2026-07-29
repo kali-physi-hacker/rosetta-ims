@@ -26,6 +26,14 @@ database.run_migrations(database.engine)
 database.seed_default_users(database.engine)
 database.seed_category_rules(database.engine)
 
+# Materialize the explicit inventory and channel-selling identities for rows
+# created before the product-domain split. This is additive and idempotent;
+# the legacy Product alias remains only as an API compatibility surface.
+from services import product_domain
+
+with database.SessionLocal() as _product_domain_session:
+    product_domain.backfill_explicit_product_domain(_product_domain_session)
+
 # Config-driven transformation engine (Phase A): seed the registry + default config version so
 # the engine reproduces the previously hard-coded formulas. Idempotent; behaviour-neutral.
 from services import transform_engine

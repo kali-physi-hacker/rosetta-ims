@@ -48,7 +48,7 @@ def _reset(session):
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
-        models.CatalogueSupplierProduct,
+        models.SupplierOffering,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,
@@ -60,7 +60,7 @@ def _reset(session):
     ):
         session.query(model).delete()
     session.query(models.CatalogueImport).filter(models.CatalogueImport.filename.like("stage-services-%")).delete()
-    session.query(models.Product).filter(models.Product.sku_code.in_(("STAGE-SKU-10447", "STAGE-SKU-ALT", "10447"))).delete()
+    session.query(models.ProductVariant).filter(models.ProductVariant.sku_code.in_(("STAGE-SKU-10447", "STAGE-SKU-ALT", "10447"))).delete()
     session.commit()
 
 
@@ -221,9 +221,9 @@ def _build_claim(
 
 
 def _seed_product(db):
-    product = db.query(models.Product).filter_by(sku_code="STAGE-SKU-10447").first()
+    product = db.query(models.ProductVariant).filter_by(sku_code="STAGE-SKU-10447").first()
     if product is None:
-        product = models.Product(
+        product = models.ProductVariant(
             sku_code="STAGE-SKU-10447",
             name="Hill's Healthy Cuisine Chicken 2.9 oz",
             brand="Hill's",
@@ -514,7 +514,7 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
 
     assert applied.metrics.created_count == 1
     assert applied_again.metrics.reused_count == 1
-    supplier_product = db.query(models.CatalogueSupplierProduct).one()
+    supplier_product = db.query(models.SupplierOffering).one()
     assert supplier_product.product_family_id is None
     assert supplier_product.supplier_product_key == "supplier:14:offer:10447"
     price = db.query(models.CatalogueSupplierPrice).one()
@@ -622,7 +622,7 @@ def test_unmatched_canonical_product_cannot_be_approved_or_applied(db):
     ).one()
     assert candidate.review_status == ReviewStatus.PENDING_REVIEW.value
     assert db.query(models.CatalogueReviewDecision).count() == 0
-    assert db.query(models.CatalogueSupplierProduct).count() == 0
+    assert db.query(models.SupplierOffering).count() == 0
     assert db.query(models.CatalogueSupplierPrice).count() == 0
     assert db.query(models.CataloguePackagingConfiguration).count() == 0
 
@@ -663,12 +663,12 @@ def test_candidate_supplier_identity_cannot_cross_source_catalogues(db):
         )
 
     assert db.query(models.CatalogueReviewDecision).count() == 0
-    assert db.query(models.CatalogueSupplierProduct).count() == 0
+    assert db.query(models.SupplierOffering).count() == 0
 
 
 def _seed_supplier_mapping(db, product, *, key="supplier:14:offer:10447", sku="10447", barcode=None):
     db.add(
-        models.CatalogueSupplierProduct(
+        models.SupplierOffering(
             supplier_product_key=key,
             supplier_id=14,
             product_variant_id=product.id,
@@ -715,7 +715,7 @@ def test_supplier_sku_is_never_promoted_to_canonical_sku(db):
     # A canonical product whose sku_code COINCIDENTALLY equals the supplier SKU,
     # with no supplier mapping: it must NOT auto-match.
     db.add(
-        models.Product(
+        models.ProductVariant(
             sku_code="10447",
             name="Unrelated product with colliding code",
             brand="Other",
@@ -747,7 +747,7 @@ def test_ambiguous_supplier_identity_is_reviewable_not_fatal(db):
     raw_id = _capture_raw(db)
     staging_id = _build_claim(db, raw_id)
     product_a = _seed_product(db)
-    product_b = models.Product(
+    product_b = models.ProductVariant(
         sku_code="STAGE-SKU-ALT",
         name="Alternate canonical product",
         brand="Hill's",
@@ -1380,7 +1380,7 @@ def test_application_replay_repairs_full_material_drift_and_stale_mbb(db):
     ).one()
     packaging = db.query(models.CataloguePackagingConfiguration).filter_by(superseded_at=None).one()
     price = db.query(models.CatalogueSupplierPrice).filter_by(is_current=1).one()
-    supplier_product = db.query(models.CatalogueSupplierProduct).one()
+    supplier_product = db.query(models.SupplierOffering).one()
 
     # Drift fields that the previous replay check did not compare.
     packaging.break_pack_allowed = 1 if packaging.break_pack_allowed != 1 else 0

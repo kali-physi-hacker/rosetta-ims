@@ -144,12 +144,12 @@ def seed():
             hero_sku = 1 if hero_raw in ('YES', 'Y', '1', 'TRUE') else 0
 
             # Upsert product
-            product = db.query(models.Product).filter(
-                models.Product.sku_code == sku_code
+            product = db.query(models.ProductVariant).filter(
+                models.ProductVariant.sku_code == sku_code
             ).first()
 
             if not product:
-                product = models.Product(
+                product = models.ProductVariant(
                     sku_code=sku_code,
                     name=name or f"SKU {sku_code}",
                     brand=brand,

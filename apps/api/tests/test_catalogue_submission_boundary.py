@@ -92,7 +92,7 @@ def _reset(session):
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
-        models.CatalogueSupplierProduct,
+        models.SupplierOffering,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,

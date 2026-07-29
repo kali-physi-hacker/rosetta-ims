@@ -95,7 +95,7 @@ def delete_rule(category: str, request: Request, db: Session = Depends(database.
     r = db.query(models.CategoryRule).filter(models.CategoryRule.category == category).first()
     if not r:
         raise HTTPException(status_code=404, detail="Category not found")
-    in_use = db.query(models.Product).filter(models.Product.category == category).count()
+    in_use = db.query(models.ProductVariant).filter(models.ProductVariant.category == category).count()
     audit_log.record(db, action="category.delete", actor=user, entity_type="category",
                      entity_id=category, entity_label=category,
                      details={**_to_dict(r), "products_still_tagged": in_use}, request=request)
