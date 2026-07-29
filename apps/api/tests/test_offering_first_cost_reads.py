@@ -156,3 +156,46 @@ def test_session_memo_is_one_query_and_invalidates(monkeypatch):
         # Memo cached the empty map; a new offering price appears after invalidate.
         _seed_offering_price(db, link, amount=14.0, basis_code="UNIT")
         assert get_unit_cost(link) == 14.0
+
+
+def test_record_supplier_cost_writes_current_offering_price():
+    with _session() as db:
+        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        offering_costs.record_supplier_cost(db, link, pack_cost=157.2)
+        db.commit()
+
+        offering = db.query(models.SupplierOffering).one()
+        assert offering.supplier_id == 14
+        assert offering.product_variant_id == link.product_id
+        assert offering.legacy_product_supplier_id == link.id
+        price = db.query(models.CatalogueSupplierPrice).filter_by(is_current=1).one()
+        # Whole-pack 157.2 over 12 sellable units → per-sell-unit price row.
+        assert float(price.amount) == 13.1
+        assert price.price_basis_uom_code == "UNIT"
+        assert get_unit_cost(link) == 13.1
+        assert effective_cost_source(link) == "offering"
+
+
+def test_record_supplier_cost_supersedes_previous_price_and_reuses_offering():
+    with _session() as db:
+        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        offering_costs.record_supplier_cost(db, link, pack_cost=157.2)
+        offering_costs.record_supplier_cost(db, link, pack_cost=168.0)
+        db.commit()
+
+        assert db.query(models.SupplierOffering).count() == 1
+        prices = db.query(models.CatalogueSupplierPrice).order_by(models.CatalogueSupplierPrice.id).all()
+        assert [p.is_current for p in prices] == [0, 1]
+        assert prices[0].superseded_at is not None
+        assert float(prices[1].amount) == 14.0
+        assert get_unit_cost(link) == 14.0
+
+
+def test_record_supplier_cost_is_noop_without_supplier_or_cost():
+    with _session() as db:
+        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        offering_costs.record_supplier_cost(db, link, pack_cost=None)
+        link.supplier_id = None
+        offering_costs.record_supplier_cost(db, link, pack_cost=100.0)
+        db.commit()
+        assert db.query(models.SupplierOffering).count() == 0

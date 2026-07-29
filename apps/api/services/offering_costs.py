@@ -54,6 +54,78 @@ def invalidate(session: Session) -> None:
     session.info.pop(_SESSION_CACHE_KEY, None)
 
 
+def record_supplier_cost(
+    db: Session,
+    link: models.ProductSupplier,
+    *,
+    pack_cost: float | None,
+) -> None:
+    """Record a human cost edit as the current offering price.
+
+    Deliberate human actions (manual PATCH, CSV import, sheet-accept, invoice
+    confirmation) write the domain's effective cost here — an effective-dated
+    CatalogueSupplierPrice on the link's SupplierOffering, created if the link
+    has none yet. The caller still dual-writes ``basic_cost`` so the sheet
+    conflict/shadow machinery keeps working until it is retired; reads prefer
+    the offering price either way. Bulk sheet re-seeds stay legacy-only on
+    purpose: an offering price asserts a human decided this number.
+
+    ``pack_cost`` follows basic_cost semantics (whole-pack); the per-sell-unit
+    amount is stored on the price row with the variant's sell unit as basis.
+    Does not commit — runs inside the caller's transaction.
+    """
+
+    if pack_cost is None or link.supplier_id is None or link.product_id is None:
+        return
+    units = link.units_per_pack
+    unit_cost = round(pack_cost / units, 4) if units and units > 1 else pack_cost
+    now = _utcnow_iso()
+
+    offering = (
+        db.query(models.SupplierOffering)
+        .filter_by(supplier_id=link.supplier_id, product_variant_id=link.product_id)
+        .first()
+    )
+    if offering is None:
+        offering = models.SupplierOffering(
+            supplier_product_key=f"supplier:{link.supplier_id}:offer:link:{link.id}",
+            legacy_product_supplier_id=link.id,
+            supplier_id=link.supplier_id,
+            product_variant_id=link.product_id,
+            supplier_sku=link.supplier_sku,
+            barcode=link.barcode,
+            status="active",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(offering)
+        db.flush()
+
+    variant = db.get(models.ProductVariant, link.product_id)
+    db.query(models.CatalogueSupplierPrice).filter_by(
+        supplier_product_id=offering.id, is_current=1
+    ).update({"is_current": 0, "superseded_at": now}, synchronize_session=False)
+    db.add(
+        models.CatalogueSupplierPrice(
+            supplier_product_id=offering.id,
+            amount=unit_cost,
+            currency="HKD",
+            price_basis_uom_code="UNIT",
+            price_basis_uom_label=(variant.uom if variant else None),
+            effective_from=now,
+            is_current=1,
+            created_at=now,
+        )
+    )
+    invalidate(db)
+
+
+def _utcnow_iso() -> str:
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat()
+
+
 def _session_map(session: Session) -> dict[tuple[int, int], float]:
     cached = session.info.get(_SESSION_CACHE_KEY)
     if cached is not None:

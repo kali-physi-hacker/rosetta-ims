@@ -12,7 +12,7 @@ from datetime import datetime, date
 import models
 import database
 from services.pricing_service import product_to_dict
-from services import tag_service, audit, audit_log
+from services import offering_costs, tag_service, audit, audit_log
 from dependencies import get_current_user, require_user
 from permissions import require_capability, has_capability, SENSITIVE_PRODUCT_FIELDS
 from schemas.catalogue_pipeline import ServingItemV1
@@ -1014,6 +1014,8 @@ def _apply_product_update(product, ps, data: dict, now: str, editor_name: str):
             else:
                 ps.basic_cost = _u
             ps.cost_source = "manual"; ps.updated_at = now
+        if data.get("basic_cost") is not None or data.get("unit_cost_in") is not None:
+            offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
         if "barcode" in data:      ps.barcode      = (str(data["barcode"]).strip() or None);      ps.updated_at = now
         if "supplier_sku" in data: ps.supplier_sku = (str(data["supplier_sku"]).strip() or None); ps.updated_at = now
         # Ordering terms (order multiple / MOQ) — descriptive metadata; nothing here feeds cost.
@@ -1347,6 +1349,8 @@ def add_supplier_link(sku: str, body: SupplierLink,
         is_primary=1 if make_primary else 0, updated_at=now,
     )
     db.add(link)
+    db.flush()
+    offering_costs.record_supplier_cost(db, link, pack_cost=link.basic_cost)
     _audit_product(db, current_user, "product.supplier_add", product,
                    supplier_id=body.supplier_id, supplier=sup.name)
     product.updated_at = now
@@ -1380,6 +1384,7 @@ def update_supplier_link(sku: str, ps_id: int, body: SupplierLink,
     if "barcode" in sent:       link.barcode = _clean_str(sent["barcode"])
     if sent.get("basic_cost") is not None:
         link.basic_cost = sent["basic_cost"]; link.cost_source = 'manual'; link.cost_updated_at = now
+        offering_costs.record_supplier_cost(db, link, pack_cost=link.basic_cost)
     if sent.get("units_per_pack") is not None:
         link.units_per_pack = sent["units_per_pack"]; link.pack_source = 'manual'
     # Supplier ordering terms — descriptive; do NOT feed unit cost.
@@ -1571,6 +1576,7 @@ def lock_invoice_cost(
     ps.cost_source_ref     = body.invoice_ref
     ps.cost_updated_at     = now
     ps.updated_at          = now
+    offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
     product.last_manual_edit_at = now
     product.last_manual_edit_by = current_user.display_name if current_user else None
     product.updated_at          = now
@@ -1609,6 +1615,7 @@ def accept_sheet_cost(sku: str, db: Session = Depends(database.get_db), _user: m
     ps.cost_source     = 'manual'
     ps.cost_updated_at = now
     ps.updated_at      = now
+    offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
     _audit_product(db, _user, "product.cost_accept_sheet", product, basic_cost=ps.basic_cost)
     db.commit()
     updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
@@ -1792,6 +1799,7 @@ def update_product_cost(sku: str, body: CostUpdate, db: Session = Depends(databa
     ps.cost_source_ref = body.cost_source_ref
     ps.cost_updated_at = now
     ps.updated_at      = now
+    offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
     _audit_product(db, _user, "product.cost_update", product, **{"from": _old_cost, "to": body.basic_cost, "source": body.cost_source})
     db.commit()
 
