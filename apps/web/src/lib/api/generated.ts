@@ -323,6 +323,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/products/serving-publications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Serving Publications
+         * @description Current approved catalogue snapshots for inventory consumers.
+         *
+         *     This projection intentionally excludes superseded publications and never
+         *     rebuilds values from mutable supplier-commercial tables.
+         */
+        get: operations["list_serving_publications_products_serving_publications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/serving-publications/{canonical_sku}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Serving Publication History
+         * @description Current approved supplier offers and immutable history for one SKU.
+         */
+        get: operations["get_serving_publication_history_products_serving_publications__canonical_sku__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/products/{sku}/suppliers": {
         parameters: {
             query?: never;
@@ -1131,8 +1174,18 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Import Catalogue */
-        post: operations["import_catalogue_catalogues_import_post"];
+        /**
+         * Import Catalogue Removed
+         * @deprecated
+         * @description REMOVED (v1): synchronous AI import. Use POST /catalogues/ingestions.
+         *
+         *     The evidence-first queued pipeline replaced this endpoint: submission
+         *     preserves the original file, extraction/conformance run under the supplier
+         *     contract with durable evidence, and items reach review as mastering
+         *     candidates. A static 410 keeps the removal self-explanatory for stale
+         *     clients instead of a bare 404.
+         */
+        post: operations["import_catalogue_removed_catalogues_import_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1747,6 +1800,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogues/ingestions/run_ids": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Catalogue Ingestions Run Ids */
+        get: operations["get_catalogue_ingestions_run_ids_catalogues_ingestions_run_ids_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalogues/ingestions/{run_uuid}": {
         parameters: {
             query?: never;
@@ -1756,6 +1826,202 @@ export interface paths {
         };
         /** Get Catalogue Ingestion Status */
         get: operations["get_catalogue_ingestion_status_catalogues_ingestions__run_uuid__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/validation-issues/{validation_issue_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve Catalogue Validation Issue */
+        post: operations["resolve_catalogue_validation_issue_catalogues_ingestions__run_uuid__validation_issues__validation_issue_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Catalogue Mastering Candidate */
+        post: operations["review_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalogue Mastering Candidate
+         * @description One candidate in full, with its append-only review-decision history.
+         */
+        get: operations["get_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/correct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Correct Catalogue Mastering Candidate
+         * @description Supersede a pending candidate with a human-corrected revision.
+         */
+        post: operations["correct_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__correct_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Catalogue Mastering Candidate */
+        post: operations["apply_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Catalogue Serving Item */
+        post: operations["publish_catalogue_serving_item_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/raw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Raw Layer
+         * @description RAW layer (steps 1-2): the preserved original's file facts and the
+         *     append-only raw-stage verification history. No file content, no meaning.
+         */
+        get: operations["get_raw_layer_catalogues_ingestions__run_uuid__raw_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/staging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Staging Layer
+         * @description STAGING layer (steps 3-4): verbatim, source-located extracted evidence.
+         *
+         *     Applying the supplier contract changes evidence into an interpreted
+         *     proposal, so normalized rows belong to Intermediate rather than Staging.
+         */
+        get: operations["get_staging_layer_catalogues_ingestions__run_uuid__staging_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/intermediate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Intermediate Layer
+         * @description INTERMEDIATE layer (steps 5-9): contract-conformed normalized claims,
+         *     validation issues and mastering candidates awaiting human review.
+         */
+        get: operations["get_intermediate_layer_catalogues_ingestions__run_uuid__intermediate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/serving": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Serving Layer
+         * @description SERVING layer: immutable approved publication snapshots for this run.
+         *
+         *     History remains visible for audit; ``current_publications`` is the
+         *     consumer-safe view and contains only non-superseded snapshots.
+         */
+        get: operations["get_serving_layer_catalogues_ingestions__run_uuid__serving_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2826,16 +3092,6 @@ export interface components {
             /** Subcategory */
             subcategory?: string | null;
         };
-        /** Body_import_catalogue_catalogues_import_post */
-        Body_import_catalogue_catalogues_import_post: {
-            /**
-             * File
-             * Format: binary
-             */
-            file: string;
-            /** Supplier Id */
-            supplier_id?: number | null;
-        };
         /** Body_import_products_csv_products_import_csv_post */
         Body_import_products_csv_products_import_csv_post: {
             /**
@@ -3034,10 +3290,36 @@ export interface components {
              */
             ai_generated: boolean | null;
         };
+        /** CommercialApplicationRequest */
+        CommercialApplicationRequest: {
+            /** Applied At */
+            applied_at?: string | null;
+        };
         /** ConfirmBody */
         ConfirmBody: {
             /** Change Ids */
             change_ids?: number[] | null;
+        };
+        /**
+         * Cost
+         * @description Basis-aware supplier cost.
+         */
+        Cost: {
+            /**
+             * Amount
+             * @description Cost amount. JSON serializes as a string.
+             */
+            amount: string;
+            /**
+             * Currency
+             * @description Currency. v1 accepts HKD only.
+             * @default HKD
+             * @constant
+             * @enum {string}
+             */
+            currency: "HKD";
+            /** @description Unit basis the amount prices. */
+            price_basis: components["schemas"]["UnitOfMeasure"];
         };
         /** CostUpdate */
         CostUpdate: {
@@ -3070,6 +3352,19 @@ export interface components {
              */
             role: string;
         };
+        /**
+         * DiscountedUnitPriceBenefit
+         * @description MBB benefit that changes the unit price to a quoted discounted amount.
+         */
+        DiscountedUnitPriceBenefit: {
+            /**
+             * @description Discriminator. (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            benefit_type: "discounted_unit_price";
+            /** @description Discounted HKD unit price and its price basis. */
+            discounted_price: components["schemas"]["Cost"];
+        };
         /** EditBody */
         EditBody: {
             /** Value */
@@ -3081,6 +3376,29 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /**
+         * ExternalMapping
+         * @description Mapping between Rosetta and an external product/catalogue identifier.
+         */
+        ExternalMapping: {
+            /**
+             * System
+             * @description External system name.
+             */
+            system: string;
+            /**
+             * External Id
+             * @description External identifier.
+             */
+            external_id: string;
+            /**
+             * External Label
+             * @description External display label when known.
+             */
+            external_label?: string | null;
+            /** @description Lineage supporting this mapping. */
+            lineage?: components["schemas"]["LineageReference"] | null;
+        };
         /** FieldEditBody */
         FieldEditBody: {
             /** Catalogue Item Id */
@@ -3089,6 +3407,66 @@ export interface components {
             field: string;
             /** Value */
             value?: string | null;
+        };
+        /**
+         * FieldEvidence
+         * @description Field-level provenance and confidence for a proposed interpretation.
+         */
+        FieldEvidence: {
+            /**
+             * Raw Observation Id
+             * Format: uuid
+             * @description extracted evidence observation that supports this field.
+             */
+            raw_observation_id: string;
+            /**
+             * Field Path
+             * @description JSON-style field path inside the supporting payload.
+             */
+            field_path?: string | null;
+            /**
+             * Confidence
+             * @description Field confidence in [0, 1].
+             */
+            confidence?: string | null;
+            /**
+             * Note
+             * @description Short provenance note.
+             */
+            note?: string | null;
+        };
+        /**
+         * FixedDiscountBasis
+         * @enum {string}
+         */
+        FixedDiscountBasis: "UNIT_PRICE" | "SUPPLIER_SKU_TOTAL" | "SUPPLIER_ORDER_TOTAL";
+        /**
+         * FixedDiscountBenefit
+         * @description MBB benefit that subtracts a fixed HKD amount from a defined basis.
+         */
+        FixedDiscountBenefit: {
+            /**
+             * @description Discriminator. (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            benefit_type: "fixed_discount";
+            /** @description Positive HKD fixed discount. */
+            amount: components["schemas"]["PositiveMoney"];
+            /** @description What the fixed discount reduces. */
+            reduction_basis: components["schemas"]["FixedDiscountBasis"];
+        };
+        /**
+         * FreeQuantityBenefit
+         * @description MBB benefit that grants free goods or free quantity.
+         */
+        FreeQuantityBenefit: {
+            /**
+             * @description Discriminator. (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            benefit_type: "free_quantity";
+            /** @description Positive free quantity and UOM. */
+            quantity: components["schemas"]["Quantity"];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -3129,6 +3507,11 @@ export interface components {
             /** Confirmed Cost */
             confirmed_cost: number;
         };
+        /**
+         * IssueResolutionStatus
+         * @enum {string}
+         */
+        IssueResolutionStatus: "OPEN" | "CONFIRMED" | "CORRECTED" | "ACCEPTED_AS_IS" | "DISMISSED";
         /** ItemEdit */
         ItemEdit: {
             /** Raw Description */
@@ -3170,12 +3553,83 @@ export interface components {
             /** Supplier Id */
             supplier_id?: number | null;
         };
+        /**
+         * LineageReference
+         * @description Trace from mastered or served values back to staging and raw evidence.
+         */
+        LineageReference: {
+            /**
+             * Catalogue Item Id
+             * Format: uuid
+             * @description interpreted claim identity.
+             */
+            catalogue_item_id: string;
+            /**
+             * Raw Observation Ids
+             * @description Raw observations supporting the assertion.
+             */
+            raw_observation_ids: string[];
+            /**
+             * Field Paths
+             * @description Optional field paths covered by this lineage.
+             */
+            field_paths?: string[];
+            /**
+             * Review Decision Id
+             * @description Review decision that approved or overrode the assertion.
+             */
+            review_decision_id?: string | null;
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Username */
             username: string;
             /** Password */
             password: string;
+        };
+        /**
+         * MasteringCorrectionRequest
+         * @description Human correction of one or more candidate resolution sections.
+         *
+         *     Produces an immutable revised candidate superseding this one; the revision
+         *     is what gets approved. Sections are validated by the stage service against
+         *     the mastering-candidate contract.
+         */
+        MasteringCorrectionRequest: {
+            /** Reason */
+            reason: string;
+            /** Expected Candidate Created At */
+            expected_candidate_created_at?: string | null;
+            /** Revised At */
+            revised_at?: string | null;
+            /** Supplier Product Resolution */
+            supplier_product_resolution?: Record<string, never> | null;
+            /** Product Variant Resolution */
+            product_variant_resolution?: Record<string, never> | null;
+            /** Packaging Resolution */
+            packaging_resolution?: Record<string, never> | null;
+            /** Supplier Price Resolution */
+            supplier_price_resolution?: Record<string, never> | null;
+            /** Mbb Resolution */
+            mbb_resolution?: Record<string, never> | null;
+            /** Product Family Resolution */
+            product_family_resolution?: Record<string, never> | null;
+            /** Brand Resolution */
+            brand_resolution?: Record<string, never> | null;
+            /** Category Resolution */
+            category_resolution?: Record<string, never> | null;
+        };
+        /** MasteringReviewRequest */
+        MasteringReviewRequest: {
+            review_status: components["schemas"]["ReviewStatus"];
+            /** Reason */
+            reason?: string | null;
+            /** Override Reason */
+            override_reason?: string | null;
+            /** Expected Candidate Created At */
+            expected_candidate_created_at?: string | null;
+            /** Decided At */
+            decided_at?: string | null;
         };
         /** MatchBody */
         MatchBody: {
@@ -3211,6 +3665,52 @@ export interface components {
             /** Reviewed By */
             reviewed_by?: string | null;
         };
+        /**
+         * MbbScope
+         * @enum {string}
+         */
+        MbbScope: "SUPPLIER_SKU" | "PRODUCT_GROUP" | "SUPPLIER_ORDER";
+        /**
+         * MbbTerm
+         * @description Condition plus benefit for one Max Bulk Buy term or tier.
+         */
+        MbbTerm: {
+            /**
+             * Mbb Term Id
+             * Format: uuid
+             * @description Stable MBB term identity for this pipeline payload.
+             */
+            mbb_term_id: string;
+            /** @description Business scope the term applies to. */
+            scope: components["schemas"]["MbbScope"];
+            /**
+             * Condition
+             * @description Condition that unlocks the term.
+             */
+            condition: components["schemas"]["MinimumQuantityCondition"] | components["schemas"]["MinimumSpendCondition"];
+            /**
+             * Benefit
+             * @description Benefit unlocked by the condition.
+             */
+            benefit: components["schemas"]["DiscountedUnitPriceBenefit"] | components["schemas"]["PercentageDiscountBenefit"] | components["schemas"]["FixedDiscountBenefit"] | components["schemas"]["FreeQuantityBenefit"];
+            /**
+             * Description
+             * @description Business-readable text copied or summarized from the source.
+             */
+            description?: string | null;
+            /**
+             * Effective From
+             * @description Supplier effective date when known.
+             */
+            effective_from?: string | null;
+            /**
+             * Effective To
+             * @description End date when known.
+             */
+            effective_to?: string | null;
+            /** @description Evidence supporting this MBB term. */
+            evidence?: components["schemas"]["FieldEvidence"] | null;
+        };
         /** MbbTermBody */
         MbbTermBody: {
             /** Kind */
@@ -3229,6 +3729,149 @@ export interface components {
             note?: string | null;
             /** Sort Order */
             sort_order?: number | null;
+        };
+        /**
+         * MinimumQuantityCondition
+         * @description MBB condition unlocked by buying at least a positive quantity.
+         */
+        MinimumQuantityCondition: {
+            /**
+             * @description Discriminator. (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            condition_type: "minimum_quantity";
+            /** @description Minimum quantity required to unlock the benefit. */
+            quantity: components["schemas"]["Quantity"];
+        };
+        /**
+         * MinimumSpendCondition
+         * @description MBB condition unlocked by spending at least a positive HKD amount.
+         */
+        MinimumSpendCondition: {
+            /**
+             * @description Discriminator. (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            condition_type: "minimum_spend";
+            /** @description Minimum supplier-order spend in HKD. */
+            spend: components["schemas"]["PositiveMoney"];
+        };
+        /**
+         * Money
+         * @description Non-negative HKD monetary amount for v1 contracts.
+         */
+        Money: {
+            /**
+             * Amount
+             * @description Monetary amount. JSON serializes as a string.
+             */
+            amount: string;
+            /**
+             * Currency
+             * @description Currency. v1 accepts HKD only.
+             * @default HKD
+             * @constant
+             * @enum {string}
+             */
+            currency: "HKD";
+        };
+        /**
+         * NormalizedCosts
+         * @description Optional derived costs for consumer views.
+         */
+        NormalizedCosts: {
+            /** @description Default normalized cost per sellable unit. */
+            cost_per_sellable_unit?: components["schemas"]["Money"] | null;
+            /** @description Derived cost per kg when supported by source data. */
+            cost_per_kg?: components["schemas"]["Money"] | null;
+            /** @description Derived cost per litre when supported by source data. */
+            cost_per_litre?: components["schemas"]["Money"] | null;
+        };
+        /**
+         * PackagingConfiguration
+         * @description Structured purchasing, price-basis, sellable-unit, content, and ordering semantics.
+         */
+        PackagingConfiguration: {
+            /** @description Unit Rosetta purchases from the supplier. */
+            purchase_uom?: components["schemas"]["UnitOfMeasure"] | null;
+            /** @description Unit basis for the quoted supplier price. */
+            price_basis?: components["schemas"]["UnitOfMeasure"] | null;
+            /** @description Smallest sellable unit UOM. */
+            sellable_unit_uom?: components["schemas"]["UnitOfMeasure"] | null;
+            /**
+             * Sellable Units Per Purchase Unit
+             * @description Number of sellable units contained in one purchase unit when known.
+             */
+            sellable_units_per_purchase_unit?: string | null;
+            /**
+             * Content Amount
+             * @description Content measure of one sellable unit, for example 410 or 30.
+             */
+            content_amount?: string | null;
+            /** @description Content-measure unit, for example G or ML. */
+            content_uom?: components["schemas"]["UnitOfMeasure"] | null;
+            /** @description Supplier order multiple when known. */
+            order_increment?: components["schemas"]["Quantity"] | null;
+            /** @description Minimum order quantity when known. */
+            minimum_order_quantity?: components["schemas"]["Quantity"] | null;
+            /**
+             * Break Pack Allowed
+             * @description Whether supplier allows ordering below a full purchase unit.
+             */
+            break_pack_allowed?: boolean | null;
+            /**
+             * Source Text
+             * @description Raw packaging text this structure was interpreted from.
+             */
+            source_text?: string | null;
+        };
+        /**
+         * PercentageDiscountBenefit
+         * @description MBB benefit that applies a percentage discount.
+         */
+        PercentageDiscountBenefit: {
+            /**
+             * @description Discriminator. (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            benefit_type: "percentage_discount";
+            /**
+             * Percentage
+             * @description Discount percentage in (0, 100].
+             */
+            percentage: string;
+        };
+        /** PipelineActionResponse */
+        PipelineActionResponse: {
+            /** Stage */
+            stage: string;
+            /** Status */
+            status: string;
+            /** Output Ids */
+            output_ids: string[];
+            /** Metrics */
+            metrics: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * PositiveMoney
+         * @description Positive HKD money amount.
+         */
+        PositiveMoney: {
+            /**
+             * Amount
+             * @description Positive monetary amount. JSON serializes as a string.
+             */
+            amount: string;
+            /**
+             * Currency
+             * @description Currency. v1 accepts HKD only.
+             * @default HKD
+             * @constant
+             * @enum {string}
+             */
+            currency: "HKD";
         };
         /** PreExtractedItem */
         PreExtractedItem: {
@@ -3303,6 +3946,57 @@ export interface components {
             /** Mark Verified */
             mark_verified?: boolean | null;
         };
+        /**
+         * PublicationLineage
+         * @description Lineage needed to trace a serving publication.
+         */
+        PublicationLineage: {
+            /**
+             * Catalogue Item Id
+             * Format: uuid
+             * @description interpreted claim identity.
+             */
+            catalogue_item_id: string;
+            /**
+             * Raw Observation Ids
+             * @description Raw observations supporting the assertion.
+             */
+            raw_observation_ids: string[];
+            /**
+             * Field Paths
+             * @description Optional field paths covered by this lineage.
+             */
+            field_paths?: string[];
+            /**
+             * Review Decision Id
+             * @description Review decision that approved or overrode the assertion.
+             */
+            review_decision_id?: string | null;
+            /**
+             * Mastering Candidate Id
+             * Format: uuid
+             * @description Mastering Candidate that authorized publication.
+             */
+            mastering_candidate_id: string;
+            /**
+             * Publication Version
+             * @description Serving publication version/reference.
+             */
+            publication_version: string;
+        };
+        /**
+         * Quantity
+         * @description Positive quantity in an explicitly stated UOM.
+         */
+        Quantity: {
+            /**
+             * Amount
+             * @description Positive quantity. JSON serializes as a string.
+             */
+            amount: string;
+            /** @description Quantity unit. */
+            uom: components["schemas"]["UnitOfMeasure"];
+        };
         /** RefreshBody */
         RefreshBody: {
             /** Product Id */
@@ -3336,6 +4030,11 @@ export interface components {
             /** Reviewed By */
             reviewed_by?: string | null;
         };
+        /**
+         * ReviewStatus
+         * @enum {string}
+         */
+        ReviewStatus: "PENDING_REVIEW" | "APPROVED" | "APPROVED_WITH_OVERRIDE" | "REJECTED" | "NEEDS_CLARIFICATION";
         /** RuleBody */
         RuleBody: {
             /** Rule */
@@ -3367,6 +4066,125 @@ export interface components {
             channel_restriction?: string | null;
             /** Sku Digit */
             sku_digit?: string | null;
+        };
+        /**
+         * ServingItemV1
+         * @description Approved catalogue information safe for All Inventory and SKU Details consumers.
+         */
+        ServingItemV1: {
+            /**
+             * Contract Version
+             * @description Exact CIS-103 Serving Item contract identifier.
+             * @constant
+             * @enum {string}
+             */
+            contract_version: "catalogue.serving_item.v1";
+            /**
+             * Serving Item Id
+             * Format: uuid
+             * @description Serving Item publication identity.
+             */
+            serving_item_id: string;
+            /**
+             * Canonical Sku
+             * @description Rosetta canonical SKU code.
+             */
+            canonical_sku: string;
+            /**
+             * Product Variant Id
+             * @description Canonical Product Variant identity.
+             */
+            product_variant_id: string;
+            /**
+             * Product Variant Name
+             * @description Approved Product Variant name.
+             */
+            product_variant_name: string;
+            /** @description Approved supplier-specific offering. */
+            supplier_offering: components["schemas"]["SupplierOffering"];
+            /** @description Approved purchasing packaging. */
+            purchasing_packaging: components["schemas"]["PackagingConfiguration"];
+            /** @description Approved current supplier cost. */
+            current_approved_cost: components["schemas"]["Cost"];
+            /** @description Cost per sellable unit when derivable. */
+            cost_per_sellable_unit?: components["schemas"]["Money"] | null;
+            /** @description Review status authorizing publication. */
+            review_status: components["schemas"]["ReviewStatus"];
+            /**
+             * Published At
+             * Format: date-time
+             * @description Timezone-aware publication timestamp.
+             */
+            published_at: string;
+            /** @description Trace back to mastering, staging, and raw evidence. */
+            lineage: components["schemas"]["PublicationLineage"];
+            /**
+             * Product Family Id
+             * @description Optional Product Family enrichment.
+             */
+            product_family_id?: string | null;
+            /**
+             * Brand
+             * @description Approved brand.
+             */
+            brand?: string | null;
+            /**
+             * Categories
+             * @description Approved category labels.
+             */
+            categories?: string[];
+            /**
+             * Active Mbb Terms
+             * @description Approved active MBB terms.
+             */
+            active_mbb_terms?: components["schemas"]["MbbTerm"][];
+            /** @description Optional normalized cost bundle. */
+            normalized_costs?: components["schemas"]["NormalizedCosts"] | null;
+            /**
+             * External Mappings
+             * @description External product mappings.
+             */
+            external_mappings?: components["schemas"]["ExternalMapping"][];
+            /**
+             * Metadata
+             * @description Explicit extension point for non-contract metadata.
+             */
+            metadata?: Record<string, never>;
+        };
+        /** ServingPublicationHistoryItemResponse */
+        ServingPublicationHistoryItemResponse: {
+            /** Is Current */
+            is_current: boolean;
+            /** Superseded At */
+            superseded_at?: string | null;
+            snapshot: components["schemas"]["ServingItemV1"];
+        };
+        /** ServingPublicationHistoryResponse */
+        ServingPublicationHistoryResponse: {
+            /** Canonical Sku */
+            canonical_sku: string;
+            /** Current Publications */
+            current_publications: components["schemas"]["ServingItemV1"][];
+            /** Publication History */
+            publication_history: components["schemas"]["ServingPublicationHistoryItemResponse"][];
+        };
+        /** ServingPublicationPageResponse */
+        ServingPublicationPageResponse: {
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+            /** Items */
+            items: components["schemas"]["ServingItemV1"][];
+        };
+        /** ServingPublicationRequest */
+        ServingPublicationRequest: {
+            /** Publication Version */
+            publication_version: string;
+            /** Published At */
+            published_at?: string | null;
         };
         /** SkipVerifiedBody */
         SkipVerifiedBody: {
@@ -3466,6 +4284,37 @@ export interface components {
             /** Pricing Note */
             pricing_note?: string | null;
         };
+        /**
+         * SupplierOffering
+         * @description Approved supplier offering exposed to inventory consumers.
+         */
+        SupplierOffering: {
+            /**
+             * Supplier Id
+             * @description Rosetta supplier ID.
+             */
+            supplier_id: number;
+            /**
+             * Supplier Name
+             * @description Supplier display name.
+             */
+            supplier_name: string;
+            /**
+             * Supplier Product Id
+             * @description Stable supplier-product identity when available.
+             */
+            supplier_product_id?: string | null;
+            /**
+             * Supplier Sku
+             * @description Supplier SKU.
+             */
+            supplier_sku?: string | null;
+            /**
+             * Barcode
+             * @description Barcode for this supplier offering.
+             */
+            barcode?: string | null;
+        };
         /** SupplierStockBody */
         SupplierStockBody: {
             /** Status */
@@ -3481,6 +4330,24 @@ export interface components {
         TagsBody: {
             /** Tags */
             tags: string[];
+        };
+        /**
+         * UnitCode
+         * @enum {string}
+         */
+        UnitCode: "PIECE" | "UNIT" | "PACK" | "BOX" | "CASE" | "CARTON" | "BOTTLE" | "BAG" | "CAN" | "POUCH" | "SACHET" | "TABLET" | "CAPSULE" | "VIAL" | "TUBE" | "TEST" | "STRIP" | "KG" | "G" | "OZ" | "LB" | "L" | "ML" | "OTHER" | "UNKNOWN";
+        /**
+         * UnitOfMeasure
+         * @description Controlled unit code plus optional label for deliberate OTHER classifications.
+         */
+        UnitOfMeasure: {
+            /** @description Controlled UOM code. Null means not determined. */
+            code?: components["schemas"]["UnitCode"] | null;
+            /**
+             * Label
+             * @description Required only when code is OTHER.
+             */
+            label?: string | null;
         };
         /** UomVerify */
         UomVerify: {
@@ -3506,6 +4373,14 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** ValidationIssueResolutionRequest */
+        ValidationIssueResolutionRequest: {
+            resolution_status: components["schemas"]["IssueResolutionStatus"];
+            /** Resolution Note */
+            resolution_note?: string | null;
+            /** Resolved At */
+            resolved_at?: string | null;
         };
     };
     responses: never;
@@ -3961,6 +4836,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_serving_publications_products_serving_publications_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                supplier_id?: number | null;
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServingPublicationPageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_serving_publication_history_products_serving_publications__canonical_sku__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canonical_sku: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServingPublicationHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5486,18 +6426,14 @@ export interface operations {
             };
         };
     };
-    import_catalogue_catalogues_import_post: {
+    import_catalogue_removed_catalogues_import_post: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["Body_import_catalogue_catalogues_import_post"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -5506,15 +6442,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -6530,6 +7457,26 @@ export interface operations {
             };
         };
     };
+    get_catalogue_ingestions_run_ids_catalogues_ingestions_run_ids_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueIngestionStatusResponse"][];
+                };
+            };
+        };
+    };
     get_catalogue_ingestion_status_catalogues_ingestions__run_uuid__get: {
         parameters: {
             query?: never;
@@ -6548,6 +7495,348 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CatalogueIngestionStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_catalogue_validation_issue_catalogues_ingestions__run_uuid__validation_issues__validation_issue_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                run_uuid: string;
+                validation_issue_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValidationIssueResolutionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                run_uuid: string;
+                mastering_candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MasteringReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+                mastering_candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    correct_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__correct_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+                mastering_candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MasteringCorrectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+                mastering_candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommercialApplicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_catalogue_serving_item_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                run_uuid: string;
+                mastering_candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServingPublicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_raw_layer_catalogues_ingestions__run_uuid__raw_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_staging_layer_catalogues_ingestions__run_uuid__staging_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_intermediate_layer_catalogues_ingestions__run_uuid__intermediate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_serving_layer_catalogues_ingestions__run_uuid__serving_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Validation Error */
