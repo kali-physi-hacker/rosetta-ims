@@ -1049,6 +1049,21 @@ class ApprovedCommercialStateService(_TransactionalService):
             and current_price.amount == cost.amount
             and current_price.currency == cost.currency
             and current_price.price_basis_uom_code == cost.price_basis.code.value
+            and current_price.price_basis_uom_label == cost.price_basis.label
+            and current_price.effective_to
+            == (
+                _iso(candidate.supplier_price_resolution.effective_to)
+                if candidate.supplier_price_resolution.effective_to
+                else None
+            )
+            and (
+                candidate.supplier_price_resolution.effective_from is None
+                or current_price.effective_from == _iso(candidate.supplier_price_resolution.effective_from)
+            )
+            and current_price.source_document_id
+            == _source_document_id(self.db, candidate.trace.supplier_catalogue_id)
+            and current_price.ingestion_run_uuid == str(candidate.trace.ingestion_run_id)
+            and current_price.review_decision_uuid == decision_uuid
         )
 
         packaging = candidate.packaging_resolution.packaging
@@ -1056,27 +1071,27 @@ class ApprovedCommercialStateService(_TransactionalService):
             supplier_product_id=supplier_product.id,
             superseded_at=None,
         ).first()
-        packaging_ok = (
-            packaging is not None
-            and current_packaging is not None
-            and current_packaging.review_decision_uuid == decision_uuid
-            and current_packaging.price_basis_uom_code == _uom_code(packaging.price_basis)
-            and current_packaging.content_amount == packaging.content_amount
-            and current_packaging.content_uom_code == _uom_code(packaging.content_uom)
-            and current_packaging.sellable_units_per_purchase_unit == packaging.sellable_units_per_purchase_unit
-            and current_packaging.source_text == packaging.source_text
-        )
+        packaging_ok = packaging is not None and current_packaging is not None and _packaging_material_from_row(
+            current_packaging
+        ) == _packaging_material_from_candidate(candidate)
 
         terms = candidate.mbb_resolution.terms
-        if terms:
-            active_terms = self.db.query(models.CatalogueSupplierMbbTerm).filter_by(
-                supplier_product_id=supplier_product.id,
-                is_active=1,
-                mastering_candidate_uuid=candidate_uuid,
-            ).count()
-            mbb_ok = active_terms == len(terms)
-        else:
-            mbb_ok = True
+        active_terms = self.db.query(models.CatalogueSupplierMbbTerm).filter_by(
+            supplier_product_id=supplier_product.id,
+            is_active=1,
+        ).all()
+        expected_mbb = sorted(
+            (
+                _mbb_material_from_candidate(term, candidate, supplier_product.id, self.db)
+                for term in terms
+            ),
+            key=_json_dumps,
+        )
+        actual_mbb = sorted(
+            (_mbb_material_from_row(term) for term in active_terms),
+            key=_json_dumps,
+        )
+        mbb_ok = actual_mbb == expected_mbb
 
         if offering_ok and price_ok and packaging_ok and mbb_ok:
             return "current_complete"
@@ -1210,8 +1225,6 @@ class ApprovedCommercialStateService(_TransactionalService):
         applied_at: datetime,
     ) -> int:
         terms = candidate.mbb_resolution.terms
-        if not terms:
-            return 0
         for current in self.db.query(models.CatalogueSupplierMbbTerm).filter_by(
             supplier_product_id=supplier_product.id,
             is_active=1,
@@ -1912,6 +1925,108 @@ def _cost_per_sellable_unit(cost: Cost, packaging: PackagingConfiguration) -> Mo
     ):
         return Money(amount=cost.amount / packaging.sellable_units_per_purchase_unit, currency=cost.currency)
     return None
+
+
+def _packaging_material_from_candidate(candidate: MasteringCandidateV1) -> dict[str, Any]:
+    packaging = candidate.packaging_resolution.packaging
+    if packaging is None:
+        return {}
+    return {
+        "purchase_uom_code": _uom_code(packaging.purchase_uom),
+        "purchase_uom_label": _uom_label(packaging.purchase_uom),
+        "price_basis_uom_code": _uom_code(packaging.price_basis),
+        "price_basis_uom_label": _uom_label(packaging.price_basis),
+        "sellable_unit_uom_code": _uom_code(packaging.sellable_unit_uom),
+        "sellable_unit_uom_label": _uom_label(packaging.sellable_unit_uom),
+        "sellable_units_per_purchase_unit": packaging.sellable_units_per_purchase_unit,
+        "content_amount": packaging.content_amount,
+        "content_uom_code": _uom_code(packaging.content_uom),
+        "content_uom_label": _uom_label(packaging.content_uom),
+        "order_increment_amount": packaging.order_increment.amount if packaging.order_increment else None,
+        "order_increment_uom_code": _uom_code(packaging.order_increment.uom) if packaging.order_increment else None,
+        "order_increment_uom_label": _uom_label(packaging.order_increment.uom) if packaging.order_increment else None,
+        "minimum_order_amount": packaging.minimum_order_quantity.amount if packaging.minimum_order_quantity else None,
+        "minimum_order_uom_code": (
+            _uom_code(packaging.minimum_order_quantity.uom) if packaging.minimum_order_quantity else None
+        ),
+        "minimum_order_uom_label": (
+            _uom_label(packaging.minimum_order_quantity.uom) if packaging.minimum_order_quantity else None
+        ),
+        "break_pack_allowed": None if packaging.break_pack_allowed is None else int(packaging.break_pack_allowed),
+        "source_text": packaging.source_text,
+        "review_decision_uuid": str(candidate.review_decision_id) if candidate.review_decision_id else None,
+        "raw_observation_ids_json": _json_dumps([str(item) for item in candidate.raw_observation_ids]),
+    }
+
+
+def _packaging_material_from_row(row: models.CataloguePackagingConfiguration) -> dict[str, Any]:
+    return {
+        "purchase_uom_code": row.purchase_uom_code,
+        "purchase_uom_label": row.purchase_uom_label,
+        "price_basis_uom_code": row.price_basis_uom_code,
+        "price_basis_uom_label": row.price_basis_uom_label,
+        "sellable_unit_uom_code": row.sellable_unit_uom_code,
+        "sellable_unit_uom_label": row.sellable_unit_uom_label,
+        "sellable_units_per_purchase_unit": row.sellable_units_per_purchase_unit,
+        "content_amount": row.content_amount,
+        "content_uom_code": row.content_uom_code,
+        "content_uom_label": row.content_uom_label,
+        "order_increment_amount": row.order_increment_amount,
+        "order_increment_uom_code": row.order_increment_uom_code,
+        "order_increment_uom_label": row.order_increment_uom_label,
+        "minimum_order_amount": row.minimum_order_amount,
+        "minimum_order_uom_code": row.minimum_order_uom_code,
+        "minimum_order_uom_label": row.minimum_order_uom_label,
+        "break_pack_allowed": row.break_pack_allowed,
+        "source_text": row.source_text,
+        "review_decision_uuid": row.review_decision_uuid,
+        "raw_observation_ids_json": row.raw_observation_ids_json,
+    }
+
+
+_MBB_MATERIAL_FIELDS = (
+    "contract_mbb_term_uuid",
+    "scope",
+    "condition_type",
+    "condition_quantity_amount",
+    "condition_quantity_uom_code",
+    "condition_quantity_uom_label",
+    "condition_spend_amount",
+    "condition_spend_currency",
+    "benefit_type",
+    "discounted_price_amount",
+    "discounted_price_currency",
+    "discounted_price_basis_uom_code",
+    "discounted_price_basis_uom_label",
+    "percentage_discount",
+    "fixed_discount_amount",
+    "fixed_discount_currency",
+    "fixed_discount_reduction_basis",
+    "free_quantity_amount",
+    "free_quantity_uom_code",
+    "free_quantity_uom_label",
+    "description",
+    "effective_from",
+    "effective_to",
+    "source_document_id",
+    "ingestion_run_uuid",
+    "mastering_candidate_uuid",
+    "review_decision_uuid",
+)
+
+
+def _mbb_material_from_candidate(
+    term: MbbTerm,
+    candidate: MasteringCandidateV1,
+    supplier_product_id: int,
+    db: Session,
+) -> dict[str, Any]:
+    transient = _mbb_row(term, candidate, supplier_product_id, _now(), db)
+    return _mbb_material_from_row(transient)
+
+
+def _mbb_material_from_row(row: models.CatalogueSupplierMbbTerm) -> dict[str, Any]:
+    return {field: getattr(row, field) for field in _MBB_MATERIAL_FIELDS}
 
 
 def _mbb_row(term: MbbTerm, candidate: MasteringCandidateV1, supplier_product_id: int, applied_at: datetime, db: Session):
