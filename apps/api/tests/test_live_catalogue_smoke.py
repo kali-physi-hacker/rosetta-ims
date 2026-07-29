@@ -94,7 +94,9 @@ CASES = [
             "supplier": ("ALF", "Alfamedic"),
             "contract_id": "alfamedic.price_list.v1",
             "min_rows_env": ("CATALOGUE_LIVE_SMOKE_ALFAMEDIC_MIN_ROWS", 300),
-            "max_empty_pages": 6,
+            # 56 pages include a cover, TOC and per-section divider pages — the
+            # live run classified 9 as no-catalogue-evidence.
+            "max_empty_pages": 12,
         },
         id="alfamedic",
     ),
@@ -151,7 +153,15 @@ def test_live_supplier_file_end_to_end(db, path_env, expected):
     duration = time.monotonic() - started
     run_uuid = str(submitted.ingestion_run_id)
 
-    attempt = db.query(models.CatalogueExtractionAttempt).filter_by(ingestion_run_uuid=run_uuid).one()
+    # Extraction attempts are APPEND-ONLY per Prefect retry — assert against
+    # the latest one, never .one().
+    attempt = (
+        db.query(models.CatalogueExtractionAttempt)
+        .filter_by(ingestion_run_uuid=run_uuid)
+        .order_by(models.CatalogueExtractionAttempt.id.desc())
+        .first()
+    )
+    assert attempt is not None, "no extraction attempt was persisted"
     outcomes = json.loads(attempt.unit_outcomes_json or "[]")
     issues = db.query(models.CatalogueValidationIssue).filter_by(ingestion_run_uuid=run_uuid).all()
     rows = db.query(models.CatalogueNormalizedRow).filter_by(ingestion_run_uuid=run_uuid).count()
@@ -178,8 +188,9 @@ def test_live_supplier_file_end_to_end(db, path_env, expected):
     min_rows = int(os.environ.get(min_env, min_default))
     assert result.rows_extracted >= min_rows, f"extracted {result.rows_extracted} < baseline {min_rows}"
 
-    # Every extracted row normalized; every unblocked row reached mastering.
-    assert rows == result.rows_extracted
+    # Every extracted CATALOGUE row normalized (headers/page furniture are
+    # legitimately skipped); every unblocked row reached mastering.
+    assert rows == result.rows_extracted - result.rows_skipped_non_catalogue
     assert candidates == rows - len(blocked)
 
     # No technical blockers; representative field invariants hold.

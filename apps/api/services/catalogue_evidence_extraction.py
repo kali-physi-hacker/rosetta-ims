@@ -313,6 +313,9 @@ page_outcome is REQUIRED and must be exactly one of:
 Rules:
 - columns holds each printed column heading exactly as printed, ONCE — never
   repeat headings inside rows.
+- Emit ONLY catalogue product/offer rows. Page furniture — document titles,
+  section banners, effective dates, policy footnotes, page numbers, contact
+  lines — is NOT a row; do not emit it.
 - Each tabular row's cells align by position to columns; use null for an empty
   cell. A row never has more cells than columns.
 - Copy every value exactly as printed, including bilingual text, symbols and

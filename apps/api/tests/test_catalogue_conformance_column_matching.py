@@ -303,3 +303,41 @@ def test_hills_contract_conforms_both_science_diet_and_prescription_diet_edition
         assert item.normalized_fields["product_name"]["value"] == expected_name, label
         assert item.normalized_fields["supplier_sku"]["value"] == row["Product Code 產品編號"], label
         assert item.normalized_fields["cost"]["currency"] == "HKD", label
+
+
+def test_text_only_lines_under_tabular_contract_are_furniture_not_blocking(monkeypatch):
+    """Real flash+compact behaviour: page banners/titles/footnotes arrive as
+    text-only observations. Under a TABULAR contract they are skipped like
+    header rows (evidence preserved upstream) — NOT 48 blocking issues."""
+    from services import catalogue_conformance
+    from services.catalogue_evidence_extraction import ExtractedEvidence as _EE
+
+    hills = runtime.load_contract(14)
+    banner = _EE(
+        observation_key="furniture-1",
+        source_location=SourceLocation(page_number=1, source_object_key="furniture-1"),
+        raw_text="濕糧罐頭 Wet Food",
+        extraction_method=ExtractionMethod.MODEL_VISION,
+        provider="test",
+    )
+    product = _observation({
+        "Product Code 產品編號": "10447",
+        "Product Range 產品系列": "Science Plan",
+        "Product Description 產品名稱": "Chicken 82g",
+        "Size 重量": "82g",
+        "Gross Wholesale Price 折扣前批發價": "13.10",
+        "Order Multiple 訂貨單位": "12",
+    })
+    outcome = conform_observations((banner, product), (uuid4(), uuid4()), hills)
+
+    assert len(outcome.items) == 1  # only the product row normalized
+    assert outcome.skipped_count == 1
+    assert outcome.metadata["skipped_non_tabular_text"] == 1
+    assert outcome.metadata["unconformable_items"] == 0
+    assert not any(issue.issue_code == "CONTRACT_ROW_UNCONFORMABLE" for item in outcome.items for issue in item.issues)
+
+    # A NON-tabular contract keeps the manual-review path for text lines.
+    monkeypatch.setattr(catalogue_conformance, "_contract_is_tabular", lambda _c: False)
+    reviewed = conform_observations((banner,), (uuid4(),), hills)
+    assert reviewed.metadata["unconformable_items"] == 1
+    assert any(issue.issue_code == "CONTRACT_ROW_UNCONFORMABLE" for item in reviewed.items for issue in item.issues)

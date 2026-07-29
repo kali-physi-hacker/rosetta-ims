@@ -102,6 +102,7 @@ def conform_observations(
     warnings: list[str] = [issue.message for issue in document_issues]
     items: list[ConformedRow] = []
     skipped = 0
+    furniture = 0
     unconformable = 0
     for observation, raw_id in zip(observations, raw_observation_ids, strict=True):
         key = observation.observation_key
@@ -132,8 +133,19 @@ def conform_observations(
             warnings.extend(f"{key}: {issue.message}" for issue in row_issues)
             continue
 
-        # No structured cells to map through the contract. Never invent fields;
-        # stage the row (with empty normalized fields) for manual review.
+        # No structured cells to map through the contract.
+        if _contract_is_tabular(runtime_contract):
+            # Under a TABULAR contract, a cells-less text line is page
+            # furniture (section banner, document title, effective date,
+            # policy footnote) — evidence, not a catalogue row. It stays
+            # persisted as an extracted observation but is skipped from
+            # normalization, exactly like a header row. Blocking every
+            # banner would bury reviewers in non-issues.
+            skipped += 1
+            furniture += 1
+            continue
+        # Non-tabular contract: a text line may genuinely be the catalogue
+        # row. Never invent fields; stage it for manual review.
         unconformable += 1
         message = "no structured cells to conform; staged for manual review"
         warnings.append(f"{key}: {message}")
@@ -162,6 +174,7 @@ def conform_observations(
         metadata={
             "conformed_items": len(items),
             "skipped_header_rows": skipped,
+            "skipped_non_tabular_text": furniture,
             "unconformable_items": unconformable,
             "contract_issue_count": len(document_issues) + sum(len(item.issues) for item in items),
             "document_issues": [issue.as_dict() for issue in document_issues],
@@ -182,6 +195,14 @@ def conform_observations(
         },
         issues=document_issues,
     )
+
+
+def _contract_is_tabular(runtime_contract) -> bool:
+    """True when the contract declares a cells-shaped source (tables/sheets)."""
+
+    source_format = getattr(runtime_contract.declaration.source_structure, "source_format", None)
+    value = getattr(source_format, "value", source_format)
+    return value in {"PDF_TABLE", "SPREADSHEET", "CSV"}
 
 
 def _provenance(interpreter: str) -> dict[str, Any]:
