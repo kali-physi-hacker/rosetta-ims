@@ -237,27 +237,18 @@ def _cell_evidence(
 
 def _vision_envelope(rows: list[dict[str, str]]) -> str:
     """Serialize rows as one Gemini vision evidence envelope: one observation per row."""
-
+    columns: list[str] = []
+    for row in rows:
+        for column in row:
+            if column not in columns:
+                columns.append(column)
     return json.dumps(
         {
             "page_outcome": "evidence",
-            "observations": [
-                {
-                    "raw_text": None,
-                    "raw_cells": [
-                        {
-                            "cell_reference": None,
-                            "row_number": None,
-                            "column_name": column,
-                            "column_index": index,
-                            "raw_value": value,
-                        }
-                        for index, (column, value) in enumerate(row.items(), start=1)
-                    ],
-                    "bounding_box": {"x": 0, "y": offset, "width": 1, "height": 1, "unit": "px"},
-                    "confidence": "0.95",
-                }
-                for offset, row in enumerate(rows)
+            "columns": columns,
+            "rows": [
+                {"cells": [row.get(column) for column in columns], "confidence": "0.95"}
+                for row in rows
             ],
         }
     )

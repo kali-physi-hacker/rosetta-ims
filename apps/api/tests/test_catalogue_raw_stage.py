@@ -356,22 +356,8 @@ def test_extraction_consumes_durable_reference_after_raw_completes(db, monkeypat
             text=json.dumps(
                 {
                     "page_outcome": "evidence",
-                    "observations": [
-                        {
-                            "raw_text": None,
-                            "raw_cells": [
-                                {
-                                    "cell_reference": None,
-                                    "row_number": None,
-                                    "column_name": "Product Code / 產品編號",
-                                    "column_index": 1,
-                                    "raw_value": "10447",
-                                }
-                            ],
-                            "bounding_box": {"x": 0, "y": 0, "width": 1, "height": 1, "unit": "px"},
-                            "confidence": "0.95",
-                        }
-                    ],
+                    "columns": ["Product Code / 產品編號"],
+                    "rows": [{"cells": ["10447"], "box": [0, 0, 1, 1], "confidence": "0.95"}],
                 }
             )
         ),

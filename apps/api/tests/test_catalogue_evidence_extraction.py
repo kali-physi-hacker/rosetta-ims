@@ -114,20 +114,14 @@ def test_vision_extraction_records_actual_provider_metadata_and_png_media_type(m
             text=json.dumps(
                 {
                     "page_outcome": "evidence",
-                    "observations": [
+                    "columns": [],
+                    "rows": [
                         {
-                            "raw_text": "ALF-10 | Syringe 10ml | HK$12.50",
-                            "raw_cells": [],
-                            "bounding_box": {
-                                "x": 10,
-                                "y": 20,
-                                "width": 200,
-                                "height": 24,
-                                "unit": "px",
-                            },
+                            "text": "ALF-10 | Syringe 10ml | HK$12.50",
+                            "box": [10, 20, 200, 24],
                             "confidence": "0.91",
                         }
-                    ]
+                    ],
                 }
             ),
             request_id="msg_test_123",
@@ -157,15 +151,14 @@ def test_vision_response_rejects_semantic_product_fields(monkeypatch):
             text=json.dumps(
                 {
                     "page_outcome": "evidence",
-                    "observations": [
+                    "columns": [],
+                    "rows": [
                         {
-                            "raw_text": "10447 | Product | HK$13.10",
-                            "raw_cells": [],
-                            "bounding_box": None,
+                            "text": "10447 | Product | HK$13.10",
                             "confidence": "0.9",
                             "cost_price": 13.1,
                         }
-                    ]
+                    ],
                 }
             )
         )
@@ -188,22 +181,8 @@ def test_vision_response_rejects_normalized_numeric_raw_cells(monkeypatch):
             text=json.dumps(
                 {
                     "page_outcome": "evidence",
-                    "observations": [
-                        {
-                            "raw_text": None,
-                            "raw_cells": [
-                                {
-                                    "cell_reference": None,
-                                    "row_number": None,
-                                    "column_name": "Wholesale",
-                                    "column_index": 1,
-                                    "raw_value": 13.1,
-                                }
-                            ],
-                            "bounding_box": None,
-                            "confidence": "0.9",
-                        }
-                    ]
+                    "columns": ["Wholesale"],
+                    "rows": [{"cells": [13.1], "confidence": "0.9"}],
                 }
             )
         )
@@ -348,11 +327,11 @@ def _vision_stub(payloads_by_call: list[dict]):
 
 _EVIDENCE_PAYLOAD = {
     "page_outcome": "evidence",
-    "observations": [
+    "columns": [],
+    "rows": [
         {
-            "raw_text": "SCANNED-1 | Scanned Product 500g | HK$99.00",
-            "raw_cells": [],
-            "bounding_box": {"x": 5, "y": 40, "width": 300, "height": 20, "unit": "px"},
+            "text": "SCANNED-1 | Scanned Product 500g | HK$99.00",
+            "box": [5, 40, 300, 20],
             "confidence": "0.9",
         }
     ],
@@ -377,7 +356,7 @@ def test_garbled_or_unreliable_text_layer_is_classified_for_vision():
 
 def test_empty_vision_array_without_outcome_fails_the_page(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
-    fake_vision, _ = _vision_stub([{"observations": []}])
+    fake_vision, _ = _vision_stub([{"rows": []}])
     monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
     content = _pdf_pages([{"text": None, "image": True}])
 
@@ -391,7 +370,7 @@ def test_empty_vision_array_without_outcome_fails_the_page(monkeypatch):
 
 def test_evidence_outcome_with_empty_array_is_malformed_not_empty_page(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
-    fake_vision, _ = _vision_stub([{"page_outcome": "evidence", "observations": []}])
+    fake_vision, _ = _vision_stub([{"page_outcome": "evidence", "rows": []}])
     monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
 
     result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
@@ -402,7 +381,7 @@ def test_evidence_outcome_with_empty_array_is_malformed_not_empty_page(monkeypat
 
 def test_explicit_no_catalogue_evidence_page_is_accounted_without_fake_observations(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
-    fake_vision, _ = _vision_stub([{"page_outcome": "no_catalogue_evidence", "observations": []}])
+    fake_vision, _ = _vision_stub([{"page_outcome": "no_catalogue_evidence", "rows": []}])
     monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
     content = _pdf_pages([{"text": None, "image": True}])
 
@@ -417,7 +396,7 @@ def test_explicit_no_catalogue_evidence_page_is_accounted_without_fake_observati
 
 def test_no_catalogue_evidence_with_observations_is_malformed(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
-    payload = {"page_outcome": "no_catalogue_evidence", "observations": _EVIDENCE_PAYLOAD["observations"]}
+    payload = {"page_outcome": "no_catalogue_evidence", "rows": _EVIDENCE_PAYLOAD["rows"]}
     fake_vision, _ = _vision_stub([payload])
     monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
 
@@ -432,9 +411,8 @@ def test_vision_observation_identity_is_stable_across_reordered_retries():
         return json.dumps(
             {
                 "page_outcome": "evidence",
-                "observations": [
-                    {"raw_text": row, "raw_cells": [], "bounding_box": None, "confidence": "0.9"} for row in rows
-                ],
+                "columns": [],
+                "rows": [{"text": row, "confidence": "0.9"} for row in rows],
             }
         )
 
@@ -635,27 +613,19 @@ def test_mid_size_image_is_treated_as_coverage_unknown(monkeypatch):
 
 
 def _vision_envelope(rows: list[dict[str, str]]) -> str:
-    """Typed vision envelope with column-labeled raw cells (rows: column -> value)."""
+    """Compact vision envelope: columns once, positional row cells."""
 
+    columns: list[str] = []
+    for row in rows:
+        for column in row:
+            if column not in columns:
+                columns.append(column)
     return json.dumps(
         {
             "page_outcome": "evidence",
-            "observations": [
-                {
-                    "raw_text": None,
-                    "raw_cells": [
-                        {
-                            "cell_reference": None,
-                            "row_number": None,
-                            "column_name": column,
-                            "column_index": index,
-                            "raw_value": value,
-                        }
-                        for index, (column, value) in enumerate(row.items(), start=1)
-                    ],
-                    "bounding_box": {"x": 0, "y": 0, "width": 1, "height": 1, "unit": "px"},
-                    "confidence": "0.95",
-                }
+            "columns": columns,
+            "rows": [
+                {"cells": [row.get(column) for column in columns], "box": [0, 0, 1, 1], "confidence": "0.95"}
                 for row in rows
             ],
         }
@@ -828,26 +798,16 @@ def test_suspiciously_sparse_page_is_warned_not_failed(monkeypatch):
 
     dense = {
         "page_outcome": "evidence",
-        "observations": [
-            {
-                "raw_text": f"SKU-{index} | Product {index} | HK${index}.00",
-                "raw_cells": [],
-                "bounding_box": {"x": 0, "y": index, "width": 100, "height": 10, "unit": "px"},
-                "confidence": "0.9",
-            }
+        "columns": [],
+        "rows": [
+            {"text": f"SKU-{index} | Product {index} | HK${index}.00", "box": [0, index, 100, 10], "confidence": "0.9"}
             for index in range(1, 11)
         ],
     }
     sparse = {
         "page_outcome": "evidence",
-        "observations": [
-            {
-                "raw_text": "LONE-1 | Only row | HK$1.00",
-                "raw_cells": [],
-                "bounding_box": {"x": 0, "y": 0, "width": 100, "height": 10, "unit": "px"},
-                "confidence": "0.9",
-            }
-        ],
+        "columns": [],
+        "rows": [{"text": "LONE-1 | Only row | HK$1.00", "box": [0, 0, 100, 10], "confidence": "0.9"}],
     }
     fake, _ = _vision_stub([dense, sparse])
     monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake)

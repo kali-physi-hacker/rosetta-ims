@@ -6,5 +6,6 @@
  "pages": {
   "1": "Life Stage header family, 36 rows",
   "4": "Disease Category header family, 23 rows"
- }
+ },
+ "format": "compact envelope (columns once per page + positional row cells); mechanically converted from the verbose envelopes recorded live \u2014 all verbatim values, boxes and confidences unchanged"
 }

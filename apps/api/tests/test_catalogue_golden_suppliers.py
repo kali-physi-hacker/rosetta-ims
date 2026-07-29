@@ -119,7 +119,7 @@ def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "golden-replay")
     pages = [HILLS_CLASSIC / "page_1.json", HILLS_CLASSIC / "page_4.json"]
     calls = _install_golden_replay(monkeypatch, pages)
-    expected_rows = sum(len(json.loads(p.read_text())["observations"]) for p in pages)
+    expected_rows = sum(len(json.loads(p.read_text())["rows"]) for p in pages)
 
     service = CatalogueSubmissionService(
         db, upload_root=os.environ["CATALOGUE_UPLOAD_DIR"], max_upload_bytes=4 * 1024 * 1024

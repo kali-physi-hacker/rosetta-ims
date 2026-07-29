@@ -413,26 +413,17 @@ _VISION_ROWS = [
 
 def _vision_envelope(rows: list[dict[str, str]]) -> str:
     """Serialize rows as the typed Gemini vision evidence envelope the seam expects."""
-
+    columns: list[str] = []
+    for row in rows:
+        for column in row:
+            if column not in columns:
+                columns.append(column)
     return json.dumps(
         {
             "page_outcome": "evidence",
-            "observations": [
-                {
-                    "raw_text": None,
-                    "raw_cells": [
-                        {
-                            "cell_reference": None,
-                            "row_number": None,
-                            "column_name": column,
-                            "column_index": index + 1,
-                            "raw_value": value,
-                        }
-                        for index, (column, value) in enumerate(row.items())
-                    ],
-                    "bounding_box": {"x": 0, "y": 0, "width": 1, "height": 1, "unit": "px"},
-                    "confidence": "0.95",
-                }
+            "columns": columns,
+            "rows": [
+                {"cells": [row.get(column) for column in columns], "confidence": "0.95"}
                 for row in rows
             ],
         }

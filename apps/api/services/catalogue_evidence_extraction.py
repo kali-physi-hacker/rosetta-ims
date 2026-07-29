@@ -30,10 +30,12 @@ from schemas.catalogue_pipeline.enums import ExtractionMethod, SourceFormat
 from schemas.catalogue_pipeline.extracted_evidence_v1 import BoundingBox, RawCell, SourceLocation
 
 
-# Vision model, env-overridable. Default is gemini-3.1-pro-preview — the valid id
-# for 3.1 Pro ("gemini-3.1-pro" is not a real model). Pro is paid-tier; a key
-# without billing must override, e.g. GEMINI_MODEL=gemini-flash-latest.
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.1-pro-preview")
+# Vision model, env-overridable. Default is COST-FIRST: gemini-flash-latest
+# runs ~4.8x cheaper per output token than 3.1 Pro and matched Pro's row
+# completeness on the densest measured Hill's page (36/36). Set
+# GEMINI_MODEL=gemini-3.1-pro-preview for maximum-accuracy runs (paid tier);
+# the golden/live smoke harness is the arbiter whenever the model changes.
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
 # A dense catalogue page emits ~30k output tokens of verbatim cells, and
 # thinking models spend more of the budget before emitting any — too small a
 # ceiling truncates the JSON envelope (finish_reason MAX_TOKENS). Give ample
@@ -212,51 +214,64 @@ class ExtractionResult(BaseModel):
         return self
 
 
-class _VisionObservation(BaseModel):
+class _VisionRow(BaseModel):
+    """One page row in the COMPACT provider envelope.
+
+    Tabular rows carry ``cells`` — verbatim values aligned by position to the
+    page-level ``columns`` array (null for an empty cell; a short tail is
+    padded as empty). Non-tabular lines carry ``text``. Emitting the column
+    headings once per page instead of once per cell cuts provider output
+    tokens roughly in half on dense bilingual tables — the dominant cost.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
-    raw_text: str | None = None
-    raw_cells: tuple[RawCell, ...] = ()
-    bounding_box: BoundingBox | None = None
+    cells: tuple[str | None, ...] = ()
+    text: str | None = None
+    box: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
     confidence: Decimal | None = Field(None, ge=Decimal("0"), le=Decimal("1"))
 
-    @field_validator("raw_cells")
+    @field_validator("cells", mode="before")
     @classmethod
-    def _cell_values_are_verbatim_strings(cls, value):
-        for cell in value:
-            if not isinstance(cell.raw_value, str):
-                raise ValueError("vision raw cell values must be verbatim strings")
+    def _cells_are_verbatim_strings(cls, value):
+        for item in value or ():
+            if item is not None and not isinstance(item, str):
+                raise ValueError("vision cell values must be verbatim strings")
         return value
 
     @model_validator(mode="after")
     def _requires_evidence(self):
-        has_text = bool(self.raw_text and self.raw_text.strip())
-        has_cells = any(cell.raw_value is not None and str(cell.raw_value).strip() for cell in self.raw_cells)
+        has_text = bool(self.text and self.text.strip())
+        has_cells = any(cell is not None and cell.strip() for cell in self.cells)
         if not has_text and not has_cells:
-            raise ValueError("vision observation requires verbatim text or cells")
+            raise ValueError("vision row requires verbatim text or cells")
         return self
 
 
 class _VisionEnvelope(BaseModel):
-    """Typed page-level provider outcome.
+    """Typed page-level provider outcome (compact form).
 
-    ``page_outcome`` is REQUIRED: an empty observation array is only
-    acceptable when the provider explicitly classifies the page as containing
-    no catalogue evidence. Empty-without-classification and
-    evidence-with-empty-array are both malformed — they may hide truncation.
+    ``page_outcome`` is REQUIRED: an empty row array is only acceptable when
+    the provider explicitly classifies the page as containing no catalogue
+    evidence. Empty-without-classification and evidence-with-empty-array are
+    both malformed — they may hide truncation.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     page_outcome: Literal["evidence", "no_catalogue_evidence"]
-    observations: tuple[_VisionObservation, ...] = ()
+    columns: tuple[str, ...] = ()
+    rows: tuple[_VisionRow, ...] = ()
 
     @model_validator(mode="after")
-    def _outcome_matches_observations(self):
-        if self.page_outcome == "evidence" and not self.observations:
-            raise ValueError("page_outcome 'evidence' requires at least one observation")
-        if self.page_outcome == "no_catalogue_evidence" and self.observations:
-            raise ValueError("page_outcome 'no_catalogue_evidence' cannot carry observations")
+    def _outcome_matches_rows(self):
+        if self.page_outcome == "evidence" and not self.rows:
+            raise ValueError("page_outcome 'evidence' requires at least one row")
+        if self.page_outcome == "no_catalogue_evidence" and self.rows:
+            raise ValueError("page_outcome 'no_catalogue_evidence' cannot carry rows")
+        for row in self.rows:
+            if len(row.cells) > len(self.columns):
+                raise ValueError("a row cannot carry more cells than declared columns")
         return self
 
 
@@ -276,38 +291,35 @@ duplicates. Preserve repeated rows at their separate source locations.
 Return one JSON object with exactly this shape:
 {
   "page_outcome": "evidence",
-  "observations": [
+  "columns": ["each printed column heading, once, in printed order"],
+  "rows": [
     {
-      "raw_text": "the complete row exactly as printed, or null",
-      "raw_cells": [
-        {
-          "cell_reference": null,
-          "row_number": null,
-          "column_name": "the printed column heading, or null",
-          "column_index": 1,
-          "raw_value": "the cell value exactly as printed"
-        }
-      ],
-      "bounding_box": {
-        "x": 0,
-        "y": 0,
-        "width": 1,
-        "height": 1,
-        "unit": "px"
-      },
+      "cells": ["cell value exactly as printed, aligned to columns, null when empty"],
       "confidence": "0.95"
+    },
+    {
+      "text": "a non-tabular line exactly as printed (no cells)",
+      "confidence": "0.9"
     }
   ]
 }
 
 page_outcome is REQUIRED and must be exactly one of:
-- "evidence" — the page contains catalogue rows; observations must list every
-  visible row without omission.
+- "evidence" — the page contains catalogue rows; rows must list every visible
+  row without omission.
 - "no_catalogue_evidence" — the page genuinely contains no catalogue rows
-  (blank page, cover page, pure artwork); observations must be [].
+  (blank page, cover page, pure artwork); columns and rows must be [].
 
-Use strings for confidence values. Omit no visible catalogue row. Use null for
-unknown optional values. Return only the JSON object, without Markdown fences.
+Rules:
+- columns holds each printed column heading exactly as printed, ONCE — never
+  repeat headings inside rows.
+- Each tabular row's cells align by position to columns; use null for an empty
+  cell. A row never has more cells than columns.
+- Copy every value exactly as printed, including bilingual text, symbols and
+  units. Never output computed, translated or normalized values.
+- A row may optionally include "box": [x, y, width, height] in pixels.
+- Use strings for confidence values. Return only the JSON object, without
+  Markdown fences.
 """
 
 
@@ -963,27 +975,47 @@ def _vision_observations(
     try:
         observations: list[ExtractedEvidence] = []
         digest_counts: dict[str, int] = {}
-        for item in envelope.observations:
-            digest = _observation_digest(item)
+        for row in envelope.rows:
+            digest = _observation_digest(envelope.columns, row)
             ordinal = digest_counts.get(digest, 0) + 1
             digest_counts[digest] = ordinal
             key = f"{unit_key}:obs:{digest}:{ordinal}"
+            # Re-expand the compact row into the persisted evidence shape: the
+            # page-level heading array becomes each cell's column_name, so
+            # everything downstream (persistence, contract conformance,
+            # replay idempotency) is untouched by the wire-format change.
+            raw_cells = tuple(
+                RawCell(
+                    cell_reference=None,
+                    row_number=None,
+                    column_name=envelope.columns[index],
+                    column_index=index + 1,
+                    raw_value=value,
+                )
+                for index, value in enumerate(row.cells)
+                if value is not None
+            )
+            bounding_box = (
+                BoundingBox(x=row.box[0], y=row.box[1], width=row.box[2], height=row.box[3], unit="px")
+                if row.box
+                else None
+            )
             observations.append(
                 ExtractedEvidence(
                     observation_key=key,
                     source_location=SourceLocation(
                         page_number=page_number,
-                        bounding_box=item.bounding_box,
+                        bounding_box=bounding_box,
                         source_object_key=key,
                     ),
-                    raw_text=item.raw_text,
-                    raw_cells=item.raw_cells,
+                    raw_text=row.text,
+                    raw_cells=raw_cells,
                     extraction_method=extraction_method,
                     provider="google",
                     provider_request_id=response.request_id,
                     model=GEMINI_MODEL,
                     model_version=GEMINI_MODEL,
-                    confidence=item.confidence,
+                    confidence=row.confidence,
                 )
             )
     except ValueError as exc:
@@ -995,14 +1027,12 @@ def _vision_observations(
     return observations, "evidence"
 
 
-def _observation_digest(item: _VisionObservation) -> str:
+def _observation_digest(columns: tuple[str, ...], row: _VisionRow) -> str:
     material = {
-        "raw_text": item.raw_text,
-        "raw_cells": [
-            [cell.cell_reference, cell.row_number, cell.column_name, cell.column_index, str(cell.raw_value)]
-            for cell in item.raw_cells
-        ],
-        "bounding_box": item.bounding_box.model_dump(mode="json") if item.bounding_box else None,
+        "columns": list(columns[: len(row.cells)]),
+        "cells": [None if value is None else str(value) for value in row.cells],
+        "text": row.text,
+        "box": [str(value) for value in row.box] if row.box else None,
     }
     return hashlib.sha256(json.dumps(material, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
 
