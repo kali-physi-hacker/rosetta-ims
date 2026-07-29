@@ -665,6 +665,51 @@ def test_pdf_pages_are_extracted_via_vision_into_column_labeled_cells(monkeypatc
     ]
 
 
+def test_vision_envelope_preserves_multiple_tables_and_document_level_text():
+    response = evidence_service._VisionResponse(
+        text=json.dumps(
+            {
+                "page_outcome": "evidence",
+                "tables": [
+                    {
+                        "columns": ["Product Code", "Wholesale"],
+                        "rows": [{"cells": ["10447", "HK$13.10"]}],
+                    },
+                    {
+                        "columns": ["Service Code", "Fee Basis"],
+                        "rows": [{"cells": ["DELIVERY", "per order"]}],
+                    },
+                ],
+                "text_observations": [
+                    {"text": "Prices effective from 1 August 2026"},
+                    {"text": "Minimum order: 12 cases"},
+                ],
+            }
+        ),
+        request_id="multi-table",
+    )
+
+    observations, outcome = evidence_service._vision_observations(
+        response,
+        extraction_method=ExtractionMethod.MODEL_VISION,
+        unit_key="page:1",
+        page_number=1,
+    )
+
+    assert outcome == "evidence"
+    assert len(observations) == 4
+    assert [(cell.column_name, cell.raw_value) for cell in observations[0].raw_cells] == [
+        ("Product Code", "10447"),
+        ("Wholesale", "HK$13.10"),
+    ]
+    assert [(cell.column_name, cell.raw_value) for cell in observations[1].raw_cells] == [
+        ("Service Code", "DELIVERY"),
+        ("Fee Basis", "per order"),
+    ]
+    assert observations[2].raw_text == "Prices effective from 1 August 2026"
+    assert observations[3].raw_text == "Minimum order: 12 cases"
+
+
 def test_pdf_retries_only_the_transiently_failed_page(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
     calls = 0
