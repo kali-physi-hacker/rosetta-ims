@@ -37,7 +37,7 @@ def main(force: bool = False) -> None:
     updated = 0
     final: Counter = Counter()
     try:
-        for product in db.query(models.Product).all():
+        for product in db.query(models.ProductVariant).all():
             if force or product.segment is None:
                 derived = derive(product)
                 if derived is not None and derived != product.segment:

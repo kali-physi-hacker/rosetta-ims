@@ -15,7 +15,7 @@ A reserved block of sentinel SKUs (suffix >= 9_000_000, e.g. X9999999) is
 excluded from the max so the counter never jumps into the reserved range.
 """
 from sqlalchemy.orm import Session
-from models import Product
+from models import ProductVariant
 
 # Operational item category -> SKU leading digit. The item category is the only
 # category the picker offers; several map to the same digit (the SKU-code scheme).
@@ -43,7 +43,7 @@ def _max_real_suffix(db: Session) -> int:
     """Highest 7-digit suffix across all live 8-digit numeric SKUs, ignoring the
     reserved sentinel block. Returns 0 when there are no numeric SKUs yet."""
     best = 0
-    for (code,) in db.query(Product.sku_code).all():
+    for (code,) in db.query(ProductVariant.sku_code).all():
         if code and len(code) == 8 and code.isdigit():
             suffix = int(code[1:])
             if best < suffix < _SENTINEL_FLOOR:
@@ -71,7 +71,7 @@ def next_sku(category: str, db: Session) -> str:
     suffix = _max_real_suffix(db) + 1
     while suffix <= _MAX_SUFFIX:
         code = f"{digit}{suffix:07d}"
-        if not db.query(Product.id).filter(Product.sku_code == code).first():
+        if not db.query(ProductVariant.id).filter(ProductVariant.sku_code == code).first():
             return code
         suffix += 1
     raise ValueError("SKU sequence exhausted (7-digit suffix overflow)")

@@ -75,7 +75,7 @@ def hitl_unverify_all(db: Session = Depends(database.get_db), user: models.User 
     event each). They drop out of the sheet push until re-verified via onboarding."""
     skus = _verified_skus(db)
     for sku in skus:
-        p = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+        p = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
         audit.log_event(db, action="hitl_unverify", user=user,
                         product_id=(p.id if p else None), sku_code=sku,
                         details={"name": p.name if p else None, "bulk": True})
@@ -100,7 +100,7 @@ def sync_shopify_tags(request: Request, dry_run: bool = Query(False), db: Sessio
     norm  = lambda t: " ".join((t or "").lower().split())
     alnum = lambda t: re.sub(r"[^a-z0-9]+", "", (t or "").lower())
 
-    products = db.query(models.Product).filter(models.Product.status != "DISCONTINUED").all()
+    products = db.query(models.ProductVariant).filter(models.ProductVariant.status != "DISCONTINUED").all()
     matched, total_tags = 0, 0
     for p in products:
         tags = by_title.get(norm(p.name)) or by_alnum.get(alnum(p.name))
@@ -135,12 +135,12 @@ def _base_query(db: Session):
     # selectinload issues one IN(...) query per relationship (keyed on the FK indexes
     # added in run_migrations) instead of subqueryload's correlated re-query — markedly
     # faster ORM hydration when listing all ~3.4k products.
-    return db.query(models.Product).options(
-        selectinload(models.Product.channels),
-        selectinload(models.Product.stock_levels),
-        selectinload(models.Product.product_suppliers).selectinload(models.ProductSupplier.supplier),
-        selectinload(models.Product.product_suppliers).selectinload(models.ProductSupplier.mbb_term_list),
-        selectinload(models.Product.sales_velocity),
+    return db.query(models.ProductVariant).options(
+        selectinload(models.ProductVariant.channels),
+        selectinload(models.ProductVariant.stock_levels),
+        selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.supplier),
+        selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.mbb_term_list),
+        selectinload(models.ProductVariant.sales_velocity),
     )
 
 
@@ -160,19 +160,19 @@ def list_products(
     q = _base_query(db)
 
     if status:
-        q = q.filter(models.Product.status == status.upper())
+        q = q.filter(models.ProductVariant.status == status.upper())
     else:
-        q = q.filter(models.Product.status != 'DISCONTINUED')
+        q = q.filter(models.ProductVariant.status != 'DISCONTINUED')
 
     if search:
         term = f"%{search}%"
         q = q.filter(
-            models.Product.name.ilike(term) |
-            models.Product.sku_code.ilike(term) |
-            models.Product.brand.ilike(term)
+            models.ProductVariant.name.ilike(term) |
+            models.ProductVariant.sku_code.ilike(term) |
+            models.ProductVariant.brand.ilike(term)
         )
     if category:
-        q = q.filter(models.Product.category == category)
+        q = q.filter(models.ProductVariant.category == category)
 
     if supplier:
         q = q.join(models.ProductSupplier).join(models.Supplier).filter(
@@ -187,7 +187,7 @@ def list_products(
 
     cat_rules = _load_cat_rules(db)
     verified_skus = _verified_skus_cached(db)
-    ordered = q.order_by(models.Product.category, models.Product.name)
+    ordered = q.order_by(models.ProductVariant.category, models.ProductVariant.name)
     eff_offset = offset if offset is not None else (page - 1) * limit
 
     def _mark(rows):
@@ -234,9 +234,9 @@ def stream_products(status: Optional[str] = Query(None)):
         db = database.SessionLocal()
         try:
             q = _base_query(db)
-            q = (q.filter(models.Product.status == status.upper()) if status
-                 else q.filter(models.Product.status != 'DISCONTINUED'))
-            ordered = q.order_by(models.Product.category, models.Product.name)
+            q = (q.filter(models.ProductVariant.status == status.upper()) if status
+                 else q.filter(models.ProductVariant.status != 'DISCONTINUED'))
+            ordered = q.order_by(models.ProductVariant.category, models.ProductVariant.name)
             cat_rules = _load_cat_rules(db)
             verified = _verified_skus_cached(db)
             yield orjson.dumps({"_meta": {"total": ordered.count(),
@@ -283,17 +283,17 @@ def export_products_csv(
     db: Session = Depends(database.get_db),
 ):
     """Download inventory as CSV for external validation."""
-    q = _base_query(db).filter(models.Product.status != "DISCONTINUED")
+    q = _base_query(db).filter(models.ProductVariant.status != "DISCONTINUED")
     if search:
         term = f"%{search}%"
-        q = q.filter(models.Product.name.ilike(term) | models.Product.sku_code.ilike(term))
+        q = q.filter(models.ProductVariant.name.ilike(term) | models.ProductVariant.sku_code.ilike(term))
     if category:
-        q = q.filter(models.Product.category == category)
+        q = q.filter(models.ProductVariant.category == category)
     if supplier:
         q = q.join(models.ProductSupplier).join(models.Supplier).filter(
             models.Supplier.name.ilike(f"%{supplier}%")
         )
-    products = q.order_by(models.Product.category, models.Product.name).all()
+    products = q.order_by(models.ProductVariant.category, models.ProductVariant.name).all()
     cat_rules = _load_cat_rules(db)
 
     output = io.StringIO()
@@ -378,17 +378,17 @@ def export_margins_csv(
     """Per-SKU margin breakdown as CSV, matching the ops verification sheet's columns (gross/net
     after fees × basic/MBB × Shopify/HKTV, cost-to-hit MBB, etc.) for data audit/review.
     Read-only — every value comes from the same margin_range the detail view already computes."""
-    q = _base_query(db).filter(models.Product.status != "DISCONTINUED")
+    q = _base_query(db).filter(models.ProductVariant.status != "DISCONTINUED")
     if search:
         term = f"%{search}%"
-        q = q.filter(models.Product.name.ilike(term) | models.Product.sku_code.ilike(term))
+        q = q.filter(models.ProductVariant.name.ilike(term) | models.ProductVariant.sku_code.ilike(term))
     if category:
-        q = q.filter(models.Product.category == category)
+        q = q.filter(models.ProductVariant.category == category)
     if supplier:
         q = q.join(models.ProductSupplier).join(models.Supplier).filter(
             models.Supplier.name.ilike(f"%{supplier}%")
         )
-    products = q.order_by(models.Product.category, models.Product.name).all()
+    products = q.order_by(models.ProductVariant.category, models.ProductVariant.name).all()
     cat_rules = _load_cat_rules(db)
 
     def pct(v):   return f"{v * 100:.2f}%" if v is not None else ""
@@ -483,7 +483,7 @@ def export_margins_csv(
 def margins_json(db: Session = Depends(database.get_db)):
     """Per-SKU margin summary (raw values), keyed by sku_code, for the All Inventory 'Margins'
     column view. Read-only — the same margin_range the detail view and the CSV export compute."""
-    products = _base_query(db).filter(models.Product.status != "DISCONTINUED").all()
+    products = _base_query(db).filter(models.ProductVariant.status != "DISCONTINUED").all()
     cat_rules = _load_cat_rules(db)
     out: dict = {}
     for p in products:
@@ -509,9 +509,9 @@ def margins_json(db: Session = Depends(database.get_db)):
 
 @router.get("/summary")
 def get_summary(db: Session = Depends(database.get_db)):
-    active_products   = _base_query(db).filter(models.Product.status == 'ACTIVE').all()
-    inactive_count    = db.query(models.Product).filter(models.Product.status == 'INACTIVE').count()
-    discontinued_count = db.query(models.Product).filter(models.Product.status == 'DISCONTINUED').count()
+    active_products   = _base_query(db).filter(models.ProductVariant.status == 'ACTIVE').all()
+    inactive_count    = db.query(models.ProductVariant).filter(models.ProductVariant.status == 'INACTIVE').count()
+    discontinued_count = db.query(models.ProductVariant).filter(models.ProductVariant.status == 'DISCONTINUED').count()
 
     cat_rules = _load_cat_rules(db)
     dicts = [product_to_dict(p, cat_rules) for p in active_products]
@@ -565,8 +565,8 @@ def product_changes(since: str = Query(..., description="ISO timestamp of the la
     the frontend polls this and merges, instead of refetching ~5 MB of products.
     NOTE: declared before /{sku} so 'changes' isn't swallowed by the catch-all route."""
     changed = (_base_query(db)
-               .filter(models.Product.updated_at > since)
-               .order_by(models.Product.updated_at)
+               .filter(models.ProductVariant.updated_at > since)
+               .order_by(models.ProductVariant.updated_at)
                .limit(500)
                .all())
     cat_rules = _load_cat_rules(db)
@@ -584,10 +584,10 @@ def field_options(db: Session = Depends(database.get_db), _user: models.User = D
     def distinct(col):
         return sorted({str(v[0]).strip() for v in db.query(col).distinct().all() if v[0] and str(v[0]).strip()})
     return {
-        "brands":        distinct(models.Product.brand),
-        "subcategories": distinct(models.Product.subcategory),
-        "uoms":          distinct(models.Product.uom),
-        "pack_units":    distinct(models.Product.pack_unit),
+        "brands":        distinct(models.ProductVariant.brand),
+        "subcategories": distinct(models.ProductVariant.subcategory),
+        "uoms":          distinct(models.ProductVariant.uom),
+        "pack_units":    distinct(models.ProductVariant.pack_unit),
     }
 
 
@@ -653,7 +653,7 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
     (order/minimum increment + UOM, source, pricing note) and cost provenance the main product
     serializer omits. Read-only; effective_unit_cost = basic_cost / cost-basis units."""
     from services.pricing_service import get_unit_cost
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     sups = list(product.product_suppliers)
@@ -682,7 +682,7 @@ def sku_history(sku: str, db: Session = Depends(database.get_db),
                 _user: models.User = Depends(require_user)):
     """History of this product's SKU-code renames. Kept against the stable product.id,
     so the full chain survives further renames. Newest first; `from` = the prior code."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     rows = (db.query(models.AuditLog)
@@ -704,7 +704,7 @@ def sku_history(sku: str, db: Session = Depends(database.get_db),
 
 @router.get("/{sku:path}")   # :path so a sku_code containing '/' (e.g. "...7mg/ml") still matches
 def get_product(sku: str, db: Session = Depends(database.get_db)):
-    product = _base_query(db).filter(models.Product.sku_code == sku).first()
+    product = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     cat_rules = _load_cat_rules(db)
@@ -718,7 +718,7 @@ def get_product(sku: str, db: Session = Depends(database.get_db)):
     return d
 
 
-def _reopen_catalogue_items(db: Session, product: models.Product) -> int:
+def _reopen_catalogue_items(db: Session, product: models.ProductVariant) -> int:
     """Flip the catalogue item(s) that produced this SKU back to 'pending' so the SKU
     returns to the onboarding confirm queue and can be re-reviewed/reconfirmed after an
     unverify. We clear the review stamps but keep all extracted/edited field values."""
@@ -741,7 +741,7 @@ def hitl_unverify(sku: str, db: Session = Depends(database.get_db), user: models
     """Remove a SKU's HITL-verified status (logs an unverify event) so it drops out of the
     sheet push, and return its catalogue item(s) to the pending confirm queue so it can be
     re-reviewed and reconfirmed."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     reopened = _reopen_catalogue_items(db, product)
@@ -767,7 +767,7 @@ def _audit_product(db, user, action, product, request=None, **details):
 def set_product_tags(sku: str, body: TagsBody, db: Session = Depends(database.get_db),
                      user: models.User = Depends(require_capability("product_edit"))):
     """Replace a product's full tag set (manual edit). Tags are stored as 'manual'."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     tag_service.clear_tags(db, product)   # full replace across all sources
@@ -808,7 +808,7 @@ def update_product(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(require_capability("product_edit")),
 ):
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -897,7 +897,7 @@ def update_product(
 
     db.refresh(product)
     # Reload with relationships
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -918,13 +918,13 @@ def change_sku_code(sku: str, body: SkuChange, request: Request,
         raise HTTPException(status_code=400, detail="New SKU is required")
     if len(new) > 64:
         raise HTTPException(status_code=400, detail="SKU is too long (max 64 characters)")
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     if new == product.sku_code:
         return _return_product(db, sku)
-    clash = db.query(models.Product.id).filter(models.Product.sku_code == new,
-                                               models.Product.id != product.id).first()
+    clash = db.query(models.ProductVariant.id).filter(models.ProductVariant.sku_code == new,
+                                               models.ProductVariant.id != product.id).first()
     if clash:
         raise HTTPException(status_code=409, detail=f"SKU '{new}' already exists — pick a unique code")
 
@@ -1106,7 +1106,7 @@ async def import_products_csv(
         if not sku:
             continue
         summary["total"] += 1
-        product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+        product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
         if not product:
             rows.append({"sku_code": sku, "status": "not_found"}); summary["not_found"] += 1; continue
         data, ignored = {}, []
@@ -1181,7 +1181,7 @@ async def import_products_csv(
 
 
 def _return_product(db: Session, sku: str) -> dict:
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     return product_to_dict(updated, _load_cat_rules(db), include_margin_range=True)
 
 
@@ -1238,7 +1238,7 @@ class MbbTermBody(BaseModel):
 
 
 def _find_supplier_link(db, sku, ps_id):
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     link = next((ps for ps in product.product_suppliers if ps.id == ps_id), None)
@@ -1315,7 +1315,7 @@ def add_supplier_link(sku: str, body: SupplierLink,
                       db: Session = Depends(database.get_db),
                       current_user: models.User = Depends(require_capability("product_edit"))):
     """Link a supplier to this product."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     if body.supplier_id is None:
@@ -1357,7 +1357,7 @@ def update_supplier_link(sku: str, ps_id: int, body: SupplierLink,
                          db: Session = Depends(database.get_db),
                          current_user: models.User = Depends(require_capability("product_edit"))):
     """Edit one supplier link — change the supplier, its SKU/barcode/cost/pack, or make it primary."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     link = next((ps for ps in product.product_suppliers if ps.id == ps_id), None)
@@ -1404,7 +1404,7 @@ def delete_supplier_link(sku: str, ps_id: int,
                          db: Session = Depends(database.get_db),
                          current_user: models.User = Depends(require_capability("product_edit"))):
     """Remove a supplier link. A SKU must keep at least one supplier; deleting the primary promotes the cheapest remaining one."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     if len(product.product_suppliers) <= 1:
@@ -1431,7 +1431,7 @@ def delete_supplier_link(sku: str, ps_id: int,
 @router.patch("/{sku:path}/suppliers/{supplier_id}/primary")
 def set_primary_supplier(sku: str, supplier_id: int, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
     """Switch which supplier is primary for this product."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     now = datetime.utcnow().isoformat()
@@ -1445,7 +1445,7 @@ def set_primary_supplier(sku: str, supplier_id: int, db: Session = Depends(datab
         raise HTTPException(status_code=404, detail="Supplier not linked to this product")
     _audit_product(db, _user, "product.primary_supplier", product, supplier_id=supplier_id)
     db.commit()
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1507,7 +1507,7 @@ class UomVerify(BaseModel):
 
 @router.patch("/{sku:path}/uom")
 def verify_pack_size(sku: str, body: UomVerify, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -1530,7 +1530,7 @@ def verify_pack_size(sku: str, body: UomVerify, db: Session = Depends(database.g
     _audit_product(db, _user, "product.uom_verify", product, units_per_pack=ps.units_per_pack, verified_by=body.verified_by)
     db.commit()
 
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1552,7 +1552,7 @@ def lock_invoice_cost(
     db: Session = Depends(database.get_db),
 ):
     """Lock cost at invoice_matched tier after 3-way match confirmation."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -1575,7 +1575,7 @@ def lock_invoice_cost(
     _audit_product(db, current_user, "product.cost_lock_invoice", product, invoice_ref=body.invoice_ref, cost=body.confirmed_cost)
     db.commit()
 
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1592,7 +1592,7 @@ def _get_primary_ps(product):
 @router.post("/{sku:path}/cost/accept-sheet")
 def accept_sheet_cost(sku: str, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
     """Accept the Sheet shadow cost as the new IMS cost (Sheet was right)."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     ps = _get_primary_ps(product)
@@ -1609,7 +1609,7 @@ def accept_sheet_cost(sku: str, db: Session = Depends(database.get_db), _user: m
     ps.updated_at      = now
     _audit_product(db, _user, "product.cost_accept_sheet", product, basic_cost=ps.basic_cost)
     db.commit()
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1617,7 +1617,7 @@ def accept_sheet_cost(sku: str, db: Session = Depends(database.get_db), _user: m
 @router.post("/{sku:path}/cost/dismiss-conflict")
 def dismiss_cost_conflict(sku: str, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
     """Mark IMS cost as correct; sync shadow to live to clear the conflict flag."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     ps = _get_primary_ps(product)
@@ -1628,7 +1628,7 @@ def dismiss_cost_conflict(sku: str, db: Session = Depends(database.get_db), _use
     ps.updated_at       = now
     _audit_product(db, _user, "product.cost_dismiss_conflict", product, basic_cost=ps.basic_cost)
     db.commit()
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1636,7 +1636,7 @@ def dismiss_cost_conflict(sku: str, db: Session = Depends(database.get_db), _use
 @router.post("/{sku:path}/uom/accept-sheet")
 def accept_sheet_uom(sku: str, body: UomVerify, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
     """Accept Sheet pack size as the verified IMS value (Sheet was right)."""
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     ps = _get_primary_ps(product)
@@ -1651,7 +1651,7 @@ def accept_sheet_uom(sku: str, body: UomVerify, db: Session = Depends(database.g
     ps.updated_at       = now
     _audit_product(db, _user, "product.uom_accept_sheet", product, units_per_pack=ps.units_per_pack)
     db.commit()
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1668,7 +1668,7 @@ def update_channel_price(
     db: Session = Depends(database.get_db),
     _user: models.User = Depends(require_capability("product_edit")),
 ):
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -1685,7 +1685,7 @@ def update_channel_price(
     _audit_product(db, _user, "product.price_update", product, channel=channel, **{"from": _old_price, "to": body.selling_price})
     db.commit()
 
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1698,7 +1698,7 @@ class StockAdjustBody(BaseModel):
 
 @router.patch("/{sku:path}/stock/adjust")
 def adjust_stock(sku: str, body: StockAdjustBody, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -1737,7 +1737,7 @@ def adjust_stock(sku: str, body: StockAdjustBody, db: Session = Depends(database
     _audit_product(db, _user, "product.stock_adjust", product, location=body.location, delta=body.delta, reason=body.reason)
     db.commit()
 
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 
@@ -1761,7 +1761,7 @@ def update_product_cost(sku: str, body: CostUpdate, db: Session = Depends(databa
     if body.cost_source not in _COST_SOURCE_PRIORITY:
         raise HTTPException(status_code=400, detail=f"cost_source must be one of {_COST_SOURCE_PRIORITY}")
 
-    product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -1793,7 +1793,7 @@ def update_product_cost(sku: str, body: CostUpdate, db: Session = Depends(databa
     _audit_product(db, _user, "product.cost_update", product, **{"from": _old_cost, "to": body.basic_cost, "source": body.cost_source})
     db.commit()
 
-    updated = _base_query(db).filter(models.Product.sku_code == sku).first()
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
     return product_to_dict(updated, cat_rules, include_margin_range=True)
 

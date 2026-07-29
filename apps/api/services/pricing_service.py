@@ -2,7 +2,7 @@
 import json
 import re
 from datetime import datetime, timezone
-from models import Product, ProductChannel, ProductSupplier, StockLevel, SalesVelocity, CategoryRule
+from models import ProductVariant, ProductChannel, ProductSupplier, StockLevel, SalesVelocity, CategoryRule
 from services import transform_engine as engine
 
 _STALE_DAYS = 90
@@ -25,12 +25,12 @@ def _is_cost_stale(ps: ProductSupplier | None) -> bool:
     return True
 
 
-def get_primary_supplier(product: Product) -> ProductSupplier | None:
+def get_primary_supplier(product: ProductVariant) -> ProductSupplier | None:
     ps = next((p for p in product.product_suppliers if p.is_primary), None)
     return ps or (product.product_suppliers[0] if product.product_suppliers else None)
 
 
-def get_primary_cost(product: Product) -> float | None:
+def get_primary_cost(product: ProductVariant) -> float | None:
     ps = get_primary_supplier(product)
     return ps.basic_cost if ps and ps.basic_cost else None
 
@@ -173,7 +173,7 @@ _DEFAULT_HKTV_FEE = 0.18   # standard HKTV Mall commission; used when a SKU has 
 _ALL_CHANNELS = ("clinic", "shopify", "hktv")
 
 
-def _fee_delivery(channel: ProductChannel, product: Product) -> tuple[float, float]:
+def _fee_delivery(channel: ProductChannel, product: ProductVariant) -> tuple[float, float]:
     """(channel_fee_pct, delivery_cost) for a channel: Shopify -> SF logistics only,
     HKTV -> platform fee only (its own value, else the default commission), Clinic -> neither."""
     if channel.channel == "hktv":
@@ -196,26 +196,26 @@ class _MissingChannel:
         self.units_per_listing = None
 
 
-def _all_channels(product: Product) -> list:
+def _all_channels(product: ProductVariant) -> list:
     """The SKU's channels, always widened to Clinic + Shopify + HKTV (missing ones stubbed) so
     every margin view shows all three."""
     by_name = {c.channel: c for c in product.channels}
     return [by_name.get(name) or _MissingChannel(name) for name in _ALL_CHANNELS]
 
 
-def get_stock(product: Product) -> tuple[float, float]:
+def get_stock(product: ProductVariant) -> tuple[float, float]:
     clinic    = next((s.qty for s in product.stock_levels if s.location == "clinic"),    0.0)
     warehouse = next((s.qty for s in product.stock_levels if s.location == "warehouse"), 0.0)
     return clinic, warehouse
 
 
-def get_latest_velocity(product: Product):
+def get_latest_velocity(product: ProductVariant):
     if not product.sales_velocity:
         return None
     return max(product.sales_velocity, key=lambda v: v.calculated_at)
 
 
-def get_weekly_demand(product: Product) -> float:
+def get_weekly_demand(product: ProductVariant) -> float:
     sv = get_latest_velocity(product)
     return sv.weekly_demand if sv else 0.0
 
@@ -274,7 +274,7 @@ def _channel_margin(selling_price, unit_cost, channel_fee_pct, delivery_cost) ->
                                           "fee_pct": channel_fee_pct, "delivery": delivery_cost})
 
 
-def _term_margin_dict(product: Product, term, base_unit: float | None,
+def _term_margin_dict(product: ProductVariant, term, base_unit: float | None,
                       weekly_demand: float) -> dict | None:
     """One MBB term's per-sell-unit cost + its per-channel margin (gross GP and net-of-fees).
     Same shape whether it's a primary-supplier term or a per-supplier one."""
@@ -300,7 +300,7 @@ def _term_margin_dict(product: Product, term, base_unit: float | None,
     }
 
 
-def margin_range(product: Product, cat_rules: dict) -> dict:
+def margin_range(product: ProductVariant, cat_rules: dict) -> dict:
     """Basic vs MBB margin per channel, net of channel charges: Shopify subtracts SF logistics
     (by weight), HKTV subtracts channel_fee_pct, Clinic neither."""
     ps = get_primary_supplier(product)
@@ -411,7 +411,7 @@ def _oos_days(out_at: str | None, restock_at: str | None) -> int | None:
         return None
 
 
-def product_to_dict(product: Product, cat_rules: dict[str, CategoryRule], include_margin_range: bool = False) -> dict:
+def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule], include_margin_range: bool = False) -> dict:
     clinic_qty, warehouse_qty = get_stock(product)
     total_qty     = clinic_qty + warehouse_qty
     _vel          = get_latest_velocity(product)

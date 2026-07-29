@@ -212,12 +212,12 @@ def run_sync() -> dict:
             weight_g = weight_g if weight_g and weight_g > 0 else None
 
             # Upsert product
-            product = db.query(models.Product).filter(
-                models.Product.sku_code == sku_code
+            product = db.query(models.ProductVariant).filter(
+                models.ProductVariant.sku_code == sku_code
             ).first()
 
             if not product:
-                product = models.Product(
+                product = models.ProductVariant(
                     sku_code=sku_code,
                     name=name or f"SKU {sku_code}",
                     brand=brand,
@@ -407,8 +407,8 @@ def run_sync() -> dict:
                         hktv_price  = clean_price(row.get(C_HKTV_PRICE) or "")
                         if not sku_code or hktv_price is None:
                             continue
-                        product = db2.query(models.Product).filter(
-                            models.Product.sku_code == sku_code
+                        product = db2.query(models.ProductVariant).filter(
+                            models.ProductVariant.sku_code == sku_code
                         ).first()
                         if not product:
                             continue

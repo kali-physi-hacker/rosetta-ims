@@ -409,8 +409,8 @@ class CatalogueReviewDecision(Base):
     mastering_candidate = relationship("CatalogueMasteringCandidate", back_populates="review_decisions")
 
 
-class CatalogueProductFamily(Base):
-    """Optional product grouping/enrichment above canonical SKU variants."""
+class ProductFamily(Base):
+    """Optional product/marketing identity above stock-identifiable variants."""
 
     __tablename__ = "catalogue_product_families"
     __table_args__ = (
@@ -427,9 +427,11 @@ class CatalogueProductFamily(Base):
     created_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=True)
 
+    variants = relationship("ProductVariant", back_populates="product_family")
 
-class CatalogueSupplierProduct(Base):
-    """Normalized supplier-specific offering of a Product Variant."""
+
+class SupplierOffering(Base):
+    """How one supplier commercially offers a Product Variant."""
 
     __tablename__ = "catalogue_supplier_products"
     __table_args__ = (
@@ -458,6 +460,8 @@ class CatalogueSupplierProduct(Base):
     prices = relationship("CatalogueSupplierPrice", back_populates="supplier_product")
     packaging_configurations = relationship("CataloguePackagingConfiguration", back_populates="supplier_product")
     mbb_terms = relationship("CatalogueSupplierMbbTerm", back_populates="supplier_product")
+    product_variant = relationship("ProductVariant")
+    product_family = relationship("ProductFamily")
 
 
 class CataloguePackagingConfiguration(Base):
@@ -506,7 +510,7 @@ class CataloguePackagingConfiguration(Base):
     created_at = Column(String, nullable=False)
     superseded_at = Column(String, nullable=True)
 
-    supplier_product = relationship("CatalogueSupplierProduct", back_populates="packaging_configurations")
+    supplier_product = relationship("SupplierOffering", back_populates="packaging_configurations")
 
 
 class CatalogueSupplierPrice(Base):
@@ -542,7 +546,7 @@ class CatalogueSupplierPrice(Base):
     created_at = Column(String, nullable=False)
     superseded_at = Column(String, nullable=True)
 
-    supplier_product = relationship("CatalogueSupplierProduct", back_populates="prices")
+    supplier_product = relationship("SupplierOffering", back_populates="prices")
 
 
 class CatalogueSupplierMbbTerm(Base):
@@ -602,7 +606,7 @@ class CatalogueSupplierMbbTerm(Base):
     created_at = Column(String, nullable=False)
     superseded_at = Column(String, nullable=True)
 
-    supplier_product = relationship("CatalogueSupplierProduct", back_populates="mbb_terms")
+    supplier_product = relationship("SupplierOffering", back_populates="mbb_terms")
 
 
 class CatalogueServingPublication(Base):
@@ -661,8 +665,8 @@ __all__ = [
     "CatalogueValidationIssue",
     "CatalogueMasteringCandidate",
     "CatalogueReviewDecision",
-    "CatalogueProductFamily",
-    "CatalogueSupplierProduct",
+    "ProductFamily",
+    "SupplierOffering",
     "CataloguePackagingConfiguration",
     "CatalogueSupplierPrice",
     "CatalogueSupplierMbbTerm",

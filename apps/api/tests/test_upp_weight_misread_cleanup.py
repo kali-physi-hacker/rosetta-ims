@@ -47,7 +47,7 @@ def _reset_and_seed(overrides=None) -> None:
     d = database.SessionLocal()
     try:
         for m in (models.CatalogueItem, models.CatalogueImport, models.ProductSupplier,
-                  models.Product, models.SupplierBrand, models.SupplierAlias, models.Supplier,
+                  models.ProductVariant, models.SupplierBrand, models.SupplierAlias, models.Supplier,
                   models.AuditLog):
             d.query(m).delete()
         d.commit()
@@ -57,7 +57,7 @@ def _reset_and_seed(overrides=None) -> None:
         for psid, exp in wm.TARGETS.items():
             ov = overrides.get(psid, {})
             name = ov.get("name", f"Test Air-Dried Food - {_token(exp)}")
-            d.add(models.Product(id=pidn, sku_code=f"SKU{psid}", name=name, category="Food",
+            d.add(models.ProductVariant(id=pidn, sku_code=f"SKU{psid}", name=name, category="Food",
                                  status="ACTIVE", storage_rule="any", uom=ov.get("uom", "bag"),
                                  min_purchase_qty=ov.get("mpq"),
                                  created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00"))

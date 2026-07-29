@@ -11,11 +11,11 @@ router = APIRouter(prefix="/pricing", tags=["pricing"])
 
 
 def _base_query(db: Session):
-    return db.query(models.Product).options(
-        selectinload(models.Product.channels),
-        selectinload(models.Product.stock_levels),
-        selectinload(models.Product.product_suppliers).selectinload(models.ProductSupplier.supplier),
-        selectinload(models.Product.sales_velocity),
+    return db.query(models.ProductVariant).options(
+        selectinload(models.ProductVariant.channels),
+        selectinload(models.ProductVariant.stock_levels),
+        selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.supplier),
+        selectinload(models.ProductVariant.sales_velocity),
     )
 
 
@@ -30,18 +30,18 @@ def get_pricing_matrix(
     search:   Optional[str] = Query(None),
     db: Session = Depends(database.get_db),
 ):
-    q = _base_query(db).filter(models.Product.status == 'ACTIVE')
+    q = _base_query(db).filter(models.ProductVariant.status == 'ACTIVE')
 
     if category:
-        q = q.filter(models.Product.category == category)
+        q = q.filter(models.ProductVariant.category == category)
     if search:
         term = f"%{search}%"
         q = q.filter(
-            models.Product.name.ilike(term) |
-            models.Product.sku_code.ilike(term)
+            models.ProductVariant.name.ilike(term) |
+            models.ProductVariant.sku_code.ilike(term)
         )
 
-    products = q.order_by(models.Product.category, models.Product.name).all()
+    products = q.order_by(models.ProductVariant.category, models.ProductVariant.name).all()
     cat_rules = _load_cat_rules(db)
 
     rows = [product_to_dict(p, cat_rules) for p in products]
@@ -69,7 +69,7 @@ def get_pricing_matrix(
 
 @router.get("/{sku}")
 def get_product_pricing(sku: str, db: Session = Depends(database.get_db)):
-    product = _base_query(db).filter(models.Product.sku_code == sku).first()
+    product = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     cat_rules = _load_cat_rules(db)

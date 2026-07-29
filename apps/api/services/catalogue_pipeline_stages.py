@@ -957,7 +957,7 @@ class ApprovedCommercialStateService(_TransactionalService):
         applied_at = command.applied_at or _now()
 
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        existing_supplier_product = self.db.query(models.CatalogueSupplierProduct).filter_by(
+        existing_supplier_product = self.db.query(models.SupplierOffering).filter_by(
             supplier_product_key=supplier_product_key
         ).first()
         if existing_supplier_product is not None:
@@ -1000,7 +1000,7 @@ class ApprovedCommercialStateService(_TransactionalService):
 
     def _candidate_applied_state(
         self,
-        supplier_product: models.CatalogueSupplierProduct,
+        supplier_product: models.SupplierOffering,
         candidate: MasteringCandidateV1,
     ) -> str:
         """Classify how completely this candidate's commercial state is applied.
@@ -1102,7 +1102,7 @@ class ApprovedCommercialStateService(_TransactionalService):
         candidate: MasteringCandidateV1,
         supplier_product_key: str,
         applied_at: datetime,
-    ) -> models.CatalogueSupplierProduct:
+    ) -> models.SupplierOffering:
         supplier_resolution = candidate.supplier_product_resolution
         product_resolution = candidate.product_variant_resolution
         supplier_id = supplier_resolution.supplier_id or _supplier_id_from_source(self.db, candidate.trace.supplier_catalogue_id)
@@ -1110,7 +1110,7 @@ class ApprovedCommercialStateService(_TransactionalService):
             raise AmbiguousSupplierOffer("Supplier Product application requires supplier_id")
         product = _resolved_product(self.db, product_resolution)
         product_id = product.id if product else None
-        row = models.CatalogueSupplierProduct(
+        row = models.SupplierOffering(
             supplier_product_key=supplier_product_key,
             supplier_id=supplier_id,
             product_variant_id=product_id,
@@ -1127,7 +1127,7 @@ class ApprovedCommercialStateService(_TransactionalService):
 
     def _update_supplier_product(
         self,
-        supplier_product: models.CatalogueSupplierProduct,
+        supplier_product: models.SupplierOffering,
         candidate: MasteringCandidateV1,
         applied_at: datetime,
     ) -> None:
@@ -1141,7 +1141,7 @@ class ApprovedCommercialStateService(_TransactionalService):
     def _persist_packaging(
         self,
         candidate: MasteringCandidateV1,
-        supplier_product: models.CatalogueSupplierProduct,
+        supplier_product: models.SupplierOffering,
         applied_at: datetime,
     ) -> None:
         packaging = candidate.packaging_resolution.packaging
@@ -1186,7 +1186,7 @@ class ApprovedCommercialStateService(_TransactionalService):
     def _persist_price(
         self,
         candidate: MasteringCandidateV1,
-        supplier_product: models.CatalogueSupplierProduct,
+        supplier_product: models.SupplierOffering,
         applied_at: datetime,
     ) -> models.CatalogueSupplierPrice:
         cost = candidate.supplier_price_resolution.current_cost
@@ -1221,7 +1221,7 @@ class ApprovedCommercialStateService(_TransactionalService):
     def _persist_mbb(
         self,
         candidate: MasteringCandidateV1,
-        supplier_product: models.CatalogueSupplierProduct,
+        supplier_product: models.SupplierOffering,
         applied_at: datetime,
     ) -> int:
         terms = candidate.mbb_resolution.terms
@@ -1248,7 +1248,7 @@ class ServingPublicationService(_TransactionalService):
         candidate = persistence.mastering_candidate_to_contract(candidate_row)
         _assert_publication_review_provenance(self.db, candidate)
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        supplier_product = self.db.query(models.CatalogueSupplierProduct).filter_by(
+        supplier_product = self.db.query(models.SupplierOffering).filter_by(
             supplier_product_key=supplier_product_key
         ).first()
         if supplier_product is None:
@@ -1659,7 +1659,7 @@ def _supplier_product_matches(
     if supplier_id is None:
         return []
     matches: dict[str, dict[str, Any]] = {}
-    current_rows = db.query(models.CatalogueSupplierProduct).filter_by(supplier_id=supplier_id).all()
+    current_rows = db.query(models.SupplierOffering).filter_by(supplier_id=supplier_id).all()
     for row in current_rows:
         if (supplier_sku and row.supplier_sku == supplier_sku) or (barcode and row.barcode == barcode):
             matches[row.supplier_product_key] = {
@@ -1693,7 +1693,7 @@ def _exact_product_match(
     if len(product_ids) > 1:
         raise AmbiguousProductVariant("Supplier identity resolves to multiple canonical products")
     if product_ids:
-        return db.get(models.Product, next(iter(product_ids)))
+        return db.get(models.ProductVariant, next(iter(product_ids)))
     # Deliberately NO fallback from supplier SKU to the canonical sku_code
     # namespace: supplier SKUs are supplier-scoped and a coincidental collision
     # with an unrelated canonical SKU must not auto-match. Unmapped products
@@ -1810,11 +1810,11 @@ def _assert_candidate_applicable(db: Session, candidate: MasteringCandidateV1) -
 def _resolved_product(db: Session, variant: ProductVariantResolution):
     product = None
     if variant.canonical_sku:
-        product = db.query(models.Product).filter_by(sku_code=variant.canonical_sku).first()
+        product = db.query(models.ProductVariant).filter_by(sku_code=variant.canonical_sku).first()
     if product is None and variant.product_variant_id:
-        product = db.query(models.Product).filter_by(sku_code=variant.product_variant_id).first()
+        product = db.query(models.ProductVariant).filter_by(sku_code=variant.product_variant_id).first()
         if product is None and str(variant.product_variant_id).isdigit():
-            product = db.get(models.Product, int(variant.product_variant_id))
+            product = db.get(models.ProductVariant, int(variant.product_variant_id))
     return product
 
 
@@ -1836,7 +1836,7 @@ def _serving_contract_from_state(
     *,
     serving_item_id: UUID,
     candidate: MasteringCandidateV1,
-    supplier_product: models.CatalogueSupplierProduct,
+    supplier_product: models.SupplierOffering,
     price: models.CatalogueSupplierPrice,
     packaging_row: models.CataloguePackagingConfiguration,
     publication_version: str,
@@ -2160,7 +2160,7 @@ def _supplier_id_from_source(db: Session, supplier_catalogue_id: UUID) -> int | 
 def _product_id_for_sku(db: Session, canonical_sku: str | None) -> int | None:
     if not canonical_sku:
         return None
-    product = db.query(models.Product).filter_by(sku_code=canonical_sku).first()
+    product = db.query(models.ProductVariant).filter_by(sku_code=canonical_sku).first()
     return product.id if product else None
 
 

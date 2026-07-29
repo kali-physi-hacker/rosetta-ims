@@ -102,7 +102,7 @@ def _reset(session):
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
-        models.CatalogueSupplierProduct,
+        models.SupplierOffering,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,
@@ -114,7 +114,7 @@ def _reset(session):
     ):
         session.query(model).delete()
     session.query(models.CatalogueImport).delete()
-    session.query(models.Product).filter_by(sku_code="10447").delete()
+    session.query(models.ProductVariant).filter_by(sku_code="10447").delete()
     session.commit()
 
 
@@ -219,7 +219,7 @@ def test_intermediate_layer_returns_normalized_rows_validation_and_candidates(cl
 
 
 def test_serving_layer_exposes_only_explicit_immutable_publications(client, db, monkeypatch):
-    product = models.Product(
+    product = models.ProductVariant(
         sku_code="10447",
         name="Hill's Healthy Cuisine Chicken 82g",
         brand="Hill's",
@@ -234,7 +234,7 @@ def test_serving_layer_exposes_only_explicit_immutable_publications(client, db, 
     # Mastering resolves canonical products through the APPROVED supplier
     # mapping — never by assuming supplier SKU == canonical SKU.
     db.add(
-        models.CatalogueSupplierProduct(
+        models.SupplierOffering(
             supplier_product_key="supplier:14:offer:10447",
             supplier_id=14,
             product_variant_id=product.id,
@@ -359,9 +359,9 @@ def test_candidate_correction_supersedes_and_publishes_the_corrected_identity(cl
     )
     assert rejected.status_code == 409
 
-    product = db.query(models.Product).filter_by(sku_code="RIMS-API-1").first()
+    product = db.query(models.ProductVariant).filter_by(sku_code="RIMS-API-1").first()
     if product is None:
-        product = models.Product(
+        product = models.ProductVariant(
             sku_code="RIMS-API-1",
             name="Hill's Science Plan Adult Chicken 82g",
             brand="Hill's",

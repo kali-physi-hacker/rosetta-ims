@@ -355,10 +355,10 @@ def get_brand_coverage(db: Session = Depends(database.get_db)):
     """Distinct brand strings from ACTIVE products — used by the review UI
     to classify catalogue items as 'brand already in IMS' (likely worth
     matching) vs 'brand not in IMS' (likely reject candidate)."""
-    rows = db.query(models.Product.brand).filter(
-        models.Product.status == 'ACTIVE',
-        models.Product.brand.isnot(None),
-        models.Product.brand != '',
+    rows = db.query(models.ProductVariant.brand).filter(
+        models.ProductVariant.status == 'ACTIVE',
+        models.ProductVariant.brand.isnot(None),
+        models.ProductVariant.brand != '',
     ).distinct().all()
     brands = sorted({(r[0] or '').strip() for r in rows if (r[0] or '').strip()})
     return {"brands": brands, "count": len(brands)}
@@ -510,8 +510,8 @@ def list_confirmed(import_id: Optional[int] = Query(None),
     if search and search.strip():
         like = f"%{search.strip()}%"
         # also match on the resulting product's SKU/name (the confirmed item links to a product)
-        match_pids = [pid for (pid,) in db.query(models.Product.id).filter(
-            or_(models.Product.sku_code.ilike(like), models.Product.name.ilike(like))).all()]
+        match_pids = [pid for (pid,) in db.query(models.ProductVariant.id).filter(
+            or_(models.ProductVariant.sku_code.ilike(like), models.ProductVariant.name.ilike(like))).all()]
         scoped = scoped.filter(or_(
             CI.raw_description.ilike(like), CI.original_description.ilike(like),
             CI.supplier_sku.ilike(like), CI.assigned_sku.ilike(like), CI.brand.ilike(like),
@@ -520,8 +520,8 @@ def list_confirmed(import_id: Optional[int] = Query(None),
     items = scoped.order_by(CI.reviewed_at.desc(), CI.id.desc()).offset(offset).limit(limit).all()
     pids = [i.matched_product_id for i in items if i.matched_product_id]
     prod = {p.id: (p.sku_code, p.name) for p in
-            db.query(models.Product.id, models.Product.sku_code, models.Product.name)
-            .filter(models.Product.id.in_(pids or [0])).all()}
+            db.query(models.ProductVariant.id, models.ProductVariant.sku_code, models.ProductVariant.name)
+            .filter(models.ProductVariant.id.in_(pids or [0])).all()}
     sup = {s.id: s.name for s in db.query(models.Supplier).all()}
     out = []
     for it in items:
@@ -655,7 +655,7 @@ def skip_already_verified(body: SkipVerifiedBody, request: Request, db: Session 
             continue
         product = prod_cache.get(sku)
         if product is None:
-            product = db.query(models.Product).filter(models.Product.sku_code == sku).first()
+            product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
             prod_cache[sku] = product
         if not product:
             continue
@@ -731,9 +731,9 @@ class _MatchIndex:
 
     def __init__(self, db: Session, include_inactive: bool):
         self.include_inactive = include_inactive
-        cand_q = db.query(models.Product)
+        cand_q = db.query(models.ProductVariant)
         if not include_inactive:
-            cand_q = cand_q.filter(models.Product.status == 'ACTIVE')
+            cand_q = cand_q.filter(models.ProductVariant.status == 'ACTIVE')
         self.candidates = cand_q.all()
         self.prod_by_id = {p.id: p for p in self.candidates}
 
@@ -799,16 +799,16 @@ def _find_matches(
     def _resolve_product(pid: int):
         p = idx.prod_by_id.get(pid)
         if p is None and idx.include_inactive:   # candidate pool already has it if active
-            p = db.query(models.Product).filter(models.Product.id == pid).first()
+            p = db.query(models.ProductVariant).filter(models.ProductVariant.id == pid).first()
         elif p is None:
             # barcode/SKU may point at an INACTIVE product not in the (active-only) pool
-            p = db.query(models.Product).filter(models.Product.id == pid).first()
+            p = db.query(models.ProductVariant).filter(models.ProductVariant.id == pid).first()
         return p
 
-    def _ok_status(p: models.Product) -> bool:
+    def _ok_status(p: models.ProductVariant) -> bool:
         return idx.include_inactive or (p is not None and p.status == 'ACTIVE')
 
-    def _enrich(p: models.Product, match_type: str, confidence: float) -> dict:
+    def _enrich(p: models.ProductVariant, match_type: str, confidence: float) -> dict:
         """SuggestedMatch dict with the fields the UI diff needs; supplier-specific
         units_per_pack / basic_cost so cost comparison is apples-to-apples."""
         ps_for_sup = (idx.ps_by_supplier.get(item.supplier_id, {}).get(p.id)
@@ -983,7 +983,7 @@ def match_to_existing(item_id: int, body: MatchBody, request: Request, db: Sessi
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    product = db.query(models.Product).filter(models.Product.sku_code == body.sku_code).first()
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == body.sku_code).first()
     if not product:
         raise HTTPException(status_code=404, detail=f"Product {body.sku_code} not found")
 
@@ -1150,7 +1150,7 @@ def assign_new_sku(item_id: int, body: AssignNewBody, request: Request, db: Sess
         product_name = f"{product_name} - {item.variant.strip()}"
     subcategory  = body.subcategory if body.subcategory is not None else item.ai_subcategory
 
-    product = models.Product(
+    product = models.ProductVariant(
         sku_code=sku_code,
         name=product_name,
         brand=(body.brand or item.brand or None),   # reviewer's entry, else the scanned brand
@@ -1289,7 +1289,7 @@ def unconfirm_item(item_id: int, request: Request, db: Session = Depends(databas
     if item.review_status not in ('matched', 'new_sku'):
         raise HTTPException(status_code=400, detail="Only confirmed items can be unconfirmed")
     prev = item.review_status
-    prod = (db.query(models.Product).filter(models.Product.id == item.matched_product_id).first()
+    prod = (db.query(models.ProductVariant).filter(models.ProductVariant.id == item.matched_product_id).first()
             if item.matched_product_id else None)
     sku = (prod.sku_code if prod else None) or item.assigned_sku
     item.review_status = 'pending'
@@ -1360,7 +1360,7 @@ def bulk_match(body: BulkMatchBody, db: Session = Depends(database.get_db),
         if not item:
             results["errors"].append({"item_id": entry.item_id, "error": "not found"})
             continue
-        product = db.query(models.Product).filter(models.Product.sku_code == entry.sku_code).first()
+        product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == entry.sku_code).first()
         if not product:
             results["errors"].append({"item_id": entry.item_id, "error": f"sku {entry.sku_code} not found"})
             continue
@@ -1640,8 +1640,8 @@ def get_pending_queue(
     # query for products, one for their tag links.
     top_skus = {r["suggested_matches"][0]["sku_code"] for r in result if r["suggested_matches"]}
     if top_skus:
-        prods = db.query(models.Product.id, models.Product.sku_code).filter(
-            models.Product.sku_code.in_(top_skus)).all()
+        prods = db.query(models.ProductVariant.id, models.ProductVariant.sku_code).filter(
+            models.ProductVariant.sku_code.in_(top_skus)).all()
         id_to_sku = {pid: sku for pid, sku in prods}
         tag_rows = (db.query(models.ProductTag.product_id, models.ProductTag.source, models.Tag.label)
                     .join(models.Tag, models.ProductTag.tag_id == models.Tag.id)

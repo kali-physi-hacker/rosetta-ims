@@ -17,9 +17,9 @@ BATCH = 30
 
 def main(limit=None):
     db = database.SessionLocal()
-    q = (db.query(models.Product)
-         .filter(models.Product.status != "DISCONTINUED")
-         .order_by(models.Product.id))
+    q = (db.query(models.ProductVariant)
+         .filter(models.ProductVariant.status != "DISCONTINUED")
+         .order_by(models.ProductVariant.id))
     if limit:
         q = q.limit(limit)
     products = q.all()

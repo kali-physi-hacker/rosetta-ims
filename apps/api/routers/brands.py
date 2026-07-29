@@ -113,10 +113,10 @@ def rename_brand(body: BrandRename, request: Request,
         raise HTTPException(status_code=404, detail="Brand not found")
     for r in rows:
         r.brand_name, r.normalized_brand = to, _norm(to)
-    n_prod = (db.query(models.Product)
-              .filter(models.Product.brand.isnot(None))
-              .filter(func.lower(models.Product.brand) == frm)
-              .update({models.Product.brand: to}, synchronize_session=False))
+    n_prod = (db.query(models.ProductVariant)
+              .filter(models.ProductVariant.brand.isnot(None))
+              .filter(func.lower(models.ProductVariant.brand) == frm)
+              .update({models.ProductVariant.brand: to}, synchronize_session=False))
     audit_log.record(db, action="brand.rename", actor=admin, entity_type="brand",
                      entity_label=to, details={"from": body.from_name, "to": to,
                                                "links": len(rows), "products": n_prod},

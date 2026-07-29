@@ -98,7 +98,7 @@ def _reset(session):
         models.CatalogueSupplierMbbTerm,
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
-        models.CatalogueSupplierProduct,
+        models.SupplierOffering,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,
@@ -569,7 +569,7 @@ def test_flow_runs_machine_pipeline_and_stops_at_pending_review(db, monkeypatch)
     candidate = db.query(models.CatalogueMasteringCandidate).one()
     assert candidate.review_status == "PENDING_REVIEW"
     assert db.query(models.CatalogueReviewDecision).count() == 0
-    assert db.query(models.CatalogueSupplierProduct).count() == 0
+    assert db.query(models.SupplierOffering).count() == 0
     assert db.query(models.CatalogueServingPublication).count() == 0
 
     replay = catalogue_ingestion_flow(ingestion_run_id=result.ingestion_run_id)
