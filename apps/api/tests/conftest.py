@@ -11,11 +11,17 @@ def _no_vision_retry_backoff():
 
     Production backs off 20s x attempt between retryable vision failures
     (throttle windows); tests exercising those paths stub the provider and
-    must stay fast.
+    must stay fast. The opt-in LIVE smoke keeps the real backoff — throttle
+    behaviour is part of what it verifies.
     """
+
+    import os
 
     from services import catalogue_evidence_extraction as extraction
 
+    if os.environ.get("CATALOGUE_LIVE_SMOKE"):
+        yield
+        return
     previous = extraction._VISION_RETRY_BACKOFF_SECONDS
     extraction._VISION_RETRY_BACKOFF_SECONDS = 0.0
     yield
