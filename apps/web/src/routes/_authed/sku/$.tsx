@@ -1,18 +1,20 @@
 // SKU details v2 — the classic page's type scale and card system (shared
 // SKUD_CSS), reorganized around what each domain entity owns: identity, then
 // supplier offerings (buy side), selling items (sell side), inventory, and
-// provenance. Read-first comparison route: management actions deep-link into
-// the classic page's modals (?open=suppliers|edit) until this layout wins.
-// Run IDs and pipeline jargon never render — provenance speaks plain words
-// and links to the audit surfaces.
+// provenance. Supplier and MBB management run natively here through the
+// shared SupplierManagerModal / CostMbbEditor components. Run IDs and
+// pipeline jargon never render — provenance speaks plain words and links to
+// the audit surfaces.
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { API_BASE } from '@/lib/config'
 import { authHeaders } from '@/lib/auth'
 import { skuToPath } from '@/lib/sku'
 import { SKUD_CSS } from '@/lib/skudCss'
 import { Spinner } from '@/components/Spinner'
+import { SupplierManagerModal } from '@/components/SupplierManagerModal'
+import { CostMbbEditor } from '@/components/CostMbbEditor'
 import type { MbbTerm, Product } from '@/lib/types'
 
 export const Route = createFileRoute('/_authed/sku/$')({ component: SkuDetailsV2 })
@@ -63,6 +65,22 @@ const fmtDay = (iso: string | null | undefined) => {
 }
 const money = (v: number | null | undefined, digits = 2) => (v == null ? '—' : v.toFixed(digits))
 
+// Bulk-term display: what the deal is and what it takes, in plain words.
+function termDeal(t: MbbTerm): string {
+  if (t.note) return t.note
+  switch (t.kind) {
+    case 'buy_x_get_y': return `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free`
+    case 'spend_discount': return t.discount_pct != null ? `${(t.discount_pct * 100).toFixed(0)}% off order` : 'Spend discount'
+    case 'flat_unit_cost': return 'Bulk unit price'
+    default: return t.kind.replace(/_/g, ' ')
+  }
+}
+function termRequires(t: MbbTerm, uom: string): string {
+  if (t.min_qty) return `${t.min_qty}+ ${uom}s`
+  if (t.min_spend != null) return `HK$${t.min_spend.toFixed(0)} spend`
+  return '—'
+}
+
 const SOURCE_CHIP: Record<string, { cls: string; label: string; words: string }> = {
   catalogue: { cls: 'ok', label: 'CATALOGUE', words: 'from a committed catalogue' },
   manual: { cls: 'acc', label: 'MANUAL', words: 'set by a person' },
@@ -88,7 +106,10 @@ function SkuDetailsV2() {
   const sku = (rawSplat ?? '').split('/').map(decodeURIComponent).join('/')
   const router = useRouter()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const goBack = () => { if (typeof window !== 'undefined' && window.history.length > 1) router.history.back(); else navigate({ to: '/' as never }) }
+  const [manageOpen, setManageOpen] = useState(false)
+  const [mbbOpen, setMbbOpen] = useState(false)
 
   const product = useQuery({ queryKey: ['sku-v2', sku], queryFn: () => getJson<Product>(`/products/${skuToPath(sku)}`) })
   const offerings = useQuery({
@@ -124,6 +145,12 @@ function SkuDetailsV2() {
   const costSince = preferredOffering?.current?.since ?? p.cost_updated_at
   const costSource = preferredOffering?.source ?? 'legacy'
   const classicParams = { _splat: skuToPath(p.sku_code) } as never
+  // Modal saves return the fresh product payload — update it in place and let
+  // the offerings lane refetch (a cost edit writes a new offering price row).
+  const onSaved = (updated: Product) => {
+    queryClient.setQueryData(['sku-v2', sku], updated)
+    queryClient.invalidateQueries({ queryKey: ['sku-v2-offerings', sku] })
+  }
 
   return (
     <div className="skud" style={{ padding: '26px 30px 60px', maxWidth: 1280, margin: '0 auto' }}>
@@ -147,8 +174,8 @@ function SkuDetailsV2() {
           </div>
         </div>
         <div className="hdr-act">
-          <Link className="btn" to={'/items/$' as never} params={classicParams} search={{ open: 'suppliers' } as never}>Manage suppliers</Link>
-          <Link className="btn" to={'/items/$' as never} params={classicParams} search={{ open: 'edit' } as never}>MBB &amp; details</Link>
+          <button className="btn" onClick={() => setManageOpen(true)}>Manage suppliers</button>
+          <button className="btn" onClick={() => setMbbOpen(true)}>MBB terms</button>
           <Link className="btn pri" to={'/items/$' as never} params={classicParams}>Classic view →</Link>
         </div>
       </div>
@@ -202,7 +229,7 @@ function SkuDetailsV2() {
                 <div className="ct">Supplier offerings</div>
                 <div className="hint">what each supplier charges — cost, packaging, bulk terms</div>
               </div>
-              <Link className="lnk" style={{ fontSize: 12 }} to={'/items/$' as never} params={classicParams} search={{ open: 'suppliers' } as never}>Manage</Link>
+              <span className="lnk" style={{ fontSize: 12 }} onClick={() => setManageOpen(true)}>Manage</span>
             </div>
             {offerings.isLoading && <div style={{ padding: 18 }}><Spinner /></div>}
             {offerings.isError && <div style={{ padding: 16, fontSize: 12.5, color: 'var(--red)' }}>{String((offerings.error as Error)?.message)}</div>}
@@ -212,7 +239,7 @@ function SkuDetailsV2() {
                 entry={entry}
                 link={byId.get(entry.supplier_id)}
                 uom={uom}
-                classicParams={classicParams}
+                onManageTerms={() => setMbbOpen(true)}
                 last={index === offeringRows.length - 1}
               />
             ))}
@@ -307,15 +334,28 @@ function SkuDetailsV2() {
           <Link className="lnk" style={{ marginLeft: 'auto', fontSize: 12.5, textDecoration: 'none' }} to={'/admin/audit' as never}>full audit trail →</Link>
         </div>
       </div>
+
+      {manageOpen && <SupplierManagerModal product={p} onSaved={onSaved} onClose={() => setManageOpen(false)} />}
+      {mbbOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 60, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '60px 16px' }} onClick={() => setMbbOpen(false)}>
+          <div className="skud" onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 12, maxWidth: 680, width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '18px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: 'var(--ink)' }}>Cost &amp; MBB terms</h2>
+              <button className="btn" onClick={() => setMbbOpen(false)}>Close</button>
+            </div>
+            <CostMbbEditor product={p} onSaved={onSaved} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function OfferingSection({ entry, link, uom, classicParams, last }: {
+function OfferingSection({ entry, link, uom, onManageTerms, last }: {
   entry: OfferingEntry
   link?: Product['all_suppliers'][number]
   uom: string
-  classicParams: never
+  onManageTerms: () => void
   last: boolean
 }) {
   const [showHistory, setShowHistory] = useState(false)
@@ -374,21 +414,37 @@ function OfferingSection({ entry, link, uom, classicParams, last }: {
         </DefRow>
       )}
 
-      {/* Bulk terms — every term visible, managed via the classic editor. */}
-      <DefRow label="Bulk terms">
-        {terms.length === 0 && <span style={{ color: 'var(--faint)' }}>none · <Link className="lnk" style={{ fontSize: 12.5, textDecoration: 'none' }} to={'/items/$' as never} params={classicParams} search={{ open: 'edit' } as never}>add terms</Link></span>}
+      {/* Bulk terms — a proper table: what the deal is, what it takes, what a unit lands at. */}
+      <div style={{ padding: '9px 17px', borderBottom: '1px solid var(--line2)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: terms.length ? 7 : 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Bulk terms</span>
+          <span className="lnk" style={{ fontSize: 12, marginLeft: 'auto' }} onClick={onManageTerms}>{terms.length ? 'Manage' : 'Add terms'}</span>
+        </div>
+        {terms.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--faint)' }}>No bulk-buy terms for this supplier.</div>}
         {terms.length > 0 && (
-          <span style={{ display: 'grid', gap: 3 }}>
-            {terms.map(t => (
-              <span key={t.id}>
-                {t.note ?? t.kind.replace(/_/g, ' ')}
-                {t.effective_unit_cost != null && <> → <b>{money(t.effective_unit_cost)}/{uom}</b></>}
-              </span>
-            ))}
-            <Link className="lnk" style={{ fontSize: 12, textDecoration: 'none' }} to={'/items/$' as never} params={classicParams} search={{ open: 'edit' } as never}>manage terms →</Link>
-          </span>
+          <table className="cpptab">
+            <thead>
+              <tr><th style={{ textAlign: 'left' }}>Deal</th><th>Requires</th><th>Unit lands at</th><th>Saves</th></tr>
+            </thead>
+            <tbody>
+              {terms.map(t => {
+                const saving = t.effective_unit_cost != null && unitCost != null && unitCost > 0
+                  ? (1 - t.effective_unit_cost / unitCost) * 100 : null
+                return (
+                  <tr key={t.id}>
+                    <td className="cpp-row">{termDeal(t)}</td>
+                    <td>{termRequires(t, uom)}</td>
+                    <td style={{ fontWeight: 650 }}>{money(t.effective_unit_cost)}</td>
+                    <td style={{ color: saving != null && saving > 0 ? 'var(--good)' : 'var(--faint)' }}>
+                      {saving != null ? `−${saving.toFixed(1)}%` : '—'}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         )}
-      </DefRow>
+      </div>
 
       <DefRow label="History" last={!showHistory}>
         {entry.history.length === 0 && <span style={{ color: 'var(--faint)' }}>no price changes recorded yet</span>}
