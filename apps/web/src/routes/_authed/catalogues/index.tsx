@@ -7,6 +7,7 @@ import { skuToPath } from '@/lib/sku'
 import { toast } from '@/lib/toast'
 import { confirmDialog } from '@/lib/confirm'
 import { ReparseButton } from '@/components/ReparseButton'
+import { CataloguePipelineReview } from '@/components/CataloguePipelineReview'
 import { API_BASE } from '@/lib/config'
 
 const API = API_BASE
@@ -782,6 +783,7 @@ function CataloguesPage() {
   // Unfinished batch recovered from a previous session (after a refresh). When set, a
   // banner offers to resume — re-picking the files reconciles against this snapshot.
   const [resumeSnap, setResumeSnap] = useState<BatchSnapshot | null>(null)
+  const [pipelineReviewRun, setPipelineReviewRun] = useState<string | null>(null)
 
   // Persist a metadata snapshot of the live batch so it survives an accidental refresh.
   useEffect(() => {
@@ -800,7 +802,12 @@ function CataloguesPage() {
       if (!raw) return
       const snap = JSON.parse(raw) as BatchSnapshot
       const remaining = (snap.files ?? []).filter(f => f.status !== 'done')
-      if (remaining.length > 0) setResumeSnap(snap)
+      if (remaining.length > 0) {
+        setResumeSnap(snap)
+        for (const file of remaining) {
+          if (file.status === 'processing' && file.runId) void pollRecoveredRun(file.key, file.runId)
+        }
+      }
       else localStorage.removeItem(BATCH_SNAPSHOT_KEY)
     } catch { localStorage.removeItem(BATCH_SNAPSHOT_KEY) }
   }, [])
@@ -808,12 +815,12 @@ function CataloguesPage() {
   // Warn before leaving / refreshing while a scan or batch is in flight.
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const active = uploading || batchRunning
+    const active = uploading || batchRunning || batchFiles.some(file => file.status === 'processing')
     if (!active) return
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
-  }, [uploading, batchRunning])
+  }, [uploading, batchRunning, batchFiles])
 
   function discardResume() {
     setResumeSnap(null)
@@ -1209,6 +1216,7 @@ function CataloguesPage() {
       completed:               { status: 'done',  note: () => null },
       completed_with_warnings: { status: 'done',  note: () => 'completed with warnings — review pipeline issues' },
       failed:                  { status: 'error', note: d => d?.error_summary?.message ?? d?.error_summary ?? 'ingestion failed' },
+      cancelled:               { status: 'error', note: () => 'ingestion was cancelled' },
     }
     const DEADLINE = Date.now() + 45 * 60_000   // dense catalogues can take a while
     while (Date.now() < DEADLINE) {
@@ -1234,6 +1242,39 @@ function CataloguesPage() {
     setBatchFiles(prev => prev.map(x => x.key === key
       ? { ...x, status: 'error', error: 'Timed out waiting for the ingestion run — check the run status manually' }
       : x))
+  }
+
+  // A submitted run no longer needs its File object. After a refresh, reconnect
+  // directly to the durable run ID saved in the metadata snapshot instead of
+  // asking the user to re-upload and creating a duplicate ingestion.
+  async function pollRecoveredRun(key: string, runId: string) {
+    const deadline = Date.now() + 45 * 60_000
+    while (Date.now() < deadline) {
+      try {
+        const res = await fetch(`${API}/catalogues/ingestions/${runId}`, { headers: authHeaders() })
+        if (res.ok) {
+          const run = await res.json()
+          const terminal = ['completed', 'completed_with_warnings', 'failed', 'cancelled'].includes(run.status)
+          setResumeSnap(previous => {
+            if (!previous) return previous
+            const files = previous.files.map(file => file.key === key ? {
+              ...file,
+              status: run.status === 'completed' || run.status === 'completed_with_warnings' ? 'done' as BatchStatus : terminal ? 'error' as BatchStatus : 'processing' as BatchStatus,
+              supplierStatus: run.status,
+              itemCount: run.items_extracted ?? file.itemCount,
+              error: run.status === 'failed'
+                ? String(run.error_summary?.message ?? run.error_summary ?? 'ingestion failed')
+                : run.status === 'cancelled' ? 'ingestion was cancelled' : file.error,
+            } : file)
+            const snapshot = { ...previous, savedAt: Date.now(), files }
+            localStorage.setItem(BATCH_SNAPSHOT_KEY, JSON.stringify(snapshot))
+            return snapshot
+          })
+          if (terminal) return
+        }
+      } catch { /* transient reconnect failure */ }
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
   }
 
   // Core runner — uploads the given files through a small concurrency pool.
@@ -1981,6 +2022,11 @@ function CataloguesPage() {
                           <span style={{ flex: '0 0 auto', color: b.status === 'error' ? C.redInk : '#16A34A', fontWeight: 600, maxWidth: '160px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }} title={b.error ?? ''}>
                             {b.status === 'done' ? `${b.itemCount} items` : b.status === 'error' ? (b.error ?? 'error') : ''}
                           </span>
+                          {b.runId && b.status !== 'uploading' && (
+                            <button onClick={() => setPipelineReviewRun(b.runId)} style={{ flex: '0 0 auto', background: 'white', border: '1px solid #C7D2FE', borderRadius: '5px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: C.indigoInk, cursor: 'pointer', marginTop: '1px' }}>
+                              Review pipeline
+                            </button>
+                          )}
                           {!batchRunning && (b.status === 'error' || b.status === 'done') && (
                             <button onClick={() => redoFile(b.key)} style={{ flex: '0 0 auto', background: 'none', border: '1px solid #E2E8F0', borderRadius: '5px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: b.status === 'error' ? C.amberInk : C.muted, cursor: 'pointer', marginTop: '1px' }} title={b.status === 'error' ? 'Retry this file' : 'Re-extract this file (creates a new import)'}>
                               ↻ {b.status === 'error' ? 'Retry' : 'Redo'}
@@ -1996,6 +2042,10 @@ function CataloguesPage() {
           )}
         </div>
 
+        {pipelineReviewRun && (
+          <CataloguePipelineReview runId={pipelineReviewRun} onClose={() => setPipelineReviewRun(null)} />
+        )}
+
         {/* ══ Resume an interrupted batch (recovered after a refresh) ═══════ */}
         {resumeSnap && batchFiles.length === 0 && (() => {
           const done = resumeSnap.files.filter(f => f.status === 'done').length
@@ -2009,8 +2059,14 @@ function CataloguesPage() {
                 </div>
                 <div style={{ fontSize: '12px', color: '#78350F', marginTop: '2px' }}>
                   {done} of {resumeSnap.files.length} already scanned · <strong>{remaining} left</strong>.
-                  Re-pick the same files/folder to continue — already-scanned files are skipped automatically.
+                  Submitted runs reconnect automatically. Re-pick files only for uploads that never reached the server.
                 </div>
+                {resumeSnap.files.filter(file => file.runId).map(file => (
+                  <button key={file.key} onClick={() => setPipelineReviewRun(file.runId)}
+                    style={{ display: 'block', marginTop: 5, border: 0, background: 'transparent', color: C.indigoInk, fontSize: 11, cursor: 'pointer', padding: 0 }}>
+                    {file.name}: {file.supplierStatus ?? file.status} · open review
+                  </button>
+                ))}
               </div>
               <label style={{ fontSize: '12px', fontWeight: 600, color: C.indigoInk, background: 'white', border: '1px solid #C7D2FE', borderRadius: '6px', padding: '7px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 📄 Re-pick files
