@@ -1367,6 +1367,58 @@ def test_application_replay_repairs_missing_packaging(db):
     assert published.metrics.created_count == 1
 
 
+def test_application_replay_repairs_full_material_drift_and_stale_mbb(db):
+    _seed_context(db)
+    _seed_product(db)
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = _prepare_candidate(db, staging_id)
+    _approve_and_apply(db, candidate_id)
+
+    candidate_row = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(candidate_id)
+    ).one()
+    packaging = db.query(models.CataloguePackagingConfiguration).filter_by(superseded_at=None).one()
+    price = db.query(models.CatalogueSupplierPrice).filter_by(is_current=1).one()
+    supplier_product = db.query(models.CatalogueSupplierProduct).one()
+
+    # Drift fields that the previous replay check did not compare.
+    packaging.break_pack_allowed = 1 if packaging.break_pack_allowed != 1 else 0
+    packaging.order_increment_amount = Decimal("99")
+    price.review_decision_uuid = "00000000-0000-0000-0000-000000000000"
+    db.add(
+        models.CatalogueSupplierMbbTerm(
+            supplier_product_id=supplier_product.id,
+            scope="SUPPLIER_PRODUCT",
+            condition_type="minimum_quantity",
+            condition_quantity_amount=Decimal("12"),
+            condition_quantity_uom_code="EACH",
+            benefit_type="percentage_discount",
+            percentage_discount=Decimal("10"),
+            description="stale term not present on the approved candidate",
+            mastering_candidate_uuid=str(candidate_id),
+            review_decision_uuid=candidate_row.review_decision_uuid,
+            is_active=1,
+            created_at="2026-07-23T00:06:00+00:00",
+        )
+    )
+    db.commit()
+
+    repaired = stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(
+            mastering_candidate_id=candidate_id,
+            applied_at="2026-07-23T00:08:00+00:00",
+        )
+    )
+
+    assert repaired.metrics.reused_count == 0
+    current_packaging = db.query(models.CataloguePackagingConfiguration).filter_by(superseded_at=None).one()
+    current_price = db.query(models.CatalogueSupplierPrice).filter_by(is_current=1).one()
+    assert current_packaging.order_increment_amount == Decimal("24")
+    assert current_price.review_decision_uuid == candidate_row.review_decision_uuid
+    assert db.query(models.CatalogueSupplierMbbTerm).filter_by(is_active=1).count() == 0
+
+
 def test_application_replay_after_takeover_does_not_clobber_newer_state(db):
     _seed_context(db)
     _seed_product(db)
