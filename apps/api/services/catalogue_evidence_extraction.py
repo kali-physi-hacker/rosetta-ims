@@ -54,6 +54,10 @@ _VISION_CONCURRENCY = max(1, int(os.environ.get("CATALOGUE_VISION_CONCURRENCY", 
 _VISION_UNIT_RETRIES = max(0, int(os.environ.get("CATALOGUE_VISION_UNIT_RETRIES", "2")))
 # Linear per-attempt backoff before a unit retry (seconds x attempt number).
 _VISION_RETRY_BACKOFF_SECONDS = max(0.0, float(os.environ.get("CATALOGUE_VISION_RETRY_BACKOFF_SECONDS", "20")))
+# Sparse-page completeness heuristic: warn when an evidence-bearing page yields
+# <= MAX_ROWS while a sibling page in the same document yields >= SIBLING_MIN.
+_SPARSE_PAGE_MAX_ROWS = max(0, int(os.environ.get("CATALOGUE_VISION_SPARSE_PAGE_MAX_ROWS", "2")))
+_SPARSE_PAGE_SIBLING_MIN = max(1, int(os.environ.get("CATALOGUE_VISION_SPARSE_SIBLING_MIN", "8")))
 
 
 class ExtractionStatus(str, Enum):
@@ -805,6 +809,25 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
                 )
             )
         observations.extend(page_observations)
+
+    # Completeness heuristic: a provider response can be valid, evidence-bearing
+    # and still silently missing rows (the observed thinking-level failure
+    # mode). A page yielding 1-2 rows in a document whose sibling pages yield
+    # many is suspicious — surface a reviewable warning, never a failure.
+    captured_counts = {
+        outcome.unit_key: outcome.observation_count
+        for outcome in unit_outcomes
+        if outcome.status == ExtractionUnitStatus.EVIDENCE_CAPTURED
+    }
+    if captured_counts:
+        densest = max(captured_counts.values())
+        if densest >= _SPARSE_PAGE_SIBLING_MIN:
+            for unit_key, count in sorted(captured_counts.items()):
+                if count <= _SPARSE_PAGE_MAX_ROWS:
+                    warnings.append(
+                        f"{unit_key}: suspiciously sparse extraction ({count} row(s) while a sibling "
+                        f"page yielded {densest}); verify page completeness before relying on this page"
+                    )
 
     return _build_result(
         SourceFormat.PDF,

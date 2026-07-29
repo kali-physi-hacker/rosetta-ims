@@ -498,7 +498,9 @@ function EditField({ label, value, onChange, type = 'text', wide = false, list, 
 
 // ── Batch upload (whole-folder) ────────────────────────────────────────────────
 const BATCH_EXT = new Set(['pdf', 'xlsx', 'xls', 'csv', 'jpg', 'jpeg', 'png'])
-type BatchStatus = 'queued' | 'uploading' | 'done' | 'error'
+// 'processing' = accepted (202) and queued/running server-side; 'done' means the
+// ingestion RUN reached a terminal machine status — never just the upload.
+type BatchStatus = 'queued' | 'uploading' | 'processing' | 'done' | 'error'
 interface BatchFile {
   key: string
   file: File
@@ -513,7 +515,8 @@ interface BatchFile {
   fmt: string | null
   detectedSupplier: string | null
   detectedBrands: string | null
-  supplierStatus: string | null   // 'confirmed' | 'needs_review'
+  supplierStatus: string | null   // pipeline machine status while processing/terminal
+  runId: string | null            // ingestion run id returned by the queued pipeline
   sizeMB: number
   startedAt: number | null
 }
@@ -538,7 +541,8 @@ function matchSupplierId(folder: string, suppliers: Supplier[]): number | null {
 
 const BATCH_BADGE: Record<BatchStatus, { bg: string; color: string; label: string }> = {
   queued:    { bg: C.monoBg, color: C.muted, label: 'Queued' },
-  uploading: { bg: '#DBEAFE', color: '#1E40AF', label: 'Extracting…' },
+  uploading: { bg: '#DBEAFE', color: '#1E40AF', label: 'Uploading…' },
+  processing: { bg: '#DBEAFE', color: '#1E40AF', label: 'Processing…' },
   done:      { bg: C.greenBg, color: C.green, label: 'Done' },
   error:     { bg: C.redBg, color: C.redInk, label: 'Failed' },
 }
@@ -559,7 +563,7 @@ function serializeBatch(files: BatchFile[]): SerializedBatchFile[] {
     key: f.key, name: f.name, supplierFolder: f.supplierFolder, supplierId: f.supplierId,
     status: f.status, itemCount: f.itemCount, importId: f.importId, error: f.error,
     fmt: f.fmt, detectedSupplier: f.detectedSupplier, detectedBrands: f.detectedBrands,
-    supplierStatus: f.supplierStatus, sizeMB: f.sizeMB, startedAt: f.startedAt,
+    supplierStatus: f.supplierStatus, runId: f.runId, sizeMB: f.sizeMB, startedAt: f.startedAt,
   }))
 }
 
@@ -1035,7 +1039,7 @@ function CataloguesPage() {
     for (const b of batchFiles) {
       if (b.status === 'done')        { done++; items += b.itemCount ?? 0 }
       else if (b.status === 'error')   error++
-      else if (b.status === 'uploading') uploading++
+      else if (b.status === 'uploading' || b.status === 'processing') uploading++
       else                             queued++
       if (b.supplierId != null) matched++
       if (b.supplierFolder) sups.add(b.supplierFolder)
@@ -1122,6 +1126,7 @@ function CataloguesPage() {
         supplierId: batchSupplierId ?? matchSupplierId(folder, suppliers),
         status: 'queued', itemCount: null, importId: null, error: null,
         fmt: null, detectedSupplier: null, detectedBrands: null, supplierStatus: null,
+        runId: null,
         sizeMB: f.size / 1e6, startedAt: null,
       })
     }
@@ -1175,18 +1180,60 @@ function CataloguesPage() {
       fd.append('supplier_id', String(bf.supplierId))
       const res = await fetch(`${API}/catalogues/ingestions`, { method: 'POST', body: fd, headers: authHeaders() })
       const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setBatchFiles(prev => prev.map(x => x.key === bf.key
+          ? { ...x, status: 'error', error: (typeof data.detail === 'string' ? data.detail : data.detail?.message) ?? `HTTP ${res.status}` }
+          : x))
+        return
+      }
+      // 202 means STORED AND QUEUED only — never a completed ingestion. Track
+      // the run and poll its machine status to a terminal state.
       setBatchFiles(prev => prev.map(x => x.key === bf.key
-        ? (res.ok
-            ? { ...x, status: 'done', itemCount: null, importId: null,
-                fmt: data.document_type ?? null,
-                detectedSupplier: null,
-                detectedBrands: null,
-                supplierStatus: data.contract_id ? `queued (${data.contract_id})` : 'queued' }
-            : { ...x, status: 'error', error: (typeof data.detail === 'string' ? data.detail : data.detail?.message) ?? `HTTP ${res.status}` })
+        ? { ...x, status: 'processing', itemCount: null, importId: null,
+            runId: data.ingestion_run_id ?? null,
+            fmt: data.document_type ?? null,
+            detectedSupplier: null,
+            detectedBrands: null,
+            supplierStatus: data.contract_id ? `queued (${data.contract_id})` : 'queued' }
         : x))
+      if (data.ingestion_run_id) void pollIngestionRun(bf.key, data.ingestion_run_id)
     } catch {
       setBatchFiles(prev => prev.map(x => x.key === bf.key ? { ...x, status: 'error', error: 'Network error' } : x))
     }
+  }
+
+  // Poll one queued run (fire-and-forget; does not hold an upload-pool slot)
+  // until the worker drives it to a terminal machine status.
+  async function pollIngestionRun(key: string, runId: string) {
+    const TERMINAL: Record<string, { status: BatchStatus; note: (d: any) => string | null }> = {
+      completed:               { status: 'done',  note: () => null },
+      completed_with_warnings: { status: 'done',  note: () => 'completed with warnings — review pipeline issues' },
+      failed:                  { status: 'error', note: d => d?.error_summary?.message ?? d?.error_summary ?? 'ingestion failed' },
+    }
+    const DEADLINE = Date.now() + 45 * 60_000   // dense catalogues can take a while
+    while (Date.now() < DEADLINE) {
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      try {
+        const res = await fetch(`${API}/catalogues/ingestions/${runId}`, { headers: authHeaders() })
+        if (!res.ok) continue
+        const run = await res.json()
+        const terminal = TERMINAL[run.status]
+        if (!terminal) {
+          setBatchFiles(prev => prev.map(x => x.key === key ? { ...x, supplierStatus: run.status } : x))
+          continue
+        }
+        setBatchFiles(prev => prev.map(x => x.key === key
+          ? { ...x, status: terminal.status,
+              itemCount: run.items_extracted ?? null,
+              supplierStatus: run.status,
+              error: terminal.status === 'error' ? String(terminal.note(run) ?? 'ingestion failed') : x.error }
+          : x))
+        return
+      } catch { /* transient poll failure — keep polling until the deadline */ }
+    }
+    setBatchFiles(prev => prev.map(x => x.key === key
+      ? { ...x, status: 'error', error: 'Timed out waiting for the ingestion run — check the run status manually' }
+      : x))
   }
 
   // Core runner — uploads the given files through a small concurrency pool.
@@ -1912,7 +1959,8 @@ function CataloguesPage() {
                       const badge = BATCH_BADGE[b.status]
                       const meta: string[] = []
                       if (b.sizeMB >= 0.1) meta.push(`${b.sizeMB.toFixed(1)} MB`)
-                      if (b.status === 'uploading') meta.push('extracting…')
+                      if (b.status === 'uploading') meta.push('uploading…')
+                      if (b.status === 'processing') meta.push(b.supplierStatus ? `pipeline: ${b.supplierStatus}` : 'queued for processing')
                       if (b.status === 'done') {
                         if (b.fmt) meta.push(b.fmt.toUpperCase())
                         if (b.detectedSupplier) meta.push(`supplier: ${b.detectedSupplier}`)
@@ -1922,7 +1970,7 @@ function CataloguesPage() {
                       return (
                         <div key={b.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '7px 12px', borderTop: '1px solid #F1F5F9', fontSize: '12px' }}>
                           <span style={{ flex: '0 0 84px', fontSize: '10px', fontWeight: 700, textAlign: 'center', background: badge.bg, color: badge.color, padding: '2px 6px', borderRadius: '99px', marginTop: '1px' }}>
-                            {b.status === 'uploading' ? '◷ extracting' : badge.label}
+                            {b.status === 'uploading' ? '◷ uploading' : b.status === 'processing' ? '◷ processing' : badge.label}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.name}>{b.name}</div>

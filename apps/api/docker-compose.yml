@@ -91,7 +91,9 @@ services:
   catalogue-worker:
     build: .
     image: rosetta-ims-api-v2:latest
-    profiles: ["catalogue-worker"]
+    # Deliberately NOT profiled: submission only queues runs, so a deployment
+    # without the worker accepts uploads that never process. A bare
+    # `docker compose up -d` must always include the worker.
     restart: unless-stopped
     env_file: .env
     depends_on:
@@ -121,9 +123,9 @@ services:
         else:
             raise SystemExit(f"Prefect API did not become ready at {url}")
         PY
-        python -m orchestration.catalogue_dispatch --loop
-        --interval-seconds $${CATALOGUE_DISPATCH_INTERVAL_SECONDS}
-        --batch-size $${CATALOGUE_DISPATCH_BATCH_SIZE}
+        exec python -m orchestration.catalogue_dispatch --loop \
+          --interval-seconds "$${CATALOGUE_DISPATCH_INTERVAL_SECONDS}" \
+          --batch-size "$${CATALOGUE_DISPATCH_BATCH_SIZE}"
     volumes:
       - ./data:/data
       - ./secrets:/secrets:ro

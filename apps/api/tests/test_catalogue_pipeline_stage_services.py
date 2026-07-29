@@ -1273,3 +1273,196 @@ def test_claim_replay_with_confidence_drift_reuses_the_immutable_first_claim(db)
                 metadata={"source_observation_key": "claim-replay-1", "interpretation": {"interpreter": "model"}},
             )
         )
+
+
+def _approve_and_apply(db, candidate_id, *, key="approve-candidate", applied_at="2026-07-23T00:06:00+00:00"):
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-07-23T00:05:00+00:00",
+            reason="Approved fixture candidate.",
+            idempotency_key=key,
+        )
+    )
+    return stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(mastering_candidate_id=candidate_id, applied_at=applied_at)
+    )
+
+
+def test_correction_replay_with_different_material_conflicts(db):
+    _seed_context(db)
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id, _ = _default_candidate(db, staging_id)
+    product = _seed_product(db)
+
+    def _correction(reason, sku):
+        return stages.ReviseMasteringCandidateCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            reason=reason,
+            product_variant_resolution={
+                "state": "CONFIRMED_MATCH",
+                "canonical_sku": sku,
+                "product_variant_id": sku,
+                "product_variant_name": product.name,
+                "product_family_id": None,
+            },
+        )
+
+    first = stages.MasteringService(db).revise_candidate(_correction("Map to canonical product", product.sku_code))
+    revision_id = first.output_ids[0]
+
+    # Identical replay reuses the same revision.
+    replay = stages.MasteringService(db).revise_candidate(_correction("Map to canonical product", product.sku_code))
+    assert replay.output_ids == (revision_id,)
+    assert replay.metrics.reused_count == 1
+
+    # Same correction identity with a DIFFERENT reason must not report reuse.
+    with pytest.raises(stages.IdempotencyConflict):
+        stages.MasteringService(db).revise_candidate(_correction("Different justification", product.sku_code))
+
+    # Same correction identity with different section material must not report reuse.
+    with pytest.raises(stages.IdempotencyConflict):
+        stages.MasteringService(db).revise_candidate(_correction("Map to canonical product", "STAGE-SKU-ALT"))
+
+
+def test_application_replay_repairs_missing_packaging(db):
+    _seed_context(db)
+    _seed_product(db)
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = _prepare_candidate(db, staging_id)
+    _approve_and_apply(db, candidate_id)
+
+    # Simulate incomplete applied state: the packaging row disappears.
+    db.query(models.CataloguePackagingConfiguration).delete()
+    db.commit()
+
+    repaired = stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(
+            mastering_candidate_id=candidate_id,
+            applied_at="2026-07-23T00:07:00+00:00",
+        )
+    )
+    # Never a silent reuse over incomplete state — the missing component is rebuilt.
+    assert repaired.metrics.reused_count == 0
+    assert repaired.metrics.created_count == 1
+    packaging = db.query(models.CataloguePackagingConfiguration).filter_by(superseded_at=None).one()
+    candidate_row = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(candidate_id)
+    ).one()
+    assert packaging.review_decision_uuid == candidate_row.review_decision_uuid
+
+    # Publication now succeeds against the repaired state.
+    published = stages.ServingPublicationService(db).publish(
+        stages.PublishServingItemCommand(
+            mastering_candidate_id=candidate_id,
+            publication_version="repair-v1",
+            idempotency_key="publish-after-repair",
+        )
+    )
+    assert published.metrics.created_count == 1
+
+
+def test_application_replay_after_takeover_does_not_clobber_newer_state(db):
+    _seed_context(db)
+    _seed_product(db)
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_a = _prepare_candidate(db, staging_id, key="candidate-a")
+    candidate_b = _prepare_candidate(db, staging_id, key="candidate-b")
+    _approve_and_apply(db, candidate_a, key="approve-a", applied_at="2026-07-23T00:06:00+00:00")
+    _approve_and_apply(db, candidate_b, key="approve-b", applied_at="2026-07-24T00:06:00+00:00")
+
+    current = db.query(models.CatalogueSupplierPrice).filter_by(is_current=1).one()
+    assert current.mastering_candidate_uuid == str(candidate_b)
+
+    replay_a = stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(
+            mastering_candidate_id=candidate_a,
+            applied_at="2026-07-25T00:06:00+00:00",
+        )
+    )
+    # The older application is acknowledged, and the newer state stays current.
+    assert replay_a.metrics.reused_count == 1
+    current_after = db.query(models.CatalogueSupplierPrice).filter_by(is_current=1).one()
+    assert current_after.mastering_candidate_uuid == str(candidate_b)
+
+
+def test_validation_task_batch_is_atomic_on_mid_batch_failure(db, monkeypatch):
+    from orchestration import catalogue_tasks
+
+    _seed_context(db)
+    raw_id = _capture_raw(db)
+    # Two rows whose missing normalized cost WOULD each create a durable issue.
+    first_claim = _build_claim(db, raw_id, include_cost=False, key="atomic-row-1")
+    second_claim = _build_claim(db, raw_id, include_cost=False, key="atomic-row-2")
+
+    original = stages.CatalogueValidationService.evaluate_claim
+    calls = {"n": 0}
+
+    def _explodes_on_second(self, command):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("injected mid-batch failure")
+        return original(self, command)
+
+    monkeypatch.setattr(stages.CatalogueValidationService, "evaluate_claim", _explodes_on_second)
+
+    with pytest.raises(RuntimeError, match="injected mid-batch failure"):
+        catalogue_tasks.evaluate_normalized_rows_task.fn(str(RUN_ID), (first_claim, second_claim), ())
+
+    db.expire_all()
+    assert db.query(models.CatalogueValidationIssue).count() == 0  # nothing partially committed
+
+
+def test_mastering_task_batch_is_atomic_on_mid_batch_failure(db, monkeypatch):
+    from orchestration import catalogue_tasks
+    from orchestration.catalogue_types import RunIdentity
+    from services.catalogue_conformance import ConformanceOutcome, ConformedRow
+
+    _seed_context(db)
+    raw_id = _capture_raw(db)
+    first_claim = _build_claim(db, raw_id, key="atomic-cand-1")
+    second_claim = _build_claim(db, raw_id, key="atomic-cand-2")
+    identity = RunIdentity(
+        run_uuid=RUN_ID,
+        supplier_catalogue_id=SOURCE_ID,
+        source_file_id=FILE_ID,
+        supplier_id=14,
+        contract_id="hills.price_list.v1",
+        contract_version="v1",
+        document_type="PRICE_LIST",
+        source_format="PDF",
+        filename="stage-services.pdf",
+    )
+    items = tuple(
+        ConformedRow(
+            observation_key=key,
+            raw_observation_id=raw_id,
+            raw_fields=_raw_fields(),
+            normalized_fields=_normalized_fields(raw_id),
+        )
+        for key in ("atomic-cand-1", "atomic-cand-2")
+    )
+    conformance = ConformanceOutcome(items=items)
+
+    original = stages.MasteringService.prepare_candidate
+    calls = {"n": 0}
+
+    def _explodes_on_second(self, command):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("injected mid-batch failure")
+        return original(self, command)
+
+    monkeypatch.setattr(stages.MasteringService, "prepare_candidate", _explodes_on_second)
+
+    with pytest.raises(RuntimeError, match="injected mid-batch failure"):
+        catalogue_tasks.prepare_eligible_candidates_task.fn(identity, (first_claim, second_claim), conformance)
+
+    db.expire_all()
+    assert db.query(models.CatalogueMasteringCandidate).count() == 0  # nothing partially committed

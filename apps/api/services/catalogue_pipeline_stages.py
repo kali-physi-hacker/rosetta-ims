@@ -754,17 +754,15 @@ class MasteringService(_TransactionalService):
                 "idempotency_key": f"correction:{candidate_row.mastering_candidate_uuid}",
             },
         )
-        if candidate_row.superseded_by_uuid:
-            if candidate_row.superseded_by_uuid == str(expected_revision_id):
-                # Idempotent replay of the same correction.
-                return StageResult(
-                    stage="mastering_correction",
-                    output_ids=(expected_revision_id,),
-                    metrics=StageMetrics(input_count=1, reused_count=1),
-                )
+        if candidate_row.superseded_by_uuid and candidate_row.superseded_by_uuid != str(expected_revision_id):
             raise InvalidStageTransition(
                 f"Mastering Candidate {command.mastering_candidate_id} is already superseded by {candidate_row.superseded_by_uuid}"
             )
+        # When superseded by exactly the correction revision, this is a REPLAY:
+        # do NOT reuse blindly — fall through so prepare_candidate compares the
+        # replayed correction's full material (sections, reason, actor via
+        # metadata) against the persisted revision. Equal material reuses;
+        # different material under the same correction identity conflicts.
         if command.expected_candidate_created_at and candidate_row.created_at != command.expected_candidate_created_at:
             raise StaleCandidateRevision(
                 f"Mastering Candidate {command.mastering_candidate_id} current revision is {candidate_row.created_at}; "
@@ -962,23 +960,30 @@ class ApprovedCommercialStateService(_TransactionalService):
         existing_supplier_product = self.db.query(models.CatalogueSupplierProduct).filter_by(
             supplier_product_key=supplier_product_key
         ).first()
-        current_price = None
         if existing_supplier_product is not None:
-            current_price = (
-                self.db.query(models.CatalogueSupplierPrice)
-                .filter_by(
-                    supplier_product_id=existing_supplier_product.id,
-                    mastering_candidate_uuid=str(candidate.mastering_candidate_id),
-                    is_current=1,
+            applied_state = self._candidate_applied_state(existing_supplier_product, candidate)
+            if applied_state == "current_complete":
+                # Every candidate-derived component is present and materially
+                # equal to the approved candidate — a true idempotent replay.
+                return StageResult(
+                    stage="commercial_application",
+                    output_ids=(supplier_product_key,),
+                    metrics=StageMetrics(input_count=1, reused_count=1),
                 )
-                .first()
-            )
-        if existing_supplier_product is not None and current_price is not None:
-            return StageResult(
-                stage="commercial_application",
-                output_ids=(supplier_product_key,),
-                metrics=StageMetrics(input_count=1, reused_count=1),
-            )
+            if applied_state == "superseded":
+                # This candidate WAS applied; a newer candidate's application
+                # now owns the current commercial state. Replaying the older
+                # candidate must never clobber the newer state — its historical
+                # application is acknowledged as reused.
+                return StageResult(
+                    stage="commercial_application",
+                    output_ids=(supplier_product_key,),
+                    metrics=StageMetrics(input_count=1, reused_count=1, warning_count=1),
+                )
+            # "none" (first application against an existing offering) or
+            # "incomplete" (a component is missing or drifted): fall through —
+            # the supersede-then-rewrite persistence below deterministically
+            # repairs the full applied state from the approved candidate.
 
         supplier_product = existing_supplier_product or self._create_supplier_product(candidate, supplier_product_key, applied_at)
         if existing_supplier_product is not None:
@@ -992,6 +997,90 @@ class ApprovedCommercialStateService(_TransactionalService):
             output_ids=(supplier_product_key,),
             metrics=StageMetrics(input_count=1, created_count=1, warning_count=mbb_count),
         )
+
+    def _candidate_applied_state(
+        self,
+        supplier_product: models.CatalogueSupplierProduct,
+        candidate: MasteringCandidateV1,
+    ) -> str:
+        """Classify how completely this candidate's commercial state is applied.
+
+        Returns one of:
+        - "none": the candidate never applied against this offering.
+        - "superseded": the candidate applied historically; a newer candidate's
+          application owns the current state (never clobber it on replay).
+        - "current_complete": the candidate owns the current state and EVERY
+          derived component (offering fields, canonical link, provenance,
+          packaging, price, MBB terms) is present and materially equal.
+        - "incomplete": the candidate owns current state but a component is
+          missing or drifted — repairable by re-persisting from the candidate.
+        """
+
+        candidate_uuid = str(candidate.mastering_candidate_id)
+        decision_uuid = str(candidate.review_decision_id) if candidate.review_decision_id else None
+        price_rows = self.db.query(models.CatalogueSupplierPrice).filter_by(
+            supplier_product_id=supplier_product.id,
+            mastering_candidate_uuid=candidate_uuid,
+        ).all()
+        if not price_rows:
+            return "none"
+        current_price = next((row for row in price_rows if row.is_current), None)
+        if current_price is None:
+            newer_current = self.db.query(models.CatalogueSupplierPrice).filter(
+                models.CatalogueSupplierPrice.supplier_product_id == supplier_product.id,
+                models.CatalogueSupplierPrice.is_current == 1,
+                models.CatalogueSupplierPrice.mastering_candidate_uuid != candidate_uuid,
+            ).first()
+            return "superseded" if newer_current is not None else "incomplete"
+
+        # The candidate owns current state: verify every component's material.
+        supplier_resolution = candidate.supplier_product_resolution
+        resolved_product = _resolved_product(self.db, candidate.product_variant_resolution)
+        cost = candidate.supplier_price_resolution.current_cost
+        offering_ok = (
+            supplier_product.approved_review_decision_uuid == decision_uuid
+            and supplier_product.supplier_sku == supplier_resolution.supplier_sku
+            and supplier_product.barcode == supplier_resolution.barcode
+            and resolved_product is not None
+            and supplier_product.product_variant_id == resolved_product.id
+        )
+        price_ok = (
+            cost is not None
+            and current_price.amount == cost.amount
+            and current_price.currency == cost.currency
+            and current_price.price_basis_uom_code == cost.price_basis.code.value
+        )
+
+        packaging = candidate.packaging_resolution.packaging
+        current_packaging = self.db.query(models.CataloguePackagingConfiguration).filter_by(
+            supplier_product_id=supplier_product.id,
+            superseded_at=None,
+        ).first()
+        packaging_ok = (
+            packaging is not None
+            and current_packaging is not None
+            and current_packaging.review_decision_uuid == decision_uuid
+            and current_packaging.price_basis_uom_code == _uom_code(packaging.price_basis)
+            and current_packaging.content_amount == packaging.content_amount
+            and current_packaging.content_uom_code == _uom_code(packaging.content_uom)
+            and current_packaging.sellable_units_per_purchase_unit == packaging.sellable_units_per_purchase_unit
+            and current_packaging.source_text == packaging.source_text
+        )
+
+        terms = candidate.mbb_resolution.terms
+        if terms:
+            active_terms = self.db.query(models.CatalogueSupplierMbbTerm).filter_by(
+                supplier_product_id=supplier_product.id,
+                is_active=1,
+                mastering_candidate_uuid=candidate_uuid,
+            ).count()
+            mbb_ok = active_terms == len(terms)
+        else:
+            mbb_ok = True
+
+        if offering_ok and price_ok and packaging_ok and mbb_ok:
+            return "current_complete"
+        return "incomplete"
 
     def _create_supplier_product(
         self,

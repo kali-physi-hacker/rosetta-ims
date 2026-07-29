@@ -780,3 +780,82 @@ def test_strict_json_object_recovers_trailing_structural_debris():
 
     with pytest.raises(Exception):
         _strict_json_object('{"page_outcome": "evidence", "observations": []} {"second": "object"}')
+
+
+def test_retry_backoff_sleeps_linearly_then_succeeds(monkeypatch):
+    """Backoff sequence: base x1 before retry 1, base x2 before retry 2; no
+    sleep on success and none after a permanent failure."""
+    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setattr(evidence_service, "_VISION_RETRY_BACKOFF_SECONDS", 7.0)
+    sleeps: list[float] = []
+    monkeypatch.setattr(evidence_service.time, "sleep", lambda s: sleeps.append(s))
+
+    calls = {"n": 0}
+
+    def flaky_vision(_content: bytes, *, media_type: str):
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise evidence_service._VisionExtractionFailure(
+                code="TRANSIENT_PROVIDER_ERROR", public_message="throttled", retryable=True
+            )
+        return evidence_service._VisionResponse(text=json.dumps(_EVIDENCE_PAYLOAD))
+
+    monkeypatch.setattr(evidence_service, "_call_gemini_vision", flaky_vision)
+    result = catalogue_evidence_extraction.extract_evidence(_pdf_with_pages([None]), "x.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert sleeps == [7.0, 14.0]
+    assert result.unit_outcomes[0].attempt_count == 3
+
+    # Permanent failure: no backoff sleeps at all.
+    sleeps.clear()
+
+    def permanent_vision(_content: bytes, *, media_type: str):
+        raise evidence_service._VisionExtractionFailure(
+            code="EXTRACTION_CONFIGURATION_ERROR", public_message="bad config", retryable=False
+        )
+
+    monkeypatch.setattr(evidence_service, "_call_gemini_vision", permanent_vision)
+    failed = catalogue_evidence_extraction.extract_evidence(_pdf_with_pages([None]), "x.pdf", "application/pdf")
+    assert failed.status == ExtractionStatus.FAILED
+    assert sleeps == []
+
+
+def test_suspiciously_sparse_page_is_warned_not_failed(monkeypatch):
+    """A valid evidence page with 1 row next to a 10-row sibling gets a
+    completeness warning; the run still completes."""
+    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+
+    dense = {
+        "page_outcome": "evidence",
+        "observations": [
+            {
+                "raw_text": f"SKU-{index} | Product {index} | HK${index}.00",
+                "raw_cells": [],
+                "bounding_box": {"x": 0, "y": index, "width": 100, "height": 10, "unit": "px"},
+                "confidence": "0.9",
+            }
+            for index in range(1, 11)
+        ],
+    }
+    sparse = {
+        "page_outcome": "evidence",
+        "observations": [
+            {
+                "raw_text": "LONE-1 | Only row | HK$1.00",
+                "raw_cells": [],
+                "bounding_box": {"x": 0, "y": 0, "width": 100, "height": 10, "unit": "px"},
+                "confidence": "0.9",
+            }
+        ],
+    }
+    fake, _ = _vision_stub([dense, sparse])
+    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake)
+
+    result = catalogue_evidence_extraction.extract_evidence(
+        _pdf_with_pages([None, None]), "two-pages.pdf", "application/pdf"
+    )
+
+    assert result.status == ExtractionStatus.COMPLETE
+    sparse_warnings = [w for w in result.warnings if "suspiciously sparse" in w]
+    assert sparse_warnings and sparse_warnings[0].startswith("page:2")

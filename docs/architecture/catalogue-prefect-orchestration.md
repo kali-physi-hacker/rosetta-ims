@@ -208,12 +208,15 @@ serves only v1 endpoints and is not reachable from orchestration.
 
 **Extraction** (`services.catalogue_evidence_extraction` behind the
 `catalogue_extraction_adapter` policy) is contract-independent and records only
-what the source contains and where: spreadsheet cells, CSV rows, PDF text lines
-(with a vision fallback for scanned pages), each as a typed
-`ExtractedEvidence` observation with a stable observation key, source location,
-provider metadata and optional Decimal confidence. `FAILED` results fail the
-run (retryable provider errors retry); `PARTIAL` results carry per-unit errors
-into run warnings with rejected-unit accounting. Every observation is persisted
+what the source contains and where: spreadsheet cells and CSV rows natively;
+EVERY PDF page and image via Gemini vision into column-labeled cells (there is
+no PDF text-layer path — it linearizes tables into unmappable per-cell lines).
+Each observation is a typed `ExtractedEvidence` with a stable observation key,
+source location, provider metadata and optional Decimal confidence. Only
+`COMPLETE` extraction (all units accounted for) advances; `PARTIAL` and
+`FAILED` results fail the run (retryable provider errors retry with linear
+backoff), with per-unit outcomes persisted on the extraction attempt. Every
+observation is persisted
 as an Extracted Evidence observation — including titles and column headers, which are evidence
 even when they are not items.
 

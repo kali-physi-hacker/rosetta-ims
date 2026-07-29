@@ -215,9 +215,12 @@ def evaluate_normalized_rows_task(
     staging_ids: tuple[UUID, ...],
     contract_ambiguities: tuple = (),
 ) -> tuple[int, int, int]:
+    # ONE atomic batch: a mid-batch failure must leave zero validation output
+    # rather than a partially materialized stage on a terminal (non-resumable)
+    # failed run.
     db = database.SessionLocal()
     try:
-        service = stages.CatalogueValidationService(db)
+        service = stages.CatalogueValidationService(db, commit=False)
         created = reused = blocking = 0
         ambiguity_result = service.record_run_ambiguities(
             ingestion_run_id=UUID(run_id),
@@ -230,7 +233,11 @@ def evaluate_normalized_rows_task(
             created += result.metrics.created_count
             reused += result.metrics.reused_count
             blocking += result.metrics.blocking_issue_count
+        db.commit()
         return created, reused, blocking
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
@@ -241,9 +248,11 @@ def prepare_eligible_candidates_task(
     staging_ids: tuple[UUID, ...],
     conformance: ConformanceOutcome,
 ) -> tuple[int, int, tuple[str, ...]]:
+    # ONE atomic batch (see evaluate task): blocked rows are an expected,
+    # per-row skip; any unexpected failure rolls the whole stage back.
     db = database.SessionLocal()
     try:
-        service = stages.MasteringService(db)
+        service = stages.MasteringService(db, commit=False)
         created = reused = 0
         warnings: list[str] = []
         for staging_id, item in zip(staging_ids, conformance.items, strict=True):
@@ -259,7 +268,11 @@ def prepare_eligible_candidates_task(
                 reused += result.metrics.reused_count
             except stages.BlockingValidationIssues:
                 warnings.append(f"interpreted claim {staging_id} has open blocking validation issues")
+        db.commit()
         return created, reused, tuple(warnings)
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
