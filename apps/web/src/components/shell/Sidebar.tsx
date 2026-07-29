@@ -48,7 +48,6 @@ const NAV_OPS: NavItem[] = [
   { href: '/data-review', label: 'Data Review',  icon: 'check' },
   { href: '/stock',       label: 'Stock Import', icon: 'upload' },
   { href: '/catalogues',  label: 'Catalogues',   icon: 'layers' },
-  { href: '/catalogues/review', label: 'Review', icon: 'check' },
 ]
 const NAV_ADMIN: NavItem[] = [
   { href: '/categories', label: 'Categories', icon: 'list' },
@@ -139,9 +138,7 @@ export function Sidebar() {
   })
 
   const has = (cap: string) => !!user && (CAPABILITIES[cap]?.includes(user.role) ?? false)
-  const ops = NAV_OPS.filter(i =>
-    (i.href !== '/stock' || has('stock_import')) &&
-    (i.href !== '/catalogues/review' || has('catalogue_onboard')))
+  const ops = NAV_OPS.filter(i => (i.href !== '/stock' || has('stock_import')))
 
   return (
     <>
