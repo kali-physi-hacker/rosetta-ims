@@ -27,8 +27,9 @@ database.seed_default_users(database.engine)
 database.seed_category_rules(database.engine)
 
 # Materialize the explicit inventory and channel-selling identities for rows
-# created before the product-domain split. This is additive and idempotent;
-# the legacy Product alias remains only as an API compatibility surface.
+# created before the product-domain split. Additive and idempotent; while the
+# migration completes, ProductChannel stays the source of truth and this
+# bridge re-mirrors SellingItem rows from it on every boot.
 from services import product_domain
 
 with database.SessionLocal() as _product_domain_session:
