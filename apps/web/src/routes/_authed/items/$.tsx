@@ -316,7 +316,7 @@ function ItemDetailPage() {
   // Onboarding audit trail for this SKU (who created/matched/edited it, and when)
   const [history, setHistory] = useState<AuditEvent[]>([])
   useEffect(() => {
-    fetch(`${API}/catalogues/audit?sku=${encodeURIComponent(sku)}&limit=100`, { headers: authHeaders() })
+    fetch(`${API}/products/${skuToPath(sku)}/onboarding-audit?limit=100`, { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setHistory(d.events ?? []) })
       .catch(() => {})
@@ -547,6 +547,7 @@ function ItemDetailPage() {
             {p.shopify_status && p.shopify_status !== 'archived' &&
               <a className="btn" href={`https://petproject.hk/search?q=${encodeURIComponent(p.name)}`} target="_blank" rel="noreferrer">Open in Shopify</a>}
             {can('product_sensitive') && <StatusMenu current={p.status} saving={savingStatus} onPick={setStatus} />}
+            <Link className="btn" to={'/sku/$' as never} params={{ _splat: skuToPath(p.sku_code) } as never}>New layout ↗</Link>
             {can('product_edit') && <button className="btn" onClick={() => setEditing(true)}>Edit details</button>}
             {can('product_edit') && <button className="btn pri" onClick={() => setEditing(true)}>Verify data</button>}
           </div>

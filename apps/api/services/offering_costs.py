@@ -120,6 +120,117 @@ def record_supplier_cost(
     invalidate(db)
 
 
+def variant_offerings(db: Session, variant_id: int) -> list[dict]:
+    """Read model for the SKU page's supplier-offerings lane.
+
+    One entry per supplier that offers this variant — merged from the legacy
+    ProductSupplier links and any SupplierOffering rows. Price history is the
+    offering's effective-dated rows, each attributed in plain words:
+    'catalogue' when a committed run wrote it, 'manual' otherwise. Lineage ids
+    ride along ONLY to power audit links — the page never renders them.
+    Suppliers with no offering price yet report source 'legacy' with the
+    editable basic_cost as their current cost.
+    """
+
+    links = (
+        db.query(models.ProductSupplier)
+        .filter_by(product_id=variant_id)
+        .order_by(models.ProductSupplier.is_primary.desc(), models.ProductSupplier.id)
+        .all()
+    )
+    offerings = {
+        offering.supplier_id: offering
+        for offering in db.query(models.SupplierOffering).filter_by(product_variant_id=variant_id).all()
+    }
+    supplier_ids = {link.supplier_id for link in links if link.supplier_id} | set(offerings)
+    names = {
+        supplier.id: supplier
+        for supplier in db.query(models.Supplier).filter(models.Supplier.id.in_(supplier_ids)).all()
+    } if supplier_ids else {}
+
+    out: list[dict] = []
+    seen: set[int] = set()
+    for link in links:
+        if link.supplier_id is None:
+            continue
+        seen.add(link.supplier_id)
+        out.append(_offering_entry(db, names.get(link.supplier_id), offerings.get(link.supplier_id), link))
+    for supplier_id, offering in offerings.items():
+        if supplier_id not in seen:
+            out.append(_offering_entry(db, names.get(supplier_id), offering, None))
+    return out
+
+
+def _offering_entry(
+    db: Session,
+    supplier: models.Supplier | None,
+    offering: models.SupplierOffering | None,
+    link: models.ProductSupplier | None,
+) -> dict:
+    packaging = None
+    history: list[dict] = []
+    if offering is not None:
+        pack_row = (
+            db.query(models.CataloguePackagingConfiguration)
+            .filter_by(supplier_product_id=offering.id, superseded_at=None)
+            .order_by(models.CataloguePackagingConfiguration.id.desc())
+            .first()
+        )
+        if pack_row is not None:
+            packaging = {
+                "purchase_uom": pack_row.purchase_uom_label or pack_row.purchase_uom_code,
+                "sellable_uom": pack_row.sellable_unit_uom_label or pack_row.sellable_unit_uom_code,
+                "sellable_units_per_purchase_unit": float(pack_row.sellable_units_per_purchase_unit) if pack_row.sellable_units_per_purchase_unit is not None else None,
+                "content_amount": float(pack_row.content_amount) if pack_row.content_amount is not None else None,
+                "content_uom": pack_row.content_uom_label or pack_row.content_uom_code,
+            }
+        pack_tuple = None
+        if pack_row is not None:
+            pack_tuple = (
+                pack_row.purchase_uom_code,
+                pack_row.sellable_unit_uom_code,
+                float(pack_row.sellable_units_per_purchase_unit) if pack_row.sellable_units_per_purchase_unit is not None else None,
+            )
+        price_rows = (
+            db.query(models.CatalogueSupplierPrice)
+            .filter_by(supplier_product_id=offering.id)
+            .order_by(models.CatalogueSupplierPrice.id.desc())
+            .all()
+        )
+        history = [
+            {
+                "unit_cost": _per_sell_unit(float(price.amount), price.price_basis_uom_code, pack_tuple),
+                "amount": float(price.amount),
+                "basis": price.price_basis_uom_label or price.price_basis_uom_code,
+                "since": price.effective_from or price.created_at,
+                "until": price.superseded_at,
+                "is_current": bool(price.is_current),
+                "source": "catalogue" if price.ingestion_run_uuid else "manual",
+                "run_id": price.ingestion_run_uuid,
+            }
+            for price in price_rows
+        ]
+
+    current = next((row for row in history if row["is_current"]), None)
+    return {
+        "supplier_id": (link.supplier_id if link else None) or (offering.supplier_id if offering else None),
+        "supplier_name": supplier.name if supplier else None,
+        "supplier_code": supplier.code if supplier else None,
+        "supplier_sku": (link.supplier_sku if link else None) or (offering.supplier_sku if offering else None),
+        "barcode": (link.barcode if link else None) or (offering.barcode if offering else None),
+        "source": current["source"] if current else "legacy",
+        "current": current,
+        "history": history,
+        "packaging": packaging,
+        "legacy": {
+            "basic_cost": link.basic_cost if link else None,
+            "units_per_pack": link.units_per_pack if link else None,
+            "cost_source": link.cost_source if link else None,
+            "cost_updated_at": link.cost_updated_at if link else None,
+        },
+    }
+
+
 def _utcnow_iso() -> str:
     from datetime import datetime, timezone
 

@@ -191,6 +191,45 @@ def test_record_supplier_cost_supersedes_previous_price_and_reuses_offering():
         assert get_unit_cost(link) == 14.0
 
 
+def test_variant_offerings_read_model_attributes_sources_plainly():
+    with _session() as db:
+        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        # Pre-domain: no offering price → the supplier reads as legacy.
+        entry = offering_costs.variant_offerings(db, link.product_id)[0]
+        assert entry["source"] == "legacy"
+        assert entry["current"] is None
+        assert entry["legacy"]["basic_cost"] == 157.2
+
+        # A manual edit becomes a manual price row; a catalogue commit row
+        # (carries its run id) reads as catalogue and supersedes it.
+        offering_costs.record_supplier_cost(db, link, pack_cost=157.2)
+        db.commit()
+        offering = db.query(models.SupplierOffering).one()
+        db.add(
+            models.CatalogueSupplierPrice(
+                supplier_product_id=offering.id,
+                amount=12.5,
+                currency="HKD",
+                price_basis_uom_code="UNIT",
+                ingestion_run_uuid="11111111-1111-4111-8111-111111111111",
+                is_current=1,
+                created_at="2026-07-30T00:00:00+00:00",
+            )
+        )
+        db.query(models.CatalogueSupplierPrice).filter(
+            models.CatalogueSupplierPrice.supplier_product_id == offering.id,
+            models.CatalogueSupplierPrice.ingestion_run_uuid.is_(None),
+        ).update({"is_current": 0, "superseded_at": "2026-07-30T00:00:00+00:00"}, synchronize_session=False)
+        db.commit()
+
+        entry = offering_costs.variant_offerings(db, link.product_id)[0]
+        assert entry["source"] == "catalogue"
+        assert entry["current"]["unit_cost"] == 12.5
+        assert entry["current"]["run_id"] == "11111111-1111-4111-8111-111111111111"
+        assert [row["source"] for row in entry["history"]] == ["catalogue", "manual"]
+        assert entry["history"][1]["until"] is not None
+
+
 def test_record_supplier_cost_is_noop_without_supplier_or_cost():
     with _session() as db:
         link = _seed_link(db, basic_cost=157.2, units_per_pack=12)

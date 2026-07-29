@@ -679,6 +679,45 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
     }
 
 
+@router.get("/{sku:path}/onboarding-audit")   # registered before the catch-all GET below
+def list_onboarding_audit(sku: str, limit: int = Query(100, ge=1, le=500),
+                          db: Session = Depends(database.get_db),
+                          _user: models.User = Depends(require_user)):
+    """Historical catalogue-onboarding decisions for one SKU. The matching flow
+    that wrote these is retired; the append-only history stays readable here
+    (it previously lived on the removed /catalogues/audit endpoint)."""
+    rows = (
+        db.query(models.CatalogueAuditEvent)
+        .filter(models.CatalogueAuditEvent.sku_code == sku)
+        .order_by(models.CatalogueAuditEvent.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return {"events": [
+        {
+            "id": row.id, "item_id": row.item_id, "import_id": row.import_id,
+            "product_id": row.product_id, "sku_code": row.sku_code, "action": row.action,
+            "user_id": row.user_id, "username": row.username, "display_name": row.display_name,
+            "details": json.loads(row.details or "{}"),
+            "created_at": row.created_at,
+        }
+        for row in rows
+    ]}
+
+
+@router.get("/{sku:path}/offerings")   # registered before the catch-all GET below
+def list_variant_offerings(sku: str, db: Session = Depends(database.get_db),
+                           _user: models.User = Depends(require_user)):
+    """Supplier-offerings lane for the SKU page: per supplier — current cost
+    with plain-word source (catalogue / manual / legacy), effective-dated
+    price history, and the current packaging configuration. Lineage ids are
+    included only to power audit links; the page renders none of them."""
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"sku_code": product.sku_code, "offerings": offering_costs.variant_offerings(db, product.id)}
+
+
 @router.get("/{sku:path}/sku-history")   # registered before the catch-all GET below
 def sku_history(sku: str, db: Session = Depends(database.get_db),
                 _user: models.User = Depends(require_user)):

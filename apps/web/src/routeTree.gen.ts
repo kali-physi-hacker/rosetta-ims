@@ -34,6 +34,7 @@ import { Route as AuthedCataloguesIndexRouteImport } from './routes/_authed/cata
 import { Route as AuthedClientsIndexRouteImport } from './routes/_authed/clients/index'
 import { Route as AuthedClientsGuideRouteImport } from './routes/_authed/clients/guide'
 import { Route as AuthedItemsSplatRouteImport } from './routes/_authed/items/$'
+import { Route as AuthedSkuSplatRouteImport } from './routes/_authed/sku/$'
 import { Route as AuthedCataloguesReviewIndexRouteImport } from './routes/_authed/catalogues/review/index'
 import { Route as AuthedCataloguesReviewRunIdIndexRouteImport } from './routes/_authed/catalogues/review/$runId/index'
 import { Route as AuthedCataloguesReviewRunIdCommitRouteImport } from './routes/_authed/catalogues/review/$runId/commit'
@@ -163,6 +164,11 @@ const AuthedItemsSplatRoute = AuthedItemsSplatRouteImport.update({
   path: '/items/$',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSkuSplatRoute = AuthedSkuSplatRouteImport.update({
+  id: '/sku/$',
+  path: '/sku/$',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedCataloguesReviewIndexRoute =
   AuthedCataloguesReviewIndexRouteImport.update({
     id: '/catalogues/review/',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
   '/items/$': typeof AuthedItemsSplatRoute
+  '/sku/$': typeof AuthedSkuSplatRoute
   '/catalogues/': typeof AuthedCataloguesIndexRoute
   '/clients/': typeof AuthedClientsIndexRoute
   '/catalogues/review/': typeof AuthedCataloguesReviewIndexRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthedAdminUsersRoute
   '/clients/guide': typeof AuthedClientsGuideRoute
   '/items/$': typeof AuthedItemsSplatRoute
+  '/sku/$': typeof AuthedSkuSplatRoute
   '/catalogues': typeof AuthedCataloguesIndexRoute
   '/clients': typeof AuthedClientsIndexRoute
   '/catalogues/review': typeof AuthedCataloguesReviewIndexRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/clients/guide': typeof AuthedClientsGuideRoute
   '/_authed/items/$': typeof AuthedItemsSplatRoute
+  '/_authed/sku/$': typeof AuthedSkuSplatRoute
   '/_authed/catalogues/': typeof AuthedCataloguesIndexRoute
   '/_authed/clients/': typeof AuthedClientsIndexRoute
   '/_authed/catalogues/review/': typeof AuthedCataloguesReviewIndexRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/clients/guide'
     | '/items/$'
+    | '/sku/$'
     | '/catalogues/'
     | '/clients/'
     | '/catalogues/review/'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/clients/guide'
     | '/items/$'
+    | '/sku/$'
     | '/catalogues'
     | '/clients'
     | '/catalogues/review'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/_authed/admin/users'
     | '/_authed/clients/guide'
     | '/_authed/items/$'
+    | '/_authed/sku/$'
     | '/_authed/catalogues/'
     | '/_authed/clients/'
     | '/_authed/catalogues/review/'
@@ -559,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedItemsSplatRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/sku/$': {
+      id: '/_authed/sku/$'
+      path: '/sku/$'
+      fullPath: '/sku/$'
+      preLoaderRoute: typeof AuthedSkuSplatRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/catalogues/review/': {
       id: '/_authed/catalogues/review/'
       path: '/catalogues/review'
@@ -609,6 +628,7 @@ interface AuthedRouteChildren {
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedClientsGuideRoute: typeof AuthedClientsGuideRoute
   AuthedItemsSplatRoute: typeof AuthedItemsSplatRoute
+  AuthedSkuSplatRoute: typeof AuthedSkuSplatRoute
   AuthedCataloguesIndexRoute: typeof AuthedCataloguesIndexRoute
   AuthedClientsIndexRoute: typeof AuthedClientsIndexRoute
   AuthedCataloguesReviewIndexRoute: typeof AuthedCataloguesReviewIndexRoute
@@ -636,6 +656,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedClientsGuideRoute: AuthedClientsGuideRoute,
   AuthedItemsSplatRoute: AuthedItemsSplatRoute,
+  AuthedSkuSplatRoute: AuthedSkuSplatRoute,
   AuthedCataloguesIndexRoute: AuthedCataloguesIndexRoute,
   AuthedClientsIndexRoute: AuthedClientsIndexRoute,
   AuthedCataloguesReviewIndexRoute: AuthedCataloguesReviewIndexRoute,
