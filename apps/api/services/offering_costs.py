@@ -81,6 +81,27 @@ def record_supplier_cost(
     unit_cost = round(pack_cost / units, 4) if units and units > 1 else pack_cost
     now = _utcnow_iso()
 
+    offering = _ensure_offering(db, link, now)
+    variant = db.get(models.ProductVariant, link.product_id)
+    db.query(models.CatalogueSupplierPrice).filter_by(
+        supplier_product_id=offering.id, is_current=1
+    ).update({"is_current": 0, "superseded_at": now}, synchronize_session=False)
+    db.add(
+        models.CatalogueSupplierPrice(
+            supplier_product_id=offering.id,
+            amount=unit_cost,
+            currency="HKD",
+            price_basis_uom_code="UNIT",
+            price_basis_uom_label=(variant.uom if variant else None),
+            effective_from=now,
+            is_current=1,
+            created_at=now,
+        )
+    )
+    invalidate(db)
+
+
+def _ensure_offering(db: Session, link: models.ProductSupplier, now: str) -> models.SupplierOffering:
     offering = (
         db.query(models.SupplierOffering)
         .filter_by(supplier_id=link.supplier_id, product_variant_id=link.product_id)
@@ -100,20 +121,62 @@ def record_supplier_cost(
         )
         db.add(offering)
         db.flush()
+    return offering
 
+
+def set_offering_packaging(
+    db: Session,
+    link: models.ProductSupplier,
+    *,
+    purchase_uom: str | None,
+    sellable_units: float | None,
+) -> None:
+    """Record this supplier's packaging — what one purchase unit is called and
+    how many sell units it contains — on the link's SupplierOffering, the
+    domain home for packaging. Supersedes the current packaging row; whichever
+    half isn't provided carries forward. No-op when nothing changes or the
+    link has no supplier/variant. Does not commit.
+    """
+
+    if link.supplier_id is None or link.product_id is None:
+        return
+    label = purchase_uom.strip() if isinstance(purchase_uom, str) and purchase_uom.strip() else None
+    if label is None and sellable_units is None:
+        return
+    now = _utcnow_iso()
+    offering = _ensure_offering(db, link, now)
+    current = (
+        db.query(models.CataloguePackagingConfiguration)
+        .filter_by(supplier_product_id=offering.id, superseded_at=None)
+        .order_by(models.CataloguePackagingConfiguration.id.desc())
+        .first()
+    )
+    if label is None and current is not None:
+        label = current.purchase_uom_label or current.purchase_uom_code
+    units = float(sellable_units) if sellable_units is not None else (
+        float(current.sellable_units_per_purchase_unit)
+        if current is not None and current.sellable_units_per_purchase_unit is not None
+        else None
+    )
+    if current is not None:
+        cur_label = current.purchase_uom_label or current.purchase_uom_code
+        cur_units = (
+            float(current.sellable_units_per_purchase_unit)
+            if current.sellable_units_per_purchase_unit is not None
+            else None
+        )
+        if cur_label == label and cur_units == units:
+            return
+        current.superseded_at = now
     variant = db.get(models.ProductVariant, link.product_id)
-    db.query(models.CatalogueSupplierPrice).filter_by(
-        supplier_product_id=offering.id, is_current=1
-    ).update({"is_current": 0, "superseded_at": now}, synchronize_session=False)
     db.add(
-        models.CatalogueSupplierPrice(
+        models.CataloguePackagingConfiguration(
             supplier_product_id=offering.id,
-            amount=unit_cost,
-            currency="HKD",
-            price_basis_uom_code="UNIT",
-            price_basis_uom_label=(variant.uom if variant else None),
-            effective_from=now,
-            is_current=1,
+            purchase_uom_code=(label or "PACK").upper().replace(" ", "_"),
+            purchase_uom_label=label,
+            sellable_unit_uom_code="UNIT",
+            sellable_unit_uom_label=(variant.uom if variant else None),
+            sellable_units_per_purchase_unit=units,
             created_at=now,
         )
     )

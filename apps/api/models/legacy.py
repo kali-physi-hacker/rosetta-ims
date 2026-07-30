@@ -266,6 +266,7 @@ class SellingItem(Base):
     external_listing_id = Column(String, nullable=True)
     sell_uom = Column(String, nullable=True)
     units_per_listing = Column(Integer, nullable=True)
+    order_multiple = Column(Integer, nullable=True)
     selling_price = Column(Float, nullable=True)
     status = Column(String, nullable=False, default="ACTIVE")
     created_at = Column(String, nullable=False)
@@ -288,6 +289,7 @@ class ProductSupplier(Base):
     product_id      = Column(Integer, ForeignKey("products.id"), nullable=False)
     supplier_id     = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
     supplier_sku    = Column(String)
+    rrp             = Column(Float)   # this supplier's recommended retail price (HKD) — per supplier, not per variant
     barcode         = Column(String)
     basic_cost      = Column(Float)          # the wholesale cost — the single cost all margin math runs on
     # (catalogue_cost / daysmart_cost / cost_reconciled_at retired — invoice reconciliation is a
@@ -393,6 +395,7 @@ class ProductChannel(Base):
     has_dispensing_fee  = Column(Integer, nullable=False, default=0)
     channel_fee_pct     = Column(Float, nullable=True)     # e.g. 0.08 = 8% HKTV platform fee
     units_per_listing   = Column(Integer, nullable=True)   # how many sell-units per HKTV listing (e.g. 12 for a case)
+    order_multiple      = Column(Integer, nullable=True)   # customers buy in multiples of N listings (purchase-qty rule, NOT the listing's content)
     updated_at          = Column(String, nullable=False)
 
     product = relationship("ProductVariant", back_populates="channels")

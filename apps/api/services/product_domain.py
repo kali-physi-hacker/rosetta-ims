@@ -59,6 +59,7 @@ def ensure_selling_item(
             channel=channel.channel,
             sell_uom=variant.uom,
             units_per_listing=channel.units_per_listing,
+            order_multiple=channel.order_multiple,
             selling_price=channel.selling_price,
             status=status,
             created_at=timestamp,
@@ -69,6 +70,7 @@ def ensure_selling_item(
         row.inventory_item_id = inventory_item.id
         row.sell_uom = variant.uom
         row.units_per_listing = channel.units_per_listing
+        row.order_multiple = channel.order_multiple
         row.selling_price = channel.selling_price
         row.status = status
         row.updated_at = timestamp

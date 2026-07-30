@@ -716,7 +716,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
               </div>
             ))}
             <p style={{ fontSize: '10px', color: C.faint, marginTop: '6px' }}>
-              To link a new supplier, use the <Link to={`/items/${skuToPath(sku)}` as never} style={{ color: C.indigo }}>detail page</Link> or re-sync after updating the Sheet.
+              To link a new supplier, use the <Link to={`/sku/${skuToPath(sku)}` as never} style={{ color: C.indigo }}>detail page</Link> or re-sync after updating the Sheet.
             </p>
           </div>
 
@@ -921,7 +921,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
 
       {/* Bottom bar */}
       <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to={`/items/${skuToPath(sku)}` as never} style={{ fontSize: '11px', color: C.indigo, textDecoration: 'none' }}>
+        <Link to={`/sku/${skuToPath(sku)}` as never} style={{ fontSize: '11px', color: C.indigo, textDecoration: 'none' }}>
           Full detail page →
         </Link>
         <button onClick={() => {}} style={{ fontSize: '11px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer' }}>

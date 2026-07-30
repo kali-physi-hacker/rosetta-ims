@@ -258,7 +258,7 @@ function LogicLayerPage() {
               }}
             >
               <div style={{ padding: '10px 12px' }}>
-                <Link to={`/items/${skuToPath(p.sku_code)}` as never} style={{ fontSize: '11px', color: C.indigo, textDecoration: 'none', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                <Link to={`/sku/${skuToPath(p.sku_code)}` as never} style={{ fontSize: '11px', color: C.indigo, textDecoration: 'none', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                   {p.sku_code}
                 </Link>
               </div>

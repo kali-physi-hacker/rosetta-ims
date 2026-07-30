@@ -1253,8 +1253,10 @@ class SupplierLink(BaseModel):
     supplier_id:           Optional[int]   = None
     supplier_sku:          Optional[str]   = None
     barcode:               Optional[str]   = None
+    rrp:                   Optional[float] = None   # supplier's recommended retail price
     basic_cost:            Optional[float] = None
     units_per_pack:        Optional[int]   = None   # COST BASIS units = sellable units covered by basic_cost
+    pack_unit:             Optional[str]   = None   # this supplier's purchase-unit label (tray, case…) — writes offering packaging
     is_primary:            Optional[bool]  = None
     # Supplier ordering terms (descriptive; do NOT feed unit cost). Sentinel "" clears a field.
     order_increment_qty:   Optional[int]   = None
@@ -1380,7 +1382,7 @@ def add_supplier_link(sku: str, body: SupplierLink,
     link = models.ProductSupplier(
         product_id=product.id, supplier_id=body.supplier_id,
         supplier_sku=_clean_str(body.supplier_sku), barcode=_clean_str(body.barcode),
-        basic_cost=body.basic_cost, units_per_pack=body.units_per_pack,
+        rrp=body.rrp, basic_cost=body.basic_cost, units_per_pack=body.units_per_pack,
         cost_source='manual', pack_source='manual',
         order_increment_qty=body.order_increment_qty, order_increment_uom=oi_uom,
         minimum_order_qty=body.minimum_order_qty, minimum_order_uom=mo_uom,
@@ -1390,6 +1392,9 @@ def add_supplier_link(sku: str, body: SupplierLink,
     db.add(link)
     db.flush()
     offering_costs.record_supplier_cost(db, link, pack_cost=link.basic_cost)
+    if body.pack_unit is not None or body.units_per_pack is not None:
+        offering_costs.set_offering_packaging(
+            db, link, purchase_uom=_clean_str(body.pack_unit), sellable_units=body.units_per_pack)
     _audit_product(db, current_user, "product.supplier_add", product,
                    supplier_id=body.supplier_id, supplier=sup.name)
     product.updated_at = now
@@ -1421,11 +1426,17 @@ def update_supplier_link(sku: str, ps_id: int, body: SupplierLink,
     sent = body.model_dump(exclude_unset=True)
     if "supplier_sku" in sent:  link.supplier_sku = _clean_str(sent["supplier_sku"])
     if "barcode" in sent:       link.barcode = _clean_str(sent["barcode"])
+    if "rrp" in sent:           link.rrp = sent["rrp"]
     if sent.get("basic_cost") is not None:
         link.basic_cost = sent["basic_cost"]; link.cost_source = 'manual'; link.cost_updated_at = now
         offering_costs.record_supplier_cost(db, link, pack_cost=link.basic_cost)
     if sent.get("units_per_pack") is not None:
         link.units_per_pack = sent["units_per_pack"]; link.pack_source = 'manual'
+    if "pack_unit" in sent or sent.get("units_per_pack") is not None:
+        offering_costs.set_offering_packaging(
+            db, link,
+            purchase_uom=_clean_str(sent["pack_unit"]) if "pack_unit" in sent else None,
+            sellable_units=sent.get("units_per_pack"))
     # Supplier ordering terms — descriptive; do NOT feed unit cost.
     if "order_increment_qty" in sent:   link.order_increment_qty = sent["order_increment_qty"]
     if "order_increment_uom" in sent:   link.order_increment_uom = _clean_str(sent["order_increment_uom"])
@@ -1732,6 +1743,78 @@ def update_channel_price(
     pc.updated_at = datetime.utcnow().isoformat()
     _audit_product(db, _user, "product.price_update", product, channel=channel, **{"from": _old_price, "to": body.selling_price})
     db.commit()
+
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
+    cat_rules = _load_cat_rules(db)
+    return product_to_dict(updated, cat_rules, include_margin_range=True)
+
+
+class ChannelConfigUpdate(BaseModel):
+    """Per-channel selling configuration — each selling item owns its own
+    price, visibility, listing multiple and dispensing-fee flag."""
+    selling_price:      Optional[float] = None
+    is_active:          Optional[bool]  = None
+    units_per_listing:  Optional[int]   = None   # sell-units per listing; <= 1 clears to single-unit
+    order_multiple:     Optional[int]   = None   # customers buy in multiples of N listings; <= 1 clears
+    has_dispensing_fee: Optional[bool]  = None
+
+
+@router.patch("/{sku:path}/channels/{channel}")
+def update_channel_config(
+    sku: str,
+    channel: str,
+    body: ChannelConfigUpdate,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("product_edit")),
+):
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    pc = db.query(models.ProductChannel).filter(
+        models.ProductChannel.product_id == product.id,
+        models.ProductChannel.channel == channel,
+    ).first()
+    sent = body.model_dump(exclude_unset=True)
+    created = False
+    if not pc:
+        # Upsert: a selling item can be added from the SKU page, not only by
+        # the platform syncs. The channel vocabulary stays closed.
+        if channel not in ("clinic", "shopify", "hktv"):
+            raise HTTPException(status_code=400, detail=f"Unknown channel '{channel}' — must be clinic, shopify or hktv")
+        pc = models.ProductChannel(
+            product_id=product.id, channel=channel,
+            is_active=1 if sent.get("is_active", True) else 0,
+            has_dispensing_fee=0,
+            updated_at=datetime.utcnow().isoformat(),
+        )
+        db.add(pc)
+        created = True
+
+    changes = {}
+    if "selling_price" in sent:
+        changes["price"] = {"from": pc.selling_price, "to": sent["selling_price"]}
+        pc.selling_price = sent["selling_price"]
+    if "is_active" in sent:
+        changes["is_active"] = {"from": bool(pc.is_active), "to": bool(sent["is_active"])}
+        pc.is_active = 1 if sent["is_active"] else 0
+    if "units_per_listing" in sent:
+        v = sent["units_per_listing"]
+        nv = v if v is not None and v > 1 else None
+        changes["units_per_listing"] = {"from": pc.units_per_listing, "to": nv}
+        pc.units_per_listing = nv
+    if "order_multiple" in sent:
+        v = sent["order_multiple"]
+        nv = v if v is not None and v > 1 else None
+        changes["order_multiple"] = {"from": pc.order_multiple, "to": nv}
+        pc.order_multiple = nv
+    if "has_dispensing_fee" in sent:
+        changes["has_dispensing_fee"] = {"from": bool(pc.has_dispensing_fee), "to": bool(sent["has_dispensing_fee"])}
+        pc.has_dispensing_fee = 1 if sent["has_dispensing_fee"] else 0
+    if changes or created:
+        pc.updated_at = datetime.utcnow().isoformat()
+        _audit_product(db, _user, "product.channel_add" if created else "product.channel_update",
+                       product, channel=channel, changes=changes)
+        db.commit()
 
     updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)

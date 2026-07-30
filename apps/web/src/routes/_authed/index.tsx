@@ -1041,7 +1041,7 @@ function InventoryView() {
   }, [marginMode])
   const anyFilter = !!(search.trim() || selectedCats.length || supplier !== 'All' || channelFilter !== 'all' || quickFilter || locationFilter !== 'All' || stockFilter !== 'All' || qualityFilter !== 'All' || collectionSkus)
   const clearAll = () => { setSearch(''); setSearchInput(''); setSelectedCats([]); setSupplier('All'); setChannelFilter('all'); setQuickFilter(null); setLocationFilter('All'); setStockFilter('All'); setQualityFilter('All'); selectCollection(null) }
-  const detailHref = (item: Product) => `/items/${skuToPath(item.sku_code)}`
+  const detailHref = (item: Product) => `/sku/${skuToPath(item.sku_code)}`
   const validSkuCode = (s: string) => /^\d{6,}$/.test(s.trim())
 
   const canBulk = mounted && can('product_sensitive')
