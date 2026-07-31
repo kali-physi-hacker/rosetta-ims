@@ -1,7 +1,7 @@
 // Inventory rev-02 — scope first, attention second, table third.
 //
 // The catalogue is 11k variants of which a few hundred are operational, so the
-// page opens on the *working set* (stocked, selling, or recently sold) and
+// page opens on *stocked or moving* (holds stock, or sold recently) and
 // keeps the archive one click away. Attention counts are computed inside the
 // scope, which is what makes them mean anything. Three fitting views replace
 // the 18-column table plus its special-case Margins mode, and every row
@@ -30,11 +30,33 @@ type ScopeId = 'working' | 'active' | 'all'
 type ViewId = 'ops' | 'money' | 'dq'
 type AttentionId = 'low_cover' | 'below_floor' | 'supplier_out' | 'no_cost' | 'expiring'
 
-const SCOPES: { id: ScopeId; label: string; blurb: string }[] = [
-  { id: 'working', label: 'Working set', blurb: 'active, and stocked or selling' },
-  { id: 'active', label: 'Active', blurb: 'status ACTIVE' },
-  { id: 'all', label: 'Everything', blurb: 'every variant, including inactive' },
+/** The three scopes nest: stocked-or-moving ⊂ active ⊂ everything. The labels
+ *  name the rule rather than a category — "Working set" and "Active" both read
+ *  as "the live stuff", which hid the fact that one sits inside the other. */
+const SCOPES: {
+  id: ScopeId; label: string; blurb: string
+  rule: string; delta: (d: ScopeCounts) => string; use: string
+}[] = [
+  {
+    id: 'working', label: 'Stocked or moving', blurb: 'active, and holding stock or selling',
+    rule: 'Active SKUs that hold stock, sold in the last 120 days, or carry weekly demand.',
+    delta: d => `Hides ${d.dormant.toLocaleString()} active-but-dormant and ${d.inactive.toLocaleString()} inactive rows.`,
+    use: 'The daily queue. Every attention count is measured against this set.',
+  },
+  {
+    id: 'active', label: 'All active', blurb: 'status ACTIVE, dormant rows included',
+    rule: 'Every SKU with status ACTIVE, whether or not it moves.',
+    delta: d => `Adds ${d.dormant.toLocaleString()} dormant SKUs — no stock, no sales, no demand.`,
+    use: 'When a SKU you expect is missing. Usually one that has never been stocked.',
+  },
+  {
+    id: 'all', label: 'Whole catalogue', blurb: 'every variant, archive included',
+    rule: 'Every variant on record, including inactive and discontinued.',
+    delta: d => `Adds ${d.inactive.toLocaleString()} inactive rows — the archive.`,
+    use: 'Looking something up by name or SKU. Attention counts switch off here.',
+  },
 ]
+type ScopeCounts = { working: number; active: number; all: number; dormant: number; inactive: number }
 const VIEWS: { id: ViewId; label: string }[] = [
   { id: 'ops', label: 'Operations' },
   { id: 'money', label: 'Money' },
@@ -858,7 +880,11 @@ function NewInventoryPage() {
   })
 
   const scopeMeta = SCOPES.find(s => s.id === scope)!
-  const workingCount = useMemo(() => items.filter(inWorkingSet).length, [items])
+  const scopeCounts = useMemo<ScopeCounts>(() => {
+    const working = items.filter(inWorkingSet).length
+    const active = items.filter(i => i.status === 'ACTIVE').length
+    return { working, active, all: items.length, dormant: active - working, inactive: items.length - active }
+  }, [items])
 
   return (
     <div className="inv2" style={{ padding: '18px 24px 40px', maxWidth: 1320, margin: '0 auto', position: 'relative' }}>
@@ -870,16 +896,12 @@ function NewInventoryPage() {
           <h1>Inventory</h1>
           <div className="sub" style={{ marginTop: 3 }}>
             {settled
-              ? <>{workingCount.toLocaleString()} stocked or selling · {items.length.toLocaleString()} in the catalogue</>
+              ? <>{items.length.toLocaleString()} variants · live from the catalogue</>
               : <>loading {loaded.toLocaleString()}{total ? ` / ${total.toLocaleString()}` : ''}…</>}
           </div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', position: 'relative' }}>
-          <div className="scope">
-            {SCOPES.map(s => (
-              <button key={s.id} className={scope === s.id ? 'on' : ''} title={s.blurb} onClick={() => setScope(s.id)}>{s.label}</button>
-            ))}
-          </div>
+          <ScopeSwitch scope={scope} onPick={setScope} counts={scopeCounts} settled={settled} />
           <button className="btn" onClick={() => setExportOpen(true)}>↓ Export</button>
           {editable && <button className="btn" onClick={() => setBatchOpen(true)}>Batch update</button>}
           <div style={{ position: 'relative' }}>
@@ -894,8 +916,9 @@ function NewInventoryPage() {
         <div className="att" style={{ gridTemplateColumns: '1fr' }}>
           <div className="acard quiet">
             <div className="al" style={{ fontSize: 12, color: 'var(--ink2)' }}>
-              Attention counts are hidden in this scope — most of these rows are archived and can’t need anything.{' '}
-              <button className="lnk" onClick={() => setScope('working')}>Back to the working set</button>
+              Attention counts are off in the whole catalogue — {scopeCounts.inactive.toLocaleString()} of these rows are
+              archived and can’t need anything. Search and filters still work.{' '}
+              <button className="lnk" onClick={() => setScope('working')}>Back to stocked or moving</button>
             </div>
           </div>
         </div>
@@ -911,11 +934,11 @@ function NewInventoryPage() {
           <div className="acard quiet">
             <div className="an">
               {!settled ? <span className="skel" style={{ display: 'block', width: 110 }} />
-                : counts.low_cover + counts.below_floor + counts.supplier_out + counts.no_cost === 0
-                  ? 'Nothing needs attention' : `${scoped.length.toLocaleString()} in ${scopeMeta.label.toLowerCase()}`}
+                : counts.low_cover + counts.below_floor + counts.supplier_out + counts.no_cost + counts.expiring === 0
+                  ? 'Nothing needs attention' : `${scoped.length.toLocaleString()} in scope`}
             </div>
             <div className="al">{scopeMeta.blurb}</div>
-            <div className="ax">counts are scoped — dormant rows never appear</div>
+            <div className="ax">{settled ? scopeMeta.delta(scopeCounts) : 'counts are scoped to the rows above'}</div>
           </div>
         </div>
       )}
@@ -1037,7 +1060,7 @@ function NewInventoryPage() {
             <div className="tfoot">
               <span>
                 Showing {rows.length.toLocaleString()} of {filtered.length.toLocaleString()} matching
-                {scope !== 'all' && <> · {scopeMeta.label.toLowerCase()} of {scoped.length.toLocaleString()}</>}
+                {scope !== 'all' && <> · {scoped.length.toLocaleString()} in {scopeMeta.label.toLowerCase()}</>}
               </span>
               {rows.length < filtered.length && (
                 <button className="lnk" onClick={() => setRenderLimit(n => n + 500)}>Show 500 more</button>
@@ -1234,7 +1257,7 @@ function SelectionBar({ total, allSkus, onApplied, editable }: {
     if (status === 'DISCONTINUED') {
       const ok = await confirmDialog({
         title: `Discontinue ${skus.length} SKU${skus.length === 1 ? '' : 's'}?`,
-        message: `They stop appearing in the working set and in channel pushes. This is reversible from here or the SKU page.\n\nIncludes: ${skus.slice(0, 5).join(' · ')}${skus.length > 5 ? ` + ${skus.length - 5} more` : ''}`,
+        message: `They stop appearing in the stocked-or-moving scope and in channel pushes. This is reversible from here or the SKU page.\n\nIncludes: ${skus.slice(0, 5).join(' · ')}${skus.length > 5 ? ` + ${skus.length - 5} more` : ''}`,
         confirmLabel: `Discontinue ${skus.length}`, danger: true,
       })
       if (!ok) return
@@ -1288,6 +1311,41 @@ function SkeletonTable({ view }: { view: ViewId }) {
         ))}
       </tbody>
     </table>
+  )
+}
+
+/** Scope picker. Each segment carries its own size, so the cost of widening is
+ *  visible before you click, and hovering explains the rule in place rather
+ *  than in a tooltip you have to hunt for. */
+function ScopeSwitch({ scope, onPick, counts, settled }: {
+  scope: ScopeId; onPick: (s: ScopeId) => void; counts: ScopeCounts; settled: boolean
+}) {
+  const [hint, setHint] = useState<ScopeId | null>(null)
+  const shown = SCOPES.find(s => s.id === (hint ?? scope))!
+  const n = (id: ScopeId) => (id === 'working' ? counts.working : id === 'active' ? counts.active : counts.all)
+  return (
+    <div style={{ position: 'relative' }} onMouseLeave={() => setHint(null)}
+      onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHint(null) }}>
+      <div className="scope2" role="group" aria-label="Catalogue scope">
+        {SCOPES.map(s => (
+          <button key={s.id} className={scope === s.id ? 'on' : ''} aria-pressed={scope === s.id}
+            onClick={() => onPick(s.id)} onMouseEnter={() => setHint(s.id)} onFocus={() => setHint(s.id)}>
+            <span className="sl">{s.label}</span>
+            <span className="sn">{settled ? n(s.id).toLocaleString() : <span className="skel" style={{ display: 'inline-block', width: 30, height: 8 }} />}</span>
+          </button>
+        ))}
+      </div>
+      {hint && (
+        <div className="inv2-pop scopehint">
+          <div className="ph">{shown.label}{hint === scope ? ' · showing now' : ''}</div>
+          <div className="pb">
+            <div style={{ lineHeight: 1.55 }}>{shown.rule}</div>
+            {settled && <div className="pmeta" style={{ marginTop: 6 }}>{shown.delta(counts)}</div>}
+          </div>
+          <div className="pf">{shown.use}</div>
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -23,10 +23,19 @@ export const INV_CSS = `
 .inv2 .chip.bad{color:var(--red);background:var(--red-soft);border-color:#F1CDC9}
 .inv2 .chip.acc{color:var(--accent-ink);background:var(--accent-soft);border-color:var(--accent-line)}
 
-.inv2 .scope{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card)}
-.inv2 .scope button{font-family:inherit;font-size:11.5px;font-weight:650;padding:6px 13px;border:none;background:var(--card);color:var(--muted);border-right:1px solid var(--line2);cursor:pointer}
-.inv2 .scope button:last-child{border-right:none}
-.inv2 .scope button.on{background:var(--accent);color:#fff}
+/* Scope picker. The three scopes NEST (stocked-or-moving c active c
+   everything), so each segment carries its own size — the ascending counts
+   say "this one is wider" without a separate ornament to explain. */
+.inv2 .scope2{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.inv2 .scope2 button{position:relative;font-family:inherit;font-weight:650;padding:5px 13px 6px;border:none;background:var(--card);color:var(--muted);border-right:1px solid var(--line2);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:1px;line-height:1.25}
+.inv2 .scope2 button:last-child{border-right:none}
+.inv2 .scope2 button:hover:not(.on){background:var(--panel);color:var(--ink2)}
+.inv2 .scope2 button.on{background:var(--accent);color:#fff}
+.inv2 .scope2 .sl{font-size:11.5px;white-space:nowrap}
+.inv2 .scope2 .sn{font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--faint)}
+.inv2 .scope2 button.on .sn{color:rgba(255,255,255,.8)}
+.inv2 .scopehint{position:absolute;right:0;top:calc(100% + 6px);left:auto;width:300px}
+@media(max-width:560px){.inv2 .scope2 .sl{font-size:10.5px}.inv2 .scope2 button{padding:5px 9px 6px}}
 
 .inv2 .att{display:grid;grid-template-columns:repeat(5,1fr) 1.2fr;gap:8px;margin-top:12px}
 @media(max-width:1180px){.inv2 .att{grid-template-columns:repeat(3,1fr)}}
