@@ -16,6 +16,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.orm import Session
 
 import models
+from services import offering_identity
 from schemas.catalogue_pipeline import (
     MasteringCandidateV1,
     ExtractedEvidenceV1,
@@ -423,7 +424,16 @@ def _persist_candidate_review_decision(db: Session, contract: MasteringCandidate
 
 def _ensure_supplier_product(db: Session, contract: ServingItemV1) -> models.SupplierOffering:
     key = contract.supplier_offering.supplier_product_id or _supplier_product_key(contract)
-    existing = db.query(models.SupplierOffering).filter_by(supplier_product_key=key).first()
+    # By key OR by the identity the unique index enforces: the same offering
+    # reaches this table under several key forms, and matching on the key alone
+    # would INSERT a second row for a supplier SKU that already has one.
+    existing = offering_identity.find_offering(
+        db,
+        supplier_id=contract.supplier_offering.supplier_id,
+        supplier_sku=contract.supplier_offering.supplier_sku,
+        barcode=contract.supplier_offering.barcode,
+        key=key,
+    )
     product_id = _product_id_for_sku(db, contract.canonical_sku)
     if existing:
         existing.supplier_sku = contract.supplier_offering.supplier_sku

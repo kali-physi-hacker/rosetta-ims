@@ -61,6 +61,7 @@ from schemas.catalogue_pipeline.serving_item_v1 import PublicationLineage, Suppl
 from schemas.catalogue_pipeline.normalized_row_v1 import NormalizedCatalogueFields, ClaimRawFields
 from services import catalogue_pipeline_persistence as persistence
 from services import offering_costs
+from services import offering_identity
 from services import product_domain
 from services import supplier_source_contract_runtime
 
@@ -960,21 +961,9 @@ class ApprovedCommercialStateService(_TransactionalService):
         applied_at = command.applied_at or _now()
 
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        existing_supplier_product = self.db.query(models.SupplierOffering).filter_by(
-            supplier_product_key=supplier_product_key
-        ).first()
-        if existing_supplier_product is None:
-            # The key is not the identity — (supplier_id, supplier_sku) is, and
-            # it carries a UNIQUE index. Offerings reach this table by two
-            # routes that mint different keys: the pipeline uses
-            # "supplier:{id}:offer:{sku}", while offering_costs (the legacy-link
-            # and human-edit path) uses "…:offer:legacy-product-supplier:{n}".
-            # 2,791 of 2,794 offerings in the dev catalogue carry the second
-            # form, so keying the lookup alone meant apply tried to INSERT a
-            # duplicate and died on the constraint. Adopt the row instead.
-            existing_supplier_product = _existing_offering_for_identity(
-                self.db, candidate.supplier_product_resolution
-            )
+        existing_supplier_product = _find_candidate_offering(
+            self.db, candidate, key=supplier_product_key
+        )
         if existing_supplier_product is not None:
             applied_state = self._candidate_applied_state(existing_supplier_product, candidate)
             if applied_state == "current_complete":
@@ -1352,9 +1341,9 @@ class ServingPublicationService(_TransactionalService):
         candidate = persistence.mastering_candidate_to_contract(candidate_row)
         _assert_publication_review_provenance(self.db, candidate)
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        supplier_product = self.db.query(models.SupplierOffering).filter_by(
-            supplier_product_key=supplier_product_key
-        ).first()
+        supplier_product = _find_candidate_offering(
+            self.db, candidate, key=supplier_product_key
+        )
         if supplier_product is None:
             raise PublicationIneligible("Serving publication requires applied Supplier Offer state")
         decision_id = str(candidate.review_decision_id)
@@ -1769,14 +1758,15 @@ def _supplier_product_matches(
             matches[row.supplier_product_key] = {
                 "supplier_product_id": row.supplier_product_key,
                 "product_id": row.product_variant_id,
-                "identities": _offering_identities(row, supplier_id, supplier_sku),
+                "identities": offering_identity.offering_identities(
+                    row, supplier_id=supplier_id, supplier_sku=supplier_sku),
             }
     if matches:
         return list(matches.values())
     legacy_rows = db.query(models.ProductSupplier).filter_by(supplier_id=supplier_id).all()
     for row in legacy_rows:
         if (supplier_sku and row.supplier_sku == supplier_sku) or (barcode and row.barcode == barcode):
-            key = f"{_LEGACY_LINK_PREFIX}{row.id}"
+            key = f"{offering_identity.LEGACY_LINK_PREFIX}{row.id}"
             matches[key] = {
                 "supplier_product_id": key,
                 "product_id": row.product_id,
@@ -1785,39 +1775,7 @@ def _supplier_product_matches(
     return list(matches.values())
 
 
-_LEGACY_LINK_PREFIX = "legacy-product-supplier:"
-_LINK_KEY_SUFFIX = re.compile(r":offer:(?:link|legacy-product-supplier):(\d+)$")
 
-
-def _offering_identities(
-    row: models.SupplierOffering,
-    supplier_id: int | None,
-    supplier_sku: str | None,
-) -> set[str]:
-    """Every identity string that has ever denoted this one offering.
-
-    A candidate freezes `supplier_product_id` when it is prepared, and which
-    form it froze depends on what existed at that moment. Before the offering
-    baseline backfill (ca45fc0) a supplier match could only come from the
-    legacy ProductSupplier fallback, so 182 pending candidates hold
-    "legacy-product-supplier:{n}". The backfill then created real offerings for
-    those same links under "supplier:{sid}:offer:link:{n}", the matcher started
-    preferring them, and every one of those candidates became unapprovable —
-    the row had not changed, only the name we called it by.
-
-    Comparing on the set rather than the current key makes the check about the
-    offering, which is what it was always meant to assert.
-    """
-    identities = {row.supplier_product_key}
-    if row.legacy_product_supplier_id is not None:
-        identities.add(f"{_LEGACY_LINK_PREFIX}{row.legacy_product_supplier_id}")
-    # Rows predating the FK column still carry the link id inside the key.
-    embedded = _LINK_KEY_SUFFIX.search(row.supplier_product_key or "")
-    if embedded:
-        identities.add(f"{_LEGACY_LINK_PREFIX}{embedded.group(1)}")
-    if supplier_id is not None and supplier_sku:
-        identities.add(f"supplier:{supplier_id}:offer:{supplier_sku}")
-    return identities
 
 
 def _exact_product_match(
@@ -1988,23 +1946,22 @@ def _assert_candidate_applicable(db: Session, candidate: MasteringCandidateV1) -
         raise InvalidStageTransition("Candidate packaging price basis conflicts with supplier cost price basis")
 
 
-def _existing_offering_for_identity(db: Session, supplier: SupplierProductResolution):
-    """The offering that already owns this supplier's SKU or barcode, if any.
+def _find_candidate_offering(db: Session, candidate: MasteringCandidateV1, *, key: str | None = None):
+    """The offering this candidate's supplier identity denotes, by any key.
 
-    Deliberately matches the UNIQUE constraint the database enforces, not the
-    key the pipeline happens to mint, so an offering created by any route is
-    found and updated rather than duplicated.
+    Every checkpoint that asks "is there already an offering for this supplier
+    SKU?" must go through here. Asking by key alone is what made apply insert a
+    duplicate and die on the unique constraint, and then made publish report
+    perfectly good applied state as missing.
     """
-    if supplier.supplier_id is None:
-        return None
-    query = db.query(models.SupplierOffering).filter_by(supplier_id=supplier.supplier_id)
-    if supplier.supplier_sku:
-        found = query.filter(models.SupplierOffering.supplier_sku == supplier.supplier_sku).first()
-        if found is not None:
-            return found
-    if supplier.barcode:
-        return query.filter(models.SupplierOffering.barcode == supplier.barcode).first()
-    return None
+    supplier = candidate.supplier_product_resolution
+    return offering_identity.find_offering(
+        db,
+        supplier_id=supplier.supplier_id,
+        supplier_sku=supplier.supplier_sku,
+        barcode=supplier.barcode,
+        key=key,
+    )
 
 
 def _resolved_product(db: Session, variant: ProductVariantResolution):
