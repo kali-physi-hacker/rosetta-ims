@@ -121,7 +121,13 @@ export const INV_CSS = `
 .inv2 .mi:hover{background:var(--panel)}
 .inv2 .mi .mt{font-weight:650;color:var(--ink)}
 .inv2 .mi .mx{font-size:10.5px;color:var(--faint);margin-top:1px;line-height:1.4}
-.inv2 .fpanel{position:absolute;left:0;top:calc(100% + 5px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(15,23,42,.16);padding:0;width:560px;max-width:92vw;z-index:50}
+/* The Filters button sits at the right of the toolbar, so the panel opens
+   leftward — anchoring it left pushed 342px off the viewport edge. Below the
+   toolbar's wrap point it becomes a bottom sheet, which can never clip. */
+.inv2 .fpanel{position:absolute;right:0;left:auto;top:calc(100% + 5px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(15,23,42,.16);padding:0;width:560px;max-width:calc(100vw - 32px);z-index:50}
+@media(max-width:820px){
+  .inv2 .fpanel{position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;border-radius:14px 14px 0 0;box-shadow:0 -12px 40px rgba(15,23,42,.22);max-height:80vh;overflow-y:auto}
+}
 .inv2 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:640px){.inv2 .fgrid{grid-template-columns:1fr}}
 .inv2 .shorto{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1200;display:flex;align-items:center;justify-content:center}
