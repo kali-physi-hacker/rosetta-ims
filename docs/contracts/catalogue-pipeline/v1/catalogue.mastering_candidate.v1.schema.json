@@ -64,6 +64,50 @@
       "title": "DiscountedUnitPriceBenefit",
       "type": "object"
     },
+    "DuplicateCandidate": {
+      "additionalProperties": false,
+      "description": "A product the duplicate radar surfaced while a create draft was open.",
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Existing product name.",
+          "title": "Name"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Name similarity at the time of the decision.",
+          "title": "Score"
+        },
+        "sku_code": {
+          "description": "Existing canonical SKU the radar matched.",
+          "title": "Sku Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sku_code",
+        "score"
+      ],
+      "title": "DuplicateCandidate",
+      "type": "object"
+    },
     "ExternalMapping": {
       "additionalProperties": false,
       "description": "Mapping between Rosetta and an external product/catalogue identifier.",
@@ -1079,6 +1123,19 @@
           "description": "Resolution confidence in [0, 1].",
           "title": "Confidence"
         },
+        "created_product_sku": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "SKU apply actually minted for this candidate. Written by apply, never by a reviewer — it is what the create decision turned into, and it makes replay and publish resolve the row like an ordinary match.",
+          "title": "Created Product Sku"
+        },
         "lineage": {
           "anyOf": [
             {
@@ -1143,6 +1200,18 @@
           "description": "Name to use when proposing creation.",
           "title": "Proposed Name"
         },
+        "proposed_variant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProposedVariantDraft"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filled-in create intent. Required for CONFIRMED_CREATE; the SKU itself is minted at apply."
+        },
         "review_decision_id": {
           "anyOf": [
             {
@@ -1166,6 +1235,103 @@
         "state"
       ],
       "title": "ProductVariantResolution",
+      "type": "object"
+    },
+    "ProposedVariantDraft": {
+      "additionalProperties": false,
+      "description": "A human's filled-in intent to create a canonical product.\n\nPresent only on CONFIRMED_CREATE. It exists because the pipeline cannot\nsupply what `products` requires: `category` is non-nullable and also picks\nthe SKU digit, and the extractor's `proposed_name` is frequently malformed\n(it concatenates a range label with a product label, giving names like\n\"i/d i/d Adult 1+ Canned\"). A person writes the name.",
+      "properties": {
+        "brand": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Brand, free text, matching the existing column.",
+          "title": "Brand"
+        },
+        "category": {
+          "description": "Item category; must map to a SKU digit.",
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "checked_against": {
+          "description": "What the radar found when the human confirmed — freezes the evidence they acted on.",
+          "items": {
+            "$ref": "#/$defs/DuplicateCandidate"
+          },
+          "title": "Checked Against",
+          "type": "array"
+        },
+        "duplicate_ack": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why this is not the near-duplicate the radar showed.",
+          "title": "Duplicate Ack"
+        },
+        "name": {
+          "description": "Product name a human wrote. Not the extractor's proposed_name.",
+          "minLength": 2,
+          "title": "Name",
+          "type": "string"
+        },
+        "pack_unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Purchasing pack noun.",
+          "title": "Pack Unit"
+        },
+        "storage_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Storage rule; defaults to 'any'.",
+          "title": "Storage Rule"
+        },
+        "uom": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sell unit.",
+          "title": "Uom"
+        }
+      },
+      "required": [
+        "name",
+        "category"
+      ],
+      "title": "ProposedVariantDraft",
       "type": "object"
     },
     "Quantity": {

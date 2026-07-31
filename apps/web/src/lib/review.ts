@@ -49,6 +49,12 @@ export interface SummaryItem {
   selling_price: number | null
   selling_channel: string | null
   published: boolean
+  /** Drafted to become a new product — about to mint a SKU when the run applies. */
+  will_create?: boolean
+  /** The SKU apply actually minted, once it has. */
+  created_product_sku?: string | null
+  draft_name?: string | null
+  draft_category?: string | null
 }
 
 export interface RunIssue {
@@ -75,10 +81,53 @@ export interface VariantHit {
   category: string | null
   species: string | null
   status: string
+  /** Name-similarity 0..1, present when the hit came from the scorer rather than a literal match. */
+  score?: number | null
+  /** False for historical rows carrying a product name in the SKU column. */
+  sku_valid?: boolean
   offering_cost: number | null
   offering_source: 'offering' | 'legacy' | null
   selling_price: number | null
   selling_channel: string | null
+}
+
+export interface DuplicateBlocker {
+  kind: 'barcode' | 'name'
+  sku_code: string
+  name: string | null
+  detail: string
+}
+
+export interface DuplicateSimilar {
+  sku_code: string
+  name: string | null
+  brand: string | null
+  category: string | null
+  status: string
+  score: number
+  /** False for historical rows carrying a product name in the SKU column. */
+  sku_valid?: boolean
+}
+
+export interface DuplicateCheck {
+  /** Facts, not judgement — a barcode or identical name already owned. No override. */
+  blockers: DuplicateBlocker[]
+  similar: DuplicateSimilar[]
+  top_score: number
+  /** Above the threshold the reviewer must say what makes their row different. */
+  reason_required: boolean
+  threshold: number
+}
+
+export interface VariantDraft {
+  name: string
+  category: string
+  brand?: string | null
+  uom?: string | null
+  pack_unit?: string | null
+  storage_rule?: string | null
+  duplicate_ack?: string | null
+  checked_against?: { sku_code: string; name: string | null; score: number }[]
 }
 
 export interface EvidenceCell { column_name: string | null; value: unknown }
@@ -104,6 +153,9 @@ export const latest = (items: SummaryItem[]) => items.filter(i => !i.superseded_
 export function groupOf(item: SummaryItem): Group {
   if (item.variant_state === 'AMBIGUOUS' || item.offering_state === 'AMBIGUOUS') return 'ambiguous'
   if (item.variant_state === 'PROPOSED_MATCH' || item.variant_state === 'CONFIRMED_MATCH') return 'matched'
+  // A drafted create has been dealt with — it leaves the "new to us" queue and
+  // joins the rows waiting to be approved, carrying a "will create" marker.
+  if (item.variant_state === 'CONFIRMED_CREATE') return 'matched'
   return 'unmatched'
 }
 
@@ -111,9 +163,15 @@ export function groupOf(item: SummaryItem): Group {
 export const isPulled = (item: SummaryItem) =>
   item.price_delta_pct != null && Math.abs(item.price_delta_pct) > PULL_THRESHOLD_PCT
 
+/** Rows that will mint a new SKU. Never swept in bulk — each one is a new
+ *  product entering the catalogue and deserves its own look. */
+export const willCreate = (item: SummaryItem) =>
+  item.will_create === true || (item.variant_state === 'CONFIRMED_CREATE' && !item.created_product_sku)
+
 /** Bulk-approvable pool: clean matches, nothing blocking, nothing material. */
 export const isBulkEligible = (item: SummaryItem) =>
-  groupOf(item) === 'matched' && !isPulled(item) && item.blocking_issues === 0 && item.review_status === 'PENDING_REVIEW'
+  groupOf(item) === 'matched' && !isPulled(item) && !willCreate(item)
+  && item.blocking_issues === 0 && item.review_status === 'PENDING_REVIEW'
 
 export const isDecided = (item: SummaryItem) => item.review_status !== 'PENDING_REVIEW'
 
@@ -162,6 +220,45 @@ export const correctVariantMatch = (
         product_variant_name: variant.name,
         proposed_name: proposedName,
         product_family_id: null,
+      },
+    }),
+  })
+
+/** Categories that can actually mint a SKU — the picker offers nothing else,
+ *  so "category has no SKU digit" can never surface at apply time. */
+export const fetchSkuCategories = () =>
+  reviewApi<{ category: string; sku_digit: string | null }[]>('/category-rules')
+    .then(rows => rows.filter(r => !!r.sku_digit))
+
+export const checkDuplicates = (runId: string, name: string, barcode?: string | null) =>
+  reviewApi<DuplicateCheck>(
+    `/catalogues/ingestions/${runId}/duplicate-check?name=${encodeURIComponent(name)}`
+    + (barcode ? `&barcode=${encodeURIComponent(barcode)}` : ''),
+  )
+
+/**
+ * Draft a brand-new canonical product for this row.
+ *
+ * Nothing is created here — this records the intent as an immutable revision,
+ * exactly like a match correction. The SKU is minted when the run is applied,
+ * so an abandoned or rejected draft leaves nothing behind.
+ */
+export const correctToNewProduct = (
+  runId: string, id: string, reason: string,
+  draft: VariantDraft, proposedName: string | null,
+) =>
+  reviewApi(`/catalogues/ingestions/${runId}/mastering-candidates/${id}/correct`, {
+    method: 'POST',
+    body: JSON.stringify({
+      reason,
+      product_variant_resolution: {
+        state: 'CONFIRMED_CREATE',
+        canonical_sku: null,
+        product_variant_id: null,
+        product_variant_name: draft.name,
+        proposed_name: proposedName,
+        product_family_id: null,
+        proposed_variant: draft,
       },
     }),
   })
@@ -238,9 +335,23 @@ export interface ReceiptChange {
   written_at: string | null
   is_current: boolean
 }
+/** A product this run brought into existence, with the evidence that justified it. */
+export interface ReceiptCreated {
+  sku_code: string
+  name: string | null
+  category: string | null
+  brand: string | null
+  drafted_by: string | null
+  decided_at: string | null
+  duplicate_ack: string | null
+  checked_against: { sku_code: string; name: string | null; score: number }[]
+}
+
 export const fetchReceipt = (runId: string) =>
-  reviewApi<{ ingestion_run_id: string; count: number; changes: ReceiptChange[] }>(
-    `/catalogues/ingestions/${runId}/receipt`)
+  reviewApi<{
+    ingestion_run_id: string; count: number
+    changes: ReceiptChange[]; created?: ReceiptCreated[]
+  }>(`/catalogues/ingestions/${runId}/receipt`)
 
 /** Search terms for auto-suggestions: the family key when the pipeline found
  * one, else the name's first meaningful words — never the raw supplier SKU,

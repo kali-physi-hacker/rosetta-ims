@@ -15,14 +15,20 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
 
+import re
+
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 import models
+from services import variant_similarity
 
 _MATCHED_VARIANT_STATES = {"PROPOSED_MATCH", "CONFIRMED_MATCH"}
 _LEGACY_OFFER_PREFIX = "legacy-product-supplier:"
 _PREFERRED_SELLING_CHANNEL = "shopify"
+
+
+_VALID_SKU = re.compile(r"^\d{6,}$")
 
 
 def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
@@ -89,6 +95,13 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
                 "variant_state": variant.get("state"),
                 "canonical_sku": variant.get("canonical_sku"),
                 "variant_name": variant.get("product_variant_name"),
+                # Drafted-to-create rows read very differently from matched
+                # ones — they are about to mint a SKU — so the lane can mark
+                # them without re-deriving intent from the state name.
+                "will_create": variant.get("state") == "CONFIRMED_CREATE" and not variant.get("created_product_sku"),
+                "created_product_sku": variant.get("created_product_sku"),
+                "draft_name": (variant.get("proposed_variant") or {}).get("name"),
+                "draft_category": (variant.get("proposed_variant") or {}).get("category"),
                 "family_key": family,
                 "open_issues": issues[0],
                 "blocking_issues": issues[1],
@@ -131,8 +144,9 @@ def run_receipt(db: Session, run_uuid: UUID) -> dict[str, Any]:
         .order_by(models.CatalogueSupplierPrice.id)
         .all()
     )
+    created = _created_variants(db, run)
     if not rows:
-        return {"ingestion_run_id": run, "count": 0, "changes": []}
+        return {"ingestion_run_id": run, "count": 0, "changes": [], "created": created}
 
     offering_ids = {offering.id for _, offering, _, _ in rows}
     history: dict[int, list[models.CatalogueSupplierPrice]] = {oid: [] for oid in offering_ids}
@@ -187,7 +201,45 @@ def run_receipt(db: Session, run_uuid: UUID) -> dict[str, Any]:
             "written_at": price.created_at,
             "is_current": bool(price.is_current),
         })
-    return {"ingestion_run_id": run, "count": len(changes), "changes": changes}
+    return {
+        "ingestion_run_id": run,
+        "count": len(changes),
+        "changes": changes,
+        "created": created,
+    }
+
+
+def _created_variants(db: Session, run: str) -> list[dict[str, Any]]:
+    """Products this run brought into existence, with why they were allowed to.
+
+    The whole point of storing `checked_against` and `duplicate_ack` on the
+    draft is that six months from now "why does this SKU exist?" has an answer
+    in the UI rather than in a decision blob nobody opens.
+    """
+    out: list[dict[str, Any]] = []
+    for candidate in (
+        db.query(models.CatalogueMasteringCandidate)
+        .filter(models.CatalogueMasteringCandidate.ingestion_run_uuid == run)
+        .order_by(models.CatalogueMasteringCandidate.id)
+        .all()
+    ):
+        variant = _loads(candidate.product_variant_resolution_json, {}) or {}
+        sku = variant.get("created_product_sku")
+        if not sku:
+            continue
+        draft = variant.get("proposed_variant") or {}
+        product = db.query(models.ProductVariant).filter_by(sku_code=sku).first()
+        out.append({
+            "sku_code": sku,
+            "name": product.name if product else draft.get("name"),
+            "category": product.category if product else draft.get("category"),
+            "brand": product.brand if product else draft.get("brand"),
+            "drafted_by": candidate.reviewed_by,
+            "decided_at": candidate.reviewed_at,
+            "duplicate_ack": draft.get("duplicate_ack"),
+            "checked_against": draft.get("checked_against") or [],
+        })
+    return out
 
 
 def search_product_variants(db: Session, run_uuid: UUID, query: str, limit: int) -> dict[str, Any]:
@@ -200,25 +252,33 @@ def search_product_variants(db: Session, run_uuid: UUID, query: str, limit: int)
 
     run = db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
     supplier_id = run.supplier_id if run else None
-    needle = f"%{query.lower()}%"
-    prefix = f"{query.lower()}%"
-    variants = (
-        db.query(models.ProductVariant)
-        .filter(
-            or_(
-                func.lower(models.ProductVariant.sku_code).like(needle),
-                func.lower(models.ProductVariant.name).like(needle),
-                func.lower(models.ProductVariant.brand).like(needle),
+
+    # A substring LIKE cannot answer the question the reviewer is actually
+    # asking. "GI Biome Chicken" never appears contiguously inside "Hill's
+    # Prescription Diet - Wet Cat Food - GI Biome Chicken & Vegetable Stew", so
+    # the old search returned nothing and the row looked new. Score by shared
+    # distinguishing words instead, and keep the literal LIKE as a floor so
+    # typing a SKU or an exact fragment still works.
+    scored = variant_similarity.rank_variants(db, query, limit=limit)
+    seen = {variant.sku_code for variant, _ in scored}
+    scores = {variant.sku_code: score for variant, score in scored}
+    variants = [variant for variant, _ in scored]
+    if len(variants) < limit:
+        needle = f"%{query.lower()}%"
+        literal = (
+            db.query(models.ProductVariant)
+            .filter(
+                or_(
+                    func.lower(models.ProductVariant.sku_code).like(needle),
+                    func.lower(models.ProductVariant.name).like(needle),
+                    func.lower(models.ProductVariant.brand).like(needle),
+                )
             )
+            .order_by(models.ProductVariant.status, models.ProductVariant.name)
+            .limit(limit - len(variants))
+            .all()
         )
-        .order_by(
-            func.lower(models.ProductVariant.sku_code).like(prefix).desc(),
-            models.ProductVariant.status,
-            models.ProductVariant.name,
-        )
-        .limit(limit)
-        .all()
-    )
+        variants.extend(v for v in literal if v.sku_code not in seen)
 
     results = []
     for variant in variants:
@@ -232,6 +292,11 @@ def search_product_variants(db: Session, run_uuid: UUID, query: str, limit: int)
                 "category": variant.category,
                 "species": variant.species,
                 "status": variant.status,
+                "score": scores.get(variant.sku_code),
+                # Some historical rows carry a product name in the SKU column.
+                # They are still legitimate match targets, but the reviewer
+                # should see what they are picking.
+                "sku_valid": bool(_VALID_SKU.match(variant.sku_code or "")),
                 "offering_cost": offering_cost,
                 "offering_source": offering_source,
                 "selling_price": sell[0] if sell else None,

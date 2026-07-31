@@ -16,10 +16,12 @@ import {
   fetchSummary, fetchDetail, fetchReceipt, searchVariants, latest, groupOf, isPulled,
   isBulkEligible, isDecided, isApproved, isStaged, sampleIds, suggestTerms,
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
+  correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate,
   resolveRunIssue, fanOut, fmtDelta, marginPct,
   fetchRunStatus, retryRun, failureInfo, TERMINAL_RUN_STATUSES,
   REASON_CHIPS, PULL_THRESHOLD_PCT,
   type SummaryItem, type VariantHit, type ReceiptChange, type RunStatus, type FailureView,
+  type DuplicateCheck, type VariantDraft,
 } from '@/lib/review'
 
 export const Route = createFileRoute('/_authed/catalogues/review/$runId/')({ component: RunDeskPage })
@@ -29,8 +31,204 @@ type LaneId = 'pick' | 'new' | 'check'
 const fm = (v: number | null | undefined) => (v == null ? '—' : v.toFixed(2))
 
 function canApprove(item: SummaryItem): boolean {
-  return (item.variant_state === 'PROPOSED_MATCH' || item.variant_state === 'CONFIRMED_MATCH')
-    && item.blocking_issues === 0 && !isDecided(item)
+  // CONFIRMED_CREATE is approvable, PROPOSED_CREATE is not. The difference is a
+  // human: PROPOSED_CREATE is only the matcher saying it found nothing, while
+  // CONFIRMED_CREATE carries a draft somebody filled in and signed.
+  const resolved = item.variant_state === 'PROPOSED_MATCH'
+    || item.variant_state === 'CONFIRMED_MATCH'
+    || item.variant_state === 'CONFIRMED_CREATE'
+  return resolved && item.blocking_issues === 0 && !isDecided(item)
+}
+
+
+/**
+ * Drafting a brand-new canonical product for an unmatched row.
+ *
+ * Nothing is created here. Confirming records an immutable revision carrying
+ * the draft; the SKU is minted when the run is applied, so an abandoned or
+ * rejected draft leaves nothing behind.
+ *
+ * The radar is the point of the panel. Matching only follows exact supplier
+ * SKU/barcode, so most rows in the "new to us" lane are a missing *link*, not
+ * a missing *product* — the reviewer has to see what already exists before
+ * they can mint anything.
+ */
+function CreateDraftPanel({ runId, item, onCancel, onCreated }: {
+  runId: string; item: SummaryItem; onCancel: () => void
+  onCreated: (revisionId: string | null) => void | Promise<void>
+}) {
+  const [name, setName] = useState(item.name?.trim() ?? '')
+  const [category, setCategory] = useState('')
+  const [brand, setBrand] = useState('')
+  const [uom, setUom] = useState('')
+  const [ack, setAck] = useState('')
+  const [dupes, setDupes] = useState<DuplicateCheck | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [categories, setCategories] = useState<{ category: string; sku_digit: string | null }[]>([])
+
+  useEffect(() => { fetchSkuCategories().then(setCategories).catch(() => setCategories([])) }, [])
+
+  // The radar runs against the name as it is typed, debounced. It also carries
+  // the row's barcode, which is checked regardless of what the name says.
+  useEffect(() => {
+    const probe = name.trim()
+    if (probe.length < 3) { setDupes(null); return }
+    setChecking(true)
+    const timer = setTimeout(() => {
+      checkDuplicates(runId, probe, item.barcode)
+        .then(setDupes).catch(() => setDupes(null)).finally(() => setChecking(false))
+    }, 300)
+    return () => { clearTimeout(timer); setChecking(false) }
+  }, [runId, name, item.barcode])
+
+  const digit = categories.find(c => c.category === category)?.sku_digit ?? null
+  const blocked = (dupes?.blockers.length ?? 0) > 0
+  const needsReason = dupes?.reason_required === true
+  const ready = name.trim().length > 1 && !!category && !blocked && (!needsReason || ack.trim().length > 3)
+
+  async function confirm() {
+    setSaving(true)
+    try {
+      const draft: VariantDraft = {
+        name: name.trim(),
+        category,
+        brand: brand.trim() || null,
+        uom: uom.trim() || null,
+        duplicate_ack: needsReason ? ack.trim() : null,
+        // Freeze what the radar showed at the moment of the decision — the
+        // append-only design is worth nothing if the evidence moves later.
+        checked_against: (dupes?.similar ?? []).slice(0, 3)
+          .map(d => ({ sku_code: d.sku_code, name: d.name, score: d.score })),
+      }
+      const result = await correctToNewProduct(
+        runId, item.mastering_candidate_id,
+        needsReason ? `New to the catalogue — ${ack.trim()}` : 'New to the catalogue',
+        draft, item.name,
+      )
+      const revision = (result as any)?.output_ids?.[0]
+      toast.success('Drafted — approve it, and the SKU is minted when the run applies')
+      onCreated(typeof revision === 'string' ? revision : null)
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="panel" style={{ background: 'var(--card)', borderColor: 'var(--accent-line)' }}>
+      <div className="cdh">
+        <span>Draft a new product</span>
+        <span className="cdnote">nothing is created until this run is applied</span>
+      </div>
+
+      <div className="cdgrid">
+        <div>
+          <div className="cdlab">What the supplier sent</div>
+          <div className="cdev"><span>Name on the sheet</span><b>{item.name ?? '—'}</b></div>
+          <div className="cdev"><span>Supplier SKU</span><b className="mono">{item.supplier_sku ?? '—'}</b></div>
+          <div className="cdev"><span>Barcode</span><b className="mono">{item.barcode ?? '—'}</b></div>
+          <div className="cdev"><span>Cost</span><b>{item.cost_amount != null
+            ? `${item.cost_amount.toFixed(2)} ${item.cost_currency ?? ''}${item.cost_basis ? ` / ${item.cost_basis.toLowerCase()}` : ''}`
+            : '—'}</b></div>
+        </div>
+
+        <div>
+          <div className="cdlab">What Rosetta needs</div>
+          <label className="cdf">
+            <span>Item category — sets the SKU digit</span>
+            <select className="fin" value={category} onChange={e => setCategory(e.target.value)}>
+              <option value="">Choose one…</option>
+              {categories.map(c => <option key={c.category} value={c.category}>{c.category}</option>)}
+            </select>
+          </label>
+          <label className="cdf">
+            <span>Product name</span>
+            <input className="fin" value={name} onChange={e => setName(e.target.value)}
+              placeholder="Brand - Form - Variant" />
+          </label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <label className="cdf" style={{ flex: 1 }}>
+              <span>Brand</span>
+              <input className="fin" value={brand} onChange={e => setBrand(e.target.value)} />
+            </label>
+            <label className="cdf" style={{ flex: 1 }}>
+              <span>Sell unit</span>
+              <input className="fin" value={uom} onChange={e => setUom(e.target.value)} placeholder="can, bag, kg…" />
+            </label>
+          </div>
+          <div className="cdsku">
+            SKU <b className="mono">{digit ? `${digit}·······` : '········'}</b>
+            <span> — assigned from the {category || 'chosen category'} sequence when the run is applied</span>
+          </div>
+        </div>
+      </div>
+
+      {/* the radar */}
+      <div className={`cdradar${blocked ? ' bad' : needsReason ? ' warn' : dupes ? ' ok' : ''}`}>
+        {checking && <div className="cdrh"><Spinner size={13} /> <span>checking the catalogue…</span></div>}
+        {!checking && blocked && dupes!.blockers.map(b => (
+          <div key={`${b.kind}-${b.sku_code}`}>
+            <div className="cdrh"><b>{b.detail}</b></div>
+            <div className="cddup">
+              <span className="mono" title={b.sku_code}>{b.sku_code}</span>
+              <span className="dn" title={b.name ?? undefined}>{b.name}</span>
+              <Link to={'/sku/$' as never} params={{ _splat: skuToPath(b.sku_code) } as never} className="lnk" target="_blank">open</Link>
+            </div>
+            <div className="cdrs">
+              {b.kind === 'barcode'
+                ? 'A barcode identifies a physical product. This row is that product from a different supplier — creating a second SKU would split its stock and its history.'
+                : 'Match that product instead, or reject this row.'}
+            </div>
+          </div>
+        ))}
+        {!checking && !blocked && dupes && dupes.similar.length > 0 && (
+          <>
+            <div className="cdrh">
+              <b>{dupes.similar.length} product{dupes.similar.length === 1 ? '' : 's'} look close to this name</b>
+              <span className="cdnote">top match {Math.round(dupes.top_score * 100)}%</span>
+            </div>
+            {dupes.similar.slice(0, 3).map(d => (
+              <div key={d.sku_code} className="cddup">
+                <span className="cdbar"><i style={{
+                  width: `${Math.round(d.score * 100)}%`,
+                  background: d.score >= (dupes.threshold ?? 0.62) ? 'var(--red)' : 'var(--amber)',
+                }} /></span>
+                <span className="mono" title={d.sku_code}>{d.sku_code}</span>
+                <span className="dn" title={d.name ?? undefined}>{d.name}</span>
+                {d.sku_valid === false && <span className="badsku" title="This product's SKU code is a product name — matching to it inherits that">bad SKU</span>}
+                <Link to={'/sku/$' as never} params={{ _splat: skuToPath(d.sku_code) } as never} className="lnk" target="_blank">open</Link>
+              </div>
+            ))}
+            {needsReason && (
+              <label className="cdf" style={{ marginTop: 8 }}>
+                <span>What makes this different? — stored on the decision</span>
+                <input className="fin" value={ack} onChange={e => setAck(e.target.value)}
+                  placeholder="e.g. different pack format — 156 g can vs 370 g tin" />
+              </label>
+            )}
+          </>
+        )}
+        {!checking && !blocked && dupes && dupes.similar.length === 0 && (
+          <div className="cdrh"><b>Nothing close in the catalogue</b><span className="cdnote">clear to create</span></div>
+        )}
+        {!checking && !dupes && <div className="cdrh"><span className="cdnote">Type a name to check it against the catalogue.</span></div>}
+      </div>
+
+      <div className="cdact">
+        <button className="btn pri" disabled={!ready || saving} onClick={confirm}>
+          {saving ? 'Drafting…' : 'Create this product'}
+        </button>
+        <span className="cdnote">
+          {blocked ? 'Blocked — that product already exists.'
+            : needsReason && ack.trim().length <= 3 ? 'Say what makes this different to continue.'
+            : !category ? 'Pick a category — it sets the SKU digit.'
+            : name.trim().length < 2 ? 'Give it a name.'
+            : 'Records the intent; the SKU is minted at apply.'}
+        </span>
+        <button className="btn" style={{ marginLeft: 'auto' }} onClick={onCancel} disabled={saving}>Cancel</button>
+      </div>
+    </div>
+  )
 }
 
 function RunDeskPage() {
@@ -508,7 +706,13 @@ function LaneRow({ item, why, whyTone, action, onOpen }: {
   return (
     <div className={`trow${isDecided(item) ? ' decided' : ''}`}>
       <span className="sku">{item.supplier_sku ?? '—'}</span>
-      <span className="nm" onClick={onOpen} title={item.name ?? undefined}>{item.name ?? '—'}</span>
+      <span className="nm" onClick={onOpen} title={item.name ?? undefined}>
+        {/* A row about to mint a SKU reads very differently from a matched one
+            — mark it so a lane can be swept without losing track. */}
+        {willCreate(item) && <span className="willcreate">will create</span>}
+        {willCreate(item) && ' '}
+        {item.draft_name ?? item.name ?? '—'}
+      </span>
       <span className="prc">{item.cost_amount != null ? `${item.cost_amount.toFixed(2)} ${item.cost_currency ?? ''}` : '—'}</span>
       <span className="why" style={whyTone ? { color: whyTone, fontWeight: 650 } : undefined}>{why}</span>
       <span style={{ display: 'flex', gap: 6 }}>
@@ -654,6 +858,29 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
           <Link className="lnk" style={{ fontSize: 11 }} to="/catalogues/review/$runId/commit" params={{ runId }}>full receipt →</Link>
         </div>
       )}
+
+      {/* Products this run brought into existence. Called out separately from
+          price changes — a new SKU in the catalogue is a bigger event than a
+          cost moving, and it is the one thing here that cannot be undone by
+          the next run. */}
+      {(receipt.data?.created?.length ?? 0) > 0 && (
+        <div className="dsec" style={{ background: 'var(--accent-soft)' }}>
+          <div className="dh" style={{ color: 'var(--accent-ink)' }}>
+            {receipt.data!.created!.length} product{receipt.data!.created!.length === 1 ? '' : 's'} created
+          </div>
+          {receipt.data!.created!.slice(0, 4).map(created => (
+            <div key={created.sku_code} className="sitem">
+              <span className="sku">{created.sku_code}</span>
+              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{created.name}</span>
+              <Link className="lnk" style={{ marginLeft: 'auto', fontSize: 10.5 }}
+                to={'/sku/$' as never} params={{ _splat: skuToPath(created.sku_code) } as never}>SKU →</Link>
+            </div>
+          ))}
+          <div style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 4 }}>
+            No selling price or channel yet — priced on the SKU page.
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -697,10 +924,12 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
   const [chip, setChip] = useState<string>(REASON_CHIPS[0])
   const [note, setNote] = useState('')
   const [noteOpen, setNoteOpen] = useState(false)
+  const [drafting, setDrafting] = useState(false)
   const reason = note.trim() ? `${chip} — ${note.trim()}` : chip
 
   useEffect(() => {
     setPicked(null); setSugg(null); setQuery(''); setHits([]); setNote(''); setNoteOpen(false); setSearching(false)
+    setDrafting(false)
     if (!current) return
     const terms = suggestTerms(current)
     if (terms.length < 2) { setSugg([]); return }
@@ -834,7 +1063,23 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
             )}
           </div>
 
-          {/* decision rail */}
+          {/* decision rail — replaced by the draft panel while creating, so the
+              reviewer is doing one thing at a time */}
+          {drafting ? (
+            <CreateDraftPanel
+              runId={runId}
+              item={current}
+              onCancel={() => setDrafting(false)}
+              onCreated={async revision => {
+                setDrafting(false)
+                // Await the refetch: the revision is a NEW candidate, so moving
+                // to it before the summary carries it lands on a stale row that
+                // still reads as undecided.
+                await queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
+                if (revision) onMove(revision)
+              }}
+            />
+          ) : (
           <div className="panel" style={{ background: 'var(--card)' }}>
             <div style={{ padding: '8px 12px 6px', fontSize: 10, fontWeight: 750, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>
               {groupOf(current) === 'matched' ? <>Matched → <span className="mono">{current.canonical_sku}</span> — confirm or re-pick</> : 'Best matches — pick one'}
@@ -863,7 +1108,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
                 )
               })}
               {sugg !== null && list.length === 0 && (
-                <div style={{ fontSize: 11.5, color: 'var(--faint)', padding: '4px 2px 8px' }}>No confident matches — search below{groupOf(current) === 'unmatched' ? ', or reject if this shouldn’t exist' : ''}.</div>
+                <div style={{ fontSize: 11.5, color: 'var(--faint)', padding: '4px 2px 8px' }}>Nothing scored above the noise — search below{groupOf(current) === 'unmatched' ? ', or draft it as a new product' : ''}.</div>
               )}
               <input className="fin" placeholder="Search all variants — sku, name, brand…" value={query} onChange={e => setQuery(e.target.value)} />
             </div>
@@ -886,18 +1131,28 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
                 <button className="btn pri" onClick={() => correct(picked)}>Match → {picked.sku_code}</button>
               ) : (
                 <button className="btn pri" disabled={!canApprove(current)}
-                  title={canApprove(current) ? 'Approve — stages for publish' : current.blocking_issues > 0 ? 'Blocked by validation issues' : 'Pick a match first'}
+                  title={canApprove(current) ? 'Approve — stages for publish' : current.blocking_issues > 0 ? 'Blocked by validation issues' : 'Pick a match, or draft a new product'}
                   onClick={() => decide('APPROVED')}>
-                  {canApprove(current) ? 'Approve → staged' : 'Approve (pick a match first)'}
+                  {canApprove(current) ? 'Approve → staged' : 'Approve (decide this row first)'}
+                </button>
+              )}
+              {/* Deliberately quiet, and worded as a claim the reviewer has to
+                  be willing to make. Most rows in this lane are a missing link,
+                  not a missing product. */}
+              {groupOf(current) === 'unmatched' && !isDecided(current) && !picked && current.name && (
+                <button className="btn" style={{ borderStyle: 'dashed', color: 'var(--muted)' }}
+                  onClick={() => setDrafting(true)}>
+                  Not in the catalogue…
                 </button>
               )}
               <button className="btn" disabled={isDecided(current)} style={{ color: 'var(--red)', borderColor: '#F1CDC9' }} onClick={() => decide('REJECTED')}>Reject</button>
               <span style={{ fontSize: 10, color: 'var(--faint)', marginLeft: 'auto' }}>append-only · corrections = new revision</span>
             </div>
           </div>
+          )}
         </div>
 
-        {clusterRows.length > 0 && (
+        {!drafting && clusterRows.length > 0 && (
           <div style={{ marginTop: 10, background: 'var(--accent-soft)', border: '1px solid var(--accent-line)', borderRadius: 10, padding: '8px 13px', fontSize: 11.5, color: 'var(--accent-ink)' }}>
             <ClusterBlock runId={runId} anchor={current} rows={clusterRows} />
           </div>

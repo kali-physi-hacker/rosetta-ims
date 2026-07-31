@@ -585,6 +585,12 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
 
 
 def test_unmatched_canonical_product_cannot_be_approved_or_applied(db):
+    """PROPOSED_CREATE stays unapprovable even though CONFIRMED_CREATE is now allowed.
+
+    The difference is a human. PROPOSED_CREATE is only the matcher reporting
+    that it found nothing; a row still cannot reach apply until someone fills
+    in a draft and confirms it.
+    """
     _seed_context(db)
     raw_id = _capture_raw(db)
     staging_id = _build_claim(db, raw_id)
@@ -606,7 +612,7 @@ def test_unmatched_canonical_product_cannot_be_approved_or_applied(db):
         )
     ).output_ids[0]
 
-    with pytest.raises(stages.AmbiguousProductVariant, match="creation is not implemented"):
+    with pytest.raises(stages.AmbiguousProductVariant, match="must match an existing canonical product"):
         stages.ReviewDecisionService(db).record_decision(
             stages.RecordReviewDecisionCommand(
                 mastering_candidate_id=candidate_id,

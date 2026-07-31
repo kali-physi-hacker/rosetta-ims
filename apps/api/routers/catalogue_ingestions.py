@@ -13,11 +13,12 @@ from sqlalchemy.orm import Session
 
 import database
 import models
-from permissions import require_capability
+from permissions import has_capability, require_capability
 from services import audit_log
 from services import catalogue_pipeline_persistence as persistence
 from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
+from services import variant_similarity
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus
 from services.catalogue_submission import (
     RetryNotAllowedError,
@@ -412,6 +413,21 @@ def correct_catalogue_mastering_candidate(
     """Supersede a pending candidate with a human-corrected revision."""
     _load_run_or_404(db, run_uuid)
     _load_run_candidate_or_404(db, run_uuid, mastering_candidate_id)
+    # Correcting a match is ordinary review work. Drafting a *new* canonical
+    # product writes name, category and status — the three fields
+    # `product_sensitive` already governs everywhere else — so it is held to
+    # the same bar rather than riding in on catalogue_onboard.
+    variant_resolution = body.product_variant_resolution or {}
+    if str(variant_resolution.get("state") or "") == "CONFIRMED_CREATE" and not variant_resolution.get("canonical_sku"):
+        if not has_capability(getattr(user, "role", None), "product_sensitive"):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error_code": "CREATE_PRODUCT_FORBIDDEN",
+                    "message": "Creating a canonical product needs the product_sensitive capability. "
+                               "You can still match this row to an existing product, or reject it.",
+                },
+            )
     try:
         result = stages.MasteringService(db, commit=False).revise_candidate(
             stages.ReviseMasteringCandidateCommand(
@@ -675,6 +691,25 @@ def search_catalogue_product_variants(
     _load_run_or_404(db, run_uuid)
     return review_summary.search_product_variants(db, run_uuid, q, limit)
 
+
+
+@router.get("/ingestions/{run_uuid}/duplicate-check")
+def check_for_duplicate_product(
+    run_uuid: UUID,
+    name: str = Query("", description="The draft product name being typed."),
+    barcode: str | None = Query(None, description="Barcode from the supplier row, when it has one."),
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """What stands between this create draft and a new SKU.
+
+    Blockers are facts (a barcode or an identical name already owned by a
+    product) and cannot be overridden. `similar` is judgement — above
+    `threshold` the reviewer must say what makes their row different, and that
+    reason is stored on the decision.
+    """
+    _load_run_or_404(db, run_uuid)
+    return variant_similarity.duplicate_check(db, name=name, barcode=barcode)
 
 
 @router.get("/ingestions/{run_uuid}/receipt")

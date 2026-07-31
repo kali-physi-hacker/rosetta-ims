@@ -100,4 +100,37 @@ export const DESK_CSS = `
 .rdesk .rchip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
 .rdesk .prog{height:5px;border-radius:3px;background:var(--line2);overflow:hidden;min-width:90px}
 .rdesk .prog i{display:block;height:100%;background:var(--accent);border-radius:3px}
+/* Draft-a-new-product panel. It replaces the decision rail rather than sitting
+   beside it — creating a canonical product is a different job from picking one,
+   and doing both at once is how duplicates get made. */
+.rdesk .cdh{display:flex;align-items:baseline;gap:10px;padding:9px 13px;border-bottom:1px solid var(--line2);background:var(--accent-soft);font-size:12.5px;font-weight:700;color:var(--accent-ink)}
+.rdesk .cdnote{font-size:10.5px;font-weight:500;color:var(--muted);margin-left:auto}
+.rdesk .cdgrid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px;padding:12px 13px}
+@media(max-width:820px){.rdesk .cdgrid{grid-template-columns:1fr}}
+.rdesk .cdlab{font-size:9.5px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.rdesk .cdev{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--line2);font-size:11.5px;color:var(--muted)}
+.rdesk .cdev:last-child{border-bottom:none}
+.rdesk .cdev b{color:var(--ink);font-weight:650;text-align:right;min-width:0;overflow-wrap:anywhere}
+.rdesk .cdf{display:block;margin-bottom:8px}
+.rdesk .cdf>span{display:block;font-size:9.5px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+.rdesk .cdf .fin{width:100%}
+.rdesk .cdsku{font-size:11px;color:var(--faint);background:var(--panel);border:1px dashed var(--line);border-radius:7px;padding:6px 9px}
+.rdesk .cdsku b{color:var(--ink2);letter-spacing:.08em}
+.rdesk .cdradar{margin:0 13px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:9px 11px}
+.rdesk .cdradar.ok{border-color:#CDE8D6;background:var(--good-soft)}
+.rdesk .cdradar.warn{border-color:#F3E0BE;background:var(--amber-soft)}
+.rdesk .cdradar.bad{border-color:#F1CDC9;background:var(--red-soft)}
+.rdesk .cdrh{display:flex;align-items:baseline;gap:8px;font-size:12px;color:var(--ink2)}
+.rdesk .cdrs{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.rdesk .cddup{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:11.5px;color:var(--ink2);border-bottom:1px solid rgba(15,23,42,.06)}
+.rdesk .cddup:last-child{border-bottom:none}
+/* Historical rows carry a whole product name in sku_code, so this must clamp
+   or it eats the row and the name has nowhere to go. */
+.rdesk .cddup .mono{font-size:10.5px;color:var(--faint);flex:0 1 auto;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rdesk .cddup .dn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rdesk .badsku{font-size:8.5px;font-weight:750;color:var(--amber);background:var(--amber-soft);border:1px solid #F3E0BE;border-radius:99px;padding:0 5px;flex:none}
+.rdesk .cdbar{height:5px;width:46px;border-radius:3px;background:rgba(15,23,42,.09);position:relative;overflow:hidden;flex:none}
+.rdesk .cdbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.rdesk .cdact{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:10px 13px;border-top:1px solid var(--line2)}
+.rdesk .willcreate{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:750;padding:1px 7px;border-radius:99px;color:var(--accent-ink);background:var(--accent-soft);border:1px solid var(--accent-line);white-space:nowrap}
 `
