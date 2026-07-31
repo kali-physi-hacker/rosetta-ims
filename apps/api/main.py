@@ -35,6 +35,17 @@ from services import product_domain
 with database.SessionLocal() as _product_domain_session:
     product_domain.backfill_explicit_product_domain(_product_domain_session)
 
+# Offering baselines: links still carrying only legacy basic_cost get a
+# SupplierOffering + current price row (the MANUAL migration baseline), so
+# cost reads have exactly two sources — CATALOGUE / MANUAL. Idempotent; a
+# no-op scan on every boot after the first.
+from services import offering_costs as _offering_costs
+
+with database.SessionLocal() as _baseline_session:
+    _bf_offerings, _bf_prices = _offering_costs.backfill_offering_baselines(_baseline_session)
+    if _bf_prices:
+        print(f"[startup] offering baseline backfill: {_bf_offerings} offerings, {_bf_prices} price rows")
+
 # Config-driven transformation engine (Phase A): seed the registry + default config version so
 # the engine reproduces the previously hard-coded formulas. Idempotent; behaviour-neutral.
 from services import transform_engine

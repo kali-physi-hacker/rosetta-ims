@@ -110,6 +110,86 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
     }
 
 
+def run_receipt(db: Session, run_uuid: UUID) -> dict[str, Any]:
+    """What a run's commits actually wrote — the publish receipt.
+
+    One entry per offering price row this run created: the SKU it landed on,
+    the predecessor price it superseded (old -> new), and when. Empty until
+    the run's first apply. Costs are per-sell-unit, packaging-aware, matching
+    every other read surface.
+    """
+
+    from services import offering_costs
+
+    run = str(run_uuid)
+    rows = (
+        db.query(models.CatalogueSupplierPrice, models.SupplierOffering, models.ProductVariant, models.Supplier)
+        .join(models.SupplierOffering, models.CatalogueSupplierPrice.supplier_product_id == models.SupplierOffering.id)
+        .outerjoin(models.ProductVariant, models.SupplierOffering.product_variant_id == models.ProductVariant.id)
+        .outerjoin(models.Supplier, models.SupplierOffering.supplier_id == models.Supplier.id)
+        .filter(models.CatalogueSupplierPrice.ingestion_run_uuid == run)
+        .order_by(models.CatalogueSupplierPrice.id)
+        .all()
+    )
+    if not rows:
+        return {"ingestion_run_id": run, "count": 0, "changes": []}
+
+    offering_ids = {offering.id for _, offering, _, _ in rows}
+    history: dict[int, list[models.CatalogueSupplierPrice]] = {oid: [] for oid in offering_ids}
+    for price in (
+        db.query(models.CatalogueSupplierPrice)
+        .filter(models.CatalogueSupplierPrice.supplier_product_id.in_(offering_ids))
+        .order_by(models.CatalogueSupplierPrice.id)
+        .all()
+    ):
+        history[price.supplier_product_id].append(price)
+
+    packaging: dict[int, tuple[str | None, str | None, float | None]] = {}
+    for pack in (
+        db.query(models.CataloguePackagingConfiguration)
+        .filter(
+            models.CataloguePackagingConfiguration.supplier_product_id.in_(offering_ids),
+            models.CataloguePackagingConfiguration.superseded_at.is_(None),
+        )
+        .order_by(models.CataloguePackagingConfiguration.id)
+        .all()
+    ):
+        packaging[pack.supplier_product_id] = (
+            pack.purchase_uom_code,
+            pack.sellable_unit_uom_code,
+            float(pack.sellable_units_per_purchase_unit) if pack.sellable_units_per_purchase_unit is not None else None,
+        )
+
+    changes: list[dict[str, Any]] = []
+    for price, offering, variant, supplier in rows:
+        pack = packaging.get(offering.id)
+        new_unit = offering_costs._per_sell_unit(float(price.amount), price.price_basis_uom_code, pack)
+        prev = next(
+            (p for p in reversed(history[offering.id]) if p.id < price.id),
+            None,
+        )
+        old_unit = (
+            offering_costs._per_sell_unit(float(prev.amount), prev.price_basis_uom_code, pack)
+            if prev is not None else None
+        )
+        delta_pct = (
+            round((new_unit - old_unit) / old_unit * 100, 1)
+            if old_unit not in (None, 0) else None
+        )
+        changes.append({
+            "sku_code": variant.sku_code if variant else None,
+            "variant_name": variant.name if variant else None,
+            "supplier_name": supplier.name if supplier else None,
+            "supplier_sku": offering.supplier_sku,
+            "old_unit_cost": old_unit,
+            "new_unit_cost": new_unit,
+            "delta_pct": delta_pct,
+            "written_at": price.created_at,
+            "is_current": bool(price.is_current),
+        })
+    return {"ingestion_run_id": run, "count": len(changes), "changes": changes}
+
+
 def search_product_variants(db: Session, run_uuid: UUID, query: str, limit: int) -> dict[str, Any]:
     """Product-variant picker scoped to the run's supplier.
 

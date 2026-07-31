@@ -20,6 +20,8 @@ from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus
 from services.catalogue_submission import (
+    RetryNotAllowedError,
+    SourceFileMissingError,
     CatalogueIngestionStatus,
     CatalogueSubmissionCommand,
     CatalogueSubmissionError,
@@ -74,6 +76,8 @@ class CatalogueIngestionStatusResponse(BaseModel):
     items_extracted: int | None = None
     metrics: dict[str, Any] | None = None
     error_summary: dict[str, Any] | str | None = None
+    retry_of: str | None = None
+    superseded_by_run: str | None = None
 
 
 class ValidationIssueResolutionRequest(BaseModel):
@@ -230,6 +234,41 @@ def get_catalogue_ingestion_status(
     except Exception as exc:
         raise _http_error(exc) from exc
     return _status_response(result)
+
+
+@router.post(
+    "/ingestions/{run_uuid}/retry",
+    response_model=CatalogueSubmissionResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def retry_catalogue_ingestion(
+    run_uuid: UUID,
+    request: Request,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Retry a failed run: re-submit its stored file as a new run with lineage."""
+    service = CatalogueSubmissionService(db)
+    try:
+        result = service.retry(run_uuid, submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")))
+    except Exception as exc:
+        raise _http_error(exc) from exc
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.ingestion_retry",
+            actor=user,
+            entity_type="ingestion_run",
+            entity_id=str(result.ingestion_run_id),
+            entity_label=result.contract_id,
+            details={"retry_of": str(run_uuid), "supplier_id": result.supplier_id, "status": result.status},
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception("catalogue retry %s was durably submitted but audit logging failed", result.ingestion_run_id)
+    return _submission_response(result)
 
 
 @router.post(
@@ -637,6 +676,16 @@ def search_catalogue_product_variants(
     return review_summary.search_product_variants(db, run_uuid, q, limit)
 
 
+
+@router.get("/ingestions/{run_uuid}/receipt")
+def get_run_receipt(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Publish receipt — the offering price rows this run wrote (old → new per SKU)."""
+    return review_summary.run_receipt(db, run_uuid)
+
 @router.get("/ingestions/{run_uuid}/serving")
 def get_serving_layer(
     run_uuid: UUID,
@@ -825,6 +874,10 @@ def _http_error(exc: Exception) -> HTTPException:
         return HTTPException(status_code=409, detail=_detail("SUPPLIER_CONTRACT_MISMATCH", str(exc)))
     if isinstance(exc, SupplierContractSelectionError):
         return HTTPException(status_code=422, detail=_detail("UNSUPPORTED_SUPPLIER_CONTRACT", str(exc)))
+    if isinstance(exc, RetryNotAllowedError):
+        return HTTPException(status_code=409, detail=_detail("RETRY_NOT_ALLOWED", str(exc)))
+    if isinstance(exc, SourceFileMissingError):
+        return HTTPException(status_code=410, detail=_detail("SOURCE_FILE_MISSING", str(exc)))
     if isinstance(exc, SubmissionIdempotencyConflict):
         return HTTPException(status_code=409, detail=_detail("IDEMPOTENCY_CONFLICT", str(exc)))
     if isinstance(exc, EmptyUploadError):

@@ -23,6 +23,58 @@ from .catalogue_types import (
 )
 
 
+# Envelope v2 vocabulary — the failure's lifecycle stage and whether a retry
+# of the same bytes can plausibly succeed. Codes missing from these maps get
+# the conservative defaults (recording / not retryable).
+_STAGE_BY_CODE = {
+    "SOURCE_VERIFICATION_ERROR": "reading",
+    "SOURCE_PAGE_READ_ERROR": "reading",
+    "SPREADSHEET_SHEET_READ_ERROR": "reading",
+    "EXTRACTION_EVIDENCE_ERROR": "understanding",
+    "EXTRACTION_CONFIGURATION_ERROR": "understanding",
+    "TRANSIENT_PROVIDER_ERROR": "understanding",
+    "PROVIDER_ERROR": "understanding",
+    "RECORDED_CONTRACT_ERROR": "recording",
+    "INVALID_RUN_TRANSITION": "recording",
+    "DUPLICATE_RUN_CLAIM": "recording",
+    "TERMINAL_RUN_REPLAY": "recording",
+    "RUN_CANCELLED": "recording",
+    "CATALOGUE_ORCHESTRATION_ERROR": "recording",
+}
+_RETRYABLE_CODES = {
+    "TRANSIENT_PROVIDER_ERROR",
+    "PROVIDER_ERROR",
+    "EXTRACTION_EVIDENCE_ERROR",
+    "SOURCE_PAGE_READ_ERROR",
+    "INVALID_RUN_TRANSITION",
+    "DUPLICATE_RUN_CLAIM",
+    "TERMINAL_RUN_REPLAY",
+    "CATALOGUE_ORCHESTRATION_ERROR",
+}
+
+
+def failure_envelope(error_code: str, message: str) -> dict:
+    """Build the structured failure envelope (v2).
+
+    Attempt loops upstream join the same message with semicolons — that
+    stutter becomes an ``attempts`` count and a single clean sentence; any
+    genuinely different messages ride along in ``detail``.
+    """
+
+    parts = [part.strip() for part in str(message).split(";") if part.strip()]
+    unique = list(dict.fromkeys(parts)) or [_sanitize(message) or "Run failed"]
+    envelope = {
+        "error_code": error_code,
+        "message": _sanitize(unique[0]),
+        "stage": _STAGE_BY_CODE.get(error_code, "recording"),
+        "retryable": error_code in _RETRYABLE_CODES,
+        "attempts": max(len(parts), 1),
+    }
+    if len(unique) > 1:
+        envelope["detail"] = _sanitize("; ".join(unique[1:]))[:400]
+    return envelope
+
+
 def claim_queued_run(db: Session, *, ingestion_run_id: UUID, started_at: datetime | None = None) -> None:
     """Atomically move one queued run to running."""
 
@@ -89,7 +141,7 @@ def fail_run(
         raise InvalidRunTransition(f"Ingestion run {ingestion_run_id} cannot fail from {run.status}")
     run.status = IngestionRunStatus.FAILED.value
     run.completed_at = _iso(completed_at or _now())
-    run.error_summary = json.dumps({"error_code": error_code, "message": _sanitize(message)}, sort_keys=True)
+    run.error_summary = json.dumps(failure_envelope(error_code, message), sort_keys=True)
     db.commit()
 
 

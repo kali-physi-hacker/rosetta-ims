@@ -183,6 +183,130 @@ def set_offering_packaging(
     invalidate(db)
 
 
+def backfill_offering_baselines(db: Session) -> tuple[int, int]:
+    """Migration baseline: every supplier link still carrying only the legacy
+    ``basic_cost`` gets a SupplierOffering and a current UNIT-basis price row.
+
+    This is what lets the read path (and the SKU page) speak two sources only
+    — CATALOGUE / MANUAL — with no legacy fallback state. The baseline keeps
+    the legacy cost's own date as ``effective_from`` so history reads
+    honestly. Idempotent and cheap after the first pass: links whose
+    (supplier, variant) already has a current offering price are skipped, so
+    later boots scan and do nothing. Note the deliberate consequence: bulk
+    sheet re-seeds (which write only ``basic_cost``) no longer move the
+    effective cost — an offering price asserts a human decided the number,
+    and the sheet's disagreement stays visible via the shadow/conflict flags.
+
+    Returns (offerings_created, price_rows_created). Commits once.
+    """
+
+    now = _utcnow_iso()
+    priced: set[tuple[int, int]] = {
+        (supplier_id, variant_id)
+        for supplier_id, variant_id in (
+            db.query(models.SupplierOffering.supplier_id, models.SupplierOffering.product_variant_id)
+            .join(
+                models.CatalogueSupplierPrice,
+                models.CatalogueSupplierPrice.supplier_product_id == models.SupplierOffering.id,
+            )
+            .filter(
+                models.CatalogueSupplierPrice.is_current == 1,
+                models.SupplierOffering.product_variant_id.isnot(None),
+            )
+            .all()
+        )
+    }
+    offerings: dict[tuple[int, int], models.SupplierOffering] = {
+        (offering.supplier_id, offering.product_variant_id): offering
+        for offering in (
+            db.query(models.SupplierOffering)
+            .filter(models.SupplierOffering.product_variant_id.isnot(None))
+            .all()
+        )
+    }
+    links = (
+        db.query(models.ProductSupplier)
+        .filter(
+            models.ProductSupplier.supplier_id.isnot(None),
+            models.ProductSupplier.basic_cost.isnot(None),
+        )
+        .all()
+    )
+    todo = [link for link in links if (link.supplier_id, link.product_id) not in priced]
+    if not todo:
+        return (0, 0)
+
+    uoms = {
+        variant_id: uom
+        for variant_id, uom in (
+            db.query(models.ProductVariant.id, models.ProductVariant.uom)
+            .filter(models.ProductVariant.id.in_({link.product_id for link in todo}))
+            .all()
+        )
+    }
+
+    # Offerings are unique per (supplier, supplier_sku) — but legacy data has
+    # the same supplier SKU linked to more than one variant. The first keeps
+    # the sku; later ones carry none (the link's own sku still displays).
+    used_skus = {
+        (offering.supplier_id, offering.supplier_sku)
+        for offering in offerings.values()
+        if offering.supplier_sku
+    }
+    offerings_created = 0
+    for link in todo:
+        key = (link.supplier_id, link.product_id)
+        if key in offerings:
+            continue
+        # Blank skus normalize to NULL — '' collides under the unique index,
+        # NULLs never do.
+        sku = (link.supplier_sku or "").strip() or None
+        if sku:
+            if (link.supplier_id, sku) in used_skus:
+                sku = None
+            else:
+                used_skus.add((link.supplier_id, sku))
+        offering = models.SupplierOffering(
+            supplier_product_key=f"supplier:{link.supplier_id}:offer:link:{link.id}",
+            legacy_product_supplier_id=link.id,
+            supplier_id=link.supplier_id,
+            product_variant_id=link.product_id,
+            supplier_sku=sku,
+            barcode=link.barcode,
+            status="active",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(offering)
+        offerings[key] = offering
+        offerings_created += 1
+    if offerings_created:
+        db.flush()
+
+    prices_created = 0
+    for link in todo:
+        offering = offerings[(link.supplier_id, link.product_id)]
+        units = link.units_per_pack
+        unit_cost = round(link.basic_cost / units, 4) if units and units > 1 else link.basic_cost
+        db.add(
+            models.CatalogueSupplierPrice(
+                supplier_product_id=offering.id,
+                amount=unit_cost,
+                currency="HKD",
+                price_basis_uom_code="UNIT",
+                price_basis_uom_label=uoms.get(link.product_id),
+                effective_from=link.cost_updated_at or now,
+                is_current=1,
+                created_at=now,
+            )
+        )
+        prices_created += 1
+
+    db.commit()
+    invalidate(db)
+    return (offerings_created, prices_created)
+
+
 def variant_offerings(db: Session, variant_id: int) -> list[dict]:
     """Read model for the SKU page's supplier-offerings lane.
 

@@ -86,6 +86,14 @@ class SubmissionIdempotencyConflict(CatalogueSubmissionError):
     """Raised when the same idempotency key is reused for different material."""
 
 
+class RetryNotAllowedError(CatalogueSubmissionError):
+    """The run is not in a retryable state (not failed, or already retried)."""
+
+
+class SourceFileMissingError(CatalogueSubmissionError):
+    """The stored source file for the run is gone — a retry needs a re-upload."""
+
+
 class SubmissionNotFoundError(CatalogueSubmissionError):
     """Raised when a run UUID cannot be found."""
 
@@ -138,6 +146,8 @@ class CatalogueIngestionStatus:
     items_extracted: int | None
     metrics: dict[str, Any] | None
     error_summary: dict[str, Any] | str | None
+    retry_of: str | None = None            # parent run uuid when this run is a retry
+    superseded_by_run: str | None = None   # child run uuid when this run has been retried
 
 
 @dataclass(frozen=True)
@@ -245,6 +255,13 @@ class CatalogueSubmissionService:
             source = self.db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
         metrics = _json_or_none(run.metrics)
         error_summary = _json_or_text(run.error_summary)
+        retry_of = run.parent_run.run_uuid if run.parent_run_id and run.parent_run else None
+        child = (
+            self.db.query(models.IngestionRun)
+            .filter_by(parent_run_id=run.id)
+            .order_by(models.IngestionRun.id.desc())
+            .first()
+        )
         return CatalogueIngestionStatus(
             ingestion_run_id=UUID(run.run_uuid),
             supplier_catalogue_id=UUID(source.supplier_catalogue_uuid) if source else None,
@@ -260,6 +277,8 @@ class CatalogueSubmissionService:
             items_extracted=run.items_extracted,
             metrics=metrics,
             error_summary=error_summary,
+            retry_of=retry_of,
+            superseded_by_run=child.run_uuid if child else None,
         )
         
     def list(self) -> list[CatalogueIngestionStatus]: 
@@ -267,6 +286,53 @@ class CatalogueSubmissionService:
         runs = self.db.query(models.IngestionRun).all()
         run_statuses = [self._get_status(run) for run in runs]
         return run_statuses 
+
+    def retry(self, run_uuid: UUID, *, submitted_by: str | None = None) -> CatalogueSubmissionResult:
+        """Re-submit a failed run's stored source file as a NEW run.
+
+        Append-only: the failed run is never mutated — the child links back
+        through ``parent_run_id`` and the queued-run dispatcher picks it up
+        exactly like a fresh submission. Same bytes, same contract; if the
+        file itself was the problem, the caller should re-upload instead.
+        """
+
+        run = self.db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
+        if run is None:
+            raise SubmissionNotFoundError(f"Ingestion run {run_uuid} was not found")
+        if run.status != "failed":
+            raise RetryNotAllowedError(f"Only failed runs can be retried (this one is {run.status})")
+        existing_child = self.db.query(models.IngestionRun).filter_by(parent_run_id=run.id).first()
+        if existing_child is not None:
+            raise RetryNotAllowedError(f"This run was already retried as {existing_child.run_uuid}")
+        if run.supplier_id is None or not run.supplier_source_contract_id:
+            raise RetryNotAllowedError("This run has no supplier contract to retry with")
+        source = run.pipeline_source_document
+        if source is None and run.catalogue_source_document_id:
+            source = self.db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
+        if source is None or not source.source_ref:
+            raise SourceFileMissingError("The original file for this run is no longer available — upload it again")
+        path = self.upload_root / source.source_ref
+        if not path.exists():
+            raise SourceFileMissingError("The original file for this run is no longer available — upload it again")
+
+        with path.open("rb") as stream:
+            result = self.submit(
+                CatalogueSubmissionCommand(
+                    supplier_id=run.supplier_id,
+                    original_filename=source.filename,
+                    content_type=None,
+                    stream=stream,
+                    contract_id=run.supplier_source_contract_id,
+                    contract_version=run.supplier_source_contract_version,
+                    idempotency_key=None,
+                    submitted_by=submitted_by,
+                )
+            )
+        new_run = self.db.query(models.IngestionRun).filter_by(run_uuid=str(result.ingestion_run_id)).first()
+        if new_run is not None and new_run.parent_run_id is None:
+            new_run.parent_run_id = run.id
+            self.db.commit()
+        return result
 
     def get_status(self, run_uuid: UUID) -> CatalogueIngestionStatus:
         """Return a safe typed status payload for one ingestion run."""

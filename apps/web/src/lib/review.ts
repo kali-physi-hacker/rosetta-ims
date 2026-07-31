@@ -216,3 +216,201 @@ export const fmtDelta = (pct: number | null | undefined) =>
 /** Margin a reviewer sanity-checks: what's left of the selling price after this cost. */
 export const marginPct = (cost: number | null, sell: number | null) =>
   cost == null || sell == null || sell === 0 ? null : Math.round((1 - cost / sell) * 100)
+
+// ── Run desk additions ───────────────────────────────────────────────────────
+
+/** Structured decision reasons — one tap, auditable, never boilerplate. */
+export const REASON_CHIPS = [
+  'Matches the evidence',
+  'Picked the cheaper offering',
+  'Parse was wrong',
+  'Supplier confirmed directly',
+] as const
+
+export interface ReceiptChange {
+  sku_code: string | null
+  variant_name: string | null
+  supplier_name: string | null
+  supplier_sku: string | null
+  old_unit_cost: number | null
+  new_unit_cost: number | null
+  delta_pct: number | null
+  written_at: string | null
+  is_current: boolean
+}
+export const fetchReceipt = (runId: string) =>
+  reviewApi<{ ingestion_run_id: string; count: number; changes: ReceiptChange[] }>(
+    `/catalogues/ingestions/${runId}/receipt`)
+
+/** Search terms for auto-suggestions: the family key when the pipeline found
+ * one, else the name's first meaningful words — never the raw supplier SKU,
+ * which is exactly the search that dead-ends. */
+export function suggestTerms(item: SummaryItem): string {
+  // The server matches the whole phrase, so: two distinctive words from the
+  // parsed NAME first (family keys are often bilingual and phrase-miss);
+  // fall back to the family key when the name has nothing usable.
+  const words = (source: string | null) =>
+    (source ?? '').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(w => w.length > 2)
+  const name = words(item.name)
+  if (name.length >= 1) return name.slice(0, 2).join(' ')
+  return words(item.family_key).slice(0, 2).join(' ')
+}
+
+export const isApproved = (item: SummaryItem) =>
+  item.review_status === 'APPROVED' || item.review_status === 'APPROVED_WITH_OVERRIDE'
+
+/** Staged = decided-approved but not yet published; the dock's cart. */
+export const isStaged = (item: SummaryItem) => isApproved(item) && !item.published
+
+// ── Run failures: plain-words layer over the failure envelope ────────────────
+
+export interface RunStatus {
+  ingestion_run_id: string
+  supplier_id: number | null
+  contract_id: string | null
+  contract_version?: string | null
+  status: string
+  submitted_at: string
+  started_at?: string | null
+  completed_at: string | null
+  items_extracted: number | null
+  error_summary?: Record<string, any> | string | null
+  retry_of?: string | null
+  superseded_by_run?: string | null
+}
+export const TERMINAL_RUN_STATUSES = new Set(['completed', 'completed_with_warnings', 'failed', 'cancelled'])
+export const fetchRunStatus = (runId: string) => reviewApi<RunStatus>(`/catalogues/ingestions/${runId}`)
+export const retryRun = (runId: string) =>
+  reviewApi<{ ingestion_run_id: string }>(`/catalogues/ingestions/${runId}/retry`, { method: 'POST' })
+
+export type FailureStage = 'received' | 'reading' | 'understanding' | 'recording'
+export interface FailureView {
+  code: string
+  sentence: string
+  action: string
+  stage: FailureStage
+  stageWords: string
+  retryable: boolean
+  attempts: number
+  detail: string | null
+  raw: string
+}
+
+const lowerFirst = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text)
+
+const FAILURE_COPY: Record<string, {
+  sentence: (message: string, attempts: number) => string
+  action: string
+  stage: FailureStage
+  retryable: boolean
+}> = {
+  SOURCE_VERIFICATION_ERROR: {
+    sentence: m => `The file couldn’t be opened — ${lowerFirst(m)}.`,
+    action: 'Fix the file (remove the password / re-export it) and upload it again — retrying the same file will fail the same way.',
+    stage: 'reading', retryable: false,
+  },
+  SOURCE_PAGE_READ_ERROR: {
+    sentence: m => `A page of the document couldn’t be read — ${lowerFirst(m)}.`,
+    action: 'Retry once — if it repeats, re-export the PDF and upload again.',
+    stage: 'reading', retryable: true,
+  },
+  SPREADSHEET_SHEET_READ_ERROR: {
+    sentence: m => `The spreadsheet couldn’t be read — ${lowerFirst(m)}.`,
+    action: 'Check the workbook matches the contract’s sheet layout, then re-upload.',
+    stage: 'reading', retryable: false,
+  },
+  TRANSIENT_PROVIDER_ERROR: {
+    sentence: () => 'The reading service had a temporary problem.',
+    action: 'Retry now — nothing about the file needs to change.',
+    stage: 'understanding', retryable: true,
+  },
+  PROVIDER_ERROR: {
+    sentence: () => 'The reading service rejected this document.',
+    action: 'Retry once — if it repeats, the document probably needs contract attention.',
+    stage: 'understanding', retryable: true,
+  },
+  EXTRACTION_EVIDENCE_ERROR: {
+    sentence: (_m, attempts) => `The reader couldn’t make sense of the pages${attempts > 1 ? ` after ${attempts} attempts` : ''}.`,
+    action: 'Retry once — recurring failures usually mean the document layout changed and the supplier contract needs an update.',
+    stage: 'understanding', retryable: true,
+  },
+  EXTRACTION_CONFIGURATION_ERROR: {
+    sentence: () => 'This supplier’s reading instructions are broken.',
+    action: 'Fix the extraction profile / supplier contract — retrying won’t help.',
+    stage: 'understanding', retryable: false,
+  },
+  RECORDED_CONTRACT_ERROR: {
+    sentence: () => 'The run’s contract records don’t line up.',
+    action: 'Engineering territory — copy the technical details and file it.',
+    stage: 'recording', retryable: false,
+  },
+  INVALID_RUN_TRANSITION: {
+    sentence: () => 'The run hit an internal state conflict.',
+    action: 'Retry creates a clean new run; if it recurs, involve engineering.',
+    stage: 'recording', retryable: true,
+  },
+  DUPLICATE_RUN_CLAIM: {
+    sentence: () => 'Two workers tried to process this run at once.',
+    action: 'Retry creates a clean new run.',
+    stage: 'recording', retryable: true,
+  },
+  TERMINAL_RUN_REPLAY: {
+    sentence: () => 'The run was replayed after it already finished.',
+    action: 'Retry creates a clean new run.',
+    stage: 'recording', retryable: true,
+  },
+  RUN_CANCELLED: {
+    sentence: m => `Cancelled — ${lowerFirst(m)}.`,
+    action: 'Informational — re-submit from the Catalogues page if it should run again.',
+    stage: 'recording', retryable: false,
+  },
+  CATALOGUE_ORCHESTRATION_ERROR: {
+    sentence: () => 'The run failed unexpectedly.',
+    action: 'Retry once — then copy the technical details for engineering.',
+    stage: 'recording', retryable: true,
+  },
+}
+
+const STAGE_WORDS: Record<FailureStage, string> = {
+  received: 'receiving the file',
+  reading: 'reading the file',
+  understanding: 'reading the pages',
+  recording: 'recording the run',
+}
+
+/** Normalize any failure envelope (v1 two-field or v2) into display truth.
+ * Old envelopes carry the ×N semicolon stutter — dedupe it here so history
+ * renders as cleanly as new failures. */
+export function failureInfo(errorSummary: RunStatus['error_summary']): FailureView | null {
+  if (errorSummary == null) return null
+  let env: Record<string, any>
+  if (typeof errorSummary === 'string') {
+    try { env = JSON.parse(errorSummary) } catch { env = { message: errorSummary } }
+  } else {
+    env = errorSummary
+  }
+  const code = String(env.error_code ?? 'UNKNOWN')
+  let message = String(env.message ?? '')
+  let attempts = typeof env.attempts === 'number' ? env.attempts : 1
+  let detail = env.detail != null ? String(env.detail) : null
+  if (env.attempts == null && message.includes(';')) {
+    const parts = message.split(';').map(p => p.trim()).filter(Boolean)
+    const unique = [...new Set(parts)]
+    message = unique[0] ?? message
+    attempts = parts.length
+    if (unique.length > 1) detail = unique.slice(1).join('; ')
+  }
+  const copy = FAILURE_COPY[code]
+  const stage = (env.stage as FailureStage) ?? copy?.stage ?? 'recording'
+  return {
+    code,
+    sentence: copy ? copy.sentence(message, attempts) : (message || 'The run failed unexpectedly.'),
+    action: copy?.action ?? 'Retry once — then copy the technical details for engineering.',
+    stage,
+    stageWords: STAGE_WORDS[stage] ?? STAGE_WORDS.recording,
+    retryable: typeof env.retryable === 'boolean' ? env.retryable : copy?.retryable ?? false,
+    attempts,
+    detail,
+    raw: message,
+  }
+}
