@@ -11,9 +11,8 @@
 // Data still streams client-side (instant filtering + client CSV export); the
 // only new API dependency is sales_120d / data_grade / cost_source, now in the
 // stream serializer.
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import type { CSSProperties } from 'react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { API_BASE } from '@/lib/config'
 import { authHeaders, can } from '@/lib/auth'
 import { skuToPath } from '@/lib/sku'
@@ -50,6 +49,20 @@ const inWorkingSet = (p: Product) =>
   p.status === 'ACTIVE' && ((p.total_qty ?? 0) > 0 || (p.sales_120d ?? 0) > 0 || (p.weekly_demand ?? 0) > 0)
 
 const oosSuppliers = (p: Product) => (p.all_suppliers ?? []).filter(s => s.stock_status === 'out_of_stock')
+
+// Which supplier the row speaks for: the preferred link, else the first named one.
+// `+N` says there are alternates; the dot says the preferred one can't ship, and
+// whether anyone else can.
+function supplierSummary(p: Product) {
+  const named = (p.all_suppliers ?? []).filter(s => s.name)
+  const pref = (p.all_suppliers ?? []).find(s => s.is_preferred && s.name) ?? named[0] ?? null
+  return {
+    pref,
+    extra: Math.max(0, named.length - 1),
+    prefOos: pref?.stock_status === 'out_of_stock',
+    hasAlt: (p.all_suppliers ?? []).some(s => s.stock_status !== 'out_of_stock'),
+  }
+}
 const worstMargin = (p: Product): number | null => {
   const live = (p.channels ?? []).filter(c => c.is_active && c.gp_pct != null)
   return live.length ? Math.min(...live.map(c => c.gp_pct as number)) : null
@@ -121,6 +134,354 @@ function SelCheckbox({ sku }: { sku: string }) {
   return <input type="checkbox" checked={on} onChange={() => selectionStore.toggle(sku)} onClick={e => e.stopPropagation()} aria-label={`Select ${sku}`} />
 }
 
+
+// ── hover cards ───────────────────────────────────────────────────────────
+// A summary cell shows the headline number; hovering reveals what's behind it
+// (bulk tiers, the supplier list, the stock split, per-channel margin). These
+// carry the detail the old page kept in extra columns, without the width.
+/** One row of GET /products/margins.json, keyed by sku on the response. */
+type MarginRow = {
+  basic_cost?: number | null
+  mbb_cost?: number | null
+  cost_to_hit?: number | null
+  gp_floor?: number | null
+  ch?: Record<string, { price?: number | null; nb?: number | null; nm?: number | null }>
+}
+
+type PopKind = 'suppliers' | 'channels' | 'cover' | 'bulk' | 'stock'
+  | 'state' | 'demand' | 'unitcost' | 'costtohit' | 'grade' | 'costsrc'
+type PopState = { kind: PopKind; item: Product; margin?: MarginRow; x: number; y: number } | null
+
+const FEE: Record<string, number> = { clinic: 0, shopify: 0.029, hktv: 0.15 }
+const LOGI: Record<string, number> = { clinic: 0, shopify: 0.9, hktv: 0.6 }
+
+// One entry per rowState verdict: the numbers that triggered it, and the move
+// that clears it. Keep these in step with rowState() above.
+const STATE_WHY: Record<string, { what: (p: Product) => string; fix: string }> = {
+  oos: {
+    what: p => `Nothing on hand${(p.sales_120d ?? 0) > 0 ? ` while it still moves ~${fmtRate(p.weekly_demand ?? 0)}/wk` : ' and it is listed for sale'}.`,
+    fix: 'Raise a purchase order, or take it off the channels it can’t serve.',
+  },
+  low_cover: {
+    what: p => `${(p.woc ?? 0).toFixed(1)} weeks of cover left at ~${fmtRate(p.weekly_demand ?? 0)}/wk — under the 2-week reorder line.`,
+    fix: 'Hover the cover cell for how much to buy to reach 4 or 8 weeks.',
+  },
+  below_floor: {
+    what: p => {
+      const m = worstMargin(p)
+      return `Its weakest live channel returns ${m == null ? '—' : (m * 100).toFixed(1)}%, under the ${((p.gp_floor ?? 0) * 100).toFixed(0)}% floor.`
+    },
+    fix: 'Either the cost comes down or the price goes up — the margin card shows which channels bleed.',
+  },
+  supplier_out: {
+    what: p => {
+      const out = oosSuppliers(p)
+      return `${out.length} of ${(p.all_suppliers ?? []).length} suppliers can’t ship${out[0]?.expected_restock_at ? `; the first is back ${fmtDay(out[0].expected_restock_at)}` : ''}.`
+    },
+    fix: 'Buy from an alternate, or wait for restock if cover allows.',
+  },
+  no_cost: {
+    what: () => 'It sells, but no supplier price is on record — every margin on this row is unknown.',
+    fix: 'Add a supplier cost, or run it through a catalogue ingestion.',
+  },
+  check: {
+    what: p => p.data_grade === 'C'
+      ? 'Grade C — something a trading decision depends on is missing.'
+      : 'Pack size has never been verified, so the per-unit cost is unconfirmed.',
+    fix: 'Open the SKU and fill the gap; the Data quality view lists what’s missing.',
+  },
+  ok: {
+    what: () => 'Stocked, covered, priced above the floor, and its data checks out.',
+    fix: 'No action needed.',
+  },
+}
+
+const primarySupplier = (p: Product) =>
+  (p.all_suppliers ?? []).find(sp => sp.is_primary) ?? (p.all_suppliers ?? [])[0]
+
+/** The bulk term the headline mbb_unit_cost came from — the cheapest one. */
+const bestTerm = (p: Product) => {
+  const terms = (primarySupplier(p)?.mbb_term_list ?? []).filter(t => t.effective_unit_cost != null)
+  if (!terms.length) return null
+  return terms.reduce((a, b) => ((b.effective_unit_cost as number) < (a.effective_unit_cost as number) ? b : a))
+}
+
+const termLabel = (t: ReturnType<typeof bestTerm>, uom: string): string | null => {
+  if (!t) return null
+  if (t.kind === 'buy_x_get_y') return `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free`
+  if (t.kind === 'spend_discount') return `Spend ${t.min_spend != null ? money(t.min_spend) : '?'} → ${t.discount_pct != null ? (t.discount_pct * 100).toFixed(0) : '?'}% off`
+  return t.min_qty && t.min_qty > 1 ? `${t.min_qty}+ ${plural(uom)}` : `Flat ${uom} price`
+}
+
+// A check the row either passes or fails, rendered as a ✓/✗ line.
+function Check({ ok, label, detail }: { ok: boolean; label: string; detail?: string }) {
+  return (
+    <div className="prow">
+      <span className="pk"><b>{label}</b>{detail && <div className="pmeta">{detail}</div>}</span>
+      <span className="pv" style={{ color: ok ? 'var(--good)' : 'var(--red)' }}>{ok ? '✓' : '✗'}</span>
+    </div>
+  )
+}
+
+function PopBody({ kind, item, margin }: { kind: PopKind; item: Product; margin?: MarginRow }) {
+  const uom = item.uom ?? 'unit'
+  if (kind === 'suppliers') {
+    const costs = (item.all_suppliers ?? []).map(s => s.basic_cost).filter((v): v is number => v != null)
+    const lo = costs.length ? Math.min(...costs) : null
+    const out = oosSuppliers(item)
+    return <>
+      <div className="ph">Suppliers · pack cost</div>
+      <div className="pb">
+        {(item.all_suppliers ?? []).length === 0 && <div className="sub">No supplier linked yet.</div>}
+        {(item.all_suppliers ?? []).map(sp => (
+          <div className="prow" key={sp.id}>
+            <span className="pk">
+              <b>{sp.name ?? 'Supplier record missing'}</b>
+              {sp.is_preferred && <span className="low" style={{ background: 'var(--accent-soft)', color: 'var(--accent-ink)' }}>preferred</span>}
+              <div className="pmeta">{[sp.code, sp.supplier_sku && `SKU ${sp.supplier_sku}`].filter(Boolean).join(' · ') || (sp.name ? '' : 'this link points at no supplier')}</div>
+              <div style={{ marginTop: 3 }}>
+                {sp.stock_status === 'out_of_stock'
+                  ? <span className="chip bad">out{sp.expected_restock_at ? ` · back ${fmtDay(sp.expected_restock_at)}` : ''}</span>
+                  : <span className="chip ok">in stock</span>}
+              </div>
+            </span>
+            <span className="pv">{sp.basic_cost != null ? money(sp.basic_cost) : '—'}
+              {lo != null && sp.basic_cost === lo && (item.all_suppliers ?? []).length > 1 && <span className="low">lowest</span>}</span>
+          </div>
+        ))}
+      </div>
+      <div className="pf">{out.length > 0
+        ? <b style={{ color: 'var(--red)' }}>{out.length} of {(item.all_suppliers ?? []).length} out of stock.</b>
+        : (item.all_suppliers ?? []).length > 1 ? 'Cheapest source is preferred.' : 'Single supplier on record.'}</div>
+    </>
+  }
+  if (kind === 'channels') {
+    const live = (item.channels ?? []).filter(c => c.selling_price != null || c.is_active)
+    return <>
+      <div className="ph">Margin by channel</div>
+      <div className="pb">
+        {live.length === 0 && <div className="sub">Not listed on any channel.</div>}
+        {live.map(c => {
+          const sell = c.selling_price
+          const gross = c.gp_pct
+          const fee = c.channel_fee_pct ?? FEE[c.channel] ?? 0
+          const logi = LOGI[c.channel] ?? 0
+          const net = gross == null || sell == null ? null : gross - fee - logi / sell
+          return (
+            <div className="prow" key={c.channel}>
+              <span className="pk">
+                <b>{c.channel}</b>{c.is_active ? '' : ' · off'}
+                {sell != null && <div className="pmeta">
+                  {money(sell)} sell{fee > 0 ? ` · −${(fee * 100).toFixed(1)}% fee` : ''}{logi > 0 ? ` · −${money(logi)} logi` : ''}
+                  {gross != null ? ` · ${(gross * 100).toFixed(1)}% gross` : ''}
+                </div>}
+              </span>
+              <span className={`pv ${net == null ? '' : net >= (item.gp_floor ?? 0) ? 'good' : net > 0 ? 'amber' : 'red'}`}>
+                {net == null ? '—' : `${(net * 100).toFixed(1)}%`}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="pf">Net = sell − channel fee − logistics − cost (fees are standard estimates). Floor {((item.gp_floor ?? 0) * 100).toFixed(0)}% is gross GP.</div>
+    </>
+  }
+  if (kind === 'cover') {
+    const upp = item.units_per_pack ?? 1
+    const rows = (item.weekly_demand ?? 0) > 0
+      ? [4, 8].map(w => {
+          const packs = Math.ceil(Math.max(0, (w - (item.woc ?? 0)) * item.weekly_demand) / upp)
+          return packs > 0 ? { w, packs, units: packs * upp } : null
+        }).filter(Boolean) as { w: number; packs: number; units: number }[]
+      : []
+    return <>
+      <div className="ph">Weeks of cover · target 4w</div>
+      <div className="pb">
+        <div style={{ marginBottom: rows.length ? 8 : 0 }}>
+          Currently {item.woc != null
+            ? <b className={item.woc < 2 ? 'red' : item.woc < 4 ? 'amber' : 'good'}>{item.woc.toFixed(1)} weeks</b>
+            : <span className="sub">no demand signal</span>} · ~{fmtRate(item.weekly_demand ?? 0)}/wk
+        </div>
+        {rows.map(r => (
+          <div className="prow" key={r.w}>
+            <span className="pk">Reach <b>{r.w} weeks</b></span>
+            <span className="pv">{r.packs} {item.pack_unit ?? 'pack'}{r.packs > 1 ? 's' : ''}
+              <div className="pmeta" style={{ textAlign: 'right' }}>{r.units.toLocaleString()} {plural(uom)}</div></span>
+          </div>
+        ))}
+        {!rows.length && <div className="sub">Add pack size + demand to simulate top-ups.</div>}
+      </div>
+      <div className="pf">Clinic (DaySmart) vs warehouse cover; target is 4 weeks.</div>
+    </>
+  }
+  if (kind === 'stock') {
+    return <>
+      <div className="ph">Stock on hand</div>
+      <div className="pb">
+        <div className="prow"><span className="pk">Clinic</span><span className="pv">{Math.round(item.clinic_qty ?? 0).toLocaleString()}</span></div>
+        <div className="prow"><span className="pk">Warehouse</span><span className="pv">{Math.round(item.warehouse_qty ?? 0).toLocaleString()}</span></div>
+        <div className="prow"><span className="pk"><b>Total</b></span><span className="pv">{Math.round(item.total_qty ?? 0).toLocaleString()} {plural(uom)}</span></div>
+      </div>
+      <div className="pf">Storage rule: {item.storage_rule === 'clinic_only' ? 'clinic only' : 'any location'}
+        {item.min_purchase_qty ? ` · product MOQ ${item.min_purchase_qty}` : ''}</div>
+    </>
+  }
+  if (kind === 'state') {
+    const st = rowState(item)
+    const why = STATE_WHY[st.key]
+    return <>
+      <div className="ph">Why this row is flagged</div>
+      <div className="pb">
+        <div style={{ marginBottom: 7 }}>
+          {st.key === 'ok'
+            ? <span className="chip ok">nothing to do</span>
+            : <span className={`chip ${st.tone === 'bad' ? 'bad' : 'warn'}`}>{st.label}</span>}
+        </div>
+        <div style={{ lineHeight: 1.55 }}>{why.what(item)}</div>
+      </div>
+      <div className="pf">{why.fix}</div>
+    </>
+  }
+  if (kind === 'demand') {
+    const wk = item.weekly_demand ?? 0
+    return <>
+      <div className="ph">Demand</div>
+      <div className="pb">
+        <div className="prow"><span className="pk">Weekly rate</span><span className="pv">{fmtRate(wk)} {plural(uom)}/wk</span></div>
+        <div className="prow"><span className="pk">Over 120 days</span><span className="pv">{(item.sales_120d ?? 0).toLocaleString()} {plural(uom)}</span></div>
+        <div className="prow"><span className="pk">Covered by stock for</span><span className="pv">{item.woc != null ? `${item.woc.toFixed(1)} weeks` : '—'}</span></div>
+      </div>
+      <div className="pf">This is the weekly rate carried over 120 days, not a recorded sales count. The rate comes from the algo sales feed.</div>
+    </>
+  }
+  if (kind === 'unitcost') {
+    const upp = item.units_per_pack ?? null
+    return <>
+      <div className="ph">Cost per {uom}</div>
+      <div className="pb">
+        <div className="prow"><span className="pk">Pack cost<div className="pmeta">what the supplier charges</div></span>
+          <span className="pv">{item.primary_cost != null ? money(item.primary_cost) : '—'}</span></div>
+        <div className="prow"><span className="pk">Units per {item.pack_unit ?? 'pack'}</span>
+          <span className="pv">{upp ?? <span style={{ color: 'var(--red)' }}>not set</span>}</span></div>
+        <div className="prow"><span className="pk"><b>Cost per {uom}</b></span>
+          <span className="pv">{item.unit_cost != null ? money(item.unit_cost) : '—'}</span></div>
+        {item.mbb_unit_cost != null && item.unit_cost != null && item.mbb_unit_cost < item.unit_cost && (
+          <div className="prow"><span className="pk">At bulk terms</span>
+            <span className="pv" style={{ color: 'var(--good)' }}>{money(item.mbb_unit_cost)}</span></div>
+        )}
+      </div>
+      <div className="pf">{upp == null
+        ? 'Without a pack size the per-unit cost — and every margin built on it — is a guess.'
+        : `Margins are struck against the cost per ${uom}, not the pack cost.`}</div>
+    </>
+  }
+  if (kind === 'costtohit') {
+    // cost_to_hit is the cash you lay out to UNLOCK the best bulk term — for
+    // buy-x-get-y that's min_qty at the basic price, for spend_discount the
+    // threshold, otherwise min_qty at the discounted price. Not a margin target.
+    const outlay = margin?.cost_to_hit ?? null
+    const best = bestTerm(item)
+    const qty = best?.min_qty ?? null
+    const saving = item.unit_cost != null && item.mbb_unit_cost != null ? item.unit_cost - item.mbb_unit_cost : null
+    const wk = item.weekly_demand ?? 0
+    const weeks = qty != null && wk > 0 ? qty / wk : null
+    return <>
+      <div className="ph">Buying into the bulk tier</div>
+      <div className="pb">
+        <div className="prow"><span className="pk">Best term<div className="pmeta">{termLabel(best, uom) ?? 'none on record'}</div></span>
+          <span className="pv">{item.mbb_unit_cost != null ? `${money(item.mbb_unit_cost)}/${uom}` : '—'}</span></div>
+        <div className="prow"><span className="pk"><b>Outlay to unlock</b><div className="pmeta">what you pay up front</div></span>
+          <span className="pv">{outlay != null ? money(outlay, 0) : '—'}</span></div>
+        {saving != null && saving > 0 && (
+          <div className="prow"><span className="pk">Saves per {uom}</span>
+            <span className="pv" style={{ color: 'var(--good)' }}>{money(saving)}</span></div>
+        )}
+        {weeks != null && (
+          <div className="prow"><span className="pk">That quantity lasts</span>
+            <span className="pv" style={{ color: weeks > 26 ? 'var(--amber)' : undefined }}>{weeks.toFixed(0)} weeks</span></div>
+        )}
+      </div>
+      <div className="pf">{outlay == null ? 'No bulk term on this supplier, so there is nothing to buy into.'
+        : weeks != null && weeks > 26 ? 'Over six months of stock — the discount may not be worth the cash and the shelf life.'
+        : 'Weigh the discount against tying up cash and storage.'}</div>
+    </>
+  }
+  if (kind === 'grade') {
+    const hasCostV = item.primary_cost != null
+    const hasPrice = (item.channels ?? []).some(c => c.selling_price != null)
+    const hasSup = !!supplierSummary(item).pref
+    const okSku = /^\d{6,}$/.test(item.sku_code ?? '')
+    return <>
+      <div className="ph">What sets the grade</div>
+      <div className="pb">
+        <Check ok={hasCostV} label="Cost on record" detail={hasCostV ? undefined : 'no supplier price'} />
+        <Check ok={hasPrice} label="Priced on a channel" detail={hasPrice ? undefined : 'no selling price anywhere'} />
+        <Check ok={hasSup} label="Supplier linked" />
+        <Check ok={okSku} label="Valid SKU code" detail={okSku ? undefined : item.sku_code} />
+      </div>
+      <div className="pf">All four pass → <b>A</b>, actionable. Any one fails → <b>C</b>, don’t trade on it.</div>
+    </>
+  }
+  if (kind === 'costsrc') {
+    const age = daysSince(item.cost_last_updated)
+    return <>
+      <div className="ph">Where the cost came from</div>
+      <div className="pb">
+        <div className="prow"><span className="pk">Source</span>
+          <span className="pv">{item.cost_source ? item.cost_source.toUpperCase() : '—'}</span></div>
+        <div className="prow"><span className="pk">Last updated</span>
+          <span className="pv">{item.cost_last_updated ? fmtDay(item.cost_last_updated) : '—'}</span></div>
+        <div className="prow"><span className="pk">Age</span>
+          <span className="pv" style={{ color: age != null && age > 90 ? 'var(--amber)' : undefined }}>{age != null ? `${age} days` : '—'}</span></div>
+        {item.uom_verified_at && (
+          <div className="prow"><span className="pk">Pack size checked</span>
+            <span className="pv">{fmtDay(item.uom_verified_at)}{item.uom_verified_by ? ` · ${item.uom_verified_by}` : ''}</span></div>
+        )}
+      </div>
+      <div className="pf">{item.cost_source === 'catalogue'
+        ? 'Read from a reviewed supplier catalogue.'
+        : 'Entered by hand — a catalogue run would replace it.'}{age != null && age > 90 ? ' Over 90 days old; worth re-checking.' : ''}</div>
+    </>
+  }
+  // bulk
+  const sup = primarySupplier(item)
+  const terms = sup?.mbb_term_list ?? []
+  return <>
+    <div className="ph">Bulk-buy tiers{sup?.name ? ` · ${sup.name}` : ''}</div>
+    <div className="pb">
+      {terms.length === 0 && <div className="sub">No bulk-buy terms on record.</div>}
+      {terms.map(t => (
+        <div className="prow" key={t.id}>
+          <span className="pk">
+            <b>{termLabel(t, uom)}</b>
+            {t.note && <div className="pmeta">{t.note}</div>}
+          </span>
+          <span className="pv">{t.effective_unit_cost != null ? `${money(t.effective_unit_cost)}/${uom}` : '—'}</span>
+        </div>
+      ))}
+    </div>
+    {item.mbb_unit_cost != null && (
+      <div className="pf">Best achievable: <b style={{ color: 'var(--accent-ink)' }}>{money(item.mbb_unit_cost)}</b> / {uom}
+        {item.unit_cost != null && item.mbb_unit_cost < item.unit_cost
+          ? ` · ${((1 - item.mbb_unit_cost / item.unit_cost) * 100).toFixed(1)}% under the base cost`
+          : item.unit_cost != null ? ' · not cheaper than the base cost' : ''}</div>
+    )}
+  </>
+}
+
+const plural = (u: string) => (/(\(s\)|s)$/i.test(u.trim()) ? u : `${u}s`)
+// A demand of 0.4/wk still justifies a top-up — don't round it away to "0/wk".
+const fmtRate = (n: number) => (n > 0 && n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString())
+
+function HoverCard({ pop, onKeep, onLeave }: { pop: PopState; onKeep: () => void; onLeave: () => void }) {
+  if (!pop) return null
+  return (
+    <div className="inv2-pop" style={{ left: pop.x, top: pop.y }} onMouseEnter={onKeep} onMouseLeave={onLeave}>
+      <PopBody kind={pop.kind} item={pop.item} margin={pop.margin} />
+    </div>
+  )
+}
+
 // ── page ──────────────────────────────────────────────────────────────────
 function NewInventoryPage() {
   const navigate = useNavigate()
@@ -133,7 +494,7 @@ function NewInventoryPage() {
   const [settled, setSettled] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [margins, setMargins] = useState<Record<string, any>>({})
+  const [margins, setMargins] = useState<Record<string, MarginRow>>({})
   const [marginsLoading, setMarginsLoading] = useState(false)
 
   // view state (URL-backed so a link reproduces the list)
@@ -147,6 +508,13 @@ function NewInventoryPage() {
   const [supplier, setSupplier] = useState(params.get('sup') ?? 'All')
   const [stockFilter, setStockFilter] = useState(params.get('stock') ?? 'any')
   const [gradeFilter, setGradeFilter] = useState(params.get('dq') ?? 'any')
+  const [channelFilter, setChannelFilter] = useState(params.get('ch') ?? 'any')
+  const [storageFilter, setStorageFilter] = useState(params.get('store') ?? 'any')
+  const [heroFilter, setHeroFilter] = useState(params.get('hero') ?? 'any')
+  const [gapFilter, setGapFilter] = useState(params.get('gap') ?? 'any')
+  const [collectionId, setCollectionId] = useState<number | null>(params.get('col') ? Number(params.get('col')) : null)
+  const [collections, setCollections] = useState<{ id: number; name: string; count: number }[]>([])
+  const [collectionSkus, setCollectionSkus] = useState<Set<string> | null>(null)
   const [sortCol, setSortCol] = useState(params.get('sort') ?? 'state')
   // 'state' ranks worst-first, so ascending is the useful default there.
   const [sortAsc, setSortAsc] = useState(params.get('dir') ? params.get('dir') === 'asc' : true)
@@ -158,6 +526,18 @@ function NewInventoryPage() {
   const [batchOpen, setBatchOpen] = useState(false)
   const [shortcuts, setShortcuts] = useState(false)
   const [focusRow, setFocusRow] = useState(0)
+  const [pop, setPop] = useState<PopState>(null)
+  const popTimer = useRef<number | null>(null)
+  const showPop = (kind: PopKind, item: Product, e: React.MouseEvent, margin?: MarginRow) => {
+    if (popTimer.current) { window.clearTimeout(popTimer.current); popTimer.current = null }
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const x = Math.max(8, Math.min(r.left, window.innerWidth - 334))
+    const below = e.clientY + 14
+    const y = below + 300 > window.innerHeight ? Math.max(8, e.clientY - 306) : below
+    setPop({ kind, item, margin, x, y })
+  }
+  const hidePop = () => { if (popTimer.current) window.clearTimeout(popTimer.current); popTimer.current = window.setTimeout(() => setPop(null), 130) }
+  const keepPop = () => { if (popTimer.current) { window.clearTimeout(popTimer.current); popTimer.current = null } }
   const searchRef = useRef<HTMLInputElement>(null)
   const anyDialog = exportOpen || batchOpen || shortcuts
 
@@ -175,11 +555,17 @@ function NewInventoryPage() {
     if (supplier !== 'All') p.set('sup', supplier)
     if (stockFilter !== 'any') p.set('stock', stockFilter)
     if (gradeFilter !== 'any') p.set('dq', gradeFilter)
+    if (channelFilter !== 'any') p.set('ch', channelFilter)
+    if (storageFilter !== 'any') p.set('store', storageFilter)
+    if (heroFilter !== 'any') p.set('hero', heroFilter)
+    if (gapFilter !== 'any') p.set('gap', gapFilter)
+    if (collectionId != null) p.set('col', String(collectionId))
     if (sortCol !== 'state') p.set('sort', sortCol)
     p.set('dir', sortAsc ? 'asc' : 'desc')
     const qs = p.toString()
     window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
-  }, [scope, view, search, attention, category, supplier, stockFilter, gradeFilter, sortCol, sortAsc])
+  }, [scope, view, search, attention, category, supplier, stockFilter, gradeFilter,
+      channelFilter, storageFilter, heroFilter, gapFilter, collectionId, sortCol, sortAsc])
 
   // ── stream the catalogue ──
   const fetchData = useCallback(async () => {
@@ -222,7 +608,18 @@ function NewInventoryPage() {
   useEffect(() => { fetchData() }, [fetchData])
   useEffect(() => {
     fetch(`${API}/suppliers`, { headers: authHeaders() }).then(r => r.ok ? r.json() : []).then(setSuppliers).catch(() => {})
+    fetch(`${API}/collections`, { headers: authHeaders() }).then(r => r.ok ? r.json() : []).then(setCollections).catch(() => {})
   }, [])
+  // A collection is a stored list of SKUs — fetch its membership when picked.
+  useEffect(() => {
+    if (collectionId == null) { setCollectionSkus(null); return }
+    let cancelled = false
+    fetch(`${API}/collections/${collectionId}/products`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled && d) setCollectionSkus(new Set((d.items ?? d ?? []).map((x: any) => x.sku_code ?? x))) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [collectionId])
   // Money view pulls the margin table once, on demand.
   useEffect(() => {
     if (view !== 'money' || Object.keys(margins).length || marginsLoading) return
@@ -268,13 +665,25 @@ function NewInventoryPage() {
       if (gradeFilter === 'a' && i.data_grade !== 'A') return false
       if (gradeFilter === 'c' && i.data_grade !== 'C') return false
       if (gradeFilter === 'unverified' && i.uom_verified_at) return false
+      if (gradeFilter === 'verified' && !i.uom_verified_at) return false
+      if (channelFilter !== 'any' && !(i.channels ?? []).some(c => c.channel === channelFilter && c.is_active)) return false
+      if (storageFilter === 'clinic_only' && i.storage_rule !== 'clinic_only') return false
+      if (storageFilter === 'any_loc' && i.storage_rule === 'clinic_only') return false
+      if (heroFilter === 'hero' && !i.hero_sku) return false
+      if (heroFilter === 'not_hero' && i.hero_sku) return false
+      if (collectionSkus && !collectionSkus.has(i.sku_code)) return false
+      if (gapFilter === 'no_sku' && /^\d{6,}$/.test(i.sku_code.trim())) return false
+      if (gapFilter === 'no_supplier' && (i.all_suppliers ?? []).some(sp => sp.name)) return false
+      if (gapFilter === 'no_pack' && i.units_per_pack != null) return false
+      if (gapFilter === 'priority' && !((i.sales_120d ?? 0) > 0 && i.data_grade === 'C')) return false
       if (attention === 'low_cover' && !(i.woc != null && i.woc < 2)) return false
       if (attention === 'below_floor' && !belowFloor(i)) return false
       if (attention === 'supplier_out' && oosSuppliers(i).length === 0) return false
       if (attention === 'no_cost' && !((isListed(i) || (i.sales_120d ?? 0) > 0) && !hasCost(i))) return false
       return true
     })
-  }, [scoped, search, category, supplier, stockFilter, gradeFilter, attention])
+  }, [scoped, search, category, supplier, stockFilter, gradeFilter, attention,
+      channelFilter, storageFilter, heroFilter, gapFilter, collectionSkus])
 
   const sorted = useMemo(() => {
     const val = (p: Product): string | number | null => {
@@ -286,6 +695,8 @@ function NewInventoryPage() {
         case 'onhand': return p.total_qty
         case 'sales': return p.sales_120d
         case 'cost': return p.primary_cost
+        case 'sell': return ((p.channels ?? []).find(c => c.channel === 'clinic' && c.selling_price != null)
+          ?? (p.channels ?? []).find(c => c.selling_price != null))?.selling_price ?? null
         case 'gp': return worstMargin(p)
         case 'packcost': return p.primary_cost
         case 'unitcost': return p.unit_cost
@@ -313,10 +724,19 @@ function NewInventoryPage() {
     ...category.map(c => ({ label: `Category: ${c}`, clear: () => setCategory(prev => prev.filter(x => x !== c)) })),
     ...(supplier !== 'All' ? [{ label: `Supplier: ${supplier}`, clear: () => setSupplier('All') }] : []),
     ...(stockFilter !== 'any' ? [{ label: stockFilter === 'in' ? 'In stock' : 'Out of stock', clear: () => setStockFilter('any') }] : []),
-    ...(gradeFilter !== 'any' ? [{ label: gradeFilter === 'a' ? 'Grade A' : gradeFilter === 'c' ? 'Grade C' : 'Unverified pack', clear: () => setGradeFilter('any') }] : []),
+    ...(gradeFilter !== 'any' ? [{ label: GRADE_LABEL[gradeFilter] ?? gradeFilter, clear: () => setGradeFilter('any') }] : []),
     ...(attention ? [{ label: ATT_LABEL[attention], clear: () => setAttention(null) }] : []),
+    ...(channelFilter !== 'any' ? [{ label: `Channel: ${channelFilter}`, clear: () => setChannelFilter('any') }] : []),
+    ...(storageFilter !== 'any' ? [{ label: storageFilter === 'clinic_only' ? 'Clinic only' : 'Warehouse OK', clear: () => setStorageFilter('any') }] : []),
+    ...(heroFilter !== 'any' ? [{ label: heroFilter === 'hero' ? '★ Hero SKUs' : 'Not hero', clear: () => setHeroFilter('any') }] : []),
+    ...(gapFilter !== 'any' ? [{ label: GAP_LABEL[gapFilter] ?? gapFilter, clear: () => setGapFilter('any') }] : []),
+    ...(collectionId != null ? [{ label: `Collection: ${collections.find(c => c.id === collectionId)?.name ?? collectionId}`, clear: () => setCollectionId(null) }] : []),
   ]
-  const clearAll = () => { setCategory([]); setSupplier('All'); setStockFilter('any'); setGradeFilter('any'); setAttention(null); setSearchInput('') }
+  const clearAll = () => {
+    setCategory([]); setSupplier('All'); setStockFilter('any'); setGradeFilter('any'); setAttention(null)
+    setChannelFilter('any'); setStorageFilter('any'); setHeroFilter('any'); setGapFilter('any')
+    setCollectionId(null); setSearchInput('')
+  }
 
   // search that reaches outside the scope
   const outsideScope = useMemo(() => {
@@ -451,6 +871,11 @@ function NewInventoryPage() {
               stockFilter={stockFilter} setStockFilter={setStockFilter}
               gradeFilter={gradeFilter} setGradeFilter={setGradeFilter}
               attention={attention} setAttention={setAttention}
+              channelFilter={channelFilter} setChannelFilter={setChannelFilter}
+              storageFilter={storageFilter} setStorageFilter={setStorageFilter}
+              heroFilter={heroFilter} setHeroFilter={setHeroFilter}
+              gapFilter={gapFilter} setGapFilter={setGapFilter}
+              collections={collections} collectionId={collectionId} setCollectionId={setCollectionId}
               resultCount={filtered.length}
               onClose={() => setFiltersOpen(false)} onReset={clearAll}
             />
@@ -500,28 +925,32 @@ function NewInventoryPage() {
                   {view === 'ops' && <>
                     <SortTh id="cover" label="Cover" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     <SortTh id="onhand" label="On hand" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
-                    <SortTh id="sales" label="Sold 120d" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
+                    {/* Not recorded sales — the backend projects it from the weekly
+                        rate (weekly_demand × 120/7), so call it demand. */}
+                    <SortTh id="sales" label="120d demand" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     <SortTh id="cost" label="Cost" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
+                    <SortTh id="sell" label="Sell" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     <SortTh id="gp" label="GP%" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                   </>}
                   {view === 'money' && <>
                     <SortTh id="packcost" label="Pack cost" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     <SortTh id="unitcost" label="Unit cost" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     <SortTh id="bulk" label="Best bulk" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
+                    <th className="r" title="Cash you lay out to unlock the best bulk term">To unlock bulk</th>
                     <th className="r">Clinic net</th><th className="r">Shopify net</th><th className="r">HKTV net</th>
                   </>}
                   {view === 'dq' && <>
                     <SortTh id="grade" label="Grade" sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     <th>Verified</th><th>Cost source</th>
                     <SortTh id="costage" label="Cost age" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
-                    <th>Missing</th>
+                    <th>Storage</th><th>Missing</th>
                   </>}
                   <th style={{ width: 26 }}></th>
                 </tr></thead>
                 <tbody>
                   {rows.map((p, i) => (
                     <Row key={p.sku_code} p={p} view={view} margin={margins[p.sku_code]} marginsLoading={marginsLoading}
-                      focused={i === focusRow} onOpen={() => openSku(p.sku_code)} />
+                      focused={i === focusRow} onOpen={() => openSku(p.sku_code)} showPop={showPop} hidePop={hidePop} />
                   ))}
                 </tbody>
               </table>
@@ -556,10 +985,18 @@ function NewInventoryPage() {
       )}
       {batchOpen && <BatchDialog onClose={() => setBatchOpen(false)} onApplied={fetchData} />}
       {shortcuts && <ShortcutsOverlay onClose={() => setShortcuts(false)} />}
+      <HoverCard pop={pop} onKeep={keepPop} onLeave={hidePop} />
     </div>
   )
 }
 
+const GAP_LABEL: Record<string, string> = {
+  no_sku: 'No valid SKU', no_supplier: 'No supplier', no_pack: 'No pack size',
+  priority: 'Fix first — sells, Grade C',
+}
+const GRADE_LABEL: Record<string, string> = {
+  a: 'Grade A', c: 'Grade C', verified: 'Pack size verified', unverified: 'Pack size unverified',
+}
 const ATT_LABEL: Record<AttentionId, string> = {
   low_cover: 'Cover < 2 weeks', below_floor: 'Below GP floor',
   supplier_out: 'Supplier out', no_cost: 'No cost on record',
@@ -590,18 +1027,31 @@ function SortTh({ id, label, r, sortCol, sortAsc, onSort }: {
   )
 }
 
-function Row({ p, view, margin, marginsLoading, focused, onOpen }: {
-  p: Product; view: ViewId; margin: any; marginsLoading: boolean; focused: boolean; onOpen: () => void
+function Row({ p, view, margin, marginsLoading, focused, onOpen, showPop, hidePop }: {
+  p: Product; view: ViewId; margin?: MarginRow; marginsLoading: boolean; focused: boolean; onOpen: () => void
+  showPop: (k: PopKind, item: Product, e: React.MouseEvent, margin?: MarginRow) => void; hidePop: () => void
 }) {
+  // No className here — spreading it would clobber the cell's alignment class.
+  const hov = (kind: PopKind) => ({
+    onMouseEnter: (e: React.MouseEvent) => showPop(kind, p, e, margin),
+    onMouseLeave: hidePop,
+  })
   const st = rowState(p)
   const sel = useSelHas(p.sku_code)
   const cover = p.woc
   const coverPct = cover == null ? 0 : Math.max(3, Math.min(100, (cover / 8) * 100))
   const coverTone = cover == null ? 'var(--ghost)' : cover < 2 ? '#E25A4E' : cover < 4 ? '#E9A23B' : '#34B36F'
   const gp = worstMargin(p)
+  // Headline sell price: clinic first (the primary channel), else any listed one.
+  const sellPrice = ((p.channels ?? []).find(c => c.channel === 'clinic' && c.selling_price != null)
+    ?? (p.channels ?? []).find(c => c.selling_price != null))?.selling_price ?? null
+  const sup = supplierSummary(p)
   const missing = [
-    !hasCost(p) && 'cost', p.units_per_pack == null && 'pack size',
-    !p.supplier_name && 'supplier', !/^\d{6,}$/.test(p.sku_code) && 'valid SKU',
+    !hasCost(p) && 'cost',
+    !(p.channels ?? []).some(c => c.selling_price != null) && 'selling price',
+    !sup.pref && 'supplier',
+    !/^\d{6,}$/.test(p.sku_code) && 'valid SKU',
+    p.units_per_pack == null && 'pack size',
   ].filter(Boolean) as string[]
 
   return (
@@ -611,50 +1061,62 @@ function Row({ p, view, margin, marginsLoading, focused, onOpen }: {
         <span className="pname" onClick={onOpen}>{p.name ?? p.sku_code}</span>
         <span className="pmeta">
           <span className="sku">{p.sku_code}</span>
+          {p.hero_sku && <span title="Hero SKU" style={{ color: '#D9A400' }}>★</span>}
           {p.brand && <>· {p.brand}</>}
           <span className="chip neu">{p.category}</span>
+          {sup.pref
+            ? <span className="hoverable" {...hov('suppliers')} style={{ color: 'var(--muted)' }}>
+                {sup.pref.name}
+                {sup.extra > 0 && <span className="plusn">+{sup.extra}</span>}
+                {sup.prefOos && <span className={`oosdot ${sup.hasAlt ? 'part' : 'crit'}`}
+                  title={`Preferred supplier out of stock${sup.hasAlt ? ' — an alternate can ship' : ''}`} />}
+              </span>
+            : <span className="chip warn">no supplier</span>}
           {p.shopify_status && p.shopify_status !== 'archived' && <span className="chip ok">SP</span>}
           {p.daysmart_status && <span className="chip ok">DS</span>}
           {p.hktv_status && p.hktv_status !== 'offline' && <span className="chip ok">HK</span>}
         </span>
       </td>
-      <td>
+      <td className="hoverable" {...hov('state')}>
         {st.key === 'ok'
           ? <span className="sub" style={{ color: 'var(--good)' }}>● ok</span>
           : <span className={`chip ${st.tone === 'bad' ? 'bad' : st.tone === 'warn' ? 'warn' : 'neu'}`}>{st.label}</span>}
       </td>
 
       {view === 'ops' && <>
-        <td className="r">
+        <td className="r hoverable" {...hov('cover')}>
           <span className="cover"><i style={{ width: `${coverPct}%`, background: coverTone }} /><b style={{ left: '50%' }} /></span>
           <span className={cover == null ? 'zero' : cover < 2 ? 'red' : cover < 4 ? 'amber' : 'good'}>{cover == null ? '—' : `${cover.toFixed(1)}w`}</span>
         </td>
-        <td className="r">{(p.total_qty ?? 0) > 0 ? Math.round(p.total_qty).toLocaleString() : <span className="zero">0</span>}</td>
-        <td className="r">{(p.sales_120d ?? 0) > 0 ? p.sales_120d.toLocaleString() : <span className="zero">—</span>}</td>
-        <td className="r">{p.primary_cost != null ? money(p.primary_cost) : <span className="zero">—</span>}</td>
-        <td className={`r ${gp == null ? '' : gp >= (p.gp_floor ?? 0) ? 'good' : 'amber'}`}>{pct(gp)}</td>
+        <td className="r hoverable" {...hov('stock')}>{(p.total_qty ?? 0) > 0 ? Math.round(p.total_qty).toLocaleString() : <span className="zero">0</span>}</td>
+        <td className="r hoverable" {...hov('demand')}>{(p.sales_120d ?? 0) > 0 ? p.sales_120d!.toLocaleString() : <span className="zero">—</span>}</td>
+        <td className="r hoverable" {...hov('suppliers')}>{p.primary_cost != null ? money(p.primary_cost) : <span className="zero">—</span>}</td>
+        <td className="r hoverable" {...hov('channels')}>{sellPrice != null ? money(sellPrice) : <span className="zero">—</span>}</td>
+        <td className={`r hoverable ${gp == null ? '' : gp >= (p.gp_floor ?? 0) ? 'good' : 'amber'}`} {...hov('channels')}>{pct(gp)}</td>
       </>}
 
       {view === 'money' && <>
-        <td className="r">{p.primary_cost != null ? money(p.primary_cost) : <span className="zero">—</span>}</td>
-        <td className="r">{p.unit_cost != null ? money(p.unit_cost) : <span className="zero">—</span>}</td>
-        <td className={`r ${p.mbb_unit_cost != null && p.unit_cost != null && p.mbb_unit_cost < p.unit_cost ? 'good' : ''}`}>
+        <td className="r hoverable" {...hov('suppliers')}>{p.primary_cost != null ? money(p.primary_cost) : <span className="zero">—</span>}</td>
+        <td className="r hoverable" {...hov('unitcost')}>{p.unit_cost != null ? money(p.unit_cost) : <span className="zero">—</span>}</td>
+        <td className={`r hoverable ${p.mbb_unit_cost != null && p.unit_cost != null && p.mbb_unit_cost < p.unit_cost ? 'good' : ''}`} {...hov('bulk')}>
           {p.mbb_unit_cost != null ? money(p.mbb_unit_cost) : <span className="zero">—</span>}
         </td>
+        <td className="r hoverable" {...hov('costtohit')}>{margin?.cost_to_hit != null ? money(margin.cost_to_hit, 0) : <span className="zero">—</span>}</td>
         {(['clinic', 'shopify', 'hktv'] as const).map(ch => {
           const cell = margin?.ch?.[ch]
           const net = cell?.nb ?? null   // net-after-fees at the basic (non-bulk) cost
           if (marginsLoading && !margin) return <td key={ch} className="r"><span className="skel" style={{ display: 'inline-block', width: 34, height: 9 }} /></td>
           if (cell?.price == null) return <td key={ch} className="r"><span className="zero">not listed</span></td>
-          return <td key={ch} className={`r ${net == null ? '' : net >= (p.gp_floor ?? 0) ? 'good' : 'red'}`}>{pct(net)}</td>
+          return <td key={ch} className={`r hoverable ${net == null ? '' : net >= (p.gp_floor ?? 0) ? 'good' : 'red'}`} {...hov('channels')}>{pct(net)}</td>
         })}
       </>}
 
       {view === 'dq' && <>
-        <td><span className={`chip ${p.data_grade === 'A' ? 'ok' : 'warn'}`}>{p.data_grade ?? '—'}</span></td>
+        <td className="hoverable" {...hov('grade')}><span className={`chip ${p.data_grade === 'A' ? 'ok' : 'warn'}`}>{p.data_grade ?? '—'}</span></td>
         <td>{p.uom_verified_at ? <span className="chip ok">✓ {p.uom_verified_by ?? 'verified'}</span> : <span className="zero">—</span>}</td>
-        <td>{p.cost_source ? <span className={`chip ${p.cost_source === 'catalogue' ? 'ok' : 'acc'}`}>{p.cost_source.toUpperCase()}</span> : <span className="zero">—</span>}</td>
-        <td className="r">{(() => { const d = daysSince(p.cost_last_updated); return d == null ? <span className="zero">—</span> : <span className={d > 90 ? 'amber' : ''}>{d}d</span> })()}</td>
+        <td className="hoverable" {...hov('costsrc')}>{p.cost_source ? <span className={`chip ${p.cost_source === 'catalogue' ? 'ok' : 'acc'}`}>{p.cost_source.toUpperCase()}</span> : <span className="zero">—</span>}</td>
+        <td className="r hoverable" {...hov('costsrc')}>{(() => { const d = daysSince(p.cost_last_updated); return d == null ? <span className="zero">—</span> : <span className={d > 90 ? 'amber' : ''}>{d}d</span> })()}</td>
+        <td>{p.storage_rule === 'clinic_only' ? <span className="chip neu">clinic only</span> : <span className="sub">any location</span>}</td>
         <td>{missing.length ? missing.map(m => <span key={m} className="chip warn" style={{ marginRight: 4 }}>{m}</span>) : <span className="sub">nothing</span>}</td>
       </>}
 
@@ -783,18 +1245,39 @@ function FiltersPanel(props: {
   stockFilter: string; setStockFilter: (s: string) => void
   gradeFilter: string; setGradeFilter: (s: string) => void
   attention: AttentionId | null; setAttention: (a: AttentionId | null) => void
+  channelFilter: string; setChannelFilter: (s: string) => void
+  storageFilter: string; setStorageFilter: (s: string) => void
+  heroFilter: string; setHeroFilter: (s: string) => void
+  gapFilter: string; setGapFilter: (s: string) => void
+  collections: { id: number; name: string; count: number }[]
+  collectionId: number | null; setCollectionId: (id: number | null) => void
   resultCount: number; onClose: () => void; onReset: () => void
 }) {
   const seg = (value: string, current: string, set: (v: string) => void, label: string) => (
     <button className={current === value ? 'on' : ''} onClick={() => set(value)}>{label}</button>
   )
+  // The panel hangs off a toolbar that sits ~270px down the page, so a fixed
+  // vh cap still runs off the bottom. Measure the real room left instead.
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  useLayoutEffect(() => {
+    const fit = () => {
+      const el = panelRef.current
+      if (!el) return
+      const room = window.innerHeight - el.getBoundingClientRect().top - 16
+      el.style.setProperty('--favail', `${Math.max(260, room)}px`)
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    window.addEventListener('scroll', fit, true)
+    return () => { window.removeEventListener('resize', fit); window.removeEventListener('scroll', fit, true) }
+  }, [])
   return (
-    <div className="fpanel" onClick={e => e.stopPropagation()}>
+    <div className="fpanel" ref={panelRef} onClick={e => e.stopPropagation()}>
       <div className="dh" style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
         <span className="dt" style={{ fontSize: 14 }}>Filters</span>
         <button className="lnk" style={{ marginLeft: 'auto', fontSize: 11.5 }} onClick={props.onReset}>reset</button>
       </div>
-      <div className="db" style={{ maxHeight: '48vh' }}>
+      <div className="db">
         <div className="fgrid">
           <div>
             <span className="flab">Category</span>
@@ -815,6 +1298,25 @@ function FiltersPanel(props: {
         </div>
         <div className="fgrid" style={{ marginTop: 12 }}>
           <div>
+            <span className="flab">Channel</span>
+            <span className="seg">
+              {seg('any', props.channelFilter, props.setChannelFilter, 'Any')}
+              {seg('clinic', props.channelFilter, props.setChannelFilter, 'Clinic')}
+              {seg('shopify', props.channelFilter, props.setChannelFilter, 'Shopify')}
+              {seg('hktv', props.channelFilter, props.setChannelFilter, 'HKTV')}
+            </span>
+          </div>
+          <div>
+            <span className="flab">Collection</span>
+            <select className="fin" value={props.collectionId ?? ''}
+              onChange={e => props.setCollectionId(e.target.value ? Number(e.target.value) : null)}>
+              <option value="">All collections</option>
+              {props.collections.map(c => <option key={c.id} value={c.id}>{c.name} ({c.count})</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="fgrid" style={{ marginTop: 12 }}>
+          <div>
             <span className="flab">Stock</span>
             <span className="seg">
               {seg('any', props.stockFilter, props.setStockFilter, 'Any')}
@@ -823,13 +1325,41 @@ function FiltersPanel(props: {
             </span>
           </div>
           <div>
+            <span className="flab">Storage</span>
+            <span className="seg">
+              {seg('any', props.storageFilter, props.setStorageFilter, 'Any')}
+              {seg('clinic_only', props.storageFilter, props.setStorageFilter, 'Clinic only')}
+              {seg('any_loc', props.storageFilter, props.setStorageFilter, 'Warehouse OK')}
+            </span>
+          </div>
+        </div>
+        <div className="fgrid" style={{ marginTop: 12 }}>
+          <div>
+            <span className="flab">Hero</span>
+            <span className="seg">
+              {seg('any', props.heroFilter, props.setHeroFilter, 'Any')}
+              {seg('hero', props.heroFilter, props.setHeroFilter, '★ Hero only')}
+              {seg('not_hero', props.heroFilter, props.setHeroFilter, 'Not hero')}
+            </span>
+          </div>
+          <div>
             <span className="flab">Data quality</span>
             <span className="seg">
               {seg('any', props.gradeFilter, props.setGradeFilter, 'Any')}
               {seg('a', props.gradeFilter, props.setGradeFilter, 'Grade A')}
               {seg('c', props.gradeFilter, props.setGradeFilter, 'Grade C')}
+              {seg('verified', props.gradeFilter, props.setGradeFilter, 'Verified')}
               {seg('unverified', props.gradeFilter, props.setGradeFilter, 'Unverified')}
             </span>
+          </div>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <span className="flab">Missing data</span>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            {Object.entries(GAP_LABEL).map(([k, label]) => (
+              <span key={k} className={`chip ${props.gapFilter === k ? 'acc' : 'neu'}`} style={{ cursor: 'pointer' }}
+                onClick={() => props.setGapFilter(props.gapFilter === k ? 'any' : k)}>{label}</span>
+            ))}
           </div>
         </div>
         <div style={{ marginTop: 12 }}>

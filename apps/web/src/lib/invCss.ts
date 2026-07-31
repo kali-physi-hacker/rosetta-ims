@@ -124,12 +124,39 @@ export const INV_CSS = `
 /* The Filters button sits at the right of the toolbar, so the panel opens
    leftward — anchoring it left pushed 342px off the viewport edge. Below the
    toolbar's wrap point it becomes a bottom sheet, which can never clip. */
-.inv2 .fpanel{position:absolute;right:0;left:auto;top:calc(100% + 5px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(15,23,42,.16);padding:0;width:560px;max-width:calc(100vw - 32px);z-index:50}
+.inv2 .fpanel{position:absolute;right:0;left:auto;top:calc(100% + 5px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(15,23,42,.16);padding:0;width:560px;max-width:calc(100vw - 32px);z-index:50;
+  /* --favail is measured on open: the room left below the button. The body
+     scrolls inside it so "Show N results" is always reachable. */
+  display:flex;flex-direction:column;max-height:var(--favail,80vh)}
+.inv2 .fpanel > .db{flex:1 1 auto;min-height:0;overflow-y:auto}
+.inv2 .fpanel > .dh,.inv2 .fpanel > .df{flex:0 0 auto}
 @media(max-width:820px){
-  .inv2 .fpanel{position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;border-radius:14px 14px 0 0;box-shadow:0 -12px 40px rgba(15,23,42,.22);max-height:80vh;overflow-y:auto}
+  .inv2 .fpanel{position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;border-radius:14px 14px 0 0;box-shadow:0 -12px 40px rgba(15,23,42,.22);max-height:80vh}
 }
 .inv2 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:640px){.inv2 .fgrid{grid-template-columns:1fr}}
+/* Hover cards — the detail behind a summary cell (bulk tiers behind the best
+   bulk price, the supplier list behind a cost, the stock split behind a
+   total). Fixed-positioned so no table overflow can clip them. */
+.inv2-pop{position:fixed;z-index:900;width:326px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 16px 40px rgba(15,23,42,.18);overflow:hidden;font-size:12px;color:var(--ink2)}
+@media(prefers-reduced-motion:no-preference){.inv2-pop{animation:inv2fade .12s ease-out}}
+@keyframes inv2fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.inv2-pop .ph{padding:8px 12px;border-bottom:1px solid var(--line2);background:var(--panel);font-size:9.5px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.inv2-pop .pb{padding:9px 12px;max-height:280px;overflow-y:auto}
+.inv2-pop .pf{padding:7px 12px;border-top:1px solid var(--line2);background:var(--panel);font-size:10.5px;color:var(--faint);line-height:1.5}
+.inv2-pop .prow{display:flex;gap:10px;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line2)}
+.inv2-pop .prow:last-child{border-bottom:none}
+.inv2-pop .pk{color:var(--ink2);min-width:0}
+.inv2-pop .pk b{color:var(--ink);font-weight:650}
+.inv2-pop .pv{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
+.inv2-pop .pmeta{font-size:10.5px;color:var(--faint);margin-top:1px}
+.inv2-pop .low{font-size:9px;font-weight:750;color:var(--good);background:var(--good-soft);border-radius:99px;padding:1px 6px;margin-left:6px}
+.inv2 .hoverable{cursor:help;border-bottom:1px dotted var(--ghost)}
+.inv2 .plusn{font-size:9.5px;font-weight:700;color:var(--faint);background:var(--panel);border-radius:99px;padding:0 4px;margin-left:3px;vertical-align:1px}
+/* Preferred supplier can't ship: amber if an alternate can, red if nobody can. */
+.inv2 .oosdot{display:inline-block;width:6px;height:6px;border-radius:99px;margin-left:4px;vertical-align:1px}
+.inv2 .oosdot.part{background:var(--amber)}
+.inv2 .oosdot.crit{background:var(--red)}
 .inv2 .shorto{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1200;display:flex;align-items:center;justify-content:center}
 .inv2 .shorto .box{background:#fff;border-radius:14px;padding:20px 24px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
 .inv2 .shorto .krow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
