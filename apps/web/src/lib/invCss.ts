@@ -28,8 +28,9 @@ export const INV_CSS = `
 .inv2 .scope button:last-child{border-right:none}
 .inv2 .scope button.on{background:var(--accent);color:#fff}
 
-.inv2 .att{display:grid;grid-template-columns:repeat(4,1fr) 1.15fr;gap:9px;margin-top:12px}
-@media(max-width:1080px){.inv2 .att{grid-template-columns:repeat(2,1fr)}}
+.inv2 .att{display:grid;grid-template-columns:repeat(5,1fr) 1.2fr;gap:8px;margin-top:12px}
+@media(max-width:1180px){.inv2 .att{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.inv2 .att{grid-template-columns:repeat(2,1fr)}}
 .inv2 .acard{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 12px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .12s}
 .inv2 .acard:hover{border-color:var(--accent-line)}
 .inv2 .acard.on{border-color:var(--accent);background:var(--accent-soft)}

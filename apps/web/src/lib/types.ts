@@ -139,6 +139,9 @@ export interface Product {
   uom_verified_at: string | null     // IMS-stamped date pack size was manually confirmed
   uom_verified_by: string | null     // name/initials of person who confirmed
   hitl_verified?: boolean            // currently HITL-verified (latest onboarding event is a verify)
+  // Batch expiry (algo-dashboard sync) — soonest first; days < 0 means lapsed
+  expiry_batches?: ExpiryBatch[]
+  expiry_days?: number | null        // days to the soonest batch, null when none tracked
   // Sales velocity
   sales_120d: number | null          // units sold in last 120 days (null when no demand signal)
   data_grade: 'A' | 'C'              // inventory completeness (reconciliation lives in procurement)
@@ -179,12 +182,21 @@ export interface ProductsResponse {
   items: Product[]
 }
 
+export interface ExpiryBatch {
+  batch_ref: string | null
+  expiry_date: string              // YYYY-MM-DD
+  qty: number | null
+  location: string | null
+  days: number                     // days until expiry; negative once lapsed
+}
+
 export interface SummaryResponse {
   total_active: number
   inactive_count: number
   discontinued_count: number
   low_stock_count: number
-  expiring_soon: number
+  expiring_soon: number            // soonest batch inside 90 days, not yet lapsed
+  expired_stock: number            // soonest batch already lapsed — a write-off
   price_alerts: number
 }
 

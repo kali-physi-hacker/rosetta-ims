@@ -1302,7 +1302,9 @@ function InventoryView() {
             <div className={`tile ${quickFilter === 'below_margin' ? 'on' : ''}`} onClick={() => toggleQuickFilter('below_margin')}><div className="lab">Below margin</div><div className="val" style={{ color: clientCounts.below_margin > 0 ? C.amber : undefined }}>{clientCounts.below_margin.toLocaleString()}</div><div className="vsub">below GP floor</div></div>
             <div className={`tile ${quickFilter === 'out_of_stock' ? 'on' : ''}`} onClick={() => toggleQuickFilter('out_of_stock')}><div className="lab">Out of stock</div><div className="val" style={{ color: clientCounts.out_of_stock > 0 ? '#C0362C' : undefined }}>{clientCounts.out_of_stock.toLocaleString()}</div><div className="vsub">zero on hand</div></div>
             <div className={`tile ${quickFilter === 'supplier_oos' ? 'on' : ''}`} onClick={() => toggleQuickFilter('supplier_oos')}><div className="lab">Supplier OOS</div><div className="val" style={{ color: clientCounts.supplier_oos > 0 ? C.amber : undefined }}>{clientCounts.supplier_oos.toLocaleString()}</div><div className="vsub">a supplier is out</div></div>
-            <div className="tile" style={{ cursor: 'default' }}><div className="lab">Expiring &lt;90d</div><div className="val" style={{ color: (summary?.expiring_soon ?? 0) > 0 ? C.amber : undefined }}>{summary?.expiring_soon ?? '—'}</div></div>
+            {/* expiring_soon no longer folds in already-lapsed batches — those are a
+                write-off, not something to sell through, so they get their own line. */}
+            <div className="tile" style={{ cursor: 'default' }}><div className="lab">Expiring &lt;90d</div><div className="val" style={{ color: (summary?.expiring_soon ?? 0) > 0 ? C.amber : undefined }}>{summary?.expiring_soon ?? '—'}</div><div className="vsub">{(summary?.expired_stock ?? 0) > 0 ? `+${summary!.expired_stock} already expired` : 'none lapsed'}</div></div>
           </div>
         )}
 

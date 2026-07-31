@@ -28,7 +28,7 @@ const API = API_BASE
 // ── domain ────────────────────────────────────────────────────────────────
 type ScopeId = 'working' | 'active' | 'all'
 type ViewId = 'ops' | 'money' | 'dq'
-type AttentionId = 'low_cover' | 'below_floor' | 'supplier_out' | 'no_cost'
+type AttentionId = 'low_cover' | 'below_floor' | 'supplier_out' | 'no_cost' | 'expiring'
 
 const SCOPES: { id: ScopeId; label: string; blurb: string }[] = [
   { id: 'working', label: 'Working set', blurb: 'active, and stocked or selling' },
@@ -49,6 +49,13 @@ const inWorkingSet = (p: Product) =>
   p.status === 'ACTIVE' && ((p.total_qty ?? 0) > 0 || (p.sales_120d ?? 0) > 0 || (p.weekly_demand ?? 0) > 0)
 
 const oosSuppliers = (p: Product) => (p.all_suppliers ?? []).filter(s => s.stock_status === 'out_of_stock')
+
+// Batch expiry. Expired stock is a write-off; expiring stock is still sellable
+// if it moves now — never merge the two into one "under 90 days" number.
+const EXPIRY_SOON_DAYS = 90
+const expiryDays = (p: Product) => p.expiry_days ?? null
+const hasExpired = (p: Product) => (p.expiry_days ?? 1) < 0
+const isExpiring = (p: Product) => { const d = p.expiry_days; return d != null && d >= 0 && d < EXPIRY_SOON_DAYS }
 
 // Which supplier the row speaks for: the preferred link, else the first named one.
 // `+N` says there are alternates; the dot says the preferred one can't ship, and
@@ -78,16 +85,21 @@ type RowState = { key: string; label: string; tone: 'bad' | 'warn' | 'neu' | 'ok
 function rowState(p: Product): RowState {
   const sells = isListed(p) || (p.sales_120d ?? 0) > 0
   if (sells && (p.total_qty ?? 0) <= 0) return { key: 'oos', label: 'out of stock', tone: 'bad', rank: 0 }
-  if (p.woc != null && p.woc < 2) return { key: 'low_cover', label: `${p.woc.toFixed(1)}w cover`, tone: 'bad', rank: 1 }
-  if (belowFloor(p)) return { key: 'below_floor', label: 'below floor', tone: 'warn', rank: 2 }
+  if (hasExpired(p) && (p.total_qty ?? 0) > 0) return { key: 'expired', label: 'expired stock', tone: 'bad', rank: 1 }
+  if (p.woc != null && p.woc < 2) return { key: 'low_cover', label: `${p.woc.toFixed(1)}w cover`, tone: 'bad', rank: 2 }
+  // Expiring stock outranks a margin miss: a few points of GP is recoverable,
+  // a batch that dates out is a total loss on a fixed deadline.
+  if (isExpiring(p) && (p.total_qty ?? 0) > 0)
+    return { key: 'expiring', label: `expires in ${p.expiry_days}d`, tone: 'warn', rank: 3 }
+  if (belowFloor(p)) return { key: 'below_floor', label: 'below floor', tone: 'warn', rank: 4 }
   if (oosSuppliers(p).length > 0) {
     const back = oosSuppliers(p)[0]?.expected_restock_at
-    return { key: 'supplier_out', label: back ? `supplier out · back ${fmtDay(back)}` : 'supplier out', tone: 'warn', rank: 3 }
+    return { key: 'supplier_out', label: back ? `supplier out · back ${fmtDay(back)}` : 'supplier out', tone: 'warn', rank: 5 }
   }
-  if (sells && !hasCost(p)) return { key: 'no_cost', label: 'no cost', tone: 'warn', rank: 4 }
+  if (sells && !hasCost(p)) return { key: 'no_cost', label: 'no cost', tone: 'warn', rank: 6 }
   if (p.data_grade === 'C' || (p.units_per_pack != null && !p.uom_verified_at && sells))
-    return { key: 'check', label: 'check data', tone: 'neu', rank: 5 }
-  return { key: 'ok', label: 'ok', tone: 'ok', rank: 6 }
+    return { key: 'check', label: 'check data', tone: 'neu', rank: 7 }
+  return { key: 'ok', label: 'ok', tone: 'ok', rank: 8 }
 }
 
 const money = (v: number | null | undefined, d = 2) =>
@@ -149,7 +161,7 @@ type MarginRow = {
 }
 
 type PopKind = 'suppliers' | 'channels' | 'cover' | 'bulk' | 'stock'
-  | 'state' | 'demand' | 'unitcost' | 'costtohit' | 'grade' | 'costsrc'
+  | 'state' | 'demand' | 'unitcost' | 'costtohit' | 'grade' | 'costsrc' | 'expiry'
 type PopState = { kind: PopKind; item: Product; margin?: MarginRow; x: number; y: number } | null
 
 const FEE: Record<string, number> = { clinic: 0, shopify: 0.029, hktv: 0.15 }
@@ -179,6 +191,22 @@ const STATE_WHY: Record<string, { what: (p: Product) => string; fix: string }> =
       return `${out.length} of ${(p.all_suppliers ?? []).length} suppliers can’t ship${out[0]?.expected_restock_at ? `; the first is back ${fmtDay(out[0].expected_restock_at)}` : ''}.`
     },
     fix: 'Buy from an alternate, or wait for restock if cover allows.',
+  },
+  expired: {
+    what: p => {
+      const b = (p.expiry_batches ?? []).filter(x => x.days < 0)
+      const q = b.reduce((n, x) => n + (x.qty ?? 0), 0)
+      return `${b.length} batch${b.length === 1 ? '' : 'es'}${q > 0 ? ` (${q.toLocaleString()} units)` : ''} lapsed, the oldest ${Math.abs(p.expiry_days ?? 0)} days ago, and stock is still on hand.`
+    },
+    fix: 'Write it off and pull it from sale — it cannot ship.',
+  },
+  expiring: {
+    what: p => {
+      const b = (p.expiry_batches ?? []).filter(x => x.days >= 0 && x.days < EXPIRY_SOON_DAYS)
+      const q = b.reduce((n, x) => n + (x.qty ?? 0), 0)
+      return `${q > 0 ? `${q.toLocaleString()} units date` : 'A batch dates'} out in ${p.expiry_days} days at ~${fmtRate(p.weekly_demand ?? 0)}/wk.`
+    },
+    fix: 'Discount, promote, or move it to a channel that will clear it in time.',
   },
   no_cost: {
     what: () => 'It sells, but no supplier price is on record — every margin on this row is unknown.',
@@ -422,6 +450,40 @@ function PopBody({ kind, item, margin }: { kind: PopKind; item: Product; margin?
       <div className="pf">All four pass → <b>A</b>, actionable. Any one fails → <b>C</b>, don’t trade on it.</div>
     </>
   }
+  if (kind === 'expiry') {
+    const batches = item.expiry_batches ?? []
+    const lapsed = batches.filter(b => b.days < 0)
+    const soon = batches.filter(b => b.days >= 0 && b.days < EXPIRY_SOON_DAYS)
+    const atRisk = [...lapsed, ...soon].reduce((n, b) => n + (b.qty ?? 0), 0)
+    const wk = item.weekly_demand ?? 0
+    return <>
+      <div className="ph">Batch expiry</div>
+      <div className="pb">
+        {batches.length === 0 && <div className="sub">No batch dates tracked for this SKU.</div>}
+        {batches.map((b, i) => (
+          <div className="prow" key={`${b.batch_ref ?? 'batch'}-${i}`}>
+            <span className="pk">
+              <b>{fmtDay(b.expiry_date)}</b>
+              <div className="pmeta">{[b.batch_ref, b.location].filter(Boolean).join(' · ') || 'no batch reference'}</div>
+            </span>
+            <span className="pv">
+              {b.qty != null ? `${b.qty.toLocaleString()} ${plural(uom)}` : '—'}
+              <div className="pmeta" style={{ textAlign: 'right', color: b.days < 0 ? 'var(--red)' : b.days < EXPIRY_SOON_DAYS ? 'var(--amber)' : undefined }}>
+                {b.days < 0 ? `lapsed ${Math.abs(b.days)}d ago` : `${b.days}d left`}
+              </div>
+            </span>
+          </div>
+        ))}
+      </div>
+      {batches.length > 0 && (
+        <div className="pf">{lapsed.length > 0
+          ? <b style={{ color: 'var(--red)' }}>{lapsed.length} batch{lapsed.length === 1 ? '' : 'es'} already lapsed — write off.</b>
+          : soon.length > 0
+            ? <>{atRisk.toLocaleString()} {plural(uom)} at risk{wk > 0 ? `; at ~${fmtRate(wk)}/wk you would clear ${Math.round(wk * (soon[0].days / 7)).toLocaleString()} of it first.` : ' and no demand to clear it.'}</>
+            : 'Nothing dates out inside 90 days.'}</div>
+      )}
+    </>
+  }
   if (kind === 'costsrc') {
     const age = daysSince(item.cost_last_updated)
     return <>
@@ -512,6 +574,7 @@ function NewInventoryPage() {
   const [storageFilter, setStorageFilter] = useState(params.get('store') ?? 'any')
   const [heroFilter, setHeroFilter] = useState(params.get('hero') ?? 'any')
   const [gapFilter, setGapFilter] = useState(params.get('gap') ?? 'any')
+  const [expiryFilter, setExpiryFilter] = useState(params.get('exp') ?? 'any')
   const [collectionId, setCollectionId] = useState<number | null>(params.get('col') ? Number(params.get('col')) : null)
   const [collections, setCollections] = useState<{ id: number; name: string; count: number }[]>([])
   const [collectionSkus, setCollectionSkus] = useState<Set<string> | null>(null)
@@ -559,13 +622,14 @@ function NewInventoryPage() {
     if (storageFilter !== 'any') p.set('store', storageFilter)
     if (heroFilter !== 'any') p.set('hero', heroFilter)
     if (gapFilter !== 'any') p.set('gap', gapFilter)
+    if (expiryFilter !== 'any') p.set('exp', expiryFilter)
     if (collectionId != null) p.set('col', String(collectionId))
     if (sortCol !== 'state') p.set('sort', sortCol)
     p.set('dir', sortAsc ? 'asc' : 'desc')
     const qs = p.toString()
     window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
   }, [scope, view, search, attention, category, supplier, stockFilter, gradeFilter,
-      channelFilter, storageFilter, heroFilter, gapFilter, collectionId, sortCol, sortAsc])
+      channelFilter, storageFilter, heroFilter, gapFilter, expiryFilter, collectionId, sortCol, sortAsc])
 
   // ── stream the catalogue ──
   const fetchData = useCallback(async () => {
@@ -644,6 +708,8 @@ function NewInventoryPage() {
     below_floor: scoped.filter(belowFloor).length,
     supplier_out: scoped.filter(i => oosSuppliers(i).length > 0).length,
     no_cost: scoped.filter(i => (isListed(i) || (i.sales_120d ?? 0) > 0) && !hasCost(i)).length,
+    expiring: scoped.filter(i => isExpiring(i) || hasExpired(i)).length,
+    expired: scoped.filter(hasExpired).length,
   }), [scoped])
 
   const categories = useMemo(
@@ -680,9 +746,14 @@ function NewInventoryPage() {
       if (attention === 'below_floor' && !belowFloor(i)) return false
       if (attention === 'supplier_out' && oosSuppliers(i).length === 0) return false
       if (attention === 'no_cost' && !((isListed(i) || (i.sales_120d ?? 0) > 0) && !hasCost(i))) return false
+      if (attention === 'expiring' && !(isExpiring(i) || hasExpired(i))) return false
+      if (expiryFilter === 'expired' && !hasExpired(i)) return false
+      if (expiryFilter === 'd30' && !(expiryDays(i) != null && expiryDays(i)! < 30)) return false
+      if (expiryFilter === 'd90' && !(expiryDays(i) != null && expiryDays(i)! < 90)) return false
+      if (expiryFilter === 'tracked' && expiryDays(i) == null) return false
       return true
     })
-  }, [scoped, search, category, supplier, stockFilter, gradeFilter, attention,
+  }, [scoped, search, category, supplier, stockFilter, gradeFilter, attention, expiryFilter,
       channelFilter, storageFilter, heroFilter, gapFilter, collectionSkus])
 
   const sorted = useMemo(() => {
@@ -693,6 +764,7 @@ function NewInventoryPage() {
         case 'sku': return p.sku_code
         case 'cover': return p.woc
         case 'onhand': return p.total_qty
+        case 'expiry': return p.expiry_days ?? null
         case 'sales': return p.sales_120d
         case 'cost': return p.primary_cost
         case 'sell': return ((p.channels ?? []).find(c => c.channel === 'clinic' && c.selling_price != null)
@@ -717,7 +789,8 @@ function NewInventoryPage() {
 
   // "Everything" can be 11k rows — keep incremental rendering there only.
   const [renderLimit, setRenderLimit] = useState(300)
-  useEffect(() => { setRenderLimit(300) }, [scope, view, search, attention, category, supplier, stockFilter, gradeFilter])
+  useEffect(() => { setRenderLimit(300) }, [scope, view, search, attention, category, supplier, stockFilter, gradeFilter,
+    channelFilter, storageFilter, heroFilter, gapFilter, expiryFilter, collectionSkus])
   const rows = useMemo(() => sorted.slice(0, renderLimit), [sorted, renderLimit])
 
   const activeFilters = [
@@ -730,11 +803,12 @@ function NewInventoryPage() {
     ...(storageFilter !== 'any' ? [{ label: storageFilter === 'clinic_only' ? 'Clinic only' : 'Warehouse OK', clear: () => setStorageFilter('any') }] : []),
     ...(heroFilter !== 'any' ? [{ label: heroFilter === 'hero' ? '★ Hero SKUs' : 'Not hero', clear: () => setHeroFilter('any') }] : []),
     ...(gapFilter !== 'any' ? [{ label: GAP_LABEL[gapFilter] ?? gapFilter, clear: () => setGapFilter('any') }] : []),
+    ...(expiryFilter !== 'any' ? [{ label: EXPIRY_LABEL[expiryFilter] ?? expiryFilter, clear: () => setExpiryFilter('any') }] : []),
     ...(collectionId != null ? [{ label: `Collection: ${collections.find(c => c.id === collectionId)?.name ?? collectionId}`, clear: () => setCollectionId(null) }] : []),
   ]
   const clearAll = () => {
     setCategory([]); setSupplier('All'); setStockFilter('any'); setGradeFilter('any'); setAttention(null)
-    setChannelFilter('any'); setStorageFilter('any'); setHeroFilter('any'); setGapFilter('any')
+    setChannelFilter('any'); setStorageFilter('any'); setHeroFilter('any'); setGapFilter('any'); setExpiryFilter('any')
     setCollectionId(null); setSearchInput('')
   }
 
@@ -831,6 +905,9 @@ function NewInventoryPage() {
           <AttCard id="below_floor" n={counts.below_floor} label="below GP floor" hint="selling under target margin" hot active={attention} onPick={setAttention} settled={settled} />
           <AttCard id="supplier_out" n={counts.supplier_out} label="supplier out" hint="a supplier can’t ship" active={attention} onPick={setAttention} settled={settled} />
           <AttCard id="no_cost" n={counts.no_cost} label="no cost on record" hint="selling, but margin unknown" active={attention} onPick={setAttention} settled={settled} />
+          <AttCard id="expiring" n={counts.expiring} label="stock expiring"
+            hint={counts.expired > 0 ? `${counts.expired} already lapsed — write off` : 'a batch dates out within 90 days'}
+            hot={counts.expired > 0} active={attention} onPick={setAttention} settled={settled} />
           <div className="acard quiet">
             <div className="an">
               {!settled ? <span className="skel" style={{ display: 'block', width: 110 }} />
@@ -875,6 +952,7 @@ function NewInventoryPage() {
               storageFilter={storageFilter} setStorageFilter={setStorageFilter}
               heroFilter={heroFilter} setHeroFilter={setHeroFilter}
               gapFilter={gapFilter} setGapFilter={setGapFilter}
+              expiryFilter={expiryFilter} setExpiryFilter={setExpiryFilter}
               collections={collections} collectionId={collectionId} setCollectionId={setCollectionId}
               resultCount={filtered.length}
               onClose={() => setFiltersOpen(false)} onReset={clearAll}
@@ -925,6 +1003,7 @@ function NewInventoryPage() {
                   {view === 'ops' && <>
                     <SortTh id="cover" label="Cover" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     <SortTh id="onhand" label="On hand" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
+                    <SortTh id="expiry" label="Expiry" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
                     {/* Not recorded sales — the backend projects it from the weekly
                         rate (weekly_demand × 120/7), so call it demand. */}
                     <SortTh id="sales" label="120d demand" r sortCol={sortCol} sortAsc={sortAsc} onSort={toggleSort} />
@@ -999,7 +1078,11 @@ const GRADE_LABEL: Record<string, string> = {
 }
 const ATT_LABEL: Record<AttentionId, string> = {
   low_cover: 'Cover < 2 weeks', below_floor: 'Below GP floor',
-  supplier_out: 'Supplier out', no_cost: 'No cost on record',
+  supplier_out: 'Supplier out', no_cost: 'No cost on record', expiring: 'Expiring or expired',
+}
+const EXPIRY_LABEL: Record<string, string> = {
+  expired: 'Already expired', d30: 'Expires within 30 days',
+  d90: 'Expires within 90 days', tracked: 'Has batch dates',
 }
 
 function AttCard({ id, n, label, hint, hot, active, onPick, settled }: {
@@ -1089,6 +1172,10 @@ function Row({ p, view, margin, marginsLoading, focused, onOpen, showPop, hidePo
           <span className={cover == null ? 'zero' : cover < 2 ? 'red' : cover < 4 ? 'amber' : 'good'}>{cover == null ? '—' : `${cover.toFixed(1)}w`}</span>
         </td>
         <td className="r hoverable" {...hov('stock')}>{(p.total_qty ?? 0) > 0 ? Math.round(p.total_qty).toLocaleString() : <span className="zero">0</span>}</td>
+        <td className="r hoverable" {...hov('expiry')}>{p.expiry_days == null
+          ? <span className="zero">—</span>
+          : p.expiry_days < 0 ? <span className="red">expired</span>
+          : <span className={p.expiry_days < EXPIRY_SOON_DAYS ? 'amber' : ''}>{p.expiry_days}d</span>}</td>
         <td className="r hoverable" {...hov('demand')}>{(p.sales_120d ?? 0) > 0 ? p.sales_120d!.toLocaleString() : <span className="zero">—</span>}</td>
         <td className="r hoverable" {...hov('suppliers')}>{p.primary_cost != null ? money(p.primary_cost) : <span className="zero">—</span>}</td>
         <td className="r hoverable" {...hov('channels')}>{sellPrice != null ? money(sellPrice) : <span className="zero">—</span>}</td>
@@ -1249,6 +1336,7 @@ function FiltersPanel(props: {
   storageFilter: string; setStorageFilter: (s: string) => void
   heroFilter: string; setHeroFilter: (s: string) => void
   gapFilter: string; setGapFilter: (s: string) => void
+  expiryFilter: string; setExpiryFilter: (s: string) => void
   collections: { id: number; name: string; count: number }[]
   collectionId: number | null; setCollectionId: (id: number | null) => void
   resultCount: number; onClose: () => void; onReset: () => void
@@ -1351,6 +1439,15 @@ function FiltersPanel(props: {
               {seg('verified', props.gradeFilter, props.setGradeFilter, 'Verified')}
               {seg('unverified', props.gradeFilter, props.setGradeFilter, 'Unverified')}
             </span>
+          </div>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <span className="flab">Batch expiry</span>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            {Object.entries(EXPIRY_LABEL).map(([k, label]) => (
+              <span key={k} className={`chip ${props.expiryFilter === k ? 'acc' : 'neu'}`} style={{ cursor: 'pointer' }}
+                onClick={() => props.setExpiryFilter(props.expiryFilter === k ? 'any' : k)}>{label}</span>
+            ))}
           </div>
         </div>
         <div style={{ marginTop: 12 }}>
@@ -1481,6 +1578,8 @@ const EXTRA_COLS: ExportCol[] = [
   { key: 'cost_source', label: 'Cost source', value: p => p.cost_source },
   { key: 'cost_last_updated', label: 'Cost updated', value: p => (p.cost_last_updated ?? '').slice(0, 10) },
   { key: 'uom_verified_at', label: 'Pack verified', value: p => (p.uom_verified_at ?? '').slice(0, 10) },
+  { key: 'expiry_date', label: 'Soonest expiry', value: p => (p.expiry_batches ?? [])[0]?.expiry_date ?? '' },
+  { key: 'expiry_days', label: 'Days to expiry', value: p => p.expiry_days ?? '' },
   { key: 'notes', label: 'Notes', value: p => p.notes },
 ]
 // The round-trip set: exactly what Batch update accepts back.

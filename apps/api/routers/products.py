@@ -11,7 +11,7 @@ from datetime import datetime, date
 
 import models
 import database
-from services.pricing_service import product_to_dict, effective_pack_cost
+from services.pricing_service import product_to_dict, effective_pack_cost, expiry_batches
 from services import offering_costs, tag_service, audit, audit_log
 from dependencies import get_current_user, require_user
 from permissions import require_capability, has_capability, SENSITIVE_PRODUCT_FIELDS
@@ -141,6 +141,7 @@ def _base_query(db: Session):
         selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.supplier),
         selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.mbb_term_list),
         selectinload(models.ProductVariant.sales_velocity),
+        selectinload(models.ProductVariant.expiry_tracking),
     )
 
 
@@ -516,17 +517,18 @@ def get_summary(db: Session = Depends(database.get_db)):
     cat_rules = _load_cat_rules(db)
     dicts = [product_to_dict(p, cat_rules) for p in active_products]
 
-    today = date.today()
-    expiring_soon = 0
+    # Expired stock is written off; expiring stock is sold through or discounted.
+    # The old single <90d count merged the two, so it read high and pointed nowhere.
+    expiring_soon = expired_stock = 0
     for p in active_products:
-        for exp in p.expiry_tracking:
-            try:
-                days = (date.fromisoformat(exp.expiry_date) - today).days
-                if days < 90:
-                    expiring_soon += 1
-                    break
-            except (ValueError, AttributeError):
-                pass
+        soonest = expiry_batches(p)
+        if not soonest:
+            continue
+        days = soonest[0]["days"]
+        if days < 0:
+            expired_stock += 1
+        elif days < 90:
+            expiring_soon += 1
 
     price_alerts = sum(
         1 for d in dicts
@@ -538,7 +540,8 @@ def get_summary(db: Session = Depends(database.get_db)):
         "inactive_count":    inactive_count,
         "discontinued_count": discontinued_count,
         "low_stock_count":   sum(1 for d in dicts if d["woc"] is not None and d["woc"] < 2),
-        "expiring_soon":     expiring_soon,
+        "expiring_soon":     expiring_soon,   # soonest batch inside 90 days, not yet lapsed
+        "expired_stock":     expired_stock,   # soonest batch already lapsed — a write-off
         "price_alerts":      price_alerts,
     }
 

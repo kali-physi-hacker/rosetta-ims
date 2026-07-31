@@ -422,6 +422,31 @@ def compute_data_grade(primary_cost, channels, supplier_name=None, sku_code=None
     return 'C' if (not has_cost or not has_any_price or not has_supplier or not valid_sku) else 'A'
 
 
+def expiry_batches(product: ProductVariant) -> list[dict]:
+    """Batch expiry for a variant, soonest first, with days-to-expiry precomputed.
+
+    `days` is negative for a batch that has already lapsed — expired stock is a
+    write-off, not something to sell through, so callers must not fold the two
+    together the way the old <90d summary tile did.
+    """
+    from datetime import date
+    today = date.today()
+    out = []
+    for e in (product.expiry_tracking or []):
+        try:
+            days = (date.fromisoformat(e.expiry_date) - today).days
+        except (ValueError, AttributeError, TypeError):
+            continue
+        out.append({
+            "batch_ref":   e.batch_ref,
+            "expiry_date": e.expiry_date,
+            "qty":         e.qty,
+            "location":    e.location,
+            "days":        days,
+        })
+    return sorted(out, key=lambda b: b["days"])
+
+
 def _oos_days(out_at: str | None, restock_at: str | None) -> int | None:
     """Length of an out-of-stock period in days: out_at → restock_at, or out_at → today if ongoing."""
     from datetime import date
@@ -440,6 +465,7 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
     weekly_demand = _vel.weekly_demand if _vel else 0.0
     woc           = engine.evaluate("woc", {"total_qty": total_qty, "weekly_demand": weekly_demand})
     sales_120d    = engine.evaluate("sales_120d", {"weekly_demand": weekly_demand})
+    _expiry       = expiry_batches(product)
     # Per-channel weekly demand (algo multichannel sync); None if no velocity row yet.
     wd_by_channel = {
         "clinic":  getattr(_vel, "weekly_demand_clinic", None),
@@ -578,6 +604,9 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
         "uom_verified_at":      ps.uom_verified_at      if ps else None,
         "uom_verified_by":      ps.uom_verified_by      if ps else None,
         "pack_source":          ps.pack_source          if ps else 'sheet',
+        # Batch expiry (algo-dashboard sync). Soonest first; `days` < 0 = lapsed.
+        "expiry_batches":       _expiry,
+        "expiry_days":          _expiry[0]["days"] if _expiry else None,
         # Shadow values — last value seen from Sheet sync
     }
 
