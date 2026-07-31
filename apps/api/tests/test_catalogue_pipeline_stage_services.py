@@ -49,6 +49,10 @@ def _reset(session):
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
         models.SupplierOffering,
+        # Legacy links are seeded by the backfill-identity test and are matched
+        # on (supplier_id, supplier_sku) — leaving one behind silently changes a
+        # sibling test's PROPOSED_CREATE into a PROPOSED_MATCH.
+        models.ProductSupplier,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,
@@ -582,6 +586,73 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
     assert serving.review_status == "APPROVED"
     assert serving.cost_per_sellable_unit_amount == Decimal("13.1000")
     assert serving.is_current == 1
+
+
+def test_supplier_identity_survives_the_offering_backfill_renaming_it(db):
+    """A candidate must not become unapprovable because a row was renamed.
+
+    `supplier_product_id` is frozen when the candidate is prepared, and which
+    form it froze depends on what existed at that moment. Before the offering
+    baseline backfill a supplier match could only come from the legacy
+    ProductSupplier fallback, so the candidate holds
+    "legacy-product-supplier:{n}". The backfill then created a real
+    SupplierOffering for that same link under "supplier:{sid}:offer:link:{n}",
+    the matcher started preferring it, and the identity check compared two
+    names for one row and refused — 182 pending candidates, the whole queue,
+    409 on approve.
+    """
+    _seed_context(db)
+    product = _seed_product(db)
+    link = models.ProductSupplier(
+        product_id=product.id, supplier_id=14, supplier_sku="10447",
+        cost_source="manual", pack_source="manual", updated_at="2026-07-23T00:00:00",
+    )
+    db.add(link)
+    db.flush()
+
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = stages.MasteringService(db).prepare_candidate(
+        stages.PrepareMasteringCandidateCommand(
+            catalogue_item_id=staging_id,
+            idempotency_key="legacy-identity",
+            supplier_product_resolution={
+                "state": "PROPOSED_MATCH",
+                "supplier_id": 14,
+                # The pre-backfill form, exactly as 182 real candidates hold it.
+                "supplier_product_id": f"legacy-product-supplier:{link.id}",
+                "supplier_sku": "10447",
+            },
+            product_variant_resolution={
+                "state": "PROPOSED_MATCH",
+                "product_variant_id": product.sku_code,
+                "canonical_sku": product.sku_code,
+                "product_variant_name": product.name,
+            },
+        )
+    ).output_ids[0]
+
+    # The backfill lands: the same link becomes a first-class offering under a
+    # different key. Nothing about the supplier's identity has changed.
+    db.add(models.SupplierOffering(
+        supplier_product_key=f"supplier:14:offer:link:{link.id}",
+        legacy_product_supplier_id=link.id,
+        supplier_id=14, supplier_sku="10447", product_variant_id=product.id,
+        status="active", created_at="2026-07-31T00:00:00",
+    ))
+    db.flush()
+
+    decision = stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-07-31T00:05:00+00:00",
+            reason="Still the same supplier offering.",
+            idempotency_key="approve-after-backfill",
+        )
+    )
+    assert decision.metrics.created_count == 1
 
 
 def test_unmatched_canonical_product_cannot_be_approved_or_applied(db):

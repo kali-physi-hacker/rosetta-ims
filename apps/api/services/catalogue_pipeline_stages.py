@@ -9,6 +9,7 @@ FastAPI, Prefect, routers, or request objects.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -1768,15 +1769,55 @@ def _supplier_product_matches(
             matches[row.supplier_product_key] = {
                 "supplier_product_id": row.supplier_product_key,
                 "product_id": row.product_variant_id,
+                "identities": _offering_identities(row, supplier_id, supplier_sku),
             }
     if matches:
         return list(matches.values())
     legacy_rows = db.query(models.ProductSupplier).filter_by(supplier_id=supplier_id).all()
     for row in legacy_rows:
         if (supplier_sku and row.supplier_sku == supplier_sku) or (barcode and row.barcode == barcode):
-            key = f"legacy-product-supplier:{row.id}"
-            matches[key] = {"supplier_product_id": key, "product_id": row.product_id}
+            key = f"{_LEGACY_LINK_PREFIX}{row.id}"
+            matches[key] = {
+                "supplier_product_id": key,
+                "product_id": row.product_id,
+                "identities": {key},
+            }
     return list(matches.values())
+
+
+_LEGACY_LINK_PREFIX = "legacy-product-supplier:"
+_LINK_KEY_SUFFIX = re.compile(r":offer:(?:link|legacy-product-supplier):(\d+)$")
+
+
+def _offering_identities(
+    row: models.SupplierOffering,
+    supplier_id: int | None,
+    supplier_sku: str | None,
+) -> set[str]:
+    """Every identity string that has ever denoted this one offering.
+
+    A candidate freezes `supplier_product_id` when it is prepared, and which
+    form it froze depends on what existed at that moment. Before the offering
+    baseline backfill (ca45fc0) a supplier match could only come from the
+    legacy ProductSupplier fallback, so 182 pending candidates hold
+    "legacy-product-supplier:{n}". The backfill then created real offerings for
+    those same links under "supplier:{sid}:offer:link:{n}", the matcher started
+    preferring them, and every one of those candidates became unapprovable —
+    the row had not changed, only the name we called it by.
+
+    Comparing on the set rather than the current key makes the check about the
+    offering, which is what it was always meant to assert.
+    """
+    identities = {row.supplier_product_key}
+    if row.legacy_product_supplier_id is not None:
+        identities.add(f"{_LEGACY_LINK_PREFIX}{row.legacy_product_supplier_id}")
+    # Rows predating the FK column still carry the link id inside the key.
+    embedded = _LINK_KEY_SUFFIX.search(row.supplier_product_key or "")
+    if embedded:
+        identities.add(f"{_LEGACY_LINK_PREFIX}{embedded.group(1)}")
+    if supplier_id is not None and supplier_sku:
+        identities.add(f"supplier:{supplier_id}:offer:{supplier_sku}")
+    return identities
 
 
 def _exact_product_match(
@@ -1902,7 +1943,7 @@ def _assert_candidate_applicable(db: Session, candidate: MasteringCandidateV1) -
             supplier_sku=supplier.supplier_sku,
             barcode=supplier.barcode,
         )
-        if not any(match["supplier_product_id"] == supplier.supplier_product_id for match in matches):
+        if not any(supplier.supplier_product_id in match["identities"] for match in matches):
             raise AmbiguousSupplierOffer("Candidate supplier-product match does not exist or conflicts with its source identity")
 
     variant = candidate.product_variant_resolution
