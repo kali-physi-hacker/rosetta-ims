@@ -4,8 +4,7 @@ One attempt to extract data from one uploaded supplier catalogue file (a
 CatalogueImport / Catalogue Source Asset, in v1 terms). This module is
 intentionally isolated: it defines a new table and imports existing v1
 classes for read-only relationship convenience only — it never edits
-models.py, and nothing in routers/v1 or services/extraction_service.py
-references it. Wiring a real upload into creating one of these rows is a
+models.py, and nothing in routers/v1 references it. Wiring a real upload into creating one of these rows is a
 separate, later change (CIS-104.2).
 
 Reprocessing a source document always creates a new row (a new `id`) rather

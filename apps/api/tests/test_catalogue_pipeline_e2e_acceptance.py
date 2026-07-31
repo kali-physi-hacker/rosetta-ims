@@ -34,7 +34,7 @@ from schemas.catalogue_pipeline.enums import ExtractionMethod, ReviewStatus  # n
 from services import catalogue_evidence_extraction as extraction  # noqa: E402
 from services import catalogue_pipeline_persistence as persistence  # noqa: E402
 from services import catalogue_pipeline_stages as stages  # noqa: E402
-from services import extraction_service, tagging_service  # noqa: E402
+from services import tagging_service  # noqa: E402
 
 
 models.Base.metadata.create_all(bind=database.engine)
@@ -63,7 +63,6 @@ def _auth_and_no_inline_work(monkeypatch):
     previous_v2 = main.alias_app.dependency_overrides.get(require_user)
     main.app.dependency_overrides[require_user] = lambda: _CatalogueOnboardingAdmin()
     main.alias_app.dependency_overrides[require_user] = lambda: _CatalogueOnboardingAdmin()
-    monkeypatch.setattr(extraction_service, "extract", lambda *a, **k: pytest.fail("submission must not extract"))
     monkeypatch.setattr(tagging_service, "suggest_tags", lambda *a, **k: pytest.fail("submission must not tag"))
     yield
     if previous_root is None:

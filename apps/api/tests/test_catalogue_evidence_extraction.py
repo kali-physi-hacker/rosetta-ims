@@ -514,7 +514,6 @@ def test_stage3_extraction_import_boundary():
     )
     forbidden = {
         "services.catalogue_conformance",       # Intermediate layer
-        "services.extraction_service",             # legacy semantic extraction
         "services.catalogue_pipeline_stages",      # staging/validation/mastering/serving services
         "services.tagging_service",
         "services.sku_service",

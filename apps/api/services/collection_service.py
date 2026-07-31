@@ -7,6 +7,8 @@ collection is always live — no stored membership to drift.
 import json
 import os
 
+from services.json_salvage import loads_json_array
+
 # field -> key in product_to_dict (string fields unless listed numeric/special)
 FIELD_MAP = {
     "category": "category", "brand": "brand", "supplier": "supplier_name",
@@ -167,7 +169,6 @@ def evaluate(rule: dict, dicts, tmap) -> list:
 def _ai_suggest(tag_counts, categories, brands, max_n):
     import anthropic
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
-    from services.extraction_service import _loads_json_array
     tags_str = ", ".join(f"{t} ({c})" for t, c in tag_counts[:60])
     prompt = f"""You are organising a Hong Kong vet/pet inventory into Shopify-style smart collections.
 
@@ -184,7 +185,7 @@ Prefer merchandising groupings buyers care about (e.g. "Senior Cat Food", "Grain
 Return a JSON array only. No prose."""
     msg = client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=4096,
                                  messages=[{"role": "user", "content": prompt}])
-    return _loads_json_array(msg.content[0].text)
+    return loads_json_array(msg.content[0].text)
 
 
 def suggest_collections(db, max_n: int = 8) -> list:

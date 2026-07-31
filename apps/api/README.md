@@ -15,7 +15,7 @@ Lives at `apps/api/` in the repo. The frontend lives at `apps/web/` and talks to
 | DB (dev) | SQLite | File at `apps/api/ims.db` (gitignored) |
 | DB (prod) | SQLite on the droplet today; Postgres-ready | Set `DATABASE_URL` env var to cut over |
 | Auth | JWT (HS256) + legacy API key gate | `auth.py` router, middleware in `main.py` |
-| OCR / extraction | Claude Haiku via Anthropic SDK | `services/extraction_service.py` |
+| OCR / extraction | Gemini vision (`gemini-flash-latest`) via `google-genai` | `services/catalogue_evidence_extraction.py` |
 | Catalogue orchestration | Prefect 3.3.x | `orchestration/catalogue_flows.py`; worker is an optional Docker Compose profile |
 | Deployment | DigitalOcean droplet | Docker Compose + Caddy; GitHub Actions syncs `apps/api/` and restarts the containers |
 
@@ -80,7 +80,9 @@ Starts the backend on `:8001` and the frontend on `:3001`.
 | `ALLOWED_ORIGINS` | optional | `http://localhost:3001,http://localhost:3000` | Comma-separated CORS allowlist |
 | `IMS_API_KEY` | optional | (empty) | Legacy API key gate. If unset, only JWT auth is required. If set, requests must include either `X-API-Key: <key>` or a Bearer JWT. |
 | `JWT_SECRET` | yes (prod) | `dev-only-secret-change-me` | HS256 signing key for JWT tokens (see `routers/auth.py`) |
-| `ANTHROPIC_API_KEY` | yes for OCR | (empty) | Used by `services/extraction_service.py` to call Claude Haiku |
+| `GEMINI_API_KEY` | yes for catalogue ingestion | (empty) | Gemini vision OCR in `services/catalogue_evidence_extraction.py`. Without it, PDF/image extraction fails closed with `EXTRACTION_CONFIGURATION_ERROR`. |
+| `GEMINI_MODEL` | optional | `gemini-flash-latest` | Vision model. `gemini-3.1-pro-preview` for maximum-accuracy runs (~4.8x the output-token cost). |
+| `ANTHROPIC_API_KEY` | optional | (empty) | Claude Haiku for AI product tagging (`services/tagging_service.py`, script-only) and smart-collection suggestions (`POST /collections/suggest`). Both degrade to heuristics when unset. |
 | `CATALOGUE_UPLOAD_DIR` | optional | `/data/catalogue_uploads` | Durable upload root used by v2 catalogue submission and Prefect source verification |
 | `CATALOGUE_SUBMISSION_MAX_BYTES` | optional | `26214400` | Maximum upload size accepted by the v2 catalogue submission endpoint |
 | `CATALOGUE_ORCHESTRATION_MAX_SOURCE_BYTES` | optional | `26214400` | Maximum source size the Prefect orchestration loader will verify/read |
@@ -193,7 +195,7 @@ apps/api/
 │       └── __init__.py      # mirrors inventory routes; adds queued catalogue submission only
 │
 ├── services/                # Business logic — pure Python, no HTTP
-│   ├── extraction_service.py    # OCR pipeline (Claude Haiku)
+│   ├── catalogue_evidence_extraction.py  # OCR pipeline (Gemini vision) — the only per-page model cost
 │   ├── catalogue_submission.py  # v2 durable submission service
 │   ├── catalogue_pipeline_stages.py      # framework-neutral catalogue stage services
 │   ├── catalogue_pipeline_persistence.py # Pydantic/SQLAlchemy mapping helpers
