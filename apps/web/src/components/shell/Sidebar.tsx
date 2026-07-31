@@ -41,6 +41,7 @@ const NAV: NavItem[] = [
   { href: '/am-walkthrough', label: 'AM Walkthrough', icon: 'play' },
   { href: '/tech-stack',     label: 'Tech Stack',     icon: 'stack' },
   { href: '/',               label: 'All Inventory',  icon: 'box' },
+  { href: '/new-inventory',  label: 'Inventory (new)', icon: 'box' },
   { href: '/collections',    label: 'Collections',    icon: 'grid' },
 ]
 const NAV_CLIENTS: NavItem[] = [{ href: '/clients', label: 'Clientbase', icon: 'client' }]

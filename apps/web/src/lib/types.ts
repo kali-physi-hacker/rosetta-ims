@@ -140,7 +140,7 @@ export interface Product {
   uom_verified_by: string | null     // name/initials of person who confirmed
   hitl_verified?: boolean            // currently HITL-verified (latest onboarding event is a verify)
   // Sales velocity
-  sales_120d: number                 // units sold in last 120 days
+  sales_120d: number | null          // units sold in last 120 days (null when no demand signal)
   data_grade: 'A' | 'C'              // inventory completeness (reconciliation lives in procurement)
   // Cost confidence (Story 1.5)
   cost_source: 'manual' | 'catalogue' | 'po_issued' | 'invoice_matched'

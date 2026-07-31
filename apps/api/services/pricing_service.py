@@ -554,7 +554,12 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
         "weekly_demand": weekly_demand,
         "weekly_demand_by_channel": wd_by_channel,   # {clinic, hktv, shopify} weekly demand, or None
         "sales_trend":   sales_trend,                # [{month:'YYYY-MM', units}] last ~5 months, or None
+        "sales_120d":    sales_120d,                 # demand-derived 120-day units (computed above)
         "woc":           woc,
+        # Inventory data-quality letter — A actionable / C do-not-use. Computed
+        # here so every surface (list, stream, detail) agrees on the grade.
+        "data_grade":    compute_data_grade(primary_cost, product.channels, supplier_name, product.sku_code),
+        "cost_source":   (ps.cost_source if ps else None),
         "primary_cost":  primary_cost,
         "gp_floor":      gp_floor,
         "channels":      channels,
