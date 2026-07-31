@@ -64,13 +64,6 @@ _FREEQ   = [None, 0, 1, 2]
 _DISC    = [None, 0, 0.1, 0.25]
 
 
-def test_unit_cost_equivalence():
-    for bc in _COSTS:
-        for up in _PACKS:
-            assert engine.evaluate("unit_cost", {"basic_cost": bc, "units_per_pack": up}) \
-                == P._legacy_unit_cost(bc, up), (bc, up)
-
-
 def test_gross_gp_equivalence():
     for pr in _PRICES:
         for c in _COSTS:
@@ -134,7 +127,6 @@ def test_seed_idempotent_and_db_backed_matches_defaults():
     finally:
         d.close()
     engine.invalidate()   # force a reload from the DB (not the default fallback)
-    assert engine.evaluate("unit_cost", {"basic_cost": 141.0, "units_per_pack": 12}) == P._legacy_unit_cost(141.0, 12)
     assert engine.evaluate("net_margin", {"price": 250.0, "cost": 40.0, "fee_pct": 0.18, "delivery": 34.0}) \
         == P._legacy_channel_margin(250.0, 40.0, 0.18, 34.0)
     assert engine.get_param("hktv_fee") == 0.18

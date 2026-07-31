@@ -57,7 +57,7 @@ export interface SupplierMarginBlock {
 }
 
 export interface MarginRange {
-  basic_cost: number | null        // landed per-unit cost (supplier unit + per-unit extras)
+  basic_cost: number | null        // landed per-unit cost before bulk terms (supplier unit + per-unit extras)
   extra_unit_cost: number | null
   mbb_cost: number | null
   mbb_kind: string | null
@@ -139,11 +139,6 @@ export interface Product {
   uom_verified_at: string | null     // IMS-stamped date pack size was manually confirmed
   uom_verified_by: string | null     // name/initials of person who confirmed
   hitl_verified?: boolean            // currently HITL-verified (latest onboarding event is a verify)
-  // Sync protection — shadow values + conflict flags
-  basic_cost_sheet: number | null        // last cost value seen from Sheet sync
-  units_per_pack_sheet: number | null    // last pack size seen from Sheet sync
-  cost_sheet_conflict: boolean           // Sheet cost disagrees with IMS-locked cost
-  pack_sheet_conflict: boolean           // Sheet pack size disagrees with IMS-verified value
   // Sales velocity
   sales_120d: number                 // units sold in last 120 days
   data_grade: 'A' | 'C'              // inventory completeness (reconciliation lives in procurement)

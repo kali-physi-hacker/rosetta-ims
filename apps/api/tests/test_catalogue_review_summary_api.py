@@ -26,7 +26,8 @@ os.environ.setdefault("PREFECT_SERVER_ANALYTICS_ENABLED", "false")
 
 import database  # noqa: E402
 import main  # noqa: E402
-import models  # noqa: E402
+import models
+from services import offering_costs  # noqa: E402
 from dependencies import require_user  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from orchestration.catalogue_flows import catalogue_ingestion_flow  # noqa: E402
@@ -277,15 +278,15 @@ def test_summary_matched_candidate_carries_price_delta_and_selling_price(client,
 
 def test_variant_search_scopes_sanity_to_run_supplier(client, db, monkeypatch):
     variant = _seed_variant(db, "RIMS-SUM-1", name="Hill's d/d Duck & Green Pea 3.5lb", selling_price=79.0)
-    db.add(
-        models.ProductSupplier(
-            product_id=variant.id,
-            supplier_id=14,
-            supplier_sku="5351",
-            basic_cost=33.90,
-            updated_at="2026-07-29T00:00:00+00:00",
-        )
+    link = models.ProductSupplier(
+        product_id=variant.id,
+        supplier_id=14,
+        supplier_sku="5351",
+        updated_at="2026-07-29T00:00:00+00:00",
     )
+    db.add(link)
+    db.flush()
+    offering_costs.record_supplier_cost(db, link, pack_cost=33.90)
     db.commit()
     run = _run_pipeline(db, monkeypatch)
 
@@ -293,9 +294,9 @@ def test_variant_search_scopes_sanity_to_run_supplier(client, db, monkeypatch):
     assert body["query"] == "duck"
     match = next(r for r in body["results"] if r["sku_code"] == "RIMS-SUM-1")
     assert match["name"] == "Hill's d/d Duck & Green Pea 3.5lb"
-    # No SupplierOffering yet: the legacy ProductSupplier cost is the current cost.
+    # The supplier's recorded offering price is the cost the reviewer sees.
     assert match["offering_cost"] == 33.90
-    assert match["offering_source"] == "legacy"
+    assert match["offering_source"] == "offering"
     assert match["selling_price"] == 79.0
     assert match["selling_channel"] == "shopify"
 

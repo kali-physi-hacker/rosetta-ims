@@ -155,10 +155,10 @@ def test_list_config_and_versions():
     try:
         cfg = engine.list_config(d)
         keys = {c["key"] for c in cfg}
-        assert {"unit_cost", "net_margin", "hktv_fee", "sf_logistics"} <= keys
+        assert {"gross_gp", "net_margin", "hktv_fee", "sf_logistics"} <= keys
         hktv = next(c for c in cfg if c["key"] == "hktv_fee")
         assert hktv["editable"] and hktv["value"] == 0.18
-        assert next(c for c in cfg if c["key"] == "unit_cost")["editable"] is False   # formula, not yet
+        assert next(c for c in cfg if c["key"] == "gross_gp")["editable"] is False   # formula, not yet
         assert len(engine.list_versions(d)) >= 1
     finally:
         d.close()

@@ -57,7 +57,6 @@ const GRADE_STYLE: Record<string, { bg: string; color: string }> = {
 function hasIssue(p: Product) {
   return (
     !!p.last_manual_edit_at ||
-    p.cost_sheet_conflict || p.pack_sheet_conflict ||
     (p.units_per_pack != null && !p.uom_verified_at) ||
     p.channels.some(c => c.recommendation === 'Raise price ⚠' || c.recommendation === 'Check pack size ⚠') ||
     p.data_grade === 'C'
@@ -230,8 +229,6 @@ function DataReviewContent() {
       if (categoryFilter !== 'All' && p.category !== categoryFilter) return false
       if (issueFilter === 'Any issue'           && !hasIssue(p)) return false
       if (issueFilter === 'Manually edited'     && !p.last_manual_edit_at) return false
-      if (issueFilter === 'Cost conflict'        && !p.cost_sheet_conflict) return false
-      if (issueFilter === 'Pack conflict'        && !p.pack_sheet_conflict) return false
       if (issueFilter === 'Unverified pack size' && !(p.units_per_pack != null && !p.uom_verified_at)) return false
       if (issueFilter === 'Below margin'         && !p.channels.some(c => c.recommendation === 'Raise price ⚠')) return false
       if (issueFilter === 'Grade C'              && p.data_grade !== 'C') return false
@@ -249,8 +246,6 @@ function DataReviewContent() {
     const all = products.map(resolve)
     return {
       manuallyEdited: all.filter(p => !!p.last_manual_edit_at).length,
-      costConflict:   all.filter(p => p.cost_sheet_conflict).length,
-      packConflict:   all.filter(p => p.pack_sheet_conflict).length,
       packUnverified: all.filter(p => p.units_per_pack != null && !p.uom_verified_at).length,
       belowMargin:    all.filter(p => p.channels.some(c => c.recommendation === 'Raise price ⚠')).length,
       gradeC:         all.filter(p => p.data_grade === 'C').length,
@@ -294,8 +289,6 @@ function DataReviewContent() {
           <span style={{ fontSize: '10px', fontWeight: 700, color: C.faint, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: '2px' }}>Issues:</span>
           {([
             { key: 'Manually edited',      label: `✎ ${issueCounts.manuallyEdited} manually edited`,                                                      count: issueCounts.manuallyEdited, bg: '#EDE9FE', color: '#6D28D9', activeBg: '#7C3AED', activeColor: 'white' },
-            { key: 'Cost conflict',        label: `⚡ ${issueCounts.costConflict} cost conflict${issueCounts.costConflict !== 1 ? 's' : ''}`,              count: issueCounts.costConflict,   bg: C.warnBg, color: C.amberInk, activeBg: '#F59E0B', activeColor: 'white' },
-            { key: 'Pack conflict',        label: `⚡ ${issueCounts.packConflict} pack conflict${issueCounts.packConflict !== 1 ? 's' : ''}`,              count: issueCounts.packConflict,   bg: C.warnBg, color: C.amberInk, activeBg: '#F59E0B', activeColor: 'white' },
             { key: 'Unverified pack size', label: `📐 ${issueCounts.packUnverified} unverified pack size${issueCounts.packUnverified !== 1 ? 's' : ''}`,  count: issueCounts.packUnverified, bg: '#FFF7ED', color: '#C2410C', activeBg: '#EA580C', activeColor: 'white' },
             { key: 'Below margin',         label: `↑ ${issueCounts.belowMargin} below margin`,                                                            count: issueCounts.belowMargin,    bg: '#FFFBEB', color: C.amber, activeBg: '#D97706', activeColor: 'white' },
             { key: 'Grade C',              label: `C ${issueCounts.gradeC} grade C`,                                                                      count: issueCounts.gradeC,         bg: C.redBg, color: C.redInk, activeBg: '#DC2626', activeColor: 'white' },
@@ -344,7 +337,7 @@ function DataReviewContent() {
             <span style={{ fontSize: '11px', color: C.muted }}>Issue</span>
             <select value={issueFilter} onChange={e => setIssueFilter(e.target.value)}
               style={{ padding: '4px 6px', fontSize: '11px', border: '1px solid #E2E8F0', borderRadius: '5px', background: issueFilter !== 'All' ? C.warnBg : 'white', color: issueFilter !== 'All' ? C.amberInk : C.ink, fontWeight: issueFilter !== 'All' ? 700 : 400 }}>
-              {['All', 'Any issue', 'Manually edited', 'Cost conflict', 'Pack conflict', 'Unverified pack size', 'Below margin', 'Grade C', 'Missing cost', 'Missing pack size'].map(o => (
+              {['All', 'Any issue', 'Manually edited', 'Unverified pack size', 'Below margin', 'Grade C', 'Missing cost', 'Missing pack size'].map(o => (
                 <option key={o}>{o}</option>
               ))}
             </select>
@@ -413,8 +406,6 @@ function DataReviewContent() {
 
                 const chips: { label: string; color: string; bg: string }[] = []
                 if (p.last_manual_edit_at)                         chips.push({ label: p.last_manual_edit_by ? `✎ ${p.last_manual_edit_by}` : '✎ Edited', color: '#6D28D9', bg: '#EDE9FE' })
-                if (p.cost_sheet_conflict)                          chips.push({ label: '⚡ Cost', color: C.amberInk, bg: C.warnBg })
-                if (p.pack_sheet_conflict)                          chips.push({ label: '⚡ Pack', color: C.amberInk, bg: C.warnBg })
                 if (p.units_per_pack != null && !p.uom_verified_at) chips.push({ label: '📐 UPP', color: '#C2410C', bg: '#FFF7ED' })
                 if (p.channels.some(c => c.recommendation === 'Raise price ⚠')) chips.push({ label: '↑ Margin', color: C.amber, bg: '#FFFBEB' })
                 if (p.data_grade === 'C')                           chips.push({ label: 'C', color: C.redInk, bg: C.redBg })
@@ -499,8 +490,6 @@ function DataReviewContent() {
 
             const issueChips: { label: string; color: string; bg: string }[] = []
             if (p.last_manual_edit_at)                          issueChips.push({ label: p.last_manual_edit_by ? `✎ ${p.last_manual_edit_by}` : '✎ Edited', color: '#6D28D9', bg: '#EDE9FE' })
-            if (p.cost_sheet_conflict)                          issueChips.push({ label: '⚡ Cost conflict',     color: C.amberInk, bg: C.warnBg })
-            if (p.pack_sheet_conflict)                          issueChips.push({ label: '⚡ Pack conflict',     color: C.amberInk, bg: C.warnBg })
             if (p.units_per_pack != null && !p.uom_verified_at) issueChips.push({ label: '📐 Unverified pack',  color: '#C2410C', bg: '#FFF7ED' })
             if (p.channels.some(c => c.recommendation === 'Raise price ⚠')) issueChips.push({ label: '↑ Below margin', color: C.amber, bg: '#FFFBEB' })
             if (p.data_grade === 'C')                           issueChips.push({ label: 'Grade C',              color: C.redInk, bg: C.redBg })
@@ -716,29 +705,13 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
               </div>
             ))}
             <p style={{ fontSize: '10px', color: C.faint, marginTop: '6px' }}>
-              To link a new supplier, use the <Link to={`/sku/${skuToPath(sku)}` as never} style={{ color: C.indigo }}>detail page</Link> or re-sync after updating the Sheet.
+              To link a new supplier, use the <Link to={`/sku/${skuToPath(sku)}` as never} style={{ color: C.indigo }}>detail page</Link> on the SKU detail page.
             </p>
           </div>
 
           <div style={sectionStyle}>
             <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Cost</p>
-            {p.cost_sheet_conflict ? (
-              <div style={{ background: C.warnBg, border: '1px solid #FCD34D', borderRadius: '5px', padding: '8px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, marginBottom: '4px' }}>⚡ Conflict — Sheet ≠ IMS</p>
-                <p style={{ fontSize: '11px', color: '#78350F' }}>Sheet: <strong>HK${p.basic_cost_sheet?.toFixed(2)}</strong></p>
-                <p style={{ fontSize: '11px', color: C.ink, marginBottom: '8px' }}>IMS: <strong>HK${p.primary_cost?.toFixed(2)}</strong> · {COST_SOURCE_LABEL[p.cost_source]}</p>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button disabled={isSaving(sku, 'accept-cost')} onClick={() => callUrl(sku, 'accept-cost', `${API}/products/${sku}/cost/accept-sheet`)}
-                    style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', background: C.amberInk, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    {isSaving(sku, 'accept-cost') ? 'Saving…' : 'Use Sheet value'}
-                  </button>
-                  <button disabled={isSaving(sku, 'dismiss-cost')} onClick={() => callUrl(sku, 'dismiss-cost', `${API}/products/${sku}/cost/dismiss-conflict`)}
-                    style={{ fontSize: '11px', padding: '4px 10px', background: C.monoBg, color: C.sub, border: '1px solid #CBD5E1', borderRadius: '4px', cursor: 'pointer' }}>
-                    Keep IMS
-                  </button>
-                </div>
-              </div>
-            ) : (
+            {(
               <div>
                 {/* Current cost + source */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
@@ -831,23 +804,7 @@ function ExpandedRow({ p, verifiedBy, isSaving, patchProduct, callUrl }: {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={sectionStyle}>
             <p style={{ fontSize: '10px', fontWeight: 700, color: C.indigoInk, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Pack Size</p>
-            {p.pack_sheet_conflict ? (
-              <div style={{ background: C.warnBg, border: '1px solid #FCD34D', borderRadius: '5px', padding: '8px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 700, color: C.amberInk, marginBottom: '4px' }}>⚡ Conflict — Sheet ≠ IMS</p>
-                <p style={{ fontSize: '11px', color: '#78350F' }}>Sheet: <strong>{p.units_per_pack_sheet} units</strong></p>
-                <p style={{ fontSize: '11px', color: C.ink, marginBottom: '8px' }}>IMS: <strong>{p.units_per_pack} units</strong> (verified)</p>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button disabled={isSaving(sku, 'accept-uom')} onClick={() => callUrl(sku, 'accept-uom', `${API}/products/${sku}/uom/accept-sheet`, 'POST', { verified_by: verifiedBy || null })}
-                    style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', background: C.amberInk, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Use Sheet
-                  </button>
-                  <button disabled={isSaving(sku, 'keep-uom')} onClick={() => callUrl(sku, 'keep-uom', `${API}/products/${sku}/uom`, 'PATCH', { verified_by: verifiedBy || null })}
-                    style={{ fontSize: '11px', padding: '4px 10px', background: C.monoBg, color: C.sub, border: '1px solid #CBD5E1', borderRadius: '4px', cursor: 'pointer' }}>
-                    Keep IMS
-                  </button>
-                </div>
-              </div>
-            ) : p.units_per_pack != null ? (
+            {p.units_per_pack != null ? (
               <div>
                 <p style={{ fontSize: '18px', fontWeight: 700, color: C.ink }}>{p.units_per_pack} <span style={{ fontSize: '12px', fontWeight: 400, color: C.muted }}>units/pack</span></p>
                 {p.uom_verified_at ? (

@@ -35,16 +35,15 @@ from services import product_domain
 with database.SessionLocal() as _product_domain_session:
     product_domain.backfill_explicit_product_domain(_product_domain_session)
 
-# Offering baselines: links still carrying only legacy basic_cost get a
-# SupplierOffering + current price row (the MANUAL migration baseline), so
-# cost reads have exactly two sources — CATALOGUE / MANUAL. Idempotent; a
-# no-op scan on every boot after the first.
-from services import offering_costs as _offering_costs
+# Retire the legacy cost column: migrate any link that still carries only
+# basic_cost into an offering price, verify nothing is left behind, then drop
+# basic_cost and the Google Sheet's shadow columns. One-shot and idempotent —
+# once every environment reports "already_retired", this and the module go.
+from services import legacy_cost_retirement as _legacy_cost_retirement
 
-with database.SessionLocal() as _baseline_session:
-    _bf_offerings, _bf_prices = _offering_costs.backfill_offering_baselines(_baseline_session)
-    if _bf_prices:
-        print(f"[startup] offering baseline backfill: {_bf_offerings} offerings, {_bf_prices} price rows")
+_retirement = _legacy_cost_retirement.retire_legacy_cost(database.engine)
+if _retirement["status"] != "already_retired":
+    print(f"[startup] legacy cost retirement: {_retirement}")
 
 # Config-driven transformation engine (Phase A): seed the registry + default config version so
 # the engine reproduces the previously hard-coded formulas. Idempotent; behaviour-neutral.

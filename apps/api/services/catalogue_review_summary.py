@@ -345,10 +345,10 @@ def _published_candidate_uuids(db: Session, candidate_uuids: list[str]) -> set[s
 def _current_offer_prices(db: Session, offer_keys: list[str]) -> dict[str, float]:
     """Current supplier cost per resolution supplier_product_id.
 
-    Matched keys are either a SupplierOffering.supplier_product_key or the
-    resolver's legacy marker for a ProductSupplier row that has no offering
-    yet — the legacy basic_cost is that offering's current cost until apply
-    writes the real one.
+    Matched keys are SupplierOffering.supplier_product_key values. The
+    resolver can also emit a legacy marker for a ProductSupplier row; those
+    now always have an offering price, so they resolve through the link's
+    (supplier, variant) pair rather than a cost column of their own.
     """
 
     prices: dict[str, float] = {}
@@ -374,7 +374,17 @@ def _current_offer_prices(db: Session, offer_keys: list[str]) -> dict[str, float
     }
     if legacy_ids:
         rows = (
-            db.query(models.ProductSupplier.id, models.ProductSupplier.basic_cost)
+            db.query(models.ProductSupplier.id, models.CatalogueSupplierPrice.amount)
+            .join(
+                models.SupplierOffering,
+                (models.SupplierOffering.supplier_id == models.ProductSupplier.supplier_id)
+                & (models.SupplierOffering.product_variant_id == models.ProductSupplier.product_id),
+            )
+            .join(
+                models.CatalogueSupplierPrice,
+                (models.CatalogueSupplierPrice.supplier_product_id == models.SupplierOffering.id)
+                & (models.CatalogueSupplierPrice.is_current == 1),
+            )
             .filter(models.ProductSupplier.id.in_(legacy_ids.keys()))
             .all()
         )
@@ -421,13 +431,6 @@ def _supplier_cost_for_variant(
         )
         if price is not None:
             return float(price[0]), "offering"
-    legacy = (
-        db.query(models.ProductSupplier.basic_cost)
-        .filter_by(supplier_id=supplier_id, product_id=variant_id)
-        .first()
-    )
-    if legacy is not None and legacy[0] is not None:
-        return float(legacy[0]), "legacy"
     return None, None
 
 

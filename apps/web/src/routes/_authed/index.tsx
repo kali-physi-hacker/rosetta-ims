@@ -1,7 +1,7 @@
 import { C } from '@/lib/tokens'
 import { useState, useMemo, useEffect, useCallback, useRef, useSyncExternalStore, Suspense, type CSSProperties } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import type { Product, SummaryResponse, Supplier, SyncStatus } from '@/lib/types'
+import type { Product, SummaryResponse, Supplier } from '@/lib/types'
 import { authHeaders, can } from '@/lib/auth'
 import { skuToPath } from '@/lib/sku'
 import { toast } from '@/lib/toast'
@@ -420,10 +420,6 @@ const EXPORT_COLUMNS: ExportCol[] = [
   { key: 'last_manual_edit_at', label: 'Last Manual Edit At', group: 'extra', value: r => csvEsc((r.item.last_manual_edit_at ?? '').slice(0, 10)) },
   { key: 'last_manual_edit_by', label: 'Last Manual Edit By', group: 'extra', value: r => csvEsc(r.item.last_manual_edit_by ?? '') },
   // Sheet-sync shadow values + conflict flags
-  { key: 'basic_cost_sheet',      label: 'Basic Cost (Sheet)',    group: 'extra', value: r => csvHkd(r.item.basic_cost_sheet) },
-  { key: 'units_per_pack_sheet',  label: 'Units/Pack (Sheet)',    group: 'extra', value: r => r.item.units_per_pack_sheet ?? '' },
-  { key: 'cost_sheet_conflict',   label: 'Cost Sheet Conflict',   group: 'extra', value: r => csvYN(r.item.cost_sheet_conflict) },
-  { key: 'pack_sheet_conflict',   label: 'Pack Sheet Conflict',   group: 'extra', value: r => csvYN(r.item.pack_sheet_conflict) },
 ]
 const DEFAULT_EXPORT_KEYS = EXPORT_COLUMNS.filter(c => c.group === 'default').map(c => c.key)
 
@@ -486,8 +482,6 @@ function InventoryView() {
   const [showBatch, setShowBatch] = useState(false)
   const [summary, setSummary]     = useState<SummaryResponse | null>(null)
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
-  const [syncing, setSyncing]     = useState(false)
   const [algoSyncing, setAlgoSyncing] = useState(false)
   const [pushing, setPushing]     = useState(false)
   const [fetchingComp, setFetchingComp] = useState(false)
@@ -584,7 +578,6 @@ function InventoryView() {
 
   useEffect(() => {
     fetch(`${API}/suppliers`, { headers: authHeaders() }).then(r => r.ok ? r.json() : []).then(setSuppliers).catch(() => {})
-    fetch(`${API}/sync/status`, { headers: authHeaders() }).then(r => r.ok ? r.json() : null).then(setSyncStatus).catch(() => {})
   }, [])
 
   // One full load; search + supplier then filter CLIENT-side over the in-memory list.
@@ -718,20 +711,6 @@ function InventoryView() {
       else toast.error('Could not start competitor price fetch')
     } catch { toast.error('Could not start competitor price fetch') }
     finally { setFetchingComp(false) }
-  }
-
-  async function handleSync() {
-    setSyncing(true)
-    try {
-      const res = await fetch(`${API}/sync/sheet`, { method: 'POST', headers: authHeaders() })
-      if (res.ok) {
-        const data: SyncStatus = await res.json()
-        setSyncStatus({ ...data, synced: true })
-        fetchData(true)
-      }
-    } finally {
-      setSyncing(false)
-    }
   }
 
   // Push IMS → SSOT sheet. Dry-run first to preview, then confirm before writing.
@@ -1184,12 +1163,6 @@ function InventoryView() {
           </div>
           <div className="actions">
             {liveAt && <span className="live" title={`Auto-refreshing — last check ${liveAt.toLocaleTimeString()}`}><span className="d" />Live</span>}
-            {syncStatus?.synced_at
-              ? <>
-                  {(syncStatus.missing_cost ?? 0) > 0 && <span className="warnbadge">⚠ {syncStatus.missing_cost} missing costs</span>}
-                  {(syncStatus.cost_discrepancies ?? 0) > 0 && <span className="errbadge">⚠ {syncStatus.cost_discrepancies} cost conflicts</span>}
-                </>
-              : <span className="warnbadge">⚠ Not synced</span>}
             <div style={{ display: 'inline-flex', border: '1px solid #E7EAEF', borderRadius: '8px', overflow: 'hidden', background: '#fff' }} role="tablist" aria-label="Table view">
               {([['Inventory', false], ['Margins', true]] as const).map(([lbl, m]) => (
                 <button key={lbl} role="tab" aria-selected={marginMode === m} onClick={() => setMarginMode(m)}
@@ -1253,7 +1226,6 @@ function InventoryView() {
             {mounted && can('product_edit') && <button className="btn" onClick={handleFetchCompetitors} disabled={fetchingComp} title="Scrape all linked competitor prices">{fetchingComp ? 'Fetching…' : '🏷 Fetch competitor prices'}</button>}
             {mounted && can('sheet') && <button className="btn" onClick={handlePush} disabled={pushing}>{pushing ? 'Pushing…' : '⤴ Push to Sheet'}</button>}
             {mounted && can('sheet') && <button className="btn" onClick={handleAlgoSync} disabled={algoSyncing} title="Pull real sales + inventory expiry from the algo-dashboard">{algoSyncing ? 'Syncing…' : '⟳ Sync live sales data'}</button>}
-            {mounted && can('sheet') && <button className="btn pri" onClick={handleSync} disabled={syncing}>{syncing ? 'Syncing…' : '↻ Sync'}</button>}
             {showBatch && <BatchUpdateModal onClose={() => setShowBatch(false)} onApplied={fetchData} />}
           </div>
         </div>

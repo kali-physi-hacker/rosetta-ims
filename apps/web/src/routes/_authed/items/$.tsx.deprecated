@@ -1,3 +1,7 @@
+// HISTORICAL — the classic SKU details page, replaced by the instrument at
+// /sku/<code>. Kept for reference only; it no longer compiles as-is: the
+// supplier/MBB modals it imported were removed with the legacy basic_cost
+// column, and the Google Sheet conflict fields it renders no longer exist.
 import { C } from '@/lib/tokens'
 import { useState, useEffect, useRef } from 'react'
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'

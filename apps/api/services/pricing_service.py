@@ -38,15 +38,14 @@ def get_primary_cost(product: ProductVariant) -> float | None:
 def effective_pack_cost(ps: ProductSupplier | None) -> float | None:
     """Whole-pack display cost, consistent with get_unit_cost (offering-first).
 
-    When a current offering price exists it is the truth; the whole-pack
-    equivalent keeps the on-screen relation ``pack cost / units_per_pack =
-    unit cost`` intact. Otherwise the legacy editable basic_cost shows.
+    The offering price is the truth; the whole-pack equivalent keeps the
+    on-screen relation ``pack cost / units_per_pack = unit cost`` intact.
     """
     if not ps:
         return None
     unit = offering_costs.unit_cost_for_link(ps)
     if unit is None:
-        return ps.basic_cost if ps.basic_cost else None
+        return None
     if ps.units_per_pack and ps.units_per_pack > 1:
         return round(unit * ps.units_per_pack, 4)
     return unit
@@ -62,29 +61,15 @@ def effective_cost_source(ps: ProductSupplier | None) -> str | None:
     return ps.cost_source
 
 
-def _legacy_unit_cost(basic_cost, units_per_pack):
-    """Pre-config formula — kept only as the shadow-equivalence reference in tests."""
-    if basic_cost is None:
-        return None
-    if units_per_pack and units_per_pack > 1:
-        return basic_cost / units_per_pack
-    return basic_cost
-
-
 def get_unit_cost(ps: ProductSupplier | None) -> float | None:
     """Cost of ONE SELL-UNIT — offering-first, the single cost all margin math runs on.
 
-    The catalogue pipeline writes supplier cost to the SupplierOffering price
-    history (basis-aware, per-sell-unit derived); when a current offering
-    price exists for this (supplier, variant) link it IS the cost. Links with
-    no offering yet fall back to the legacy whole-pack basic_cost divided by
-    units_per_pack (formula in config, transform_engine 'unit_cost')."""
+    Cost is written to the SupplierOffering price history (basis-aware,
+    per-sell-unit derived) by the catalogue pipeline and by every human cost
+    edit; the current price on this (supplier, variant) link IS the cost."""
     if not ps:
         return None
-    from_offering = offering_costs.unit_cost_for_link(ps)
-    if from_offering is not None:
-        return from_offering
-    return engine.evaluate("unit_cost", {"basic_cost": ps.basic_cost, "units_per_pack": ps.units_per_pack})
+    return offering_costs.unit_cost_for_link(ps)
 
 
 def _legacy_term_unit_cost(kind, base_unit_cost, min_qty, free_qty, discount_pct, unit_cost):
@@ -527,7 +512,7 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
             ],
         }
         for sup in product.product_suppliers
-        if sup.supplier or sup.supplier_sku or sup.basic_cost or offering_costs.unit_cost_for_link(sup) is not None
+        if sup.supplier or sup.supplier_sku or offering_costs.unit_cost_for_link(sup) is not None
     ]
     # Sort by effective cost ascending (nulls last); lowest true cost = preferred
     _sup_list.sort(key=lambda s: (s["basic_cost"] is None, s["basic_cost"] or 0))
@@ -589,39 +574,6 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
         "uom_verified_by":      ps.uom_verified_by      if ps else None,
         "pack_source":          ps.pack_source          if ps else 'sheet',
         # Shadow values — last value seen from Sheet sync
-        "basic_cost_sheet":     ps.basic_cost_sheet     if ps else None,
-        "units_per_pack_sheet": ps.units_per_pack_sheet if ps else None,
-        # Discrepancy flags — Sheet value disagrees with IMS-locked value
-        "cost_sheet_conflict": bool(
-            ps and ps.basic_cost_sheet is not None and ps.basic_cost is not None
-            and ps.cost_source in ('po_issued', 'invoice_matched', 'catalogue')
-            and abs(ps.basic_cost_sheet - ps.basic_cost) / max(ps.basic_cost_sheet, ps.basic_cost) > 0.001
-        ) if ps else False,
-        "pack_sheet_conflict": bool(
-            ps and ps.units_per_pack_sheet is not None and ps.units_per_pack is not None
-            and (ps.uom_verified_at is not None or ps.pack_source == 'catalogue')
-            and ps.units_per_pack_sheet != ps.units_per_pack
-        ) if ps else False,
-        # Sales velocity
-        "sales_120d":      sales_120d,
-        # Cost confidence (Story 1.5)
-        "cost_source":        ps.cost_source     if ps else 'manual',
-        "cost_source_ref":    ps.cost_source_ref if ps else None,
-        "cost_updated_at":    ps.cost_updated_at if ps else None,
-        "cost_is_stale":      _is_cost_stale(ps),
-        # Ordering terms (order multiple / MOQ) — from the primary supplier link; NULL until set.
-        # Read-only exposure for the UI / CSV export. Does not feed any margin math.
-        "order_increment_qty":   ps.order_increment_qty   if ps else None,
-        "order_increment_uom":   ps.order_increment_uom   if ps else None,
-        "minimum_order_qty":     ps.minimum_order_qty     if ps else None,
-        "minimum_order_uom":     ps.minimum_order_uom     if ps else None,
-        "minimum_order_source":  ps.minimum_order_source  if ps else None,
-        "pricing_note":          ps.pricing_note          if ps else None,
-        # Data quality grade (inventory completeness — reconciliation lives in procurement)
-        "data_grade": compute_data_grade(
-            primary_cost, product.channels,
-            supplier_name=supplier_name, sku_code=product.sku_code,
-        ),
     }
 
     if include_margin_range:

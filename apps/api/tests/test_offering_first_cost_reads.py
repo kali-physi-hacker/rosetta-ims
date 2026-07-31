@@ -1,10 +1,9 @@
-"""Offering-first cost reads: the explicit product domain is the read path.
+"""Cost reads come from the product domain, and only from it.
 
-The catalogue pipeline writes supplier cost to SupplierOffering price history;
-read surfaces (get_unit_cost — the single cost all margin math runs on — and
-the display serializers) must prefer that current offering price, basis-aware,
-and fall back to the legacy whole-pack basic_cost only when no offering price
-exists for the (supplier, variant) link.
+Supplier cost lives in SupplierOffering price history; get_unit_cost — the
+single cost all margin math runs on — and the display serializers read the
+current offering price, basis-aware. There is no legacy column to fall back
+to: a link with no offering price simply has no cost yet.
 """
 
 from __future__ import annotations
@@ -33,7 +32,7 @@ def _session() -> Session:
     return Session(engine)
 
 
-def _seed_link(db: Session, *, basic_cost: float | None, units_per_pack: int | None) -> models.ProductSupplier:
+def _seed_link(db: Session, *, pack_cost: float | None, units_per_pack: int | None) -> models.ProductSupplier:
     variant = models.ProductVariant(
         sku_code="RIMS-COST-1",
         name="Hill's Science Plan Adult Chicken 82g",
@@ -53,11 +52,13 @@ def _seed_link(db: Session, *, basic_cost: float | None, units_per_pack: int | N
         product_id=variant.id,
         supplier_id=14,
         supplier_sku="10447",
-        basic_cost=basic_cost,
         units_per_pack=units_per_pack,
         updated_at="2026-07-29T00:00:00+00:00",
     )
     db.add(link)
+    db.flush()
+    if pack_cost is not None:
+        offering_costs.record_supplier_cost(db, link, pack_cost=pack_cost)
     db.commit()
     return link
 
@@ -111,21 +112,26 @@ def _seed_offering_price(
     offering_costs.invalidate(db)
 
 
-def test_legacy_fallback_without_offering_price():
+def test_recorded_cost_reads_back_per_sell_unit():
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        link = _seed_link(db, pack_cost=157.2, units_per_pack=12)
         assert get_unit_cost(link) == 13.1
         assert effective_pack_cost(link) == 157.2
-        assert effective_cost_source(link) == "manual"
+        assert effective_cost_source(link) == "offering"
 
 
-def test_detached_rows_keep_legacy_behaviour():
-    assert get_unit_cost(models.ProductSupplier(basic_cost=100.0, units_per_pack=4)) == 25.0
+def test_link_without_a_recorded_cost_has_no_cost():
+    with _session() as db:
+        link = _seed_link(db, pack_cost=None, units_per_pack=12)
+        assert get_unit_cost(link) is None
+        assert effective_pack_cost(link) is None
+    # detached rows (duck-typed preview stand-ins) never carry a cost either
+    assert get_unit_cost(models.ProductSupplier(units_per_pack=4)) is None
 
 
 def test_current_offering_price_wins_over_basic_cost():
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        link = _seed_link(db, pack_cost=157.2, units_per_pack=12)
         _seed_offering_price(db, link, amount=14.0, basis_code="UNIT")
         assert get_unit_cost(link) == 14.0
         # Whole-pack display equivalent keeps pack / units_per_pack = unit true.
@@ -136,23 +142,24 @@ def test_current_offering_price_wins_over_basic_cost():
 
 def test_pack_basis_price_divides_by_offering_packaging():
     with _session() as db:
-        link = _seed_link(db, basic_cost=None, units_per_pack=None)
+        link = _seed_link(db, pack_cost=None, units_per_pack=None)
         _seed_offering_price(db, link, amount=150.0, basis_code="CASE", packaging=("CASE", "UNIT", 12.0))
         assert get_unit_cost(link) == 12.5
 
 
 def test_superseded_price_is_ignored():
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        link = _seed_link(db, pack_cost=157.2, units_per_pack=12)
         _seed_offering_price(db, link, amount=99.0, basis_code="UNIT", is_current=0)
         assert get_unit_cost(link) == 13.1
-        assert effective_cost_source(link) == "manual"
+        assert effective_cost_source(link) == "offering"
 
 
 def test_session_memo_is_one_query_and_invalidates(monkeypatch):
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        link = _seed_link(db, pack_cost=157.2, units_per_pack=12)
         assert get_unit_cost(link) == 13.1
+        # the memo is warm; a newly written price only shows after invalidate
         # Memo cached the empty map; a new offering price appears after invalidate.
         _seed_offering_price(db, link, amount=14.0, basis_code="UNIT")
         assert get_unit_cost(link) == 14.0
@@ -160,7 +167,7 @@ def test_session_memo_is_one_query_and_invalidates(monkeypatch):
 
 def test_record_supplier_cost_writes_current_offering_price():
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        link = _seed_link(db, pack_cost=None, units_per_pack=12)
         offering_costs.record_supplier_cost(db, link, pack_cost=157.2)
         db.commit()
 
@@ -178,7 +185,7 @@ def test_record_supplier_cost_writes_current_offering_price():
 
 def test_record_supplier_cost_supersedes_previous_price_and_reuses_offering():
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        link = _seed_link(db, pack_cost=None, units_per_pack=12)
         offering_costs.record_supplier_cost(db, link, pack_cost=157.2)
         offering_costs.record_supplier_cost(db, link, pack_cost=168.0)
         db.commit()
@@ -193,17 +200,12 @@ def test_record_supplier_cost_supersedes_previous_price_and_reuses_offering():
 
 def test_variant_offerings_read_model_attributes_sources_plainly():
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
-        # Pre-domain: no offering price → the supplier reads as legacy.
-        entry = offering_costs.variant_offerings(db, link.product_id)[0]
-        assert entry["source"] == "legacy"
-        assert entry["current"] is None
-        assert entry["legacy"]["basic_cost"] == 157.2
-
-        # A manual edit becomes a manual price row; a catalogue commit row
+        link = _seed_link(db, pack_cost=157.2, units_per_pack=12)
+        # A recorded cost is a manual price row; a catalogue commit row
         # (carries its run id) reads as catalogue and supersedes it.
-        offering_costs.record_supplier_cost(db, link, pack_cost=157.2)
-        db.commit()
+        entry = offering_costs.variant_offerings(db, link.product_id)[0]
+        assert entry["source"] == "manual"
+        assert entry["current"]["unit_cost"] == 13.1
         offering = db.query(models.SupplierOffering).one()
         db.add(
             models.CatalogueSupplierPrice(
@@ -232,7 +234,7 @@ def test_variant_offerings_read_model_attributes_sources_plainly():
 
 def test_record_supplier_cost_is_noop_without_supplier_or_cost():
     with _session() as db:
-        link = _seed_link(db, basic_cost=157.2, units_per_pack=12)
+        link = _seed_link(db, pack_cost=None, units_per_pack=12)
         offering_costs.record_supplier_cost(db, link, pack_cost=None)
         link.supplier_id = None
         offering_costs.record_supplier_cost(db, link, pack_cost=100.0)
