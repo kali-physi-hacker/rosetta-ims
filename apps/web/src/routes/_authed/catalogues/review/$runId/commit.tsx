@@ -74,10 +74,10 @@ function ReceiptPage() {
       ) : (
         <div className="panel" style={{ marginTop: 12 }}>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 640 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 780 }}>
               <thead>
                 <tr style={{ textAlign: 'left', background: 'var(--panel)' }}>
-                  {['SKU', 'Product variant', 'Old', 'New', 'Δ', 'Written', ''].map(h => (
+                  {['SKU', 'Product variant', 'Brand', 'Weight', 'Old', 'New', 'Δ', 'Written', ''].map(h => (
                     <th key={h} style={{ padding: '8px 13px', fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>{h}</th>
                   ))}
                 </tr>
@@ -87,6 +87,8 @@ function ReceiptPage() {
                   <tr key={index} style={{ borderTop: '1px solid var(--line2)', opacity: change.is_current ? 1 : 0.6 }}>
                     <td className="mono" style={{ padding: '7px 13px', fontSize: 11 }}>{change.sku_code ?? change.supplier_sku ?? '—'}</td>
                     <td style={{ padding: '7px 13px', color: 'var(--ink)' }}>{change.variant_name ?? '—'}{!change.is_current && <span style={{ fontSize: 10, color: 'var(--faint)' }}> · superseded since</span>}</td>
+                    <td style={{ padding: '7px 13px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{change.brand ?? '—'}</td>
+                    <td className="mono" style={{ padding: '7px 13px', fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{change.weight ?? '—'}</td>
                     <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontVariantNumeric: 'tabular-nums' }}>{change.old_unit_cost != null ? `${fm(change.old_unit_cost)}${per(change.uom)}` : 'first price'}</td>
                     <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{fm(change.new_unit_cost)}{per(change.uom)}</td>
                     <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontWeight: 700, color: change.delta_pct != null && Math.abs(change.delta_pct) > 20 ? 'var(--red)' : 'var(--muted)' }}>{fmtDelta(change.delta_pct) ?? '—'}</td>

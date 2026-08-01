@@ -335,6 +335,8 @@ export interface ReceiptChange {
   sku_code: string | null
   variant_name: string | null
   uom?: string | null
+  brand?: string | null
+  weight?: string | null
   supplier_name: string | null
   supplier_sku: string | null
   old_unit_cost: number | null

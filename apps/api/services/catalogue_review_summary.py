@@ -204,6 +204,11 @@ def run_receipt(db: Session, run_uuid: UUID) -> dict[str, Any]:
             "sku_code": variant.sku_code if variant else None,
             "variant_name": variant.name if variant else None,
             "uom": _unit_label(variant.uom if variant else None),
+            # Brand and weight are columns in the golden-sample sheet that we
+            # populate and it leaves blank, so they belong on the receipt too —
+            # not only inside the export nobody opens until they diff it.
+            "brand": (variant.brand if variant else None) or None,
+            "weight": _weight_label(variant),
             "supplier_name": supplier.name if supplier else None,
             "supplier_sku": offering.supplier_sku,
             "old_unit_cost": old_unit,
@@ -483,6 +488,20 @@ def _unit_label(raw: str | None) -> str | None:
     """
     text = re.sub(r"\((?:e?s)\)$", "", (raw or "").strip()).strip().lower()
     return None if text in _JUNK_UOM else (text or None)
+
+
+# weight_g is canonical grams; weight_unit is only how the source displayed it.
+_GRAMS_PER = {"g": 1.0, "kg": 1000.0, "lb": 453.59237, "oz": 28.349523}
+
+
+def _weight_label(variant) -> str | None:
+    if variant is None or variant.weight_g is None:
+        return None
+    unit = (variant.weight_unit or "g").strip().lower()
+    per = _GRAMS_PER.get(unit)
+    if per is None:
+        return f"{variant.weight_g:g} g"
+    return f"{round(variant.weight_g / per, 3):g} {unit}"
 
 
 def _uom_by_sku(db: Session, sku_codes: list[str]) -> dict[str, str]:

@@ -191,6 +191,40 @@ def test_bulk_terms_are_one_canonical_phrasing_per_kind(db):
     assert row["commercial_offer_summary"] == "buy 6 BOTTLE at $1,200.00 per BOTTLE; buy 5 get 1 free"
 
 
+def test_the_order_multiple_sets_the_pack_size_when_none_is_recorded(db):
+    """If you can only order in 24s, the minimum order IS a 24-unit pack.
+
+    Live case: Hill's GI Biome 604202 holds order_increment_qty 24 and
+    units_per_pack 1, and the human wrote 24. 1 would make a per-unit cost 24x
+    too high, so the multiple is the number to divide by.
+    """
+    variant = _publish_one(db, with_terms=False)
+    link = db.query(models.ProductSupplier).filter_by(supplier_sku="EN7502").one()
+    link.units_per_pack = 1
+    link.order_increment_qty = 24
+    link.order_increment_uom = "ML"
+    # Drop the pipeline's packaging so the identity has to answer.
+    db.query(models.CataloguePackagingConfiguration).delete()
+    db.flush()
+
+    row = export.golden_rows(db, RUN)[0]
+    assert row["sellable_units_per_price_basis"] == "24"
+    assert row["order_multiple"] == "24 ML"
+    assert row["package_configuration"].startswith("24 ML")
+
+
+def test_a_real_pack_size_still_wins_over_the_multiple(db):
+    """units_per_pack is the direct answer when the link records one."""
+    _publish_one(db, with_terms=False)
+    link = db.query(models.ProductSupplier).filter_by(supplier_sku="EN7502").one()
+    link.units_per_pack = 30
+    link.order_increment_qty = 6
+    db.query(models.CataloguePackagingConfiguration).delete()
+    db.flush()
+
+    assert export.golden_rows(db, RUN)[0]["sellable_units_per_price_basis"] == "30"
+
+
 def test_weight_is_converted_not_relabelled(db):
     """weight_g is canonical grams; weight_unit is only how the source showed it.
 

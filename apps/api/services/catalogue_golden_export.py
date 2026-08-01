@@ -135,6 +135,7 @@ def _basis_uom(pub, variant) -> str:
 
 def _identity_order_multiple(variant, link) -> str:
     """The supplier link's ordering terms, which are kept separate from pack size."""
+    # The order multiple IS the minimum: 24s means the smallest order is 24.
     if link is not None and link.order_increment_qty:
         unit = _clean(link.order_increment_uom) or _clean(variant.uom if variant else None)
         return " ".join(part for part in (_num(link.order_increment_qty), unit) if part)
@@ -192,17 +193,38 @@ def _weight_text(variant: models.ProductVariant | None) -> str:
     return f"{format(converted, 'f')} {unit}"
 
 
+def _units_per_pack(variant, link) -> str:
+    """How many sellable units one purchase covers.
+
+    `units_per_pack` when the link records a real pack size. Otherwise the ORDER
+    MULTIPLE: if you can only order in 24s then 24 is the starting quantity —
+    the minimum order is a 24-unit pack whether or not anyone wrote "BAG" on it,
+    so that is the number a per-unit cost has to divide by. This is exactly the
+    Hill's GI Biome case: we hold order_increment_qty 24 and units_per_pack 1,
+    and the human wrote 24.
+    """
+    if link is not None and link.units_per_pack and link.units_per_pack > 1:
+        return _num(link.units_per_pack)
+    for candidate in (
+        getattr(link, "order_increment_qty", None) if link else None,
+        getattr(link, "minimum_order_qty", None) if link else None,
+        variant.min_purchase_qty if variant else None,
+    ):
+        if candidate and candidate > 1:
+            return _num(candidate)
+    return _num(link.units_per_pack) if link and link.units_per_pack else ""
+
+
 def _identity_packaging(variant, link) -> str:
     """"24 Can(s) / Box" from the product identity itself.
 
     products.uom is the sell unit and products.pack_unit the buy unit — the two
-    halves of the sheet's package_configuration — and product_suppliers
-    .units_per_pack is how many of the first are in one of the second. No
-    contract change or re-extraction needed to read them.
+    halves of the sheet's package_configuration — and the count comes from
+    _units_per_pack. No contract change or re-extraction needed to read them.
     """
     inner = _clean(variant.uom if variant else None)
     outer = _clean(variant.pack_unit if variant else None)
-    qty = _num(link.units_per_pack) if link and link.units_per_pack else ""
+    qty = _units_per_pack(variant, link)
     if qty and inner and outer:
         return f"{qty} {inner} / {outer}"
     if qty and inner:
@@ -341,7 +363,7 @@ def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
             ) or _clean(variant.uom if variant else None),
             "sellable_units_per_price_basis": (
                 (_num(pack.sellable_units_per_purchase_unit) if pack else "")
-                or (_num(link.units_per_pack) if link and link.units_per_pack else "")
+                or _units_per_pack(variant, link)
             ),
             # products.rrp is the one that is actually populated; the per-supplier
             # column exists but is null on every published row of this run.
