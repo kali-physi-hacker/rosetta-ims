@@ -531,3 +531,54 @@ def test_unknown_run_returns_404(client):
         response = client.get(f"/catalogues/ingestions/{missing}/{layer}")
         assert response.status_code == 404
         assert response.json()["detail"]["code"] == "INGESTION_RUN_NOT_FOUND"
+
+
+def test_the_source_endpoint_serves_the_scanned_file_itself(client, db, monkeypatch):
+    """A reviewer reading "13.10" should be able to open the page it came from.
+
+    Served inline so the PDF opens in a tab rather than landing in Downloads,
+    and named after the upload so the tab is identifiable.
+    """
+    run = _run_pipeline(db, monkeypatch)
+    response = client.get(f"/catalogues/ingestions/{run}/source")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/pdf")
+    assert response.headers["content-disposition"] == 'inline; filename="hills.pdf"'
+    assert response.content.startswith(b"%PDF")
+
+
+def test_a_file_altered_since_the_scan_is_refused_rather_than_served(client, db, monkeypatch):
+    """The point of the link is provenance — showing the wrong bytes is worse than showing none.
+
+    The loader checksums the stored original, so a file swapped underneath us
+    fails the check and the reviewer is told, instead of reading a document
+    that never produced these prices.
+    """
+    from pathlib import Path
+
+    run = _run_pipeline(db, monkeypatch)
+    source = db.query(models.CatalogueSourceDocument).order_by(models.CatalogueSourceDocument.id.desc()).first()
+    Path(os.environ["CATALOGUE_UPLOAD_DIR"], source.source_ref).write_bytes(_pdf_bytes(page_count=3))
+
+    response = client.get(f"/catalogues/ingestions/{run}/source")
+    assert response.status_code == 410
+    assert response.json()["detail"]["code"] == "SOURCE_FILE_UNAVAILABLE"
+    assert "checksum" in response.json()["detail"]["message"].lower()
+
+
+def test_a_reparse_serves_the_document_its_evidence_came_from(client, db, monkeypatch):
+    """A re-parse never opens a file, but it is still about one."""
+    run = _run_pipeline(db, monkeypatch)
+    reparse = client.post(f"/catalogues/ingestions/{run}/reparse", json={}).json()
+
+    response = client.get(f"/catalogues/ingestions/{reparse['ingestion_run_id']}/source")
+    assert response.status_code == 200
+    assert response.headers["content-disposition"] == 'inline; filename="hills.pdf"'
+
+
+def test_the_source_of_an_unknown_run_is_a_404(client):
+    missing = "99999999-9999-4999-8999-999999999999"
+    response = client.get(f"/catalogues/ingestions/{missing}/source")
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "INGESTION_RUN_NOT_FOUND"

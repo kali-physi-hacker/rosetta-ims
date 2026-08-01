@@ -376,6 +376,39 @@ export async function downloadGoldenCsv(runId: string) {
   URL.revokeObjectURL(url)
 }
 
+/**
+ * Open the supplier catalogue this run read, in a new tab.
+ *
+ * Not a plain <a href>: every API call carries a Bearer token, and a link
+ * would arrive unauthenticated. Fetch it, hand the browser a blob, and revoke
+ * the URL once the tab has taken it.
+ */
+export async function openSourceFile(runId: string, filename?: string | null) {
+  const response = await fetch(`${API_BASE}/catalogues/ingestions/${runId}/source`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null)
+    throw new Error(
+      typeof detail?.detail === 'string' ? detail.detail
+        : detail?.detail?.message ?? `Could not open the file — HTTP ${response.status}`,
+    )
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const opened = window.open(url, '_blank', 'noopener')
+  if (!opened) {
+    // Pop-up blocked — fall back to a download so the click still does something.
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename ?? 'supplier-catalogue'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
 export const fetchReceipt = (runId: string) =>
   reviewApi<{
     ingestion_run_id: string; count: number

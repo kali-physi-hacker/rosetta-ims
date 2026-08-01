@@ -20,6 +20,9 @@ from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
 from services import variant_similarity
 from services import catalogue_golden_export
+from orchestration import catalogue_reparse
+from orchestration.catalogue_source_loader import load_and_verify_source_asset
+from orchestration.catalogue_types import RunNotFound, SourceVerificationError
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus
 from services.catalogue_submission import (
     RetryNotAllowedError,
@@ -747,6 +750,61 @@ def reparse_catalogue_ingestion(
         db.rollback()
         logger.exception("catalogue re-parse %s was queued but audit logging failed", result.ingestion_run_id)
     return _submission_response(result)
+
+
+# What the browser should do with each source format. A price list is read, not
+# downloaded, so anything a browser renders opens inline; the rest downloads.
+_INLINE_MEDIA = {
+    "PDF": "application/pdf",
+    "JPEG": "image/jpeg",
+    "PNG": "image/png",
+    "CSV": "text/csv",
+    "TEXT": "text/plain",
+}
+_DOWNLOAD_MEDIA = {
+    "SPREADSHEET": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+
+@router.get("/ingestions/{run_uuid}/source")
+def get_catalogue_source_file(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """The supplier catalogue this run read, as the file itself.
+
+    Goes through the same verified loader the pipeline uses, so a file that has
+    been moved, truncated or altered since the scan fails here rather than
+    being served as if it were the document the prices came from.
+
+    A re-parse never opened a file, so it serves its source run's document —
+    which is the same document, and the one its evidence came from.
+    """
+    target = run_uuid
+    if catalogue_reparse.is_reparse(db, run_uuid):
+        run = db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
+        origin = catalogue_reparse.evidence_source_run(db, run) if run else None
+        if origin is not None:
+            target = UUID(origin.run_uuid)
+    try:
+        asset = load_and_verify_source_asset(db, ingestion_run_id=target)
+    except RunNotFound as exc:
+        raise HTTPException(404, _detail("INGESTION_RUN_NOT_FOUND", str(exc))) from exc
+    except SourceVerificationError as exc:
+        # Says which of the checks failed — "missing", "checksum does not match" —
+        # because "the file changed since we scanned it" is the answer a reviewer needs.
+        raise HTTPException(410, _detail("SOURCE_FILE_UNAVAILABLE", str(exc))) from exc
+
+    fmt = (asset.source_format or "").upper()
+    media = _INLINE_MEDIA.get(fmt) or _DOWNLOAD_MEDIA.get(fmt) or "application/octet-stream"
+    disposition = "inline" if fmt in _INLINE_MEDIA else "attachment"
+    safe_name = asset.original_filename.replace('"', "")
+    return Response(
+        content=asset.content,
+        media_type=media,
+        headers={"Content-Disposition": f'{disposition}; filename="{safe_name}"'},
+    )
 
 
 @router.get("/ingestions/{run_uuid}/receipt/golden.csv")

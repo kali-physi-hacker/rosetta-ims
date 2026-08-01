@@ -16,7 +16,7 @@ import {
   fetchSummary, fetchDetail, fetchReceipt, searchVariants, latest, groupOf, isPulled,
   isDecided, isApproved, isStaged, sampleIds, suggestTerms,
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
-  correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate,
+  correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate, openSourceFile,
   resolveRunIssue, fanOut, fmtDelta, marginPct, per,
   fetchRunStatus, retryRun, reparseRun, failureInfo, TERMINAL_RUN_STATUSES,
   REASON_CHIPS, PULL_THRESHOLD_PCT,
@@ -481,11 +481,13 @@ function RunDeskPage() {
           <h1>{status.data?.contract_id ?? 'Catalogue run'} <span style={{ fontWeight: 450, fontSize: 12.5, color: 'var(--faint)' }}>· {rows} rows</span></h1>
           {status.data?.source_filename && (
             <div style={{ marginTop: 3, fontSize: 11.5, color: 'var(--muted)' }}>
-              scanned from <span className="srcfile" title={
-                `${status.data.source_filename}`
+              scanned from <button className="srcfile" title={
+                `Open ${status.data.source_filename}`
                 + (status.data.source_received_at ? ` · received ${new Date(status.data.source_received_at).toLocaleDateString()}` : '')
                 + (status.data.reparse_of ? ' · this run re-read the stored evidence rather than the file' : '')
-              }>{status.data.source_filename}</span>
+              } onClick={() => openSourceFile(runId, status.data?.source_filename).catch(e => toast.error(String(e?.message ?? e)))}>
+                {status.data.source_filename}
+              </button>
               {status.data.reparse_of && <span style={{ color: 'var(--faint)' }}> · re-parsed, not re-scanned</span>}
             </div>
           )}
@@ -1328,10 +1330,14 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, onM
           {/* unified evidence card */}
           <div className="panel" style={{ background: 'var(--card)' }}>
             {/* The row's own provenance: which document, which page. */}
-            <div className="srcfile" style={{ padding: '8px 12px', borderBottom: '1px solid var(--line2)', fontSize: 10, fontWeight: 750, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', borderBottomStyle: 'solid' }}
+            <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--line2)', fontSize: 10, fontWeight: 750, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', borderBottomStyle: 'solid' }}
               title={sourceFile ? `Scanned from ${sourceFile}${evidence?.page ? `, page ${evidence.page}` : ''}` : undefined}>
               Supplier said — verbatim{evidence?.page ? ` · page ${evidence.page}` : ''}
-              {sourceFile && <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}> · {sourceFile}</span>}
+              {sourceFile && <> · <button className="srcfile" style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}
+                title={`Open ${sourceFile}${evidence?.page ? `, page ${evidence.page}` : ''}`}
+                onClick={() => openSourceFile(runId, sourceFile).catch(e => toast.error(String(e?.message ?? e)))}>
+                {sourceFile}
+              </button></>}
             </div>
             {detail.isLoading ? <div style={{ padding: 16 }}><Spinner /></div> : (
               <>

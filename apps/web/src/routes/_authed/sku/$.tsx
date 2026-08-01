@@ -19,6 +19,7 @@ import { Spinner } from '@/components/Spinner'
 import { EditSkuModal } from '@/components/EditSkuModal'
 import { ChangeSkuModal } from '@/components/ChangeSkuModal'
 import { toast } from '@/lib/toast'
+import { openSourceFile } from '@/lib/review'
 import { confirmDialog } from '@/lib/confirm'
 import type { CompetitorPrice, MbbTerm, Product } from '@/lib/types'
 
@@ -655,11 +656,13 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
                               {/* "catalogue" does not say WHICH catalogue, and by
                                   the time anyone questions a cost that is the
                                   question. */}
-                              {h.source_file && <>
+                              {h.source_file && h.run_id && <>
                                 {' · '}
-                                <span className="srcfile" title={`Read from ${h.source_file}${h.source_received_at ? ` · received ${fmtDay(h.source_received_at)}` : ''}`}>
+                                <button className="srcfile"
+                                  title={`Open ${h.source_file}${h.source_received_at ? ` · received ${fmtDay(h.source_received_at)}` : ''}`}
+                                  onClick={() => openSourceFile(h.run_id!, h.source_file).catch(err => toast.error(String(err?.message ?? err)))}>
                                   {h.source_file}
-                                </span>
+                                </button>
                               </>}
                               {' · '}
                               <Link className="lnk" style={{ fontSize: 10.5, textDecoration: 'none' }} to={(h.run_id ? `/catalogues/review/${h.run_id}` : '/admin/audit') as never}>audit →</Link>

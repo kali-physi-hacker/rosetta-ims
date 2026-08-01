@@ -145,7 +145,9 @@ export const DESK_CSS = `
 .rdesk .dsearch input{border:none;outline:none;background:transparent;font-family:inherit;font-size:12px;color:var(--ink);padding:6px 0;width:100%}
 .rdesk .dsearch .x{border:none;background:none;color:var(--faint);font-size:15px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
 .rdesk .dsearch .x:hover{color:var(--ink2)}
-.rdesk .srcfile[title]{cursor:help}
+/* The filename opens the document it names. */
+.rdesk .srcfile{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px}
+.rdesk .srcfile:hover{color:var(--accent)}
 .rdesk .lanetag{display:inline-block;font-size:9px;font-weight:750;letter-spacing:.03em;padding:1px 6px;border-radius:99px;border:1px solid;margin-right:7px;white-space:nowrap;vertical-align:1px}
 .rdesk .lanetag.pick{color:var(--amber);background:var(--amber-soft);border-color:#F3E0BE}
 .rdesk .lanetag.new{color:var(--accent-ink);background:var(--accent-soft);border-color:var(--accent-line)}
