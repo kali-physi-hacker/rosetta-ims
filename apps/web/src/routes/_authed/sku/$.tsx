@@ -177,9 +177,9 @@ function CoverBar({ woc, proj }: { woc: number | null; proj?: number | null }) {
   )
 }
 
-function Tick({ label, state, value }: { label: string; state: 'g' | 'a' | 'r'; value: string }) {
+function Tick({ label, state, value, title }: { label: string; state: 'g' | 'a' | 'r'; value: string; title?: string }) {
   return (
-    <div className="tick">
+    <div className="tick" title={title}>
       <span className="tl">{label}</span>
       <span className="tv"><span className={`ic ${state}`}>{state === 'g' ? '✓' : '!'}</span>{value}</span>
     </div>
@@ -385,7 +385,12 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
     ? ['r', 'none'] : costAge == null ? ['a', 'undated'] : costAge <= 90 ? ['g', `${costAge}d fresh`] : ['a', `${costAge}d old`]
   const coverTick: ['g' | 'a' | 'r', string] = woc == null
     ? ['a', 'no signal'] : woc < 2 ? ['r', `${woc.toFixed(1)}w`] : woc < 4 ? ['a', `${woc.toFixed(1)}w`] : ['g', `${woc.toFixed(1)}w`]
-  const dataTick: ['g' | 'a' | 'r', string] = p.hitl_verified ? ['g', 'verified'] : ['a', 'unverified']
+  // "Reviewed" means a human worked this SKU in the catalogue review desk and
+  // published it — the review the pipeline actually records, not the retired
+  // matching flow's flag.
+  const dataTick: ['g' | 'a' | 'r', string, string] = p.catalogue_reviewed
+    ? ['g', 'reviewed', `Reviewed in catalogue review${p.catalogue_reviewed_by ? ` by ${p.catalogue_reviewed_by}` : ''}${p.catalogue_reviewed_at ? ` · ${fmtDay(p.catalogue_reviewed_at)}` : ''}`]
+    : ['a', 'not reviewed', 'No supplier catalogue for this SKU has been through the review desk yet']
 
   // Strip ranks LISTED channels only — an unlisted channel's margin is noise.
   const listedMargins = marginRows.filter(m => m.selling_price != null && chMap.get(m.channel)?.is_active)
@@ -463,7 +468,7 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
             <Tick label="Margin" state={marginTick[0]} value={marginTick[1]} />
             <Tick label="Cost" state={costTick[0]} value={costTick[1]} />
             <Tick label="Cover" state={coverTick[0]} value={coverTick[1]} />
-            <Tick label="Data" state={dataTick[0]} value={dataTick[1]} />
+            <Tick label="Data" state={dataTick[0]} value={dataTick[1]} title={dataTick[2]} />
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <span className="kbd" title="keyboard shortcuts" style={{ cursor: 'pointer' }} onClick={() => setShortcuts(true)}>?</span>
@@ -898,7 +903,6 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
         </div>
         <div className="r" style={{ alignItems: 'center' }}>
           <span style={{ fontSize: 11, color: 'var(--faint)' }}>press <span className="kbd">?</span> for shortcuts</span>
-          {editable && <UnverifyButton p={p} sku={path} onProduct={onProduct} />}
         </div>
       </div>
 
@@ -1824,25 +1828,6 @@ function MoreMenu({ p, onChangeSku, sku, onProduct }: {
       )}
     </div>
   )
-}
-
-function UnverifyButton({ p, sku, onProduct }: { p: Product; sku: string; onProduct: (pr: Product) => void }) {
-  const [busy, setBusy] = useState(false)
-  if (!p.hitl_verified) return null
-  const run = async () => {
-    const ok = await confirmDialog({
-      title: 'Unverify this SKU?',
-      message: `${p.sku_code} will lose its verified status and stop being pushed to the sheet until it is re-verified through catalogue onboarding.`,
-      confirmLabel: 'Unverify', danger: true,
-    })
-    if (!ok) return
-    setBusy(true)
-    const r = await fetch(`${API}/products/${sku}/hitl-unverify`, { method: 'POST', headers: authHeaders() })
-    setBusy(false)
-    if (r.ok) { onProduct({ ...p, hitl_verified: false }); toast.success(`${p.sku_code} unverified — ready to re-scan`) }
-    else toast.error((await r.json().catch(() => ({}))).detail ?? 'Failed to unverify')
-  }
-  return <button className="btn danger" onClick={run} disabled={busy}>{busy ? '…' : 'Unverify (allow re-scan)'}</button>
 }
 
 // ── activity wording (shared shape with the classic page) ────────────────

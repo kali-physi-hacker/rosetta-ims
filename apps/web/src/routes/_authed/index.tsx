@@ -416,7 +416,7 @@ const EXPORT_COLUMNS: ExportCol[] = [
   // Pack-size verification + edit provenance
   { key: 'uom_verified_at', label: 'UOM Verified At',   group: 'extra', value: r => csvEsc((r.item.uom_verified_at ?? '').slice(0, 10)) },
   { key: 'uom_verified_by', label: 'UOM Verified By',   group: 'extra', value: r => csvEsc(r.item.uom_verified_by ?? '') },
-  { key: 'hitl_verified',   label: 'HITL Verified',     group: 'extra', value: r => csvYN(r.item.hitl_verified) },
+  { key: 'catalogue_reviewed', label: 'Catalogue Reviewed', group: 'extra', value: r => csvYN(r.item.catalogue_reviewed) },
   { key: 'last_manual_edit_at', label: 'Last Manual Edit At', group: 'extra', value: r => csvEsc((r.item.last_manual_edit_at ?? '').slice(0, 10)) },
   { key: 'last_manual_edit_by', label: 'Last Manual Edit By', group: 'extra', value: r => csvEsc(r.item.last_manual_edit_by ?? '') },
   // Sheet-sync shadow values + conflict flags
@@ -833,8 +833,8 @@ function InventoryView() {
       case 'no_pack_size': result = result.filter(i => i.units_per_pack === null); break
       case 'low_margin':   result = result.filter(i => i.channels.some(c => c.recommendation === 'Raise price ⚠')); break
       case 'priority_fix': result = result.filter(i => i.sales_120d > 0 && i.data_grade === 'C'); break
-      case 'unverified':   result = result.filter(i => !i.hitl_verified); break
-      case 'verified':     result = result.filter(i => i.hitl_verified); break
+      case 'unverified':   result = result.filter(i => !i.catalogue_reviewed); break
+      case 'verified':     result = result.filter(i => i.catalogue_reviewed); break
     }
     return result
   }, [items, search, supplier, collectionSkus, channelFilter, selectedCats, quickFilter, locationFilter, stockFilter, qualityFilter])
@@ -1283,7 +1283,7 @@ function InventoryView() {
                   { value: '_g1', label: 'Grade', group: true },
                   { value: 'grade_a', label: 'Grade A — complete' }, { value: 'grade_c', label: 'Grade C — missing data' },
                   { value: '_g2', label: 'Verification', group: true },
-                  { value: 'unverified', label: 'Unverified' }, { value: 'verified', label: 'HITL-verified' },
+                  { value: 'unverified', label: 'Not reviewed' }, { value: 'verified', label: 'Catalogue-reviewed' },
                   { value: '_g3', label: 'Data gaps', group: true },
                   { value: 'no_sku', label: 'No SKU' }, { value: 'no_supplier', label: 'No supplier' }, { value: 'no_cost', label: 'No cost' }, { value: 'no_pack_size', label: 'No pack size' },
                   { value: '_g4', label: 'Priority', group: true },

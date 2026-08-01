@@ -55,6 +55,70 @@ def _verified_skus(db: Session) -> set:
     return verified
 
 
+def _catalogue_reviewed_skus(db: Session) -> dict:
+    """SKU -> who reviewed it in the catalogue review desk, and when.
+
+    A SKU is here because a human worked its candidate to APPROVED and
+    published it — the review the pipeline actually records. This is a
+    different, narrower fact than the legacy ``hitl_verified`` flag above,
+    which comes from the retired matching flow's audit trail and says nothing
+    about the review desk.
+
+    Keyed by the published canonical SKU; the newest current publication wins
+    where a SKU has several suppliers published.
+    """
+    rows = (
+        db.query(
+            models.CatalogueServingPublication.canonical_sku,
+            models.CatalogueServingPublication.published_at,
+            models.CatalogueMasteringCandidate.reviewed_by,
+            models.CatalogueMasteringCandidate.reviewed_at,
+            models.CatalogueMasteringCandidate.ingestion_run_uuid,
+        )
+        .outerjoin(
+            models.CatalogueMasteringCandidate,
+            models.CatalogueMasteringCandidate.mastering_candidate_uuid
+            == models.CatalogueServingPublication.mastering_candidate_uuid,
+        )
+        .filter(models.CatalogueServingPublication.is_current == 1)
+        .order_by(models.CatalogueServingPublication.published_at)
+        .all()
+    )
+    return {
+        str(sku): {
+            "by": reviewed_by,
+            "at": reviewed_at or published_at,
+            # Carried for the audit link only — the SKU page never renders it.
+            "run": run_uuid,
+        }
+        for sku, published_at, reviewed_by, reviewed_at, run_uuid in rows
+        if sku
+    }
+
+
+_REVIEWED_CACHE: dict = {"t": 0.0, "skus": None}
+
+
+def _catalogue_reviewed_cached(db: Session) -> dict:
+    """`_catalogue_reviewed_skus` with the same short TTL as the legacy set, so a
+    page-by-page load of the inventory list runs it once rather than per page."""
+    import time
+    if _REVIEWED_CACHE["skus"] is not None and (time.monotonic() - _REVIEWED_CACHE["t"]) < 20:
+        return _REVIEWED_CACHE["skus"]
+    skus = _catalogue_reviewed_skus(db)
+    _REVIEWED_CACHE.update(t=time.monotonic(), skus=skus)
+    return skus
+
+
+def _mark_reviewed(row: dict, reviewed: dict) -> dict:
+    entry = reviewed.get(row["sku_code"])
+    row["catalogue_reviewed"] = entry is not None
+    row["catalogue_reviewed_by"] = entry["by"] if entry else None
+    row["catalogue_reviewed_at"] = entry["at"] if entry else None
+    row["catalogue_review_run_id"] = entry["run"] if entry else None
+    return row
+
+
 _VERIFIED_CACHE: dict = {"t": 0.0, "skus": None}
 
 
@@ -188,12 +252,14 @@ def list_products(
 
     cat_rules = _load_cat_rules(db)
     verified_skus = _verified_skus_cached(db)
+    reviewed_skus = _catalogue_reviewed_cached(db)
     ordered = q.order_by(models.ProductVariant.category, models.ProductVariant.name)
     eff_offset = offset if offset is not None else (page - 1) * limit
 
     def _mark(rows):
         for r in rows:
             r["hitl_verified"] = r["sku_code"] in verified_skus
+            _mark_reviewed(r, reviewed_skus)
         return rows
 
     if low_stock:
@@ -240,6 +306,7 @@ def stream_products(status: Optional[str] = Query(None)):
             ordered = q.order_by(models.ProductVariant.category, models.ProductVariant.name)
             cat_rules = _load_cat_rules(db)
             verified = _verified_skus_cached(db)
+            reviewed = _catalogue_reviewed_cached(db)
             yield orjson.dumps({"_meta": {"total": ordered.count(),
                                           "now": datetime.utcnow().isoformat()}}) + b"\n"
             # Modest yield_per keeps memory flat and makes rows arrive in small, frequent bursts
@@ -248,6 +315,7 @@ def stream_products(status: Optional[str] = Query(None)):
             for p in ordered.yield_per(200):
                 d = product_to_dict(p, cat_rules)
                 d["hitl_verified"] = d["sku_code"] in verified
+                _mark_reviewed(d, reviewed)
                 yield orjson.dumps(d) + b"\n"
         finally:
             db.close()
@@ -759,6 +827,7 @@ def get_product(sku: str, db: Session = Depends(database.get_db)):
           .join(models.Tag, models.ProductTag.tag_id == models.Tag.id)
           .filter(models.ProductTag.product_id == product.id).all() if src == "shopify"})
     d["hitl_verified"] = _is_verified(db, sku)
+    _mark_reviewed(d, _catalogue_reviewed_cached(db))
     return d
 
 

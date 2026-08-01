@@ -163,7 +163,11 @@ export interface Product {
   unit_cost: number | null           // basic_cost ÷ units_per_pack — used for all GP calculations
   uom_verified_at: string | null     // IMS-stamped date pack size was manually confirmed
   uom_verified_by: string | null     // name/initials of person who confirmed
-  hitl_verified?: boolean            // currently HITL-verified (latest onboarding event is a verify)
+  hitl_verified?: boolean            // legacy: retired matching flow's audit trail (kept for the sheet push)
+  catalogue_reviewed?: boolean       // a human approved and published this SKU in the catalogue review desk
+  catalogue_reviewed_by?: string | null
+  catalogue_reviewed_at?: string | null
+  catalogue_review_run_id?: string | null   // audit links only — never rendered on the page
   // Batch expiry (algo-dashboard sync) — soonest first; days < 0 means lapsed
   expiry_batches?: ExpiryBatch[]
   expiry_days?: number | null        // days to the soonest batch, null when none tracked
