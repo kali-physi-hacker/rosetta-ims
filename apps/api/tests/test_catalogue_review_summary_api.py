@@ -146,10 +146,10 @@ def _vision_envelope(rows: list[dict[str, str]]) -> str:
 
 
 def _run_pipeline(db, monkeypatch) -> UUID:
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr(
         extraction,
-        "_call_gemini_vision",
+        "_call_vision",
         lambda content, *, media_type: extraction._VisionResponse(text=_vision_envelope([HILLS_ROW])),
     )
     service = CatalogueSubmissionService(db, upload_root=os.environ["CATALOGUE_UPLOAD_DIR"], max_upload_bytes=1024 * 1024)

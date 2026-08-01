@@ -75,7 +75,7 @@ def forbid_understanding(monkeypatch):
 
     monkeypatch.setattr(anthropic, "Anthropic", _forbidden("anthropic.Anthropic"))
     monkeypatch.setattr(catalogue_evidence_extraction, "extract_evidence", _forbidden("evidence extraction"))
-    monkeypatch.setattr(catalogue_evidence_extraction, "_call_gemini_vision", _forbidden("vision OCR"))
+    monkeypatch.setattr(catalogue_evidence_extraction, "_call_vision", _forbidden("vision OCR"))
     monkeypatch.setattr(catalogue_conformance, "conform_observations", _forbidden("conformance"))
     monkeypatch.setattr(pypdf.PageObject, "extract_text", _forbidden("PDF text extraction"))
     monkeypatch.setattr(stages.ExtractedEvidenceService, "capture", _forbidden("raw observation persistence"))
@@ -346,10 +346,10 @@ def test_extraction_consumes_durable_reference_after_raw_completes(db, monkeypat
     # PDF extraction routes to the vision provider (stubbed here) to produce
     # column-labeled cells; the point of this test is that extraction reloads
     # the DURABLE stored original, not any in-memory raw-stage object.
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr(
         catalogue_evidence_extraction,
-        "_call_gemini_vision",
+        "_call_vision",
         lambda content, *, media_type: catalogue_evidence_extraction._VisionResponse(
             text=json.dumps(
                 {

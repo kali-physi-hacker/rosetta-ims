@@ -1,4 +1,4 @@
-"""OPT-IN live smoke: real supplier PDFs through the real Gemini provider.
+"""OPT-IN live smoke: real supplier PDFs through the real vision provider.
 
 Never runs in the normal suite. Enable explicitly:
 
@@ -8,8 +8,13 @@ Never runs in the normal suite. Enable explicitly:
     CATALOGUE_LIVE_SMOKE_ALFAMEDIC=/path/to/alfamedic.pdf \
     pytest tests/test_live_catalogue_smoke.py -s
 
+Runs against whichever provider CATALOGUE_VISION_PROVIDER selects (anthropic by
+default), so it is also how a provider or model change is proven before it
+ships — the golden fixtures replay recorded envelopes and cannot tell you a new
+model still reads a real page.
+
 Each provided file is submitted and processed end-to-end with the production
-configuration (model, thinking level, concurrency, retry backoff). Asserted
+configuration (model, thinking budget, concurrency, retry backoff). Asserted
 per file (the audit's live-smoke checklist):
 
 - run reaches a terminal completed status (never silent partial progression);
@@ -49,6 +54,7 @@ os.environ.setdefault("PREFECT_SERVER_ANALYTICS_ENABLED", "false")
 import database  # noqa: E402
 import models  # noqa: E402
 from orchestration.catalogue_flows import catalogue_ingestion_flow  # noqa: E402
+from services import catalogue_vision_provider as vision_provider  # noqa: E402
 from services.catalogue_submission import CatalogueSubmissionCommand, CatalogueSubmissionService  # noqa: E402
 
 
@@ -128,7 +134,11 @@ def test_live_supplier_file_end_to_end(db, path_env, expected):
         pytest.skip(f"{path_env} not set")
     source = Path(source_path)
     assert source.exists(), f"{path_env} points at a missing file: {source}"
-    assert os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"), "vision key required"
+    provider = vision_provider.active_provider()
+    assert provider.is_configured(), (
+        f"{provider.name} is the selected vision provider but its key is not set"
+    )
+    print(f"\n[live smoke] provider={provider.name} model={provider.model}")
 
     _ensure_supplier(db, expected["supplier_id"], *expected["supplier"])
     service = CatalogueSubmissionService(

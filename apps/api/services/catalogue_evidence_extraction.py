@@ -28,26 +28,19 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from schemas.catalogue_pipeline.enums import ExtractionMethod, SourceFormat
 from schemas.catalogue_pipeline.extracted_evidence_v1 import BoundingBox, RawCell, SourceLocation
+from services.catalogue_vision_provider import (
+    VisionExtractionFailure,
+    VisionResponse,
+    active_provider,
+)
+
+# The vision provider owns the model id, the request shape and the retry
+# classification; this module owns the prompt and what is done with the answer.
+# Names kept for the pipeline's internal vocabulary.
+_VisionResponse = VisionResponse
+_VisionExtractionFailure = VisionExtractionFailure
 
 
-# Vision model, env-overridable. Default is COST-FIRST: gemini-flash-latest
-# runs ~4.8x cheaper per output token than 3.1 Pro and matched Pro's row
-# completeness on the densest measured Hill's page (36/36). Set
-# GEMINI_MODEL=gemini-3.1-pro-preview for maximum-accuracy runs (paid tier);
-# the golden/live smoke harness is the arbiter whenever the model changes.
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
-# A dense catalogue page emits ~30k output tokens of verbatim cells, and
-# thinking models spend more of the budget before emitting any — too small a
-# ceiling truncates the JSON envelope (finish_reason MAX_TOKENS). Give ample
-# room; env-overridable for very dense pages.
-MAX_VISION_TOKENS = int(os.environ.get("CATALOGUE_VISION_MAX_TOKENS", "65536"))
-# Gemini 3.x "thinking" models silently UNDER-EXTRACT dense catalogue tables at
-# low thinking levels: measured on a real Hill's page, LOW returned 0-1 rows and
-# MEDIUM 3 rows where HIGH returned the full 36-row table (finish STOP each
-# time — no error, just missing products). Completeness beats latency/cost for
-# price-list ingestion, so HIGH is the default; env-overridable. Empty disables
-# the override (models that reject it fall back automatically on 400).
-VISION_THINKING_LEVEL = os.environ.get("CATALOGUE_VISION_THINKING_LEVEL", "HIGH").strip()
 # A multi-page PDF is N sequential provider round-trips otherwise; run the
 # per-page vision calls concurrently, bounded here (env-overridable).
 _VISION_CONCURRENCY = max(1, int(os.environ.get("CATALOGUE_VISION_CONCURRENCY", "6")))
@@ -714,13 +707,14 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
     # column-labeled cells the supplier contract can map deterministically. The
     # PDF text layer is not used as evidence (it linearizes multi-column tables
     # into per-cell lines the contract cannot map to fields).
-    if not _gemini_api_key():
+    provider = active_provider()
+    if not provider.is_configured():
         errors = [
             ExtractionError(
                 code="EXTRACTION_CONFIGURATION_ERROR",
-                message="PDF evidence extraction requires a configured vision provider",
+                message=f"PDF evidence extraction requires a configured {provider.name} vision provider",
                 unit_key=f"page:{page_number}",
-                provider="google",
+                provider=provider.name,
             )
             for page_number in range(1, len(pages) + 1)
         ]
@@ -773,7 +767,7 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
         while True:
             attempt_count += 1
             try:
-                response = _call_gemini_vision(page_bytes, media_type="application/pdf")
+                response = _call_vision(page_bytes, media_type="application/pdf")
                 page_observations, page_outcome = _vision_observations(
                     response,
                     extraction_method=ExtractionMethod.MODEL_VISION,
@@ -798,7 +792,7 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
                     code=exc.code,
                     message=exc.public_message,
                     unit_key=page_key,
-                    provider="google",
+                    provider=provider.name,
                     retryable=exc.retryable,
                 ), attempt_count
             except Exception:
@@ -843,7 +837,7 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
                 ExtractionUnitOutcome(
                     unit_key=f"page:{page_number}",
                     status=ExtractionUnitStatus.NO_CATALOGUE_EVIDENCE,
-                    provider="google",
+                    provider=provider.name,
                     attempt_count=attempt_count,
                 )
             )
@@ -853,7 +847,7 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
                     unit_key=f"page:{page_number}",
                     status=ExtractionUnitStatus.EVIDENCE_CAPTURED,
                     observation_count=len(page_observations),
-                    provider="google",
+                    provider=provider.name,
                     attempt_count=attempt_count,
                     provider_request_id=(
                         page_observations[0].provider_request_id
@@ -901,16 +895,17 @@ def _extract_image(
     media_type: str,
     source_format: SourceFormat,
 ) -> ExtractionResult:
-    if not _gemini_api_key():
+    provider = active_provider()
+    if not provider.is_configured():
         return _failed_result(
             source_format,
             code="EXTRACTION_CONFIGURATION_ERROR",
-            message="Image evidence extraction requires a configured vision provider",
+            message=f"Image evidence extraction requires a configured {provider.name} vision provider",
             unit_key="image:1",
-            provider="google",
+            provider=provider.name,
         )
     try:
-        response = _call_gemini_vision(content, media_type=media_type)
+        response = _call_vision(content, media_type=media_type)
         observations, page_outcome = _vision_observations(
             response,
             extraction_method=ExtractionMethod.MODEL_VISION,
@@ -923,7 +918,7 @@ def _extract_image(
             code=exc.code,
             message=exc.public_message,
             unit_key="image:1",
-            provider="google",
+            provider=provider.name,
             retryable=exc.retryable,
             units_attempted=1,
         )
@@ -947,7 +942,7 @@ def _extract_image(
                     else ExtractionUnitStatus.EVIDENCE_CAPTURED
                 ),
                 observation_count=len(observations),
-                provider="google",
+                provider=provider.name,
                 provider_request_id=(
                     observations[0].provider_request_id if observations else None
                 ),
@@ -999,6 +994,7 @@ def _vision_observations(
     silently corrupting persisted evidence.
     """
 
+    provider = active_provider()
     try:
         payload = _strict_json_object(response.text)
         envelope = _VisionEnvelope.model_validate(payload)
@@ -1060,10 +1056,10 @@ def _vision_observations(
                     raw_text=row.text,
                     raw_cells=raw_cells,
                     extraction_method=extraction_method,
-                    provider="google",
+                    provider=provider.name,
                     provider_request_id=response.request_id,
-                    model=GEMINI_MODEL,
-                    model_version=GEMINI_MODEL,
+                    model=provider.model,
+                    model_version=provider.model,
                     confidence=row.confidence,
                 )
             )
@@ -1086,123 +1082,16 @@ def _observation_digest(columns: tuple[str, ...], row: _VisionRow) -> str:
     return hashlib.sha256(json.dumps(material, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
 
 
-def _call_gemini_vision(content: bytes, *, media_type: str) -> _VisionResponse:
-    """Vision/OCR provider seam (Gemini).
+def _call_vision(content: bytes, *, media_type: str) -> _VisionResponse:
+    """Ask the configured vision provider to read one page.
 
-    The ONLY place a vision provider client is constructed. Sends the source
-    page/image inline (PDF or image bytes) with the verbatim-evidence prompt
-    and returns the raw text envelope. The SDK import is function-level so the
-    provider stays behind this seam and never loads at module import.
+    The single point where catalogue evidence meets a model. Which provider
+    answers is an environment decision; everything downstream — the envelope,
+    the observation identity, the retry policy — is identical either way.
     """
-
-    try:
-        from google import genai
-        from google.genai import types
-
-        client = genai.Client(api_key=_gemini_api_key())
-        contents = [types.Part.from_bytes(data=content, mime_type=media_type), VISION_EVIDENCE_PROMPT]
-
-        def _generate(cap_thinking: bool):
-            # Native JSON mode (response_mime_type) forces syntactically valid
-            # JSON — the observed failure mode (fences/truncation garbage).
-            # Deliberately NO response_schema: google-genai 2.8 rejects the
-            # contract envelope's JSON schema client-side (exclusiveMinimum
-            # from gt=0) and the API rejects additionalProperties, so schema
-            # enforcement stays with _VisionEnvelope.model_validate after the
-            # call — which is the authoritative gate either way.
-            config_kwargs: dict[str, Any] = {
-                "max_output_tokens": MAX_VISION_TOKENS,
-                "response_mime_type": "application/json",
-            }
-            if cap_thinking and VISION_THINKING_LEVEL:
-                config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=VISION_THINKING_LEVEL)
-            return client.models.generate_content(
-                model=GEMINI_MODEL, contents=contents, config=types.GenerateContentConfig(**config_kwargs)
-            )
-
-        try:
-            response = _generate(cap_thinking=True)
-        except Exception as exc:  # noqa: BLE001 - provider surface is broad
-            # Some models don't accept thinking_level (400 INVALID_ARGUMENT).
-            # Retry once without the cap rather than failing the page.
-            if VISION_THINKING_LEVEL and _is_invalid_argument(exc):
-                response = _generate(cap_thinking=False)
-            else:
-                raise
-        try:
-            text = response.text
-        except Exception:
-            text = None
-        if not text or not text.strip():
-            raise _VisionExtractionFailure(
-                code="MALFORMED_PROVIDER_RESPONSE",
-                public_message="Vision provider returned no text response",
-                retryable=True,
-            )
-        return _VisionResponse(text=text, request_id=getattr(response, "response_id", None))
-    except _VisionExtractionFailure:
-        raise
-    except Exception as exc:
-        raise _classify_provider_failure(exc) from exc
+    return active_provider().call(content, media_type=media_type, prompt=VISION_EVIDENCE_PROMPT)
 
 
-def _is_invalid_argument(exc: Exception) -> bool:
-    """True for a provider 400 INVALID_ARGUMENT (e.g. an unsupported config field)."""
-    code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
-    text = f"{exc}"
-    return code == 400 or text.strip().startswith("400") or "INVALID_ARGUMENT" in text
-
-
-def _classify_provider_failure(exc: Exception) -> "_VisionExtractionFailure":
-    """Retry classification for the Gemini provider seam.
-
-    google-genai API errors carry the HTTP status on ``.code``. 408/409/429
-    and 5xx are retryable; 401/403 are configuration errors (never retried as
-    transient); other 4xx are non-retryable provider errors. Network-level
-    failures (timeouts, connection resets) carry no status and fall back to a
-    conservative message heuristic. Raw provider details are never propagated
-    to the client — messages stay sanitized.
-    """
-
-    status = getattr(exc, "code", None)
-    if not isinstance(status, int):
-        status = getattr(exc, "status_code", None)
-    if isinstance(status, int) and 400 <= status < 600:
-        if status in {408, 409, 429} or status >= 500:
-            return _VisionExtractionFailure(
-                code="TRANSIENT_PROVIDER_ERROR",
-                public_message="Vision provider failed temporarily",
-                retryable=True,
-            )
-        if status in {401, 403}:
-            return _VisionExtractionFailure(
-                code="EXTRACTION_CONFIGURATION_ERROR",
-                public_message="Vision provider rejected the configured credentials",
-                retryable=False,
-            )
-        return _VisionExtractionFailure(
-            code="PROVIDER_ERROR",
-            public_message="Vision provider could not extract source evidence",
-            retryable=False,
-        )
-    retryable = _looks_transient(exc)
-    return _VisionExtractionFailure(
-        code="TRANSIENT_PROVIDER_ERROR" if retryable else "PROVIDER_ERROR",
-        public_message=(
-            "Vision provider failed temporarily"
-            if retryable
-            else "Vision provider could not extract source evidence"
-        ),
-        retryable=retryable,
-    )
-
-
-class _VisionExtractionFailure(Exception):
-    def __init__(self, *, code: str, public_message: str, retryable: bool):
-        super().__init__(public_message)
-        self.code = code
-        self.public_message = public_message
-        self.retryable = retryable
 
 
 def _single_page_pdf_bytes(page) -> bytes:
@@ -1554,25 +1443,6 @@ def _is_noise_line(line: str) -> bool:
     return any(pattern.match(line) for pattern in _NOISE_LINE_PATTERNS)
 
 
-def _gemini_api_key() -> str:
-    return (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip()
-
-
-def _looks_transient(exc: Exception) -> bool:
-    text = f"{type(exc).__name__}: {exc}".lower()
-    return any(
-        marker in text
-        for marker in (
-            "timeout",
-            "timed out",
-            "rate limit",
-            "overloaded",
-            "temporar",
-            "connection",
-            "503",
-            "529",
-        )
-    )
 
 
 __all__ = [

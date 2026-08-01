@@ -139,10 +139,10 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     # Extraction now ALWAYS runs the deterministic vision path: the vision
     # provider is stubbed to emit column-labeled cells, and conformance maps
     # those cells through the supplier contract with no model in the loop.
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr(
         extraction,
-        "_call_gemini_vision",
+        "_call_vision",
         lambda content, *, media_type: extraction._VisionResponse(text=_vision_envelope(_VISION_ROWS)),
     )
     flow_result = catalogue_ingestion_flow(ingestion_run_id=run_id)
