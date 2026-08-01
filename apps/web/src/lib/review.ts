@@ -356,6 +356,24 @@ export interface ReceiptCreated {
   checked_against: { sku_code: string; name: string | null; score: number }[]
 }
 
+/** The run's published items in the golden-sample sheet's exact columns, for a
+ *  regression diff against the hand-filled ground truth. */
+export async function downloadGoldenCsv(runId: string) {
+  const response = await fetch(`${API_BASE}/catalogues/ingestions/${runId}/receipt/golden.csv`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error(`Export failed — HTTP ${response.status}`)
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `rosetta-published-${runId}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 export const fetchReceipt = (runId: string) =>
   reviewApi<{
     ingestion_run_id: string; count: number

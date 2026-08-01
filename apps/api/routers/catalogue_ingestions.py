@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,7 @@ from services import catalogue_pipeline_persistence as persistence
 from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
 from services import variant_similarity
+from services import catalogue_golden_export
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus
 from services.catalogue_submission import (
     RetryNotAllowedError,
@@ -691,6 +692,43 @@ def search_catalogue_product_variants(
     _load_run_or_404(db, run_uuid)
     return review_summary.search_product_variants(db, run_uuid, q, limit)
 
+
+
+@router.get("/ingestions/{run_uuid}/receipt/golden.csv")
+def export_published_golden_csv(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """This run's published items in the golden-sample sheet's exact columns.
+
+    For regression testing: the sheet is 122 hand-filled SKUs that say what the
+    packaging, price basis, sellable unit and bulk terms really are. Exporting
+    our published output in the same 20 columns, in the same order, makes the
+    two directly diffable.
+    """
+    _load_run_or_404(db, run_uuid)
+    body = catalogue_golden_export.golden_csv(db, run_uuid)
+    return Response(
+        content=body,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="rosetta-published-{run_uuid}.csv"'},
+    )
+
+
+@router.get("/ingestions/{run_uuid}/receipt/golden")
+def export_published_golden_rows(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """The same rows as JSON, for a test harness that would rather not parse CSV."""
+    _load_run_or_404(db, run_uuid)
+    return {
+        "ingestion_run_id": str(run_uuid),
+        "columns": list(catalogue_golden_export.GOLDEN_COLUMNS),
+        "rows": catalogue_golden_export.golden_rows(db, run_uuid),
+    }
 
 
 @router.get("/ingestions/{run_uuid}/duplicate-check")

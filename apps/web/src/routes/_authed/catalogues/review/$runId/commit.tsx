@@ -8,7 +8,8 @@ import { useMemo } from 'react'
 import { Spinner } from '@/components/Spinner'
 import { skuToPath } from '@/lib/sku'
 import { DESK_CSS } from '@/lib/deskCss'
-import { fetchReceipt, fetchSummary, latest, isStaged, fmtDelta, per } from '@/lib/review'
+import { fetchReceipt, fetchSummary, latest, isStaged, fmtDelta, per, downloadGoldenCsv } from '@/lib/review'
+import { toast } from '@/lib/toast'
 
 export const Route = createFileRoute('/_authed/catalogues/review/$runId/commit')({ component: ReceiptPage })
 
@@ -44,7 +45,18 @@ function ReceiptPage() {
           </div>
           <h1>Receipt <span style={{ fontWeight: 450, fontSize: 12.5, color: 'var(--faint)' }}>· {changes.length} change{changes.length === 1 ? '' : 's'} written by this run</span></h1>
         </div>
-        {changes.length > 0 && <span className="bdg ok" style={{ marginLeft: 'auto' }}><span className="st" />live</span>}
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {changes.length > 0 && (
+            /* The golden-sample sheet is the only human-authored ground truth
+               for how packaging, price basis and bulk terms should read. Same
+               20 columns, same order, so the two diff directly. */
+            <button className="btn sm" title="CSV in the golden-sample sheet's columns, for a regression diff"
+              onClick={() => downloadGoldenCsv(runId).catch(e => toast.error(String(e?.message ?? e)))}>
+              ↓ Export for regression
+            </button>
+          )}
+          {changes.length > 0 && <span className="bdg ok"><span className="st" />live</span>}
+        </span>
       </div>
 
       {stagedCount > 0 && (
