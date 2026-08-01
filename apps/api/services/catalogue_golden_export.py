@@ -87,8 +87,17 @@ def _uom(code: str | None, label: str | None) -> str:
 
 
 def _packaging_text(pack: models.CataloguePackagingConfiguration | None) -> str:
-    """"30 ML / BOTTLE" — the sheet's smallest-packaging phrasing."""
+    """"30 ML / BOTTLE" — the sheet's smallest-packaging phrasing.
+
+    Returns "" unless the pipeline actually resolved a PACK. A row that only
+    carries the content measure answers "how big is one can", not "what do I
+    buy" — emitting "2.9 OZ" where the human wrote "24 CANS / BAG" looks like
+    a disagreement when it is really a missing value, and it hides the product
+    identity that does know the answer.
+    """
     if pack is None:
+        return ""
+    if pack.purchase_uom_code is None and pack.sellable_units_per_purchase_unit is None:
         return ""
     inner = _uom(pack.content_uom_code, pack.content_uom_label) or _uom(
         pack.sellable_unit_uom_code, pack.sellable_unit_uom_label
@@ -100,11 +109,41 @@ def _packaging_text(pack: models.CataloguePackagingConfiguration | None) -> str:
     return " / ".join(part for part in (f"{qty} {inner}".strip(), outer) if part)
 
 
-def _order_multiple_text(pack: models.CataloguePackagingConfiguration | None) -> str:
+def _order_multiple_text(pack: models.CataloguePackagingConfiguration | None, variant=None) -> str:
     if pack is None or pack.order_increment_amount is None:
         return ""
     unit = _uom(pack.order_increment_uom_code, pack.order_increment_uom_label)
+    # "UNIT" is the contract's placeholder for "a sellable one of these"; the
+    # identity knows which noun that is.
+    if unit.upper() == "UNIT":
+        unit = _clean(variant.uom if variant else None) or unit
     return " ".join(part for part in (_num(pack.order_increment_amount), unit) if part)
+
+
+def _basis_uom(pub, variant) -> str:
+    """What the quoted price is per.
+
+    The contract records the generic code UNIT when the price is per sellable
+    unit; the sheet names the noun ("CAN", "BAG"). Both say the same thing, so
+    resolve the placeholder against the product identity.
+    """
+    basis = _uom(pub.current_approved_cost_basis_uom_code, pub.current_approved_cost_basis_uom_label)
+    if basis.upper() == "UNIT":
+        return _clean(variant.uom if variant else None) or basis
+    return basis
+
+
+def _identity_order_multiple(variant, link) -> str:
+    """The supplier link's ordering terms, which are kept separate from pack size."""
+    if link is not None and link.order_increment_qty:
+        unit = _clean(link.order_increment_uom) or _clean(variant.uom if variant else None)
+        return " ".join(part for part in (_num(link.order_increment_qty), unit) if part)
+    if link is not None and link.minimum_order_qty:
+        unit = _clean(link.minimum_order_uom) or _clean(variant.uom if variant else None)
+        return " ".join(part for part in (_num(link.minimum_order_qty), unit) if part)
+    if variant is not None and variant.min_purchase_qty:
+        return " ".join(part for part in (_num(variant.min_purchase_qty), _clean(variant.pack_unit)) if part)
+    return ""
 
 
 def _mbb_text(term: models.CatalogueSupplierMbbTerm) -> str:
@@ -151,6 +190,57 @@ def _weight_text(variant: models.ProductVariant | None) -> str:
         return f"{_num(variant.weight_g)} g"
     converted = (Decimal(str(variant.weight_g)) / per).quantize(Decimal("0.001")).normalize()
     return f"{format(converted, 'f')} {unit}"
+
+
+def _identity_packaging(variant, link) -> str:
+    """"24 Can(s) / Box" from the product identity itself.
+
+    products.uom is the sell unit and products.pack_unit the buy unit — the two
+    halves of the sheet's package_configuration — and product_suppliers
+    .units_per_pack is how many of the first are in one of the second. No
+    contract change or re-extraction needed to read them.
+    """
+    inner = _clean(variant.uom if variant else None)
+    outer = _clean(variant.pack_unit if variant else None)
+    qty = _num(link.units_per_pack) if link and link.units_per_pack else ""
+    if qty and inner and outer:
+        return f"{qty} {inner} / {outer}"
+    if qty and inner:
+        return f"{qty} {inner}"
+    return " / ".join(part for part in (inner, outer) if part)
+
+
+def _clean(raw: str | None) -> str:
+    text = (raw or "").strip()
+    return "" if text.upper() in {"#N/A", "N/A", "NA", "-", ""} else text
+
+
+def _raw_supplier_names(db: Session, run: str) -> dict[str, str]:
+    """The supplier's OWN description per catalogue item.
+
+    The sheet's `product_name` is what the supplier called it; `product name
+    [Rosetta]` is what we decided to call it. Keeping both is the point — a
+    diff of the second is a diff of our naming, and it is meaningless if the
+    first is a copy of it. The raw text is already on the normalized row.
+    """
+    import json as _json
+
+    out: dict[str, str] = {}
+    for row in (
+        db.query(models.CatalogueNormalizedRow)
+        .filter(models.CatalogueNormalizedRow.ingestion_run_uuid == run)
+        .all()
+    ):
+        try:
+            raw = _json.loads(row.raw_fields_json or "{}")
+        except ValueError:
+            continue
+        for key in ("product_name", "description", "name", "product_description"):
+            value = raw.get(key)
+            if isinstance(value, str) and value.strip():
+                out[row.catalogue_item_uuid] = value.strip()
+                break
+    return out
 
 
 def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
@@ -203,10 +293,16 @@ def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
         .filter(models.ProductVariant.id.in_({p.product_id for p in publications if p.product_id}))
         .all()
     }
-    rrp_by_link = {
-        (link.supplier_id, link.product_id): link.rrp
+    links = {
+        (link.supplier_id, link.product_id): link
         for link in db.query(models.ProductSupplier).all()
-        if link.rrp is not None
+    }
+    raw_names = _raw_supplier_names(db, run)
+    candidate_items = {
+        c.mastering_candidate_uuid: c.catalogue_item_uuid
+        for c in db.query(models.CatalogueMasteringCandidate)
+        .filter(models.CatalogueMasteringCandidate.ingestion_run_uuid == run)
+        .all()
     }
 
     rows: list[dict[str, str]] = []
@@ -219,31 +315,40 @@ def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
 
         weight = _weight_text(variant)
 
+        link = links.get((pub.supplier_id, pub.product_id))
+        item_uuid = candidate_items.get(pub.mastering_candidate_uuid)
+        canonical_name = (variant.name if variant else pub.product_variant_name) or ""
         row = {
             "supplier": (supplier.name if supplier else "") or "",
             "supplier_product_code": pub.supplier_sku or "",
-            # The supplier's own words are the extractor's input; the Rosetta
-            # name is what we decided to call it. The sheet keeps both, and a
-            # diff of the second is a diff of the naming decision.
-            "product_name": (pub.product_variant_name or "") if variant is None else (variant.name or ""),
-            "product name [Rosetta]": (variant.name if variant else pub.product_variant_name) or "",
+            # The supplier's own words, not ours — see _raw_supplier_names.
+            "product_name": raw_names.get(item_uuid or "", "") or canonical_name,
+            "product name [Rosetta]": canonical_name,
             "weight": weight,
             "brand": (variant.brand if variant else "") or "",
-            "package_configuration": _packaging_text(pack),
-            "order_multiple": _order_multiple_text(pack),
+            # The pipeline's packaging when it resolved one, else the product
+            # identity, which carries the same three facts.
+            "package_configuration": _packaging_text(pack) or _identity_packaging(variant, link),
+            "order_multiple": _order_multiple_text(pack, variant) or _identity_order_multiple(variant, link),
             "catalogue_price_hkd": _money(pub.current_approved_cost_amount, pub.current_approved_cost_currency),
             # Every price in this pipeline is quoted for one basis unit; the
             # sheet's column is 1 on all 120 filled rows for the same reason.
             "catalogue_price_basis_qty": "1",
-            "catalogue_price_basis_uom": _uom(
-                pub.current_approved_cost_basis_uom_code, pub.current_approved_cost_basis_uom_label
-            ),
+            "catalogue_price_basis_uom": _basis_uom(pub, variant),
             "sellable_qty": "1",
             "sellable_uom": (
                 _uom(pack.sellable_unit_uom_code, pack.sellable_unit_uom_label) if pack else ""
-            ) or ((variant.uom if variant else "") or ""),
-            "sellable_units_per_price_basis": _num(pack.sellable_units_per_purchase_unit) if pack else "",
-            "rrp": _money(rrp_by_link.get((pub.supplier_id, pub.product_id))),
+            ) or _clean(variant.uom if variant else None),
+            "sellable_units_per_price_basis": (
+                (_num(pack.sellable_units_per_purchase_unit) if pack else "")
+                or (_num(link.units_per_pack) if link and link.units_per_pack else "")
+            ),
+            # products.rrp is the one that is actually populated; the per-supplier
+            # column exists but is null on every published row of this run.
+            "rrp": _money(
+                (link.rrp if link and link.rrp is not None else None)
+                if (link and link.rrp is not None) else (variant.rrp if variant else None)
+            ),
             "commercial_offer_summary": "; ".join(mbb),
         }
         for index in range(_MAX_MBB_TIERS):
