@@ -23,6 +23,7 @@ from .catalogue_extraction_adapter import (
 from .catalogue_raw_stage import complete_raw_stage
 from .catalogue_run_lifecycle import claim_queued_run, complete_run, fail_run, terminal_result_for_replay
 from .catalogue_source_loader import load_and_verify_source_asset
+from . import catalogue_reparse
 from .catalogue_stage_adapter import (
     evidence_from_persisted_observation,
     mastering_command_for_claim,
@@ -67,6 +68,9 @@ def raw_stage_task(ingestion_run_id: str) -> RawStageResult:
 
     db = database.SessionLocal()
     try:
+        # A re-parse never opens the file — see reparse_raw_stage.
+        if catalogue_reparse.is_reparse(db, UUID(ingestion_run_id)):
+            return catalogue_reparse.reparse_raw_stage(db, ingestion_run_id=UUID(ingestion_run_id))
         return complete_raw_stage(db, ingestion_run_id=UUID(ingestion_run_id))
     finally:
         db.close()
@@ -99,8 +103,18 @@ def extract_source_evidence_task(ingestion_run_id: str) -> EvidenceOutcome:
     surviving beyond the raw stage.
     """
 
+    # A re-parse already has the evidence — it exists to change what we make of
+    # it, not to re-derive it. Reading the RAW layer here keeps the rest of the
+    # flow identical and never reaches the provider.
     db = database.SessionLocal()
     try:
+        if catalogue_reparse.is_reparse(db, UUID(ingestion_run_id)):
+            stored = catalogue_reparse.load_stored_evidence(db, ingestion_run_id=UUID(ingestion_run_id))
+            return EvidenceOutcome(
+                observations=stored.observations,
+                rejected_units=0,
+                warnings=(f"re-parsed {len(stored.observations)} stored observations from run {stored.source_run_uuid}",),
+            )
         asset = load_and_verify_source_asset(db, ingestion_run_id=UUID(ingestion_run_id))
     finally:
         db.close()

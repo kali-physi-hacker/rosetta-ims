@@ -420,6 +420,14 @@ export interface RunStatus {
 }
 export const TERMINAL_RUN_STATUSES = new Set(['completed', 'completed_with_warnings', 'failed', 'cancelled'])
 export const fetchRunStatus = (runId: string) => reviewApi<RunStatus>(`/catalogues/ingestions/${runId}`)
+/** Re-run the interpretation over evidence the run already holds.
+ *  No provider call, no re-scan — for seeing a contract change land. */
+export const reparseRun = (runId: string) =>
+  reviewApi<{ ingestion_run_id: string; status: string }>(
+    `/catalogues/ingestions/${runId}/reparse`,
+    { method: 'POST', body: JSON.stringify({ from_stage: 'conformance' }) },
+  )
+
 export const retryRun = (runId: string) =>
   reviewApi<{ ingestion_run_id: string }>(`/catalogues/ingestions/${runId}/retry`, { method: 'POST' })
 

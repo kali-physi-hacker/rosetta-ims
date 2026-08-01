@@ -694,6 +694,58 @@ def search_catalogue_product_variants(
 
 
 
+class ReparseRequest(BaseModel):
+    """Where to pick the flow back up. Only conformance today — see ReparseStage."""
+
+    from_stage: str = "conformance"
+
+
+@router.post("/ingestions/{run_uuid}/reparse", response_model=CatalogueSubmissionResponse, status_code=202)
+def reparse_catalogue_ingestion(
+    run_uuid: UUID,
+    request: Request,
+    body: ReparseRequest | None = None,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Re-run the interpretation over evidence this run already holds.
+
+    The supplier contract is consumed at conformance, which reaches no model
+    provider — so a mapping change needs the stored observations re-read, not
+    the pages re-scanned. Costs nothing at the provider and takes about a
+    second where a retry takes a minute and a half.
+
+    Creates a NEW run linked by parent_run_id; the source run's decisions are
+    append-only and are left alone.
+    """
+    stage = (body.from_stage if body else "conformance")
+    service = CatalogueSubmissionService(db)
+    try:
+        result = service.reparse(
+            run_uuid,
+            from_stage=stage,
+            submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+        )
+    except Exception as exc:
+        raise _http_error(exc) from exc
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.ingestion_reparse",
+            actor=user,
+            entity_type="ingestion_run",
+            entity_id=str(result.ingestion_run_id),
+            entity_label=result.contract_id,
+            details={"reparse_of": str(run_uuid), "from_stage": stage, "supplier_id": result.supplier_id},
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception("catalogue re-parse %s was queued but audit logging failed", result.ingestion_run_id)
+    return _submission_response(result)
+
+
 @router.get("/ingestions/{run_uuid}/receipt/golden.csv")
 def export_published_golden_csv(
     run_uuid: UUID,

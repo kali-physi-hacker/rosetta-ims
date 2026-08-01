@@ -334,6 +334,120 @@ class CatalogueSubmissionService:
             self.db.commit()
         return result
 
+    def reparse(
+        self,
+        run_uuid: UUID,
+        *,
+        from_stage: str = "conformance",
+        submitted_by: str | None = None,
+    ) -> CatalogueSubmissionResult:
+        """Re-run the interpretation over evidence this run already holds.
+
+        A supplier contract is consumed at conformance, which reaches no model
+        provider — so a mapping change needs the stored observations re-read,
+        not the pages re-scanned. Unlike `retry`, this works on a COMPLETED run
+        (that is the point: you changed the contract and want to see the
+        result), can be repeated, and costs nothing at the provider.
+
+        A NEW run is created either way. The parent may already carry approved
+        and published decisions, and those are append-only.
+        """
+        from orchestration.catalogue_reparse import (
+            ReparseNotAllowed,
+            ReparseStage,
+            SUPPORTED_STAGES,
+            evidence_source_run,
+            mark_reparse,
+        )
+
+        try:
+            stage = ReparseStage(from_stage)
+        except ValueError:
+            allowed = ", ".join(s.value for s in SUPPORTED_STAGES)
+            raise RetryNotAllowedError(f"Unknown stage '{from_stage}' — supported: {allowed}") from None
+        if stage not in SUPPORTED_STAGES:
+            allowed = ", ".join(s.value for s in SUPPORTED_STAGES)
+            raise RetryNotAllowedError(
+                f"Re-parsing from '{stage.value}' is not supported yet — supported: {allowed}. "
+                "Extraction is what a re-parse exists to avoid; use retry to re-scan the file."
+            )
+
+        run = self.db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
+        if run is None:
+            raise SubmissionNotFoundError(f"Ingestion run {run_uuid} was not found")
+        if run.status in {"queued", "running"}:
+            raise RetryNotAllowedError(f"Run {run_uuid} is {run.status} — wait for it to finish")
+        if run.supplier_id is None or not run.supplier_source_contract_id:
+            raise RetryNotAllowedError("This run has no supplier contract to re-parse with")
+
+        # Follow the chain to whoever actually paid for the extraction, so a
+        # fifth contract iteration still reads the first run's evidence.
+        origin = evidence_source_run(self.db, run)
+        evidence_count = (
+            self.db.query(models.CatalogueExtractedEvidence)
+            .filter(models.CatalogueExtractedEvidence.ingestion_run_uuid == origin.run_uuid)
+            .count()
+        )
+        if evidence_count == 0:
+            raise RetryNotAllowedError(
+                f"Run {origin.run_uuid} captured no evidence, so there is nothing to re-parse — "
+                "retry the run to scan the file again"
+            )
+
+        source = run.pipeline_source_document
+        if source is None and run.catalogue_source_document_id:
+            source = self.db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
+        if source is None:
+            raise SourceFileMissingError("This run has no source document to link the re-parse to")
+
+        new_run = self._queue_reparse_run(run, source, submitted_by=submitted_by)
+        mark_reparse(new_run, source_run_uuid=origin.run_uuid, from_stage=stage)
+        new_run.parent_run_id = run.id
+        self.db.commit()
+        return CatalogueSubmissionResult(
+            ingestion_run_id=UUID(new_run.run_uuid),
+            supplier_catalogue_id=UUID(source.supplier_catalogue_uuid)
+            if getattr(source, "supplier_catalogue_uuid", None) else UUID(new_run.run_uuid),
+            source_file_id=UUID(source.source_file_uuid)
+            if getattr(source, "source_file_uuid", None) else UUID(new_run.run_uuid),
+            supplier_id=new_run.supplier_id,
+            contract_id=new_run.supplier_source_contract_id,
+            contract_version=new_run.supplier_source_contract_version,
+            document_type=new_run.document_type,
+            status=new_run.status,
+            submitted_at=new_run.created_at,
+            status_url=f"/catalogues/ingestions/{new_run.run_uuid}",
+        )
+
+    def _queue_reparse_run(self, run, source, *, submitted_by: str | None):
+        """A queued run pointing at the parent's source document.
+
+        Deliberately reuses the parent's CatalogueImport and source document
+        rather than re-storing the file: a re-parse is the same bytes, and the
+        dispatcher will never read them anyway.
+        """
+        submitted_at = _iso(_now())
+        new_run = models.IngestionRun(
+            run_uuid=str(uuid4()),
+            source_document_id=run.source_document_id,
+            catalogue_source_document_id=source.id,
+            supplier_id=run.supplier_id,
+            contract_version=run.contract_version,
+            supplier_source_contract_id=run.supplier_source_contract_id,
+            supplier_source_contract_version=run.supplier_source_contract_version,
+            document_type=run.document_type,
+            extractor_name=self.extractor_name,
+            extractor_version=self.extractor_version,
+            status=models.IngestionRunStatus.QUEUED.value,
+            started_at=None,
+            completed_at=None,
+            items_extracted=None,
+            created_at=submitted_at,
+        )
+        self.db.add(new_run)
+        self.db.flush()
+        return new_run
+
     def get_status(self, run_uuid: UUID) -> CatalogueIngestionStatus:
         """Return a safe typed status payload for one ingestion run."""
 

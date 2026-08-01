@@ -18,7 +18,7 @@ import {
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
   correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate,
   resolveRunIssue, fanOut, fmtDelta, marginPct, per,
-  fetchRunStatus, retryRun, failureInfo, TERMINAL_RUN_STATUSES,
+  fetchRunStatus, retryRun, reparseRun, failureInfo, TERMINAL_RUN_STATUSES,
   REASON_CHIPS, PULL_THRESHOLD_PCT,
   type SummaryItem, type VariantHit, type ReceiptChange, type RunStatus, type FailureView,
   type DuplicateCheck, type VariantDraft,
@@ -237,6 +237,7 @@ function CreateDraftPanel({ runId, item, onCancel, onCreated }: {
 function RunDeskPage() {
   const { runId } = Route.useParams()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const status = useQuery({
     queryKey: ['review-run-status', runId],
@@ -282,6 +283,17 @@ function RunDeskPage() {
   const [clustersExpanded, setClustersExpanded] = useState(false)
   const [cleanExpanded, setCleanExpanded] = useState(false)
   const [search, setSearch] = useState('')
+  const [reparsing, setReparsing] = useState(false)
+  async function onReparse() {
+    setReparsing(true)
+    try {
+      const result = await reparseRun(runId)
+      toast.success('Re-parsing the stored evidence — a new run, no re-scan')
+      navigate({ to: '/catalogues/review/$runId', params: { runId: result.ingestion_run_id } })
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    } finally { setReparsing(false) }
+  }
   const searchRef = useRef<HTMLInputElement>(null)
   const clusters = useMemo(() => {
     const map = new Map<string, SummaryItem[]>()
@@ -484,6 +496,14 @@ function RunDeskPage() {
           </span>
           <span className="kbd" title="Press / to search, Enter to open the next decision">/</span>
           <span className="kbd" title="Enter opens the next decision">Enter</span>
+          {/* For after a supplier contract changes: the mapping is applied at
+              conformance, which reaches no model provider, so this re-reads the
+              evidence we already hold instead of re-scanning the pages. */}
+          {TERMINAL_RUN_STATUSES.has(runState) && (
+            <button className="btn sm" disabled={reparsing}
+              title="Re-run the interpretation over this run's stored evidence — no re-scan, no provider cost"
+              onClick={onReparse}>{reparsing ? 'Re-parsing…' : '↻ Re-parse'}</button>
+          )}
           <Link className="btn sm" to="/catalogues/review/$runId/commit" params={{ runId }}>Receipt</Link>
         </span>
       </div>
