@@ -119,7 +119,7 @@ def complete_run(db: Session, *, result: CatalogueFlowResult, completed_at: date
     run.status = result.terminal_status
     run.completed_at = _iso(completed_at or _now())
     run.items_extracted = result.rows_extracted
-    run.metrics = _metrics_json(result)
+    run.metrics = _metrics_json(result, existing=run.metrics)
     run.error_summary = _summary_json(result) if result.warnings else None
     db.commit()
 
@@ -191,7 +191,12 @@ def _run(db: Session, ingestion_run_id: UUID) -> models.IngestionRun:
     return run
 
 
-def _metrics_json(result: CatalogueFlowResult) -> str:
+# Provenance written before the flow ran — how this run came to exist, not what
+# it did. Completing a run replaces its metrics wholesale, which would erase it.
+_PRESERVED_METRIC_KEYS = ("reparse_of", "reparse_from_stage")
+
+
+def _metrics_json(result: CatalogueFlowResult, *, existing: str | None = None) -> str:
     metrics = IngestionRunMetrics(
         rows_seen=result.rows_extracted,
         warnings_count=len(result.warnings),
@@ -215,6 +220,14 @@ def _metrics_json(result: CatalogueFlowResult) -> str:
             "human_review_required": result.human_review_required,
         }
     )
+    if existing:
+        try:
+            previous = json.loads(existing) or {}
+        except ValueError:
+            previous = {}
+        for key in _PRESERVED_METRIC_KEYS:
+            if key in previous:
+                payload[key] = previous[key]
     return json.dumps({key: value for key, value in payload.items() if value is not None}, sort_keys=True)
 
 

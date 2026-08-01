@@ -158,6 +158,27 @@ def test_reparsing_a_reparse_still_reads_the_original_evidence(db):
     assert stored.source_run_uuid == run.run_uuid, "must chain back to the run that actually extracted"
 
 
+def test_completing_a_reparse_keeps_its_lineage(db):
+    """Finishing a run rewrites its metrics wholesale — provenance must survive.
+
+    `reparse_of` is written before the flow runs and says how the run came to
+    exist, not what it did. Losing it on completion would make a re-parse
+    indistinguishable from a normal run afterwards, and would send a re-parse
+    OF a re-parse back to the file.
+    """
+    from orchestration.catalogue_run_lifecycle import _metrics_json
+    from orchestration.catalogue_types import CatalogueFlowResult
+
+    before = json.dumps({"reparse_of": "abc-123", "reparse_from_stage": "conformance"})
+    result = CatalogueFlowResult(
+        ingestion_run_id=uuid4(), terminal_status="completed", rows_extracted=238,
+    )
+    after = json.loads(_metrics_json(result, existing=before))
+    assert after["reparse_of"] == "abc-123"
+    assert after["reparse_from_stage"] == "conformance"
+    assert after["rows_seen"] == 238, "and the flow's own metrics still land"
+
+
 def test_a_run_with_no_evidence_is_refused_with_a_reason(db):
     run = _seed_run(db, observations=0)
     with pytest.raises(RetryNotAllowedError, match="nothing to re-parse"):
