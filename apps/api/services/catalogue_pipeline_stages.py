@@ -795,6 +795,12 @@ class MasteringService(_TransactionalService):
             key: (_with_lineage(value) if value is not None else getattr(old, key))
             for key, value in corrections.items()
         }
+        merged["supplier_product_resolution"] = _settle_offer_on_variant_confirm(
+            self.db,
+            supplier_section=merged["supplier_product_resolution"],
+            variant_section=merged["product_variant_resolution"],
+            lineage=old.lineage,
+        )
         revision_metadata = {
             **old.metadata,
             "correction": {
@@ -1664,6 +1670,98 @@ def _review_requirement(
     if raw_fields.packaging and normalized_fields.packaging is None:
         return ReviewRequirement.RECOMMENDED
     return ReviewRequirement.NOT_REQUIRED
+
+
+def _settle_offer_on_variant_confirm(
+    db: Session,
+    *,
+    supplier_section,
+    variant_section,
+    lineage,
+):
+    """Confirming which product a row is also settles which offering it is.
+
+    The "needs a pick" lane exists because two products can claim the same
+    supplier SKU — 606861 is both a Perfect Digestion chicken and a salmon;
+    6238 is both a feline and a canine wet food. The pipeline marks the
+    OFFERING ambiguous and refuses to guess.
+
+    The desk only ever let a reviewer correct the product variant, so the
+    offering stayed AMBIGUOUS: the row bounced straight back into the lane and
+    approve failed on "Candidate requires a resolved supplier identity". The
+    reviewer had made the decision; nothing recorded it.
+
+    Choosing the product IS the pick — one supplier SKU under one supplier is a
+    single offering (the unique index says so), and the variant choice is what
+    tells apply which product it belongs to. So a confirmed variant resolves
+    the offer alongside it.
+    """
+    def _state(section):
+        return section.get("state") if isinstance(section, dict) else getattr(section, "state", None)
+
+    supplier_state = _state(supplier_section)
+    if supplier_state not in {ResolutionState.AMBIGUOUS, ResolutionState.AMBIGUOUS.value}:
+        return supplier_section
+    if _state(variant_section) not in {
+        ResolutionState.CONFIRMED_MATCH, ResolutionState.CONFIRMED_MATCH.value,
+        ResolutionState.CONFIRMED_CREATE, ResolutionState.CONFIRMED_CREATE.value,
+    }:
+        return supplier_section
+
+    section = (
+        dict(supplier_section) if isinstance(supplier_section, dict)
+        else supplier_section.model_dump(mode="json")
+    )
+    supplier_id, supplier_sku, barcode = section.get("supplier_id"), section.get("supplier_sku"), section.get("barcode")
+    chosen = _chosen_product(db, variant_section)
+
+    # An offering is the precise answer when one exists — the unique index means
+    # one supplier SKU has at most one, so identity alone settles it.
+    offering = offering_identity.find_offering(
+        db, supplier_id=supplier_id, supplier_sku=supplier_sku, barcode=barcode
+    )
+    resolved = offering.supplier_product_key if offering is not None else None
+    if resolved is None and chosen is not None and supplier_id is not None:
+        # No offering yet (pre-backfill data): the colliding legacy links ARE
+        # the candidates being disambiguated, so take the one that belongs to
+        # the product the reviewer just chose. Anything else would name an
+        # identity the applicability check cannot find.
+        link = (
+            db.query(models.ProductSupplier)
+            .filter_by(supplier_id=supplier_id, product_id=chosen.id)
+            .filter(
+                (models.ProductSupplier.supplier_sku == supplier_sku)
+                if supplier_sku else (models.ProductSupplier.barcode == barcode)
+            )
+            .first()
+        )
+        if link is not None:
+            resolved = f"{offering_identity.LEGACY_LINK_PREFIX}{link.id}"
+
+    section["state"] = ResolutionState.CONFIRMED_MATCH.value
+    section["supplier_product_id"] = resolved or _candidate_offer_key(supplier_id, supplier_sku, barcode)
+    if not section.get("lineage"):
+        section["lineage"] = lineage.model_dump(mode="json")
+    return section
+
+
+def _chosen_product(db: Session, variant_section):
+    """The ProductVariant a confirmed variant section names, if it exists."""
+    def _get(key):
+        return variant_section.get(key) if isinstance(variant_section, dict) else getattr(variant_section, key, None)
+
+    for value in (_get("canonical_sku"), _get("product_variant_id")):
+        if not value:
+            continue
+        found = db.query(models.ProductVariant).filter_by(sku_code=str(value)).first()
+        if found is not None:
+            return found
+    return None
+
+
+def _candidate_offer_key(supplier_id, supplier_sku, barcode) -> str | None:
+    identity = supplier_sku or barcode
+    return f"supplier:{supplier_id}:offer:{identity}" if supplier_id and identity else None
 
 
 def _default_supplier_product_resolution(db: Session, staging: NormalizedRowV1) -> dict[str, Any]:

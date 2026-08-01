@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 from decimal import Decimal
@@ -586,6 +587,84 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
     assert serving.review_status == "APPROVED"
     assert serving.cost_per_sellable_unit_amount == Decimal("13.1000")
     assert serving.is_current == 1
+
+
+def test_picking_the_variant_settles_an_ambiguous_offering(db):
+    """The "needs a pick" lane has to be exitable.
+
+    Two products can claim one supplier SKU — in the live Hill's run 6238 is
+    both a feline and a canine wet food — so the pipeline marks the OFFERING
+    ambiguous and refuses to guess. The desk only ever corrected the product
+    variant, which left the offering AMBIGUOUS: the row bounced straight back
+    into the lane and approve died on "Candidate requires a resolved supplier
+    identity before approval". The reviewer had made the call; nothing recorded
+    it.
+
+    Choosing the product is the pick, so confirming the variant must settle the
+    offer with it.
+    """
+    _seed_context(db)
+    product = _seed_product(db)
+    other = models.ProductVariant(
+        sku_code="STAGE-SKU-ALT", name="The other claimant", category="Food", status="ACTIVE",
+        storage_rule="any", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00",
+    )
+    db.add(other)
+    db.flush()
+    # Two legacy links, one supplier SKU, two different products: the collision.
+    for target in (product, other):
+        db.add(models.ProductSupplier(
+            product_id=target.id, supplier_id=14, supplier_sku="10447",
+            cost_source="manual", pack_source="manual", updated_at="2026-01-01T00:00:00",
+        ))
+    db.flush()
+
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = stages.MasteringService(db).prepare_candidate(
+        stages.PrepareMasteringCandidateCommand(
+            catalogue_item_id=staging_id, idempotency_key="ambiguous-offer",
+        )
+    ).output_ids[0]
+
+    row = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(candidate_id)).one()
+    assert json.loads(row.supplier_product_resolution_json)["state"] == "AMBIGUOUS", \
+        "two links on one supplier SKU must produce an ambiguous offer"
+
+    # The reviewer picks the product. They never touch the offering.
+    revision = stages.MasteringService(db).revise_candidate(
+        stages.ReviseMasteringCandidateCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            reason="This row is the first product.",
+            product_variant_resolution={
+                "state": "CONFIRMED_MATCH",
+                "canonical_sku": product.sku_code,
+                "product_variant_id": product.sku_code,
+                "product_variant_name": product.name,
+            },
+        )
+    ).output_ids[0]
+
+    revised = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(revision)).one()
+    supplier = json.loads(revised.supplier_product_resolution_json)
+    assert supplier["state"] == "CONFIRMED_MATCH", "the offer must settle with the variant"
+    assert supplier["supplier_product_id"], "and it must name which offering"
+
+    # Which is the whole point: it can now be approved.
+    decision = stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=revision,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-08-01T00:05:00+00:00",
+            reason="Picked.",
+            idempotency_key="approve-picked",
+        )
+    )
+    assert decision.metrics.created_count == 1
 
 
 def test_supplier_identity_survives_the_offering_backfill_renaming_it(db):
