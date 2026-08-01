@@ -24,6 +24,7 @@ Boundaries this module enforces:
 from __future__ import annotations
 
 import re
+import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
@@ -368,6 +369,7 @@ def _item_from_fields(
     packaging = _packaging_proposal(fields, runtime_contract, evidence)
     if packaging is not None:
         normalized["packaging"] = packaging
+    normalized["mbb_terms"] = _tier_price_terms(fields, runtime_contract, evidence, cost)
 
     return ConformedRow(
         observation_key=observation.observation_key,
@@ -634,6 +636,79 @@ def _names_overlap(left: str, right: str) -> bool:
             if left_key == right_key or left_key in right_key or right_key in left_key:
                 return True
     return False
+
+
+def _tier_price_terms(
+    fields: dict[str, Any],
+    runtime_contract,
+    evidence: dict[str, Any],
+    cost: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Typed MBB terms from priced tier columns.
+
+    A supplier that prints "unit price if you spend at least X" against every
+    row has stated a complete term — condition and benefit are both determined,
+    so there is nothing to guess and nothing for a reviewer to interpret. That
+    is why these do not go through the MBB_TEXT path, which exists to preserve
+    prose whose shape nobody has proven.
+
+    The threshold comes from the contract, not the column heading: on the live
+    Hill's run the heading kept "MOV $1,200" on 36 of 174 priced rows and was
+    truncated to "Net Invoice Price*" on the rest, so reading it would have
+    produced terms for a fifth of the catalogue and silence for the others.
+    """
+    pricing = runtime_contract.declaration.pricing
+    basis = pricing.price_basis
+    if basis is None or basis.code is None:
+        return []
+    gross = _decimal_or_none((cost or {}).get("amount"))
+
+    tiers = [
+        field
+        for field in runtime_contract.declaration.fields
+        if getattr(field.role, "value", field.role) == "MBB_TIER_PRICE"
+        and field.tier_minimum_spend is not None
+    ]
+    terms: list[dict[str, Any]] = []
+    for field in sorted(tiers, key=lambda f: (f.tier_order or 0, str(f.tier_minimum_spend))):
+        amount = _decimal_or_none(fields.get(f"source:{field.field_key}"))
+        if amount is None or amount <= 0:
+            continue
+        # A tier that is not cheaper than the gross price is not a discount. It
+        # happens on rows the supplier prints the same number across, and a term
+        # asserting "spend 4,500 to pay the same" would be noise in every
+        # downstream cost calculation.
+        if gross is not None and amount >= gross:
+            continue
+        terms.append({
+            "mbb_term_id": str(_stable_term_uuid(evidence, field.field_key)),
+            # SUPPLIER_ORDER, not SUPPLIER_SKU: the condition is a minimum
+            # value across the whole order, even though the discounted price it
+            # unlocks belongs to this row. The scope vocabulary already had the
+            # word for this.
+            "scope": "SUPPLIER_ORDER",
+            "condition": {
+                "condition_type": "minimum_spend",
+                "spend": {"amount": str(field.tier_minimum_spend), "currency": pricing.currency},
+            },
+            "benefit": {
+                "benefit_type": "discounted_unit_price",
+                "discounted_price": {
+                    "amount": str(amount),
+                    "currency": pricing.currency,
+                    "price_basis": basis.model_dump(mode="json"),
+                },
+            },
+            "description": field.description,
+            "evidence": evidence,
+        })
+    return terms
+
+
+def _stable_term_uuid(evidence: dict[str, Any], field_key: str) -> uuid.UUID:
+    """Deterministic per observation + tier, so a re-parse reuses identities."""
+    seed = f"{evidence.get('raw_observation_id')}:{field_key}"
+    return uuid.uuid5(uuid.NAMESPACE_URL, f"rosetta:mbb-tier:{seed}")
 
 
 def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any]) -> dict[str, Any] | None:

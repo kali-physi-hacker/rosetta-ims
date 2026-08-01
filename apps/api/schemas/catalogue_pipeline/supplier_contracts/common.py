@@ -8,6 +8,7 @@ pipeline payload contracts.
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Literal
 
@@ -85,6 +86,12 @@ class SourceFieldRole(str, Enum):
     RRP = "RRP"
     PACKAGING = "PACKAGING"
     MBB_TEXT = "MBB_TEXT"
+    # A priced tier column: the row's unit price WHEN a stated condition is met.
+    # Distinct from MBB_TEXT, which preserves prose nobody has proven the shape
+    # of. Hill's states the ladder as three "Net Invoice Price* … MOV $1,200 /
+    # $2,200 / $4,500" columns, one price per row per threshold, which is a
+    # fully determined minimum_spend -> discounted_unit_price term.
+    MBB_TIER_PRICE = "MBB_TIER_PRICE"
     BARCODE = "BARCODE"
     VARIANT = "VARIANT"
     SPECIES = "SPECIES"
@@ -181,6 +188,31 @@ class SourceFieldContract(SupplierSourceModel):
     aliases: list[str] = Field(default_factory=list, description="Observed header aliases justified by evidence.")
     description: str | None = Field(None, description="Readable explanation of the mapping.")
     evidence: list[EvidenceReference] = Field(default_factory=list, description="Evidence supporting this field mapping.")
+    tier_minimum_spend: Decimal | None = Field(
+        None,
+        gt=Decimal("0"),
+        description=(
+            "For MBB_TIER_PRICE: the order value that unlocks this column's price. Declared here "
+            "rather than parsed from the heading because the heading is not reliable — on the live "
+            "Hill's run the vision model kept 'MOV $1,200' in the column name on 36 of 174 priced "
+            "rows and truncated it to 'Net Invoice Price*' on the rest. The ladder is a property of "
+            "the catalogue, so the contract states it."
+        ),
+    )
+    tier_order: int | None = Field(
+        None,
+        ge=1,
+        description="For MBB_TIER_PRICE: 1-based position of this tier, cheapest threshold first.",
+    )
+
+    @model_validator(mode="after")
+    def _tier_price_declares_its_condition(self):
+        if self.role == SourceFieldRole.MBB_TIER_PRICE and self.tier_minimum_spend is None:
+            raise ValueError(
+                "MBB_TIER_PRICE fields must declare tier_minimum_spend — a tier price without its "
+                "condition is not a term, and inferring the threshold from column order is a guess"
+            )
+        return self
 
     @model_validator(mode="after")
     def _mapping_has_location_or_constant(self):

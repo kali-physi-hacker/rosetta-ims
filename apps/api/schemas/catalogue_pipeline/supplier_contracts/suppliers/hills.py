@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import IssueSeverity, SourceFormat, UnitCode
 from schemas.catalogue_pipeline.supplier_contracts.common import (
@@ -148,6 +150,49 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 requirement=SourceFieldRequirement.REQUIRED,
                 source_column="Order Multiple / 訂貨單位",
                 description="Order multiple; never proof for price divisor.",
+                evidence=_EVIDENCE,
+            ),
+            # Hill's states its discount ladder as three priced columns, one per
+            # minimum-order-value threshold, printed against every row.
+            #
+            # The threshold is declared here, but each field still matches only
+            # its OWN fully-qualified heading. Deliberately no alias for the
+            # bare "Net Invoice Price* 折扣批發價*": that heading identifies the
+            # column as a tier price but not WHICH tier, so accepting it on all
+            # three fields matched one column three times and produced ladders
+            # reading "spend 1,200 -> 27.00 / spend 2,200 -> 27.00 / spend
+            # 4,500 -> 27.00". A flat ladder is not a discount, and 59 of 95
+            # rows got one. Where the vision model truncated the heading we now
+            # emit no term at all — recovering those needs positional column
+            # matching, which is a contract feature, not an alias.
+            SourceFieldContract(
+                field_key="net_invoice_price_mov_1",
+                role=SourceFieldRole.MBB_TIER_PRICE,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+                tier_minimum_spend=Decimal("1200"),
+                tier_order=1,
+                description="Unit price once the order reaches HK$1,200 — the first MOV tier.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="net_invoice_price_mov_2",
+                role=SourceFieldRole.MBB_TIER_PRICE,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+                tier_minimum_spend=Decimal("2200"),
+                tier_order=2,
+                description="Unit price once the order reaches HK$2,200 — the second MOV tier.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="net_invoice_price_mov_3",
+                role=SourceFieldRole.MBB_TIER_PRICE,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500",
+                tier_minimum_spend=Decimal("4500"),
+                tier_order=3,
+                description="Unit price once the order reaches HK$4,500 — the third MOV tier.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(

@@ -556,6 +556,37 @@
           "default": null,
           "description": "Section, banner, or document path when not a table column.",
           "title": "Source Path"
+        },
+        "tier_minimum_spend": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_PRICE: the order value that unlocks this column's price. Declared here rather than parsed from the heading because the heading is not reliable — on the live Hill's run the vision model kept 'MOV $1,200' in the column name on 36 of 174 priced rows and truncated it to 'Net Invoice Price*' on the rest. The ladder is a property of the catalogue, so the contract states it.",
+          "title": "Tier Minimum Spend"
+        },
+        "tier_order": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_PRICE: 1-based position of this tier, cheapest threshold first.",
+          "title": "Tier Order"
         }
       },
       "required": [
@@ -587,6 +618,7 @@
         "RRP",
         "PACKAGING",
         "MBB_TEXT",
+        "MBB_TIER_PRICE",
         "BARCODE",
         "VARIANT",
         "SPECIES",
