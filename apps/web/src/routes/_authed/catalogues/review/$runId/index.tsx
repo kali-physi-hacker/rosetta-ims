@@ -314,6 +314,24 @@ function RunDeskPage() {
       || hit(i.barcode) || hit(i.family_key) || hit(i.draft_name))
   }, [items, search, check])
 
+  // Where the focused row sits in its lane, remembered so a decision that moves
+  // it out of the lane can hold it in place rather than teleporting it to the
+  // end of the queue.
+  const heldSlot = useRef(0)
+  const focusQueue = useMemo(() => {
+    if (!focus) return []
+    const queue = lanes[focus.lane]
+    const at = queue.findIndex(i => i.mastering_candidate_id === focus.id)
+    if (at >= 0) {
+      heldSlot.current = at
+      return queue
+    }
+    const held = items.find(i => i.mastering_candidate_id === focus.id)
+    if (!held) return queue
+    const slot = Math.min(heldSlot.current, queue.length)
+    return [...queue.slice(0, slot), held, ...queue.slice(slot)]
+  }, [focus, items, pick, newTo, check, sweepPool])
+
   const openFocus = (lane: LaneId, id?: string) => {
     const queue = lanes[lane]
     const target = id ?? queue.find(i => !isDecided(i))?.mastering_candidate_id ?? queue[0]?.mastering_candidate_id
@@ -692,7 +710,12 @@ function RunDeskPage() {
         <FocusOverlay
           runId={runId}
           lane={focus.lane}
-          queue={lanes[focus.lane]}
+          // The row you are working on stays in the queue even after your
+          // decision moves it out of this lane. Correcting a match mints a
+          // revision that is no longer ambiguous, so it drops out of the pick
+          // lane immediately — and the overlay, finding nothing, fell back to
+          // queue[0] and silently swapped a different row under you.
+          queue={focusQueue}
           currentId={focus.id}
           allItems={items}
           onMove={id => setFocus(f => (f ? { ...f, id } : f))}
@@ -1084,7 +1107,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
       )
       await queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
       const revision = (result as any)?.output_ids?.[0]
-      toast.success(`Matched to ${variant.sku_code} — new revision; approve it to stage`)
+      toast.success(`Matched to ${variant.sku_code} — approve to stage it`)
       if (typeof revision === 'string') onMove(revision)
     } catch (e: any) { toast.error(String(e?.message ?? e)) }
   }
