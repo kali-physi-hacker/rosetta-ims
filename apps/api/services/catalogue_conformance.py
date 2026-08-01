@@ -222,12 +222,16 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
 
     # Index this row's cells by every match-key of their column heading.
     cell_by_key: dict[str, str] = {}
+    # Same index, every match rather than the first: a table may repeat one
+    # heading across several columns, and then only position tells them apart.
+    cells_by_key: dict[str, list[str]] = {}
     row_values: list[str] = []
     for cell in observation.raw_cells:
         if cell.column_name and cell.raw_value is not None and str(cell.raw_value).strip():
             row_values.append(str(cell.raw_value))
             for key in _column_keys(cell.column_name):
                 cell_by_key.setdefault(key, str(cell.raw_value))
+                cells_by_key.setdefault(key, []).append(str(cell.raw_value))
     if not cell_by_key:
         return {}
 
@@ -238,18 +242,30 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
                     return cell_by_key[key]
         return None
 
+    def _lookup_nth(occurrence: int, *column_names: str) -> str | None:
+        """The nth column carrying this heading, left to right.
+
+        A heading that appears once answers as itself only for occurrence 1 —
+        asking for the third of one column is a mismatch, not the first.
+        """
+        for column_name in column_names:
+            for key in _column_keys(column_name):
+                matches = cells_by_key.get(key) or []
+                if len(matches) >= occurrence:
+                    return matches[occurrence - 1]
+        return None
+
     def _lookup_field(contract_field) -> str | None:
-        names = tuple(
-            filter(
-                None,
-                (
-                    contract_field.source_column,
-                    contract_field.source_path,
-                    *contract_field.aliases,
-                ),
-            )
-        )
-        return _lookup(*names)
+        exact = tuple(filter(None, (contract_field.source_column, contract_field.source_path)))
+        occurrence = getattr(contract_field, "source_column_occurrence", None)
+        if occurrence:
+            # Where the source printed the distinguishing heading, it is
+            # unambiguous and wins outright. The occurrence disambiguates only
+            # the repeated fallback heading — asking it to also index the exact
+            # one would lose tiers 2 and 3 on the pages that name them, since
+            # that heading appears exactly once there.
+            return _lookup(*exact) or _lookup_nth(occurrence, *contract_field.aliases)
+        return _lookup(*exact, *contract_field.aliases)
 
     def _lookup_composed(column_name: str) -> str | None:
         aliases: list[str] = []

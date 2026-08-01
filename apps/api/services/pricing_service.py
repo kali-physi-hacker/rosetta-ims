@@ -1,6 +1,7 @@
 """GP computation, pricing recommendations, and margin range logic."""
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from models import ProductVariant, ProductChannel, ProductSupplier, StockLevel, SalesVelocity, CategoryRule
 from services import offering_costs
@@ -100,13 +101,51 @@ def _term_unit_cost(term, base_unit_cost: float | None) -> float | None:
     return None
 
 
+@dataclass(frozen=True)
+class _CatalogueTerm:
+    """A published catalogue bulk term, in the shape the margin code reads.
+
+    The pipeline's typed terms live on the offering and the hand-entered ones
+    on the legacy link, so the two never met. Rather than teach every consumer
+    a second shape, a catalogue term arrives here already priced per sellable
+    unit and answering the same questions a legacy term does.
+    """
+
+    id: str
+    kind: str
+    min_qty: float | None
+    min_spend: float | None
+    note: str | None
+    unit_cost: float | None
+    source: str = "catalogue"
+
+
+def _catalogue_terms(ps: ProductSupplier | None) -> list[_CatalogueTerm]:
+    return [
+        _CatalogueTerm(
+            id=t["id"],
+            # 'tier' so the stated price is read directly rather than run
+            # through a percentage formula it has no percentage for.
+            kind="tier",
+            min_qty=t["min_qty"],
+            min_spend=t["min_spend"],
+            note=t["note"],
+            unit_cost=t["effective_unit_cost"],
+        )
+        for t in offering_costs.bulk_terms_for_link(ps)
+        if t["effective_unit_cost"] is not None
+    ]
+
+
 def best_mbb(ps: ProductSupplier | None, base_unit_cost: float | None):
     """(cheapest achievable per-sell-unit cost, winning term) across this supplier's MBB terms.
-    Falls back to the legacy flat scalars for any row not yet migrated to relational terms."""
+    Considers both the hand-entered terms on the link and the published catalogue
+    terms on its offering — a headline "best bulk cost" that ignored half of them
+    would contradict the table right beside it."""
     if not ps:
         return (None, None)
     best_cost, best_term = None, None
-    for term in (getattr(ps, "mbb_term_list", None) or []):
+    for term in list(getattr(ps, "mbb_term_list", None) or []) + _catalogue_terms(ps):
         c = _term_unit_cost(term, base_unit_cost)
         if c is not None and (best_cost is None or c < best_cost):
             best_cost, best_term = c, term
@@ -125,6 +164,8 @@ def _cost_to_hit_mbb(term, base_unit_cost: float | None, achieved_unit_cost: flo
     (e.g. "buy 10 get 3 free" at $215 basic reads $2,150 to hit, not 10 × the $165 effective)."""
     if term is None:
         return None
+    if getattr(term, 'source', None) == 'catalogue' and term.min_spend:
+        return round(term.min_spend, 0)
     if term.kind == 'buy_x_get_y' and base_unit_cost and term.min_qty:
         return round(base_unit_cost * term.min_qty, 0)
     if term.kind == 'spend_discount' and term.min_spend:
@@ -523,6 +564,7 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
                  "effective_unit_cost": _term_unit_cost(t, get_unit_cost(sup))}
                 for t in sorted(getattr(sup, "mbb_term_list", []) or [], key=lambda x: x.sort_order)
             ],
+            "catalogue_term_list": offering_costs.bulk_terms_for_link(sup),
             "units_per_pack": sup.units_per_pack,
             "is_primary":    bool(sup.is_primary),
             "is_preferred":  False,  # set below

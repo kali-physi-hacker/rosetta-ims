@@ -155,21 +155,27 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
             # Hill's states its discount ladder as three priced columns, one per
             # minimum-order-value threshold, printed against every row.
             #
-            # The threshold is declared here, but each field still matches only
-            # its OWN fully-qualified heading. Deliberately no alias for the
-            # bare "Net Invoice Price* 折扣批發價*": that heading identifies the
-            # column as a tier price but not WHICH tier, so accepting it on all
-            # three fields matched one column three times and produced ladders
-            # reading "spend 1,200 -> 27.00 / spend 2,200 -> 27.00 / spend
-            # 4,500 -> 27.00". A flat ladder is not a discount, and 59 of 95
-            # rows got one. Where the vision model truncated the heading we now
-            # emit no term at all — recovering those needs positional column
-            # matching, which is a contract feature, not an alias.
+            # The MOV amounts sit in a banner spanning the three columns, so the
+            # vision model keeps them in the heading on some pages ("… 購貨金額滿
+            # MOV $1,200", page 1) and truncates all three to an identical
+            # "Net Invoice Price* 折扣批發價*" on others (pages 2-3). Each field
+            # therefore matches its own fully-qualified heading first, and falls
+            # back to the bare heading BY POSITION — leftmost is the lowest
+            # threshold, as the document prints them.
+            #
+            # The position is what makes the fallback safe. A bare alias without
+            # it matched the same (first) column for all three fields and
+            # produced ladders reading "spend 1,200 -> 27.00 / spend 2,200 ->
+            # 27.00 / spend 4,500 -> 27.00" on 59 rows. A flat ladder is not a
+            # discount. The threshold itself is never inferred from position —
+            # it is declared, below.
             SourceFieldContract(
                 field_key="net_invoice_price_mov_1",
                 role=SourceFieldRole.MBB_TIER_PRICE,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+                aliases=["Net Invoice Price* 折扣批發價*"],
+                source_column_occurrence=1,
                 tier_minimum_spend=Decimal("1200"),
                 tier_order=1,
                 description="Unit price once the order reaches HK$1,200 — the first MOV tier.",
@@ -180,6 +186,8 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.MBB_TIER_PRICE,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+                aliases=["Net Invoice Price* 折扣批發價*"],
+                source_column_occurrence=2,
                 tier_minimum_spend=Decimal("2200"),
                 tier_order=2,
                 description="Unit price once the order reaches HK$2,200 — the second MOV tier.",
@@ -190,6 +198,8 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.MBB_TIER_PRICE,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500",
+                aliases=["Net Invoice Price* 折扣批發價*"],
+                source_column_occurrence=3,
                 tier_minimum_spend=Decimal("4500"),
                 tier_order=3,
                 description="Unit price once the order reaches HK$4,500 — the third MOV tier.",

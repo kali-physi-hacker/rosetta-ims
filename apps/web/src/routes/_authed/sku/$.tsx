@@ -21,7 +21,7 @@ import { ChangeSkuModal } from '@/components/ChangeSkuModal'
 import { toast } from '@/lib/toast'
 import { openSourceFile } from '@/lib/review'
 import { confirmDialog } from '@/lib/confirm'
-import type { CompetitorPrice, MbbTerm, Product } from '@/lib/types'
+import type { CatalogueBulkTerm, CompetitorPrice, MbbTerm, Product } from '@/lib/types'
 
 export const Route = createFileRoute('/_authed/sku/$')({ component: SkuInstrumentRoute })
 
@@ -331,11 +331,15 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
   // Bulk tiers: min_qty is in sell units (the label says "24+ cans"). Terms
   // with min_qty ≤ 1 are unconditional prices, not tiers — they lower the
   // landed cost but never gate a quantity decision.
-  const allTerms = (buyLink?.mbb_term_list ?? [])
+  // A spend-gated term (Hill's MOV ladder: "HK$1,200 of Hill's → this price")
+  // does not gate a QUANTITY, so it must stay out of the units simulator —
+  // otherwise the ladder would claim the discount at one unit. It still shows
+  // in the supplier's Bulk price table with the spend it actually requires.
+  const allTerms = [...(buyLink?.mbb_term_list ?? []), ...termsOf(buyLink).filter(t => t.min_qty != null)]
     .filter(t => t.effective_unit_cost != null)
     .sort((a, b) => ((a.min_qty ?? 0) as number) - ((b.min_qty ?? 0) as number))
   const tiers = allTerms.filter(t => t.min_qty != null && t.min_qty > 1)
-  const landedAt = (units: number): { cost: number | null; tier: MbbTerm | null } => {
+  const landedAt = (units: number): { cost: number | null; tier: AnyTerm | null } => {
     const met = allTerms.filter(t => units >= ((t.min_qty ?? 0) as number))
     if (met.length === 0) return { cost: buyUnit, tier: null }
     const best = met.reduce((a, b) => ((a.effective_unit_cost as number) <= (b.effective_unit_cost as number) ? a : b))
@@ -395,10 +399,9 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
     for (const l of links) {
       const u = unitCostOf(l)
       if (u != null && (!flat || u < flat.unit)) flat = { unit: u, name: l.name ?? '—' }
-      for (const t of l.mbb_term_list ?? []) {
+      for (const t of [...(l.mbb_term_list ?? []), ...termsOf(l)]) {
         if (t.effective_unit_cost != null && (!best || t.effective_unit_cost < best.unit)) {
-          const req = t.min_qty ? `${t.min_qty}+ ${plu(uom)}` : t.min_spend != null ? `${hk(t.min_spend)} spend` : 'always'
-          best = { unit: t.effective_unit_cost, label: `${req} from ${l.name ?? '—'}` }
+          best = { unit: t.effective_unit_cost, label: `${termRequires(t, uom)} from ${l.name ?? '—'}` }
         }
       }
     }
@@ -549,7 +552,7 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
           const delta = prev && e?.current ? ((e.current.unit_cost - prev.unit_cost) / prev.unit_cost) * 100 : null
           const lOos = l.stock_status === 'out_of_stock'
           const full = fullById.get(l.id)
-          const terms = l.mbb_term_list ?? []
+          const terms = [...(l.mbb_term_list ?? []), ...termsOf(l)]
           const isDefault = l.id === defaultLink?.id
           const packCost = unit != null && upl > 1 ? unit * upl : null
           return (
@@ -611,9 +614,9 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
                       )}
                       <div className="kv2" style={{ alignItems: 'flex-start' }}><span className="k">Bulk price</span>
                         <span style={{ flex: 1, minWidth: 0 }}>
-                          {terms.length === 0 && <span style={{ color: 'var(--faint)' }}>no bulk terms · {editable && <span className="lnk" style={{ fontSize: 11.5 }} onClick={() => setTermsFor(l.id)}>Add terms</span>}</span>}
-                          {terms.length > 0 && unit != null && (
-                            <Ladder unit={unit} terms={terms} uom={uom} youUnits={l.id === buyLink?.id ? simUnits : null} />
+                          {terms.length === 0 && <span style={{ color: 'var(--faint)' }}>no bulk terms{e?.source === 'catalogue' ? ' in this supplier’s catalogue' : ''} · {editable && <span className="lnk" style={{ fontSize: 11.5 }} onClick={() => setTermsFor(l.id)}>Add terms</span>}</span>}
+                          {unit != null && terms.some(t => (t.min_qty ?? 0) > 1) && (
+                            <Ladder unit={unit} terms={terms.filter(t => (t.min_qty ?? 0) > 1)} uom={uom} youUnits={l.id === buyLink?.id ? simUnits : null} />
                           )}
                           {terms.length > 0 && (
                             <table className="cpptab" style={{ marginTop: 6 }}>
@@ -624,7 +627,17 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
                                   const n = clinicNetAt(t.effective_unit_cost ?? null)
                                   return (
                                     <tr key={t.id}>
-                                      <td className="cpp-row">{termDeal(t, uom)}</td>
+                                      <td className="cpp-row">
+                                        {termDeal(t, uom)}
+                                        {isCatalogueTerm(t) && (
+                                          <span style={{ display: 'block', fontSize: 10, color: 'var(--faint)' }}>
+                                            {t.source_file
+                                              ? <>from <button className="srcfile" title={`Open ${t.source_file}${t.source_received_at ? ` · received ${fmtDay(t.source_received_at)}` : ''}`}
+                                                  onClick={() => t.run_id && openSourceFile(t.run_id, t.source_file).catch(err => toast.error(String(err?.message ?? err)))}>{t.source_file}</button></>
+                                              : 'from the supplier catalogue'}
+                                          </span>
+                                        )}
+                                      </td>
                                       <td>{termRequires(t, uom)}</td>
                                       <td style={{ fontWeight: 650 }}>{fm(t.effective_unit_cost)}</td>
                                       <td><SavesCell saving={saving} /></td>
@@ -937,15 +950,31 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
 const plu = (u: string) => (/(\(s\)|s)$/i.test(u.trim()) ? u : `${u}s`)
 
 // ── term wording (plain words, no jargon) ────────────────────────────────
-function termDeal(t: MbbTerm, uom: string): string {
+/** Catalogue terms and hand-entered terms render side by side; this is the union. */
+type AnyTerm = MbbTerm | CatalogueBulkTerm
+const isCatalogueTerm = (t: AnyTerm): t is CatalogueBulkTerm =>
+  (t as CatalogueBulkTerm).source === 'catalogue'
+/** The published bulk terms on a supplier link, newest publication wins. */
+const termsOf = (l: SupplierLinkRow | null): CatalogueBulkTerm[] =>
+  (l?.catalogue_term_list ?? []).filter(t => t.effective_unit_cost != null)
+
+function termDeal(t: AnyTerm, uom: string): string {
+  if (isCatalogueTerm(t)) {
+    if (t.benefit_type === 'free_quantity') return `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free`
+    if (t.benefit_type === 'percentage_discount') return t.discount_pct != null ? `${t.discount_pct}% off` : 'Discount'
+    return t.condition_type === 'minimum_spend' ? 'Order-value price' : 'Volume price'
+  }
   switch (t.kind) {
     case 'buy_x_get_y': return `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free`
     case 'spend_discount': return t.discount_pct != null ? `${(t.discount_pct * 100).toFixed(0)}% off order` : 'Order discount'
     default: return t.min_qty != null && t.min_qty > 1 ? 'Volume price' : `Everyday ${uom} price`
   }
 }
-function termRequires(t: MbbTerm, uom: string): string {
-  if (t.min_qty && t.min_qty > 1) return `${t.min_qty}+ ${plu(uom)}`
+function termRequires(t: AnyTerm, uom: string): string {
+  // Said plainly: a spend threshold from the catalogue is measured across the
+  // whole order to that supplier, not against this one item.
+  if (isCatalogueTerm(t) && t.min_spend != null) return `HK$${t.min_spend.toFixed(0)} order`
+  if (t.min_qty && t.min_qty > 1) return `${t.min_qty}+ ${plu(isCatalogueTerm(t) ? (t.min_qty_uom ?? uom).toLowerCase() : uom)}`
   if (t.min_spend != null) return `HK$${t.min_spend.toFixed(0)} spend`
   return 'always'
 }
@@ -959,7 +988,7 @@ function SavesCell({ saving }: { saving: number | null }) {
 
 // Price ladder: each break as a dot on a quantity rail; "you" = simulator qty.
 // Unconditional terms (min_qty ≤ 1) fold into the base step so dots never overlap.
-function Ladder({ unit, terms, uom, youUnits }: { unit: number; terms: MbbTerm[]; uom: string; youUnits: number | null }) {
+function Ladder({ unit, terms, uom, youUnits }: { unit: number; terms: AnyTerm[]; uom: string; youUnits: number | null }) {
   const priced = terms.filter(t => t.effective_unit_cost != null)
   const always = priced.filter(t => t.min_qty == null || t.min_qty <= 1).map(t => t.effective_unit_cost as number)
   const base = Math.min(unit, ...always)

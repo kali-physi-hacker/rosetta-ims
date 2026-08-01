@@ -204,6 +204,20 @@ class SourceFieldContract(SupplierSourceModel):
         ge=1,
         description="For MBB_TIER_PRICE: 1-based position of this tier, cheapest threshold first.",
     )
+    source_column_occurrence: int | None = Field(
+        None,
+        ge=1,
+        description=(
+            "Which column to take when a heading appears more than once in the same row: 1 is the "
+            "leftmost. Needed where a table repeats one heading across several columns and the "
+            "distinguishing text is only in a merged banner above them — Hill's prints three "
+            "'Net Invoice Price*' columns whose MOV thresholds sit in a spanning header the vision "
+            "model keeps on some pages and drops on others. Without this an alias for the repeated "
+            "heading matches the same (first) column for every tier, producing a flat ladder that "
+            "reads as a discount but is not one. Ignored when the heading matches only one column, "
+            "so an exact threshold-bearing heading still wins where the model captured it."
+        ),
+    )
 
     @model_validator(mode="after")
     def _tier_price_declares_its_condition(self):

@@ -120,7 +120,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "description",
@@ -165,7 +166,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "pack_size",
@@ -205,7 +207,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "cost",
@@ -245,7 +248,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "rrp",
@@ -285,7 +289,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "order_multiple",
@@ -325,7 +330,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "net_invoice_price_mov_1",
@@ -335,7 +341,9 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
-      "aliases": [],
+      "aliases": [
+        "Net Invoice Price* 折扣批發價*"
+      ],
       "description": "Unit price once the order reaches HK$1,200 — the first MOV tier.",
       "evidence": [
         {
@@ -365,7 +373,8 @@
         }
       ],
       "tier_minimum_spend": "1200",
-      "tier_order": 1
+      "tier_order": 1,
+      "source_column_occurrence": 1
     },
     {
       "field_key": "net_invoice_price_mov_2",
@@ -375,7 +384,9 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
-      "aliases": [],
+      "aliases": [
+        "Net Invoice Price* 折扣批發價*"
+      ],
       "description": "Unit price once the order reaches HK$2,200 — the second MOV tier.",
       "evidence": [
         {
@@ -405,7 +416,8 @@
         }
       ],
       "tier_minimum_spend": "2200",
-      "tier_order": 2
+      "tier_order": 2,
+      "source_column_occurrence": 2
     },
     {
       "field_key": "net_invoice_price_mov_3",
@@ -415,7 +427,9 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
-      "aliases": [],
+      "aliases": [
+        "Net Invoice Price* 折扣批發價*"
+      ],
       "description": "Unit price once the order reaches HK$4,500 — the third MOV tier.",
       "evidence": [
         {
@@ -445,7 +459,8 @@
         }
       ],
       "tier_minimum_spend": "4500",
-      "tier_order": 3
+      "tier_order": 3,
+      "source_column_occurrence": 3
     },
     {
       "field_key": "brand",
@@ -485,7 +500,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "species",
@@ -525,7 +541,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "segment",
@@ -565,7 +582,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     },
     {
       "field_key": "category",
@@ -605,7 +623,8 @@
         }
       ],
       "tier_minimum_spend": null,
-      "tier_order": null
+      "tier_order": null,
+      "source_column_occurrence": null
     }
   ],
   "pricing": {

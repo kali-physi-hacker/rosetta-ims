@@ -34,6 +34,31 @@ export interface MbbTerm {
   effective_unit_cost: number | null    // derived per-sell-unit cost of this term
 }
 
+/**
+ * A bulk term the catalogue pipeline published, read off the supplier's
+ * offering. Read-only here — corrections are made in the review desk, against
+ * the document it was read from.
+ */
+export interface CatalogueBulkTerm {
+  id: string
+  source: 'catalogue'
+  scope: string                          // SUPPLIER_ORDER terms gate on the whole order, not this item
+  condition_type: 'minimum_spend' | 'minimum_quantity'
+  min_qty: number | null
+  min_qty_uom: string | null
+  min_spend: number | null
+  benefit_type: string
+  unit_price: number | null
+  unit_price_basis: string | null
+  discount_pct: number | null
+  free_qty: number | null
+  effective_unit_cost: number | null
+  note: string | null
+  run_id: string | null
+  source_file: string | null
+  source_received_at: string | null
+}
+
 export interface MbbTermMargin {
   id: number
   kind: string
@@ -129,7 +154,7 @@ export interface Product {
   supplier_name: string | null
   supplier_code: string | null
   supplier_sku: string | null
-  all_suppliers: { id: number; supplier_id: number | null; name: string | null; code: string | null; supplier_sku: string | null; barcode: string | null; rrp?: number | null; basic_cost: number | null; cost_source_effective?: string | null; mbb_term_list: MbbTerm[]; units_per_pack: number | null; is_primary: boolean; is_preferred: boolean; stock_status: string; reported_out_at: string | null; expected_restock_at: string | null; stock_confirmed_by: string | null; stock_note: string | null; stock_events: { out_at: string; restock_at: string | null; note: string | null; days: number | null }[] }[]
+  all_suppliers: { id: number; supplier_id: number | null; name: string | null; code: string | null; supplier_sku: string | null; barcode: string | null; rrp?: number | null; basic_cost: number | null; cost_source_effective?: string | null; mbb_term_list: MbbTerm[]; catalogue_term_list?: CatalogueBulkTerm[]; units_per_pack: number | null; is_primary: boolean; is_preferred: boolean; stock_status: string; reported_out_at: string | null; expected_restock_at: string | null; stock_confirmed_by: string | null; stock_note: string | null; stock_events: { out_at: string; restock_at: string | null; note: string | null; days: number | null }[] }[]
   mbb_unit_cost: number | null        // best achievable per-unit MBB cost (from mbb_terms)
   landed_unit_cost: number | null     // = supplier per-sell-unit cost (channel charges applied per channel)
   cost_last_updated: string | null

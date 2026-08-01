@@ -38,6 +38,89 @@ def _observation(cells: dict[str, str]) -> ExtractedEvidence:
     )
 
 
+def _observation_from_pairs(pairs: list[tuple[str, str]]) -> ExtractedEvidence:
+    """A row whose headings may REPEAT — which a dict cannot express."""
+    return ExtractedEvidence(
+        observation_key="row-1",
+        source_location=SourceLocation(row_number=1, source_object_key="row-1"),
+        raw_cells=tuple(
+            RawCell(cell_reference=None, row_number=1, column_index=index + 1, column_name=column, raw_value=value)
+            for index, (column, value) in enumerate(pairs)
+        ),
+        extraction_method=ExtractionMethod.MODEL_VISION,
+        provider="test",
+    )
+
+
+# The MOV thresholds live in a banner spanning three columns, so the vision
+# model keeps them in the heading on some pages and truncates all three to an
+# identical "Net Invoice Price*" on others. Both shapes must yield the same
+# ladder — on the live Hill's run the truncated shape covers 59 of 238 rows.
+_BASE_ROW = [
+    ("Product Code 產品編號", "1141HG"),
+    ("Product Range 產品系列", "Everyday Diet"),
+    ("Life Stage 生命階段", "Adult 1-6"),
+    ("Product Description 產品名稱", "Small Bite Lamb & Rice"),
+    ("Size 重量", "3kg"),
+    ("Order Multiple 訂貨單位", "1"),
+    ("Gross Wholesale Price 折扣前批發價（每包／罐）", "227.2"),
+]
+
+
+def _tiers(fields) -> list[tuple[str, str]]:
+    return [
+        (str(term["condition"]["spend"]["amount"]), str(term["benefit"]["discounted_price"]["amount"]))
+        for term in fields["mbb_terms"]
+    ]
+
+
+def test_repeated_tier_headings_are_read_left_to_right():
+    """Page 3 of the live catalogue: three columns, one indistinguishable heading."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [
+        ("Net Invoice Price* 折扣批發價*", "215.8"),
+        ("Net Invoice Price* 折扣批發價*", "206.8"),
+        ("Net Invoice Price* 折扣批發價*", "202.2"),
+    ]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+
+    assert _tiers(outcome.items[0].normalized_fields) == [
+        ("1200", "215.8"), ("2200", "206.8"), ("4500", "202.2")
+    ], "leftmost column is the lowest threshold, as the document prints them"
+
+
+def test_the_named_thresholds_still_win_where_the_model_kept_them():
+    """Page 1: the headings name their own tier. Position must not override that."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [
+        ("Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200", "151.8"),
+        ("Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200", "145.4"),
+        ("Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500", "142.2"),
+    ]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+
+    assert _tiers(outcome.items[0].normalized_fields) == [
+        ("1200", "151.8"), ("2200", "145.4"), ("4500", "142.2")
+    ]
+
+
+def test_a_single_tier_column_does_not_become_three_identical_terms():
+    """The flat-ladder bug: one column answering every tier is not a discount."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [("Net Invoice Price* 折扣批發價*", "215.8")]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+
+    assert _tiers(outcome.items[0].normalized_fields) == [("1200", "215.8")]
+
+
+def test_rows_without_any_tier_column_carry_no_terms():
+    """Pages 4-9 are prescription diets — the catalogue prints no ladder for them."""
+    hills = runtime.load_contract(14)
+    outcome = conform_observations((_observation_from_pairs(_BASE_ROW),), (uuid4(),), hills)
+
+    assert outcome.items[0].normalized_fields["mbb_terms"] == []
+
+
 def test_real_gemini_bilingual_headers_map_through_the_contract():
     hills = runtime.load_contract(14)
     # Column labels EXACTLY as gemini-flash returned them for the Hill's page:
