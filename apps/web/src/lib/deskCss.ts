@@ -151,4 +151,17 @@ export const DESK_CSS = `
 .rdesk .lanetag.check{color:var(--red);background:var(--red-soft);border-color:#F1CDC9}
 .rdesk .lanetag.clean{color:var(--muted);background:var(--line2);border-color:var(--line)}
 @media(max-width:720px){.rdesk .dsearch{min-width:160px}}
+/* Staged review — every row publish will touch, grouped by what it does. */
+.rdesk .sgroupchip{font-size:11px;font-weight:600;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px 10px;white-space:nowrap}
+.rdesk .sgroupchip b{font-weight:750}
+.rdesk .sgrouph{position:sticky;top:0;z-index:1;padding:6px 13px;background:var(--panel);border-bottom:1px solid var(--line2);font-size:9.5px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.rdesk .srow{display:flex;align-items:center;gap:11px;padding:7px 13px;border-bottom:1px solid var(--line2);font-size:12px}
+.rdesk .srow:last-child{border-bottom:none}
+.rdesk .srow .sku{font-size:11px;color:var(--muted);flex:none;width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rdesk .srow .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.rdesk .srow .ssup{flex:none;width:72px;font-size:10.5px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rdesk .srow .sval{flex:none;width:132px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.rdesk .srow .sdelta{flex:none;width:52px;text-align:right;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.rdesk .srow .lnk{flex:none;white-space:nowrap;width:42px;text-align:right}
+@media(max-width:720px){.rdesk .srow .ssup{display:none}}
 `

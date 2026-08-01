@@ -858,6 +858,115 @@ const Empty = ({ label }: { label: string }) => (
 )
 
 // ── the dock: burn-down, staged cart, publish, receipt ─────────────────────
+/** What publishing this staged row will actually write. */
+type StagedKind = 'creates' | 'moves' | 'first' | 'holds'
+const STAGED_KIND: Record<StagedKind, { label: string; tone: string }> = {
+  creates: { label: 'creates a product', tone: 'var(--accent-ink)' },
+  moves:   { label: 'price moves',       tone: 'var(--amber)' },
+  first:   { label: 'first price',       tone: 'var(--good)' },
+  holds:   { label: 'price unchanged',   tone: 'var(--muted)' },
+}
+function stagedKind(item: SummaryItem): StagedKind {
+  if (willCreate(item)) return 'creates'
+  if (item.current_cost == null) return 'first'
+  if (item.price_delta_pct != null && item.price_delta_pct !== 0) return 'moves'
+  return 'holds'
+}
+
+/**
+ * Everything staged, in one list, before it becomes real.
+ *
+ * The dock could only ever show rows whose price MOVED, capped at five — on a
+ * typical run that is 11 of 238, so a sweep of the clean lane collapsed 227
+ * rows into "+227 more". You were asked to type a count to confirm a set you
+ * could not read. This is that set, grouped by what publishing does to it.
+ */
+function StagedReview({ staged, version, typed, setTyped, onPublish, onClose }: {
+  staged: SummaryItem[]
+  version: string
+  typed: string
+  setTyped: (v: string) => void
+  onPublish: () => void
+  onClose: () => void
+}) {
+  const ORDER: StagedKind[] = ['creates', 'moves', 'first', 'holds']
+  const groups = ORDER
+    .map(kind => [kind, staged.filter(i => stagedKind(i) === kind)] as const)
+    .filter(([, rows]) => rows.length > 0)
+  // Biggest move first inside the group that has moves — the risky ones lead.
+  const sorted = (kind: StagedKind, rows: SummaryItem[]) =>
+    kind === 'moves'
+      ? [...rows].sort((a, b) => Math.abs(b.price_delta_pct ?? 0) - Math.abs(a.price_delta_pct ?? 0))
+      : rows
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="rdesk-ovl" onClick={onClose}>
+      <div className="rdesk-focus" onClick={e => e.stopPropagation()} style={{ width: 900 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          <h1 style={{ fontSize: 17 }}>{staged.length} staged · review before publishing</h1>
+          <span className="lnk" style={{ marginLeft: 'auto' }} onClick={onClose}>close <span className="kbd">Esc</span></span>
+        </div>
+        <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', margin: '9px 0 4px' }}>
+          {groups.map(([kind, rows]) => (
+            <span key={kind} className="sgroupchip" style={{ color: STAGED_KIND[kind].tone }}>
+              <b>{rows.length}</b> {STAGED_KIND[kind].label}
+            </span>
+          ))}
+        </div>
+
+        <div className="panel" style={{ maxHeight: '54vh', overflowY: 'auto' }}>
+          {groups.map(([kind, rows]) => (
+            <div key={kind}>
+              <div className="sgrouph">{STAGED_KIND[kind].label} · {rows.length}</div>
+              {sorted(kind, rows).map(item => (
+                <div key={item.mastering_candidate_id} className="srow">
+                  <span className="mono sku">{item.canonical_sku ?? item.draft_name ?? '—'}</span>
+                  <span className="nm" title={item.variant_name ?? item.name ?? undefined}>
+                    {item.variant_name ?? item.draft_name ?? item.name ?? '—'}
+                  </span>
+                  <span className="ssup mono">{item.supplier_sku ?? '—'}</span>
+                  <span className="sval">
+                    {kind === 'creates' ? <>new SKU on publish</>
+                      : kind === 'first' ? <>first price <b>{fm(item.cost_amount)}</b></>
+                      : <>{fm(item.current_cost)} → <b>{fm(item.cost_amount)}</b></>}
+                  </span>
+                  <span className="sdelta" style={{
+                    color: Math.abs(item.price_delta_pct ?? 0) > PULL_THRESHOLD_PCT ? 'var(--red)' : 'var(--faint)',
+                  }}>{kind === 'moves' ? fmtDelta(item.price_delta_pct) : ''}</span>
+                  {item.canonical_sku && (
+                    <Link className="lnk" style={{ fontSize: 10.5 }} to={'/sku/$' as never}
+                      params={{ _splat: skuToPath(item.canonical_sku) } as never} target="_blank">SKU →</Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 11, flexWrap: 'wrap' }}>
+          <input className="fin" style={{ width: 72, textAlign: 'center' }} placeholder={String(staged.length)}
+            value={typed} onChange={e => setTyped(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && typed.trim() === String(staged.length)) onPublish() }}
+            aria-label="Type the publish count to confirm" />
+          <button className="btn pri" onClick={() => {
+            if (typed.trim() === String(staged.length)) onPublish()
+            else toast.error(`Type ${staged.length} first — the count is the confirmation.`)
+          }}>Publish {staged.length}</button>
+          <span style={{ fontSize: 10.5, color: 'var(--faint)', lineHeight: 1.5, flex: 1, minWidth: 220 }}>
+            Snapshot <b className="mono">{version}</b> · immutable · writes offering prices, links, packaging &amp; deals — never selling prices or stock.
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
   runId: string
   ringStops: string
@@ -871,6 +980,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
   const [progress, setProgress] = useState<string | null>(null)
   const [failures, setFailures] = useState<{ sku: string | null; error: string }[]>([])
   const [justPublished, setJustPublished] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
   const version = `v${new Date().toISOString().slice(0, 10)}`
 
   const receipt = useQuery({
@@ -892,6 +1002,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
       (done, total) => setProgress(`${done} / ${total}`),
     )
     setProgress(null)
+    setReviewOpen(false)
     onPublished()
     setJustPublished(true)
     // The LIVE section must move the moment publish lands — refetch the
@@ -912,6 +1023,10 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
 
   return (
     <div className="dock">
+      {reviewOpen && staged.length > 0 && (
+        <StagedReview staged={staged} version={version} typed={typed} setTyped={setTyped}
+          onPublish={publishAll} onClose={() => setReviewOpen(false)} />
+      )}
       <div style={{ display: 'flex', gap: 12, padding: '13px 13px 10px', alignItems: 'center' }}>
         <span className="ring" style={{ background: `conic-gradient(${ringStops})` }}><b>{centerPct}%</b></span>
         <span style={{ minWidth: 0 }}>
@@ -924,17 +1039,28 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
       <div className="dsec">
         <div className="dh">Staged — becomes real on publish</div>
         {staged.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--faint)' }}>Nothing staged yet — approvals land here.</div>}
-        {deltas.slice(0, 5).map(item => (
+        {/* The preview leads with the price moves because they are the risky
+            ones, but it must never imply that is all that is staged — the
+            counts below name every row, and "Review all" shows them. */}
+        {deltas.slice(0, 4).map(item => (
           <div key={item.mastering_candidate_id} className="sitem">
             <span className="sku">{item.canonical_sku ?? item.supplier_sku}</span>
             <span>{fm(item.current_cost)} → <b>{fm(item.cost_amount)}</b></span>
             <span style={{ marginLeft: 'auto', fontSize: 10.5, color: Math.abs(item.price_delta_pct ?? 0) > PULL_THRESHOLD_PCT ? 'var(--red)' : 'var(--muted)' }}>{fmtDelta(item.price_delta_pct)}</span>
           </div>
         ))}
-        {staged.length > deltas.slice(0, 5).length && (
-          <div style={{ fontSize: 10.5, color: 'var(--faint)', marginTop: 3 }}>
-            + {staged.length - Math.min(5, deltas.length)} more (first prices &amp; new links)
-          </div>
+        {staged.length > 0 && (
+          <>
+            <div style={{ fontSize: 10.5, color: 'var(--faint)', marginTop: 5, lineHeight: 1.6 }}>
+              {(['creates', 'moves', 'first', 'holds'] as StagedKind[])
+                .map(kind => [kind, staged.filter(i => stagedKind(i) === kind).length] as const)
+                .filter(([, n]) => n > 0)
+                .map(([kind, n]) => `${n} ${STAGED_KIND[kind].label}`)
+                .join(' · ')}
+            </div>
+            <button className="btn sm" style={{ marginTop: 8, width: '100%', justifyContent: 'center' }}
+              onClick={() => setReviewOpen(true)}>Review all {staged.length} →</button>
+          </>
         )}
       </div>
 
