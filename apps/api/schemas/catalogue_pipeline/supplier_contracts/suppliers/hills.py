@@ -155,16 +155,21 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
             # Hill's states its discount ladder as three priced columns, one per
             # minimum-order-value threshold, printed against every row.
             #
-            # The MOV amounts sit in a banner spanning the three columns, so the
-            # vision model keeps them in the heading on some pages ("… 購貨金額滿
-            # MOV $1,200", page 1) and truncates all three to an identical
-            # "Net Invoice Price* 折扣批發價*" on others (pages 2-3). Each field
-            # therefore matches its own fully-qualified heading first, and falls
-            # back to the bare heading BY POSITION — leftmost is the lowest
-            # threshold, as the document prints them.
+            # The MOV amounts sit in a banner spanning the three columns, and
+            # what a vision model returns for them is not stable. Measured on
+            # one live document: Gemini kept "… 購貨金額滿 MOV $1,200" on page 1
+            # and truncated all three to an identical "Net Invoice Price*
+            # 折扣批發價*" on pages 2-3; Claude labelled them by discount
+            # percentage ("0%/4%/6%") on pages 1-2 and by MOV amount on page 3 —
+            # and page 1 gave the MOV form on a different run of the same page.
             #
-            # The position is what makes the fallback safe. A bare alias without
-            # it matched the same (first) column for all three fields and
+            # So each field matches its own fully-qualified heading first, and
+            # otherwise takes its position within the "Net Invoice Price*"
+            # family: leftmost is the lowest threshold, as the document prints
+            # them. Family plus printed order is the part that holds still.
+            #
+            # The position is what makes the fallback safe. Matching the family
+            # WITHOUT it gave all three fields the same (first) column and
             # produced ladders reading "spend 1,200 -> 27.00 / spend 2,200 ->
             # 27.00 / spend 4,500 -> 27.00" on 59 rows. A flat ladder is not a
             # discount. The threshold itself is never inferred from position —
@@ -174,7 +179,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.MBB_TIER_PRICE,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
-                aliases=["Net Invoice Price* 折扣批發價*"],
+                source_column_prefix="Net Invoice Price*",
                 source_column_occurrence=1,
                 tier_minimum_spend=Decimal("1200"),
                 tier_order=1,
@@ -186,7 +191,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.MBB_TIER_PRICE,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
-                aliases=["Net Invoice Price* 折扣批發價*"],
+                source_column_prefix="Net Invoice Price*",
                 source_column_occurrence=2,
                 tier_minimum_spend=Decimal("2200"),
                 tier_order=2,
@@ -198,7 +203,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.MBB_TIER_PRICE,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500",
-                aliases=["Net Invoice Price* 折扣批發價*"],
+                source_column_prefix="Net Invoice Price*",
                 source_column_occurrence=3,
                 tier_minimum_spend=Decimal("4500"),
                 tier_order=3,

@@ -225,10 +225,12 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
     # Same index, every match rather than the first: a table may repeat one
     # heading across several columns, and then only position tells them apart.
     cells_by_key: dict[str, list[str]] = {}
+    ordered_cells: list[tuple[list[str], str]] = []
     row_values: list[str] = []
     for cell in observation.raw_cells:
         if cell.column_name and cell.raw_value is not None and str(cell.raw_value).strip():
             row_values.append(str(cell.raw_value))
+            ordered_cells.append((_column_keys(cell.column_name), str(cell.raw_value)))
             for key in _column_keys(cell.column_name):
                 cell_by_key.setdefault(key, str(cell.raw_value))
                 cells_by_key.setdefault(key, []).append(str(cell.raw_value))
@@ -241,6 +243,21 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
                 if key in cell_by_key:
                     return cell_by_key[key]
         return None
+
+    def _lookup_nth_in_family(occurrence: int, prefix: str) -> str | None:
+        """The nth column whose heading BEGINS with this family, left to right.
+
+        Heading text is not a stable key — the same three columns come back
+        labelled by threshold, by percentage, or bare, depending on the page
+        and the run. The family and the printed order are stable.
+        """
+        prefix_keys = _column_keys(prefix)
+        matches = [
+            value
+            for keys, value in ordered_cells
+            if any(key.startswith(pk) for key in keys for pk in prefix_keys)
+        ]
+        return matches[occurrence - 1] if len(matches) >= occurrence else None
 
     def _lookup_nth(occurrence: int, *column_names: str) -> str | None:
         """The nth column carrying this heading, left to right.
@@ -264,7 +281,11 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
             # the repeated fallback heading — asking it to also index the exact
             # one would lose tiers 2 and 3 on the pages that name them, since
             # that heading appears exactly once there.
-            return _lookup(*exact) or _lookup_nth(occurrence, *contract_field.aliases)
+            found = _lookup(*exact) or _lookup_nth(occurrence, *contract_field.aliases)
+            prefix = getattr(contract_field, "source_column_prefix", None)
+            if found is None and prefix:
+                found = _lookup_nth_in_family(occurrence, prefix)
+            return found
         return _lookup(*exact, *contract_field.aliases)
 
     def _lookup_composed(column_name: str) -> str | None:

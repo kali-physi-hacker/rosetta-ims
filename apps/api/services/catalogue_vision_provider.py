@@ -9,9 +9,10 @@ constructs a vision client.
 Two providers are implemented and either can run the whole pipeline:
 
   anthropic (default) — Claude reads the page bytes directly (PDF document
-      blocks, image blocks). JSON is forced by prefilling the assistant turn
-      with "{", which is the strongest guarantee available without pinning a
-      tool schema to the envelope.
+      blocks, image blocks) and answers through a forced tool call, so the
+      envelope arrives as structured input rather than as text that has to be
+      parsed. (Prefilling "{" would be the lighter trick; claude-sonnet-5
+      rejects assistant prefill outright.)
   google — Gemini, which this pipeline was built on. Kept because its
       behaviour on dense Hill's pages is measured and known.
 
@@ -23,6 +24,7 @@ it and a mixed-provider database stays interpretable.
 from __future__ import annotations
 
 import base64
+import json
 import os
 from typing import Any
 
@@ -40,12 +42,59 @@ DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5"
 # this must stay well clear of that; it is separate from the Gemini ceiling
 # because the caps differ.
 DEFAULT_ANTHROPIC_MAX_TOKENS = 48000
-# Extended thinking, off by default. Transcribing printed cells is not a
-# reasoning task, and thinking forbids the assistant prefill that makes the
-# JSON envelope deterministic — so enabling it trades a hard guarantee for a
-# benefit this workload has not been measured to need. Set a token budget to
-# turn it on (the prefill is dropped automatically when you do).
+# Extended thinking, off by default: transcribing printed cells is not a
+# reasoning task, and thinking cannot be combined with forcing the tool call,
+# so turning it on downgrades the envelope from guaranteed to merely asked for.
+# Set a token budget only if measurement earns it.
 DEFAULT_ANTHROPIC_THINKING_BUDGET = 0
+
+# The envelope, as a tool the model must call. Deliberately permissive — it
+# exists to make the ANSWER STRUCTURED, not to validate it; _VisionEnvelope is
+# the authoritative gate and rejects anything this lets through. Cells are
+# typed as strings so a price reads "13.10" and not the float 13.1.
+_EVIDENCE_TOOL_NAME = "record_catalogue_evidence"
+_ROW_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "cells": {
+            "type": "array",
+            "items": {"type": ["string", "null"]},
+            "description": "Verbatim cell values aligned by position to this table's columns.",
+        },
+        "confidence": {"type": "string"},
+        "box": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+    },
+}
+_EVIDENCE_TOOL = {
+    "name": _EVIDENCE_TOOL_NAME,
+    "description": "Record the verbatim catalogue evidence found on this page.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "page_outcome": {"type": "string", "enum": ["evidence", "no_catalogue_evidence"]},
+            "tables": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "columns": {"type": "array", "items": {"type": "string"}},
+                        "rows": {"type": "array", "items": _ROW_SCHEMA},
+                    },
+                    "required": ["columns", "rows"],
+                },
+            },
+            "text_observations": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {"text": {"type": "string"}, "confidence": {"type": "string"}},
+                    "required": ["text"],
+                },
+            },
+        },
+        "required": ["page_outcome"],
+    },
+}
 
 # Vision model, env-overridable. Default is COST-FIRST: gemini-flash-latest
 # runs ~4.8x cheaper per output token than 3.1 Pro and matched Pro's row
@@ -138,40 +187,55 @@ class AnthropicVisionProvider(VisionProvider):
                 if media_type == "application/pdf"
                 else {"type": "image", "source": source}
             )
-            messages: list[dict[str, Any]] = [
-                {"role": "user", "content": [block, {"type": "text", "text": prompt}]}
-            ]
             thinking_budget = _int_setting("ANTHROPIC_VISION_THINKING_BUDGET", DEFAULT_ANTHROPIC_THINKING_BUDGET)
             request: dict[str, Any] = {
                 "model": self.model,
                 "max_tokens": _int_setting("ANTHROPIC_VISION_MAX_TOKENS", DEFAULT_ANTHROPIC_MAX_TOKENS),
-                "messages": messages,
+                "messages": [{"role": "user", "content": [block, {"type": "text", "text": prompt}]}],
+                "tools": [_EVIDENCE_TOOL],
+                # Forced, so the page cannot come back as prose. Thinking and a
+                # forced tool are mutually exclusive, so asking for thinking
+                # means asking for the tool rather than requiring it.
+                "tool_choice": (
+                    {"type": "auto"} if thinking_budget > 0
+                    else {"type": "tool", "name": _EVIDENCE_TOOL_NAME}
+                ),
             }
             if thinking_budget > 0:
                 request["thinking"] = {"type": "enabled", "budget_tokens": thinking_budget}
-            else:
-                # Prefilling the assistant turn with the opening brace removes
-                # the one failure mode worth engineering against: a preamble or
-                # a code fence wrapped around the envelope. The model can only
-                # continue the object, so the reply is JSON by construction —
-                # and the brace has to be put back, since it was ours.
-                messages.append({"role": "assistant", "content": [{"type": "text", "text": "{"}]})
 
-            response = client.messages.create(**request)
-            text = _anthropic_text(response)
+            # Streamed, not because anything consumes the chunks, but because
+            # the SDK refuses a blocking call whose max_tokens could run past
+            # ten minutes — and a dense catalogue page asks for ~30k tokens.
+            # The assembled message is identical either way.
+            with client.messages.stream(**request) as stream:
+                response = stream.get_final_message()
+
+            text = _anthropic_envelope(response)
             if not text:
                 raise VisionExtractionFailure(
                     code="MALFORMED_PROVIDER_RESPONSE",
-                    public_message="Vision provider returned no text response",
+                    public_message="Vision provider returned no evidence envelope",
                     retryable=True,
                 )
-            if thinking_budget <= 0:
-                text = "{" + text
             return VisionResponse(text=text, request_id=getattr(response, "id", None))
         except VisionExtractionFailure:
             raise
         except Exception as exc:  # noqa: BLE001 - provider surface is broad
             raise classify_provider_failure(exc) from exc
+
+
+def _anthropic_envelope(response: Any) -> str:
+    """The envelope as JSON text, however the model chose to deliver it.
+
+    Normally that is the forced tool call's input. With thinking enabled the
+    tool is only requested, so a text answer is accepted as a fallback —
+    thinking blocks are never the answer.
+    """
+    for block in getattr(response, "content", None) or []:
+        if getattr(block, "type", None) == "tool_use" and getattr(block, "input", None) is not None:
+            return json.dumps(block.input, ensure_ascii=False)
+    return _anthropic_text(response)
 
 
 def _anthropic_text(response: Any) -> str:

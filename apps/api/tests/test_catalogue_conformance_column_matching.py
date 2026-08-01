@@ -74,6 +74,30 @@ def _tiers(fields) -> list[tuple[str, str]]:
     ]
 
 
+def test_tier_columns_are_read_left_to_right_however_they_are_labelled():
+    """Every heading shape a live run has actually produced for these columns.
+
+    Truncated is Gemini on pages 2-3; the percentage labels are Claude on
+    pages 1-2 of the same document; the MOV form is both providers elsewhere.
+    A ladder must come out the same from all of them.
+    """
+    hills = runtime.load_contract(14)
+    for labels in (
+        ["Net Invoice Price* 折扣批發價*"] * 3,
+        ["Net Invoice Price* 折扣批發價* (0%)",
+         "Net Invoice Price* 折扣批發價* (4%)",
+         "Net Invoice Price* 折扣批發價* (6%)"],
+        ["Net Invoice Price* 折扣批發價* (MOV $1,200)",
+         "Net Invoice Price* 折扣批發價* (MOV $2,200)",
+         "Net Invoice Price* 折扣批發價* (MOV $4,500)"],
+    ):
+        row = _BASE_ROW + list(zip(labels, ["215.8", "206.8", "202.2"]))
+        outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+        assert _tiers(outcome.items[0].normalized_fields) == [
+            ("1200", "215.8"), ("2200", "206.8"), ("4500", "202.2")
+        ], f"failed for {labels[0]!r}"
+
+
 def test_repeated_tier_headings_are_read_left_to_right():
     """Page 3 of the live catalogue: three columns, one indistinguishable heading."""
     hills = runtime.load_contract(14)
@@ -102,6 +126,16 @@ def test_the_named_thresholds_still_win_where_the_model_kept_them():
     assert _tiers(outcome.items[0].normalized_fields) == [
         ("1200", "151.8"), ("2200", "145.4"), ("4500", "142.2")
     ]
+
+
+def test_a_column_outside_the_family_is_never_read_as_a_tier():
+    """Prefix matching must not swallow the gross price sitting next to them."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [("Net Invoice Price* 折扣批發價* (0%)", "215.8")]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+    fields = outcome.items[0].normalized_fields
+    assert _tiers(fields) == [("1200", "215.8")]
+    assert fields["cost"]["amount"] == "227.2", "the gross wholesale column is untouched"
 
 
 def test_a_single_tier_column_does_not_become_three_identical_terms():

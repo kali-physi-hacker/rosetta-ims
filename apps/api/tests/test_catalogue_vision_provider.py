@@ -23,7 +23,7 @@ os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 from services import catalogue_vision_provider as vision  # noqa: E402
 
 PROMPT = "Extract only verbatim catalogue evidence."
-ENVELOPE_BODY = '"page_outcome": "evidence", "tables": [], "text_observations": []}'
+ENVELOPE = {"page_outcome": "evidence", "tables": [], "text_observations": []}
 
 
 @pytest.fixture(autouse=True)
@@ -39,22 +39,44 @@ class _Block:
         self.text = text
 
 
+class _ToolUse:
+    type = "tool_use"
+    name = "record_catalogue_evidence"
+
+    def __init__(self, payload):
+        self.input = payload
+
+
 class _Message:
     def __init__(self, blocks, id="msg_01ABC"):
         self.content = blocks
         self.id = id
 
 
-def _fake_anthropic(monkeypatch, reply=_Message([_Block("text", ENVELOPE_BODY)])):
+def _fake_anthropic(monkeypatch, reply=None):
     """Stand in for the SDK, capturing exactly what the seam sends."""
+    if reply is None:
+        reply = _Message([_ToolUse(ENVELOPE)])
     captured: dict = {}
 
-    class _Messages:
-        def create(self, **kwargs):
-            captured.update(kwargs)
+    class _Stream:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def get_final_message(self):
             if isinstance(reply, Exception):
                 raise reply
             return reply
+
+    class _Messages:
+        def stream(self, **kwargs):
+            captured.update(kwargs)
+            if isinstance(reply, Exception) and not hasattr(reply, "status_code"):
+                raise reply
+            return _Stream()
 
     class _Anthropic:
         def __init__(self, api_key=None):
@@ -125,33 +147,52 @@ def test_a_scan_is_sent_as_an_image_block(monkeypatch):
     assert block["source"]["media_type"] == "image/png"
 
 
-def test_the_reply_is_json_by_construction(monkeypatch):
-    """The assistant turn is prefilled with "{", so a preamble cannot happen.
+def test_the_envelope_arrives_as_a_forced_tool_call(monkeypatch):
+    """Not text that has to be parsed, and not optional.
 
-    The brace is ours, so it has to be put back before anyone parses the reply.
+    Prefilling the assistant turn with "{" would be the lighter trick, but
+    claude-sonnet-5 rejects assistant prefill outright (400), so the structure
+    has to come from the tool.
     """
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     captured = _fake_anthropic(monkeypatch)
 
     response = vision.AnthropicVisionProvider().call(b"pdf", media_type="application/pdf", prompt=PROMPT)
 
-    assert captured["messages"][-1] == {"role": "assistant", "content": [{"type": "text", "text": "{"}]}
+    assert captured["tool_choice"] == {"type": "tool", "name": "record_catalogue_evidence"}
+    assert [t["name"] for t in captured["tools"]] == ["record_catalogue_evidence"]
+    assert [m["role"] for m in captured["messages"]] == ["user"], "no assistant prefill"
     assert json.loads(response.text)["page_outcome"] == "evidence"
     assert response.request_id == "msg_01ABC"
 
 
-def test_thinking_replaces_the_prefill_because_the_api_forbids_both(monkeypatch):
+def test_cells_are_typed_as_strings_so_a_price_keeps_its_trailing_zero(monkeypatch):
+    """$13.10 as a JSON number comes back 13.1 — a different printed value."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    captured = _fake_anthropic(monkeypatch)
+    vision.AnthropicVisionProvider().call(b"pdf", media_type="application/pdf", prompt=PROMPT)
+
+    rows = captured["tools"][0]["input_schema"]["properties"]["tables"]["items"]["properties"]["rows"]
+    assert rows["items"]["properties"]["cells"]["items"]["type"] == ["string", "null"]
+
+
+def test_thinking_downgrades_the_tool_from_required_to_requested(monkeypatch):
+    """The API refuses a forced tool alongside thinking, so the guarantee softens.
+
+    That trade is the whole reason thinking is off by default; when it is on,
+    a plain text envelope has to be accepted too.
+    """
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     monkeypatch.setenv("ANTHROPIC_VISION_THINKING_BUDGET", "4096")
     captured = _fake_anthropic(monkeypatch, reply=_Message([
         _Block("thinking"),
-        _Block("text", "{" + ENVELOPE_BODY),
+        _Block("text", json.dumps(ENVELOPE)),
     ]))
 
     response = vision.AnthropicVisionProvider().call(b"pdf", media_type="application/pdf", prompt=PROMPT)
 
     assert captured["thinking"] == {"type": "enabled", "budget_tokens": 4096}
-    assert [m["role"] for m in captured["messages"]] == ["user"], "no prefill when thinking is on"
+    assert captured["tool_choice"] == {"type": "auto"}
     # The thinking block is not the answer.
     assert json.loads(response.text)["page_outcome"] == "evidence"
 

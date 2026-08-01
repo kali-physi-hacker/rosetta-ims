@@ -555,8 +555,21 @@
             }
           ],
           "default": null,
-          "description": "Which column to take when a heading appears more than once in the same row: 1 is the leftmost. Needed where a table repeats one heading across several columns and the distinguishing text is only in a merged banner above them — Hill's prints three 'Net Invoice Price*' columns whose MOV thresholds sit in a spanning header the vision model keeps on some pages and drops on others. Without this an alias for the repeated heading matches the same (first) column for every tier, producing a flat ladder that reads as a discount but is not one. Ignored when the heading matches only one column, so an exact threshold-bearing heading still wins where the model captured it.",
+          "description": "Which column to take when several columns belong to one heading family: 1 is the leftmost, in printed order. Needed where a table repeats one heading across several columns and what distinguishes them sits in a merged banner above — Hill's prints three 'Net Invoice Price*' columns under a spanning MOV header. Ignored when the exact declared heading matches a column, so a fully-labelled heading still wins.",
           "title": "Source Column Occurrence"
+        },
+        "source_column_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Heading family this column belongs to, matched as a prefix and paired with source_column_occurrence. Exists because heading TEXT from a vision model is not a stable key: on one live Hill's document the same three columns came back labelled by MOV amount on one page, by discount percentage ('0%/4%/6%') on another, and truncated to bare 'Net Invoice Price*' on a third — the same page even varying between runs. What is stable is the family and the printed order, so that is what a contract may match on. The tier's own condition is still declared, never inferred from position.",
+          "title": "Source Column Prefix"
         },
         "source_path": {
           "anyOf": [
