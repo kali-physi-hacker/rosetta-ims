@@ -67,6 +67,11 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
         ],
     )
 
+    uoms = _uom_by_sku(db, [
+        variant.get("canonical_sku") or variant.get("product_variant_id")
+        for _, _, variant, _ in parsed
+    ])
+
     items = []
     by_status: dict[str, int] = {}
     for candidate, offer, variant, price in parsed:
@@ -91,6 +96,11 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
                 "cost_amount": cost,
                 "cost_currency": (price.get("current_cost") or {}).get("currency"),
                 "cost_basis": ((price.get("current_cost") or {}).get("price_basis") or {}).get("label"),
+                # What the cost is PER. Every price in this pipeline is per
+                # sellable unit (basis code UNIT), and the contract's own basis
+                # label is null on real runs, so the variant's uom is the only
+                # place the word actually lives.
+                "uom": uoms.get(sku),
                 "offering_state": offer.get("state"),
                 "variant_state": variant.get("state"),
                 "canonical_sku": variant.get("canonical_sku"),
@@ -193,6 +203,7 @@ def run_receipt(db: Session, run_uuid: UUID) -> dict[str, Any]:
         changes.append({
             "sku_code": variant.sku_code if variant else None,
             "variant_name": variant.name if variant else None,
+            "uom": _unit_label(variant.uom if variant else None),
             "supplier_name": supplier.name if supplier else None,
             "supplier_sku": offering.supplier_sku,
             "old_unit_cost": old_unit,
@@ -233,6 +244,7 @@ def _created_variants(db: Session, run: str) -> list[dict[str, Any]]:
             "sku_code": sku,
             "name": product.name if product else draft.get("name"),
             "category": product.category if product else draft.get("category"),
+            "uom": _unit_label(product.uom if product else draft.get("uom")),
             "brand": product.brand if product else draft.get("brand"),
             "drafted_by": candidate.reviewed_by,
             "decided_at": candidate.reviewed_at,
@@ -455,6 +467,34 @@ def _current_offer_prices(db: Session, offer_keys: list[str]) -> dict[str, float
         )
         prices.update({legacy_ids[row_id]: float(cost) for row_id, cost in rows if cost is not None})
     return prices
+
+
+# The catalogue's uom column is dirty: alongside real words (Can(s), Bag(s),
+# PCS) it holds "#N/A" and empty strings from years of sheet imports. A price
+# reads better with no unit at all than with "/ #N/A" after it.
+_JUNK_UOM = {"", "-", "n/a", "#n/a", "na", "null", "none"}
+
+
+def _unit_label(raw: str | None) -> str | None:
+    """"Can(s)" -> "can", "Pouch(es)" -> "pouch". None when it says nothing.
+
+    "unit" is kept: next to a price it still disambiguates (per single item,
+    not per case), which is the whole reason for showing the unit at all.
+    """
+    text = re.sub(r"\((?:e?s)\)$", "", (raw or "").strip()).strip().lower()
+    return None if text in _JUNK_UOM else (text or None)
+
+
+def _uom_by_sku(db: Session, sku_codes: list[str]) -> dict[str, str]:
+    skus = [sku for sku in set(sku_codes) if sku]
+    if not skus:
+        return {}
+    rows = (
+        db.query(models.ProductVariant.sku_code, models.ProductVariant.uom)
+        .filter(models.ProductVariant.sku_code.in_(skus))
+        .all()
+    )
+    return {sku: label for sku, uom in rows if (label := _unit_label(uom))}
 
 
 def _selling_prices_by_sku(db: Session, sku_codes: list[str]) -> dict[str, tuple[float, str]]:

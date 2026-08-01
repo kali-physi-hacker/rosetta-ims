@@ -55,6 +55,10 @@ export interface SummaryItem {
   created_product_sku?: string | null
   draft_name?: string | null
   draft_category?: string | null
+  /** What the cost is per — "can", "bag", "unit". Null when the catalogue's
+   *  uom for this variant is junk ("#N/A", empty) and would read worse than
+   *  nothing. */
+  uom?: string | null
 }
 
 export interface RunIssue {
@@ -307,6 +311,9 @@ export async function fanOut<T>(
 export const fmtMoney = (amount: number | null | undefined, currency = 'HKD') =>
   amount == null ? '—' : `${amount.toFixed(2)} ${currency}`
 
+/** "13.10 / can" — the unit is dropped when the catalogue does not know it. */
+export const per = (uom: string | null | undefined) => (uom ? ` / ${uom}` : '')
+
 export const fmtDelta = (pct: number | null | undefined) =>
   pct == null ? null : `${pct > 0 ? '↑' : pct < 0 ? '↓' : '±'} ${Math.abs(pct).toFixed(1)}%`
 
@@ -327,6 +334,7 @@ export const REASON_CHIPS = [
 export interface ReceiptChange {
   sku_code: string | null
   variant_name: string | null
+  uom?: string | null
   supplier_name: string | null
   supplier_sku: string | null
   old_unit_cost: number | null
@@ -339,6 +347,7 @@ export interface ReceiptChange {
 export interface ReceiptCreated {
   sku_code: string
   name: string | null
+  uom?: string | null
   category: string | null
   brand: string | null
   drafted_by: string | null

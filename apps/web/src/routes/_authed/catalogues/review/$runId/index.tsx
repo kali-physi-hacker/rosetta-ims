@@ -17,7 +17,7 @@ import {
   isDecided, isApproved, isStaged, sampleIds, suggestTerms,
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
   correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate,
-  resolveRunIssue, fanOut, fmtDelta, marginPct,
+  resolveRunIssue, fanOut, fmtDelta, marginPct, per,
   fetchRunStatus, retryRun, failureInfo, TERMINAL_RUN_STATUSES,
   REASON_CHIPS, PULL_THRESHOLD_PCT,
   type SummaryItem, type VariantHit, type ReceiptChange, type RunStatus, type FailureView,
@@ -622,7 +622,7 @@ function RunDeskPage() {
               {check.map(item => (
                 <LaneRow key={item.mastering_candidate_id} item={item}
                   why={isDecided(item) ? decidedLabel(item)
-                    : `${item.canonical_sku ?? ''}${item.price_delta_pct != null ? ` · ${fmtDelta(item.price_delta_pct)}` : ''}${isPulled(item) ? ' — big move' : ' · spot-check'}`}
+                    : `${item.canonical_sku ?? ''}${item.cost_amount != null ? ` · ${item.cost_amount.toFixed(2)}${per(item.uom)}` : ''}${item.price_delta_pct != null ? ` · ${fmtDelta(item.price_delta_pct)}` : ''}${isPulled(item) ? ' — big move' : ''}`}
                   whyTone={isPulled(item) && !isDecided(item) ? 'var(--red)' : undefined}
                   action={!isDecided(item) && canApprove(item) && !isPulled(item)
                     ? <button className="btn sm" disabled={rowBusy === item.mastering_candidate_id} onClick={() => stageOne(item)}>✓ Stage</button>
@@ -933,8 +933,8 @@ function StagedReview({ staged, version, typed, setTyped, onPublish, onClose }: 
                   <span className="ssup mono">{item.supplier_sku ?? '—'}</span>
                   <span className="sval">
                     {kind === 'creates' ? <>new SKU on publish</>
-                      : kind === 'first' ? <>first price <b>{fm(item.cost_amount)}</b></>
-                      : <>{fm(item.current_cost)} → <b>{fm(item.cost_amount)}</b></>}
+                      : kind === 'first' ? <>first price <b>{fm(item.cost_amount)}</b>{per(item.uom)}</>
+                      : <>{fm(item.current_cost)}{per(item.uom)} → <b>{fm(item.cost_amount)}</b>{per(item.uom)}</>}
                   </span>
                   <span className="sdelta" style={{
                     color: Math.abs(item.price_delta_pct ?? 0) > PULL_THRESHOLD_PCT ? 'var(--red)' : 'var(--faint)',
@@ -1045,7 +1045,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
         {deltas.slice(0, 4).map(item => (
           <div key={item.mastering_candidate_id} className="sitem">
             <span className="sku">{item.canonical_sku ?? item.supplier_sku}</span>
-            <span>{fm(item.current_cost)} → <b>{fm(item.cost_amount)}</b></span>
+            <span>{fm(item.current_cost)} → <b>{fm(item.cost_amount)}</b>{per(item.uom)}</span>
             <span style={{ marginLeft: 'auto', fontSize: 10.5, color: Math.abs(item.price_delta_pct ?? 0) > PULL_THRESHOLD_PCT ? 'var(--red)' : 'var(--muted)' }}>{fmtDelta(item.price_delta_pct)}</span>
           </div>
         ))}
@@ -1104,7 +1104,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
           {receiptRows.map((change, index) => (
             <div key={index} className="sitem">
               <span className="sku">{change.sku_code ?? change.supplier_sku}</span>
-              <span>{change.old_unit_cost != null ? `${fm(change.old_unit_cost)} → ` : 'first price '}<b>{fm(change.new_unit_cost)}</b></span>
+              <span>{change.old_unit_cost != null ? `${fm(change.old_unit_cost)}${per(change.uom)} → ` : 'first price '}<b>{fm(change.new_unit_cost)}</b>{per(change.uom)}</span>
               {change.sku_code && (
                 <Link className="lnk" style={{ marginLeft: 'auto', fontSize: 10.5 }}
                   to={'/sku/$' as never} params={{ _splat: skuToPath(change.sku_code) } as never}>SKU →</Link>
@@ -1312,7 +1312,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
                   )}
                 </tbody></table>
                 <div className="readas">
-                  Read as: <b>{current.name ?? '—'}</b> · {current.cost_amount != null ? `${current.cost_amount.toFixed(2)} ${current.cost_currency ?? ''}${current.cost_basis ? `/${current.cost_basis.toLowerCase()}` : ''}` : 'no cost'} · code {current.supplier_sku ?? '—'}
+                  Read as: <b>{current.name ?? '—'}</b> · {current.cost_amount != null ? `${current.cost_amount.toFixed(2)} ${current.cost_currency ?? ''}${current.cost_basis ? `/${current.cost_basis.toLowerCase()}` : per(current.uom)}` : 'no cost'} · code {current.supplier_sku ?? '—'}
                   {current.barcode ? ` · barcode ${current.barcode}` : ''}
                 </div>
               </>

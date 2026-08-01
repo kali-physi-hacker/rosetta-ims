@@ -160,7 +160,7 @@ export const DESK_CSS = `
 .rdesk .srow .sku{font-size:11px;color:var(--muted);flex:none;width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rdesk .srow .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
 .rdesk .srow .ssup{flex:none;width:72px;font-size:10.5px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rdesk .srow .sval{flex:none;width:132px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.rdesk .srow .sval{flex:none;width:196px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
 .rdesk .srow .sdelta{flex:none;width:52px;text-align:right;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
 .rdesk .srow .lnk{flex:none;white-space:nowrap;width:42px;text-align:right}
 @media(max-width:720px){.rdesk .srow .ssup{display:none}}

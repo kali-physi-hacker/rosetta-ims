@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 import { Spinner } from '@/components/Spinner'
 import { skuToPath } from '@/lib/sku'
 import { DESK_CSS } from '@/lib/deskCss'
-import { fetchReceipt, fetchSummary, latest, isStaged, fmtDelta } from '@/lib/review'
+import { fetchReceipt, fetchSummary, latest, isStaged, fmtDelta, per } from '@/lib/review'
 
 export const Route = createFileRoute('/_authed/catalogues/review/$runId/commit')({ component: ReceiptPage })
 
@@ -75,8 +75,8 @@ function ReceiptPage() {
                   <tr key={index} style={{ borderTop: '1px solid var(--line2)', opacity: change.is_current ? 1 : 0.6 }}>
                     <td className="mono" style={{ padding: '7px 13px', fontSize: 11 }}>{change.sku_code ?? change.supplier_sku ?? '—'}</td>
                     <td style={{ padding: '7px 13px', color: 'var(--ink)' }}>{change.variant_name ?? '—'}{!change.is_current && <span style={{ fontSize: 10, color: 'var(--faint)' }}> · superseded since</span>}</td>
-                    <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontVariantNumeric: 'tabular-nums' }}>{change.old_unit_cost != null ? fm(change.old_unit_cost) : 'first price'}</td>
-                    <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{fm(change.new_unit_cost)}</td>
+                    <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontVariantNumeric: 'tabular-nums' }}>{change.old_unit_cost != null ? `${fm(change.old_unit_cost)}${per(change.uom)}` : 'first price'}</td>
+                    <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{fm(change.new_unit_cost)}{per(change.uom)}</td>
                     <td className="mono" style={{ padding: '7px 13px', fontSize: 11, fontWeight: 700, color: change.delta_pct != null && Math.abs(change.delta_pct) > 20 ? 'var(--red)' : 'var(--muted)' }}>{fmtDelta(change.delta_pct) ?? '—'}</td>
                     <td style={{ padding: '7px 13px', fontSize: 11, color: 'var(--faint)', whiteSpace: 'nowrap' }}>{fmtWhen(change.written_at)}</td>
                     <td style={{ padding: '7px 13px', textAlign: 'right' }}>
