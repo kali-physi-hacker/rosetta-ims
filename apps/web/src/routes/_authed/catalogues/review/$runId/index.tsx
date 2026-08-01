@@ -27,6 +27,9 @@ import {
 export const Route = createFileRoute('/_authed/catalogues/review/$runId/')({ component: RunDeskPage })
 
 type LaneId = 'pick' | 'new' | 'check' | 'clean'
+const LANE_LABEL: Record<LaneId, string> = {
+  pick: 'needs a pick', new: 'new to us', check: 'check by hand', clean: 'clean',
+}
 
 const fm = (v: number | null | undefined) => (v == null ? '—' : v.toFixed(2))
 
@@ -278,6 +281,8 @@ function RunDeskPage() {
   // family clusters for the new-to-us lane
   const [clustersExpanded, setClustersExpanded] = useState(false)
   const [cleanExpanded, setCleanExpanded] = useState(false)
+  const [search, setSearch] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
   const clusters = useMemo(() => {
     const map = new Map<string, SummaryItem[]>()
     for (const item of newTo) {
@@ -291,6 +296,24 @@ function RunDeskPage() {
 
   // ── focus overlay ──
   const [focus, setFocus] = useState<{ lane: LaneId; id: string } | null>(null)
+  // Search spans every lane at once. Two of the four lanes are collapsed by
+  // default (New to us groups by family, Clean hides its rows), so filtering
+  // lanes in place would leave matches invisible inside a collapsed group. A
+  // flat result list finds the row wherever it lives, and the lane chip says
+  // what kind of decision it still needs.
+  const laneOf = (item: SummaryItem): LaneId =>
+    groupOf(item) === 'ambiguous' ? 'pick'
+      : groupOf(item) === 'unmatched' ? 'new'
+      : check.includes(item) ? 'check' : 'clean'
+  const results = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (q.length < 2) return null
+    const hit = (v: string | null | undefined) => !!v && v.toLowerCase().includes(q)
+    return items.filter(i =>
+      hit(i.supplier_sku) || hit(i.canonical_sku) || hit(i.name) || hit(i.variant_name)
+      || hit(i.barcode) || hit(i.family_key) || hit(i.draft_name))
+  }, [items, search, check])
+
   const openFocus = (lane: LaneId, id?: string) => {
     const queue = lanes[lane]
     const target = id ?? queue.find(i => !isDecided(i))?.mastering_candidate_id ?? queue[0]?.mastering_candidate_id
@@ -348,7 +371,16 @@ function RunDeskPage() {
     function onKey(event: KeyboardEvent) {
       if (focus) return
       const target = event.target as HTMLElement
-      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
+      const typing = target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)
+      // Esc leaves the search box even while it has focus, so the keyboard
+      // path back to the lanes never dead-ends.
+      if (event.key === 'Escape' && typing && target === searchRef.current) {
+        setSearch('')
+        searchRef.current?.blur()
+        return
+      }
+      if (typing) return
+      if (event.key === '/') { event.preventDefault(); searchRef.current?.focus(); return }
       if (event.key === 'Enter') {
         const lane: LaneId | null = pendingIn(pick).length ? 'pick' : pendingIn(newTo).length ? 'new' : pendingIn(check).length ? 'check' : null
         if (lane) openFocus(lane)
@@ -424,6 +456,15 @@ function RunDeskPage() {
           )}
         </div>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span className="dsearch">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>
+              <circle cx="7" cy="7" r="4.3" /><path d="M10.5 10.5l3 3" strokeLinecap="round" />
+            </svg>
+            <input ref={searchRef} value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Find a row — supplier SKU, our SKU, name, barcode" aria-label="Search this run" />
+            {search && <button className="x" onClick={() => { setSearch(''); searchRef.current?.focus() }} aria-label="Clear search">×</button>}
+          </span>
+          <span className="kbd" title="Press / to search, Enter to open the next decision">/</span>
           <span className="kbd" title="Enter opens the next decision">Enter</span>
           <Link className="btn sm" to="/catalogues/review/$runId/commit" params={{ runId }}>Receipt</Link>
         </span>
@@ -459,8 +500,41 @@ function RunDeskPage() {
       ))}
 
       <div className="desk">
-        {/* ── lanes ── */}
+        {/* ── lanes, or search results across all of them ── */}
         <div className="panel">
+          {results !== null ? (
+            <div className="lane">
+              <div className="laneh">
+                <span className="ln">
+                  {results.length} match{results.length === 1 ? '' : 'es'} · “{search.trim()}”
+                </span>
+                <span className="lc">across every lane · {results.filter(isDecided).length} decided</span>
+                <span className="lnk" style={{ marginLeft: 'auto', fontSize: 11.5 }} onClick={() => setSearch('')}>
+                  back to lanes
+                </span>
+              </div>
+              <div className="lanebody">
+                {results.map(item => {
+                  const lane = laneOf(item)
+                  return (
+                    <LaneRow key={item.mastering_candidate_id} item={item}
+                      why={<>
+                        <span className={`lanetag ${lane}`}>{LANE_LABEL[lane]}</span>
+                        {isDecided(item) ? decidedLabel(item)
+                          : item.canonical_sku ? `→ ${item.canonical_sku}` : 'no match yet'}
+                      </>}
+                      action={!isDecided(item) && canApprove(item) && !isPulled(item)
+                        ? <button className="btn sm" disabled={rowBusy === item.mastering_candidate_id} onClick={() => stageOne(item)}>✓ Stage</button>
+                        : undefined}
+                      onOpen={() => openFocus(lane, item.mastering_candidate_id)} />
+                  )
+                })}
+                {results.length === 0 && (
+                  <Empty label={`Nothing in this run matches “${search.trim()}”. Searches supplier SKU, our SKU, name, barcode and family.`} />
+                )}
+              </div>
+            </div>
+          ) : (<>
           {/* needs a pick */}
           <div className="lane">
             <div className="laneh">
@@ -594,6 +668,7 @@ function RunDeskPage() {
               </div>
             )}
           </div>
+          </>)}
         </div>
 
         {/* ── dock ── */}
@@ -733,7 +808,7 @@ const decidedLabel = (item: SummaryItem) =>
   item.review_status === 'REJECTED' ? 'rejected' : isApproved(item) ? (item.published ? 'live ✓' : 'staged ✓') : 'sent back'
 
 function LaneRow({ item, why, whyTone, action, onOpen }: {
-  item: SummaryItem; why: string; whyTone?: string; action?: React.ReactNode; onOpen: () => void
+  item: SummaryItem; why: React.ReactNode; whyTone?: string; action?: React.ReactNode; onOpen: () => void
 }) {
   return (
     <div className={`trow${isDecided(item) ? ' decided' : ''}`}>

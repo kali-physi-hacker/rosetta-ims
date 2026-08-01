@@ -137,4 +137,18 @@ export const DESK_CSS = `
 .rdesk .cdbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
 .rdesk .cdact{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:10px 13px;border-top:1px solid var(--line2)}
 .rdesk .willcreate{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:750;padding:1px 7px;border-radius:99px;color:var(--accent-ink);background:var(--accent-soft);border:1px solid var(--accent-line);white-space:nowrap}
+/* Run search — finds a row in any lane, including the two that are collapsed
+   by default, so the lane chip has to say where it came from. */
+.rdesk .dsearch{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:8px;padding:0 9px;background:#fff;min-width:280px}
+.rdesk .dsearch:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.10)}
+.rdesk .dsearch svg{color:var(--faint);flex:none}
+.rdesk .dsearch input{border:none;outline:none;background:transparent;font-family:inherit;font-size:12px;color:var(--ink);padding:6px 0;width:100%}
+.rdesk .dsearch .x{border:none;background:none;color:var(--faint);font-size:15px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
+.rdesk .dsearch .x:hover{color:var(--ink2)}
+.rdesk .lanetag{display:inline-block;font-size:9px;font-weight:750;letter-spacing:.03em;padding:1px 6px;border-radius:99px;border:1px solid;margin-right:7px;white-space:nowrap;vertical-align:1px}
+.rdesk .lanetag.pick{color:var(--amber);background:var(--amber-soft);border-color:#F3E0BE}
+.rdesk .lanetag.new{color:var(--accent-ink);background:var(--accent-soft);border-color:var(--accent-line)}
+.rdesk .lanetag.check{color:var(--red);background:var(--red-soft);border-color:#F1CDC9}
+.rdesk .lanetag.clean{color:var(--muted);background:var(--line2);border-color:var(--line)}
+@media(max-width:720px){.rdesk .dsearch{min-width:160px}}
 `
