@@ -48,7 +48,11 @@ export const DESK_CSS = `
 .rdesk .lane:last-child{border-bottom:none}
 .rdesk .laneh{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--panel);border-bottom:1px solid var(--line2);flex-wrap:wrap}
 .rdesk .laneh .ln{font-size:12.5px;font-weight:750;color:var(--ink)}
-.rdesk .laneh .lc{font-size:11px;color:var(--muted)}
+/* One clipped line, never three wrapped ones: Clean's caption names membership,
+   decided count and spot-check progress, which is long enough to dominate the
+   header on a narrow window. The row itself still wraps when the controls no
+   longer fit, which is the right trade at that width. */
+.rdesk .laneh .lc{font-size:11px;color:var(--muted);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rdesk .lanebody{max-height:264px;overflow-y:auto}
 .rdesk .trow{display:grid;grid-template-columns:76px minmax(0,1.9fr) 92px minmax(0,1.2fr) auto;gap:10px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--line2);font-size:12px}
 .rdesk .trow:last-child{border-bottom:none}

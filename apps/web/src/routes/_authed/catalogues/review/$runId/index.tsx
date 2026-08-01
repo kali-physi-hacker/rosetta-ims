@@ -26,7 +26,7 @@ import {
 
 export const Route = createFileRoute('/_authed/catalogues/review/$runId/')({ component: RunDeskPage })
 
-type LaneId = 'pick' | 'new' | 'check'
+type LaneId = 'pick' | 'new' | 'check' | 'clean'
 
 const fm = (v: number | null | undefined) => (v == null ? '—' : v.toFixed(2))
 
@@ -265,7 +265,7 @@ function RunDeskPage() {
   const sampledDone = sampled.filter(isDecided).length
   const gateOpen = sampled.length > 0 ? sampledDone === sampled.length : true
 
-  const lanes: Record<LaneId, SummaryItem[]> = { pick, new: newTo, check }
+  const lanes: Record<LaneId, SummaryItem[]> = { pick, new: newTo, check, clean: sweepPool }
   const pendingIn = (list: SummaryItem[]) => list.filter(i => !isDecided(i))
   const needsYou = pendingIn(pick).length + pendingIn(newTo).length + pendingIn(check).length
   const staged = items.filter(isStaged)
@@ -277,6 +277,7 @@ function RunDeskPage() {
 
   // family clusters for the new-to-us lane
   const [clustersExpanded, setClustersExpanded] = useState(false)
+  const [cleanExpanded, setCleanExpanded] = useState(false)
   const clusters = useMemo(() => {
     const map = new Map<string, SummaryItem[]>()
     for (const item of newTo) {
@@ -540,15 +541,24 @@ function RunDeskPage() {
             </div>
           </div>
 
-          {/* clean sweep */}
+          {/* clean sweep — a bulk control, but you must be able to look at what
+              you are about to approve in bulk. The 12-row spot-check gates the
+              sweep; it is not a substitute for seeing the list. */}
           <div className="lane">
-            <div className="laneh" style={{ borderBottom: 'none' }}>
+            <div className="laneh" style={{ borderBottom: cleanExpanded ? undefined : 'none' }}>
               <span className="ln">Clean · {sweepPool.length}</span>
               <span className="lc">
                 matched, moves ≤{PULL_THRESHOLD_PCT}%, nothing blocking · {sweepPool.filter(isDecided).length} decided ·{' '}
-                {sampled.length > 0 ? `spot-checks ${sampledDone}/${sampled.length}${gateOpen ? ' ✓' : ' — finish them to unlock'}` : 'no spot-checks needed'}
+                {/* "finish them to unlock" lived here AND on the button. */}
+                {sampled.length > 0 ? `spot-checks ${sampledDone}/${sampled.length}${gateOpen ? ' ✓' : ''}` : 'no spot-checks needed'}
               </span>
-              <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+              {sweepPool.length > 0 && (
+                <span className="lnk" style={{ fontSize: 11.5, marginLeft: 'auto', whiteSpace: 'nowrap' }}
+                  onClick={() => setCleanExpanded(open => !open)}>
+                  {cleanExpanded ? 'hide items' : 'show all items'}
+                </span>
+              )}
+              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {sweepProgress ? (
                   <span className="mono" style={{ fontSize: 11 }}>staging {sweepProgress}…</span>
                 ) : sweepable.length === 0 ? (
@@ -569,6 +579,20 @@ function RunDeskPage() {
                 )}
               </span>
             </div>
+            {cleanExpanded && (
+              <div className="lanebody">
+                {sweepPool.map(item => (
+                  <LaneRow key={item.mastering_candidate_id} item={item}
+                    why={isDecided(item) ? decidedLabel(item)
+                      : `${item.canonical_sku ?? ''}${item.price_delta_pct != null ? ` · ${fmtDelta(item.price_delta_pct)}` : ''}`}
+                    action={!isDecided(item) && canApprove(item)
+                      ? <button className="btn sm" disabled={rowBusy === item.mastering_candidate_id} onClick={() => stageOne(item)}>✓ Stage</button>
+                      : undefined}
+                    onOpen={() => openFocus('clean', item.mastering_candidate_id)} />
+                ))}
+                {sweepPool.length === 0 && <Empty label="Nothing clean yet." />}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1020,7 +1044,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
   if (!current) return null
   const evidence = detail.data?.evidence?.[0]
   const list = query.trim().length >= 2 ? hits : (sugg ?? [])
-  const laneLabel = lane === 'pick' ? 'Needs a pick' : lane === 'new' ? 'New to us' : 'Check by hand'
+  const laneLabel = lane === 'pick' ? 'Needs a pick' : lane === 'new' ? 'New to us' : lane === 'clean' ? 'Clean' : 'Check by hand'
   const pendingLeft = queue.filter(i => !isDecided(i)).length
 
   return (
