@@ -14,7 +14,7 @@ import { skuToPath } from '@/lib/sku'
 import { DESK_CSS } from '@/lib/deskCss'
 import {
   fetchSummary, fetchDetail, fetchReceipt, searchVariants, latest, groupOf, isPulled,
-  isBulkEligible, isDecided, isApproved, isStaged, sampleIds, suggestTerms,
+  isDecided, isApproved, isStaged, sampleIds, suggestTerms,
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
   correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate,
   resolveRunIssue, fanOut, fmtDelta, marginPct,
@@ -254,7 +254,13 @@ function RunDeskPage() {
     [runId, items],
   )
   const check = matched.filter(i => isPulled(i) || sample.has(i.mastering_candidate_id))
-  const sweepPool = matched.filter(i => isBulkEligible(i) && !sample.has(i.mastering_candidate_id))
+  // Membership, NOT eligibility. isBulkEligible() also requires PENDING_REVIEW,
+  // and using it here meant a matched row that was neither pulled nor sampled
+  // simply vanished from the desk the moment it was decided — in no lane, so
+  // the four lane counts summed to one less than the row count. `sweepable`
+  // below re-filters to what can actually be swept.
+  const sweepPool = matched.filter(i =>
+    !isPulled(i) && !willCreate(i) && i.blocking_issues === 0 && !sample.has(i.mastering_candidate_id))
   const sampled = items.filter(i => sample.has(i.mastering_candidate_id))
   const sampledDone = sampled.filter(isDecided).length
   const gateOpen = sampled.length > 0 ? sampledDone === sampled.length : true
@@ -428,7 +434,9 @@ function RunDeskPage() {
         <span className="stage done"><span className="sdot">✓</span>Checked <span className="scount">{rows} rows</span></span>
         <span className={`stage ${!decisionsDone ? 'now' : 'done'}`}>
           <span className="sdot">{decisionsDone ? '✓' : needsYou}</span>Decisions
-          <span className="scount">{needsYou} need you · {cleanPending} clean</span>
+          {/* These three partition every row, so they sum to the row count —
+              leaving the decided ones unnamed made 75 + 157 look short of 238. */}
+          <span className="scount">{needsYou} need you · {cleanPending} clean · {decidedCount} done</span>
         </span>
         <span className={`stage ${decisionsDone && staged.length > 0 ? 'now' : staged.length > 0 || liveStage ? 'done' : ''}`}>
           <span className="sdot">{staged.length || '→'}</span>Publish
@@ -537,7 +545,7 @@ function RunDeskPage() {
             <div className="laneh" style={{ borderBottom: 'none' }}>
               <span className="ln">Clean · {sweepPool.length}</span>
               <span className="lc">
-                matched, moves ≤{PULL_THRESHOLD_PCT}%, nothing blocking ·{' '}
+                matched, moves ≤{PULL_THRESHOLD_PCT}%, nothing blocking · {sweepPool.filter(isDecided).length} decided ·{' '}
                 {sampled.length > 0 ? `spot-checks ${sampledDone}/${sampled.length}${gateOpen ? ' ✓' : ' — finish them to unlock'}` : 'no spot-checks needed'}
               </span>
               <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
