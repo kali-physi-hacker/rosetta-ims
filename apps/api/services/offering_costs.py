@@ -260,6 +260,10 @@ def _offering_entry(
             .order_by(models.CatalogueSupplierPrice.id.desc())
             .all()
         )
+        # Which supplier catalogue this price was read out of. "catalogue" as a
+        # source word does not say WHICH document, and by the time anyone asks
+        # about a cost, that is usually the question.
+        scanned = _scanned_files(db, {p.ingestion_run_uuid for p in price_rows if p.ingestion_run_uuid})
         history = [
             {
                 "unit_cost": _per_sell_unit(float(price.amount), price.price_basis_uom_code, pack_tuple),
@@ -270,6 +274,8 @@ def _offering_entry(
                 "is_current": bool(price.is_current),
                 "source": "catalogue" if price.ingestion_run_uuid else "manual",
                 "run_id": price.ingestion_run_uuid,
+                "source_file": scanned.get(price.ingestion_run_uuid or "", {}).get("filename"),
+                "source_received_at": scanned.get(price.ingestion_run_uuid or "", {}).get("received_at"),
             }
             for price in price_rows
         ]
@@ -343,6 +349,26 @@ def _session_map(session: Session) -> dict[tuple[int, int], float]:
 
     session.info[_SESSION_CACHE_KEY] = out
     return out
+
+
+def _scanned_files(db: Session, run_uuids: set[str]) -> dict[str, dict]:
+    """run uuid -> the supplier catalogue file that run read.
+
+    A re-parse reads the evidence of an earlier run rather than a file of its
+    own, but it is the same document, and the source row is carried across —
+    so this resolves for re-parsed runs too.
+    """
+    if not run_uuids:
+        return {}
+    rows = (
+        db.query(models.IngestionRun.run_uuid, models.CatalogueSourceDocument.filename,
+                 models.CatalogueSourceDocument.received_at)
+        .join(models.CatalogueSourceDocument,
+              models.CatalogueSourceDocument.id == models.IngestionRun.catalogue_source_document_id)
+        .filter(models.IngestionRun.run_uuid.in_(run_uuids))
+        .all()
+    )
+    return {run: {"filename": filename, "received_at": received} for run, filename, received in rows}
 
 
 def _per_sell_unit(

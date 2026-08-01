@@ -261,6 +261,7 @@ export const SKUD2_CSS = `
 .skud .tev::before{content:"";position:absolute;left:-15px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--card);border:2px solid var(--accent-line)}
 .skud .tev.cur::before{border-color:#22A55E;background:#22A55E}
 .skud .tev .tw{color:var(--faint);font-size:10.5px}
+.skud .tev .srcfile{border-bottom:1px dotted currentColor;cursor:help}
 .skud .issue{display:flex;gap:9px;align-items:flex-start;background:var(--amber-soft);border:1px solid #F3E0BE;border-radius:9px;padding:8px 12px;font-size:12px;color:#6B4A12;margin:8px 15px}
 .skud .issue .ad{width:7px;height:7px;border-radius:50%;background:var(--amber);margin-top:5px;flex:none}
 .skud .issue b{color:var(--amber)}

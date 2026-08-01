@@ -148,6 +148,9 @@ class CatalogueIngestionStatus:
     error_summary: dict[str, Any] | str | None
     retry_of: str | None = None            # parent run uuid when this run is a retry
     superseded_by_run: str | None = None   # child run uuid when this run has been retried
+    source_filename: str | None = None     # the supplier catalogue this run read
+    source_received_at: str | None = None
+    reparse_of: str | None = None          # source run uuid when this run re-read stored evidence
 
 
 @dataclass(frozen=True)
@@ -279,6 +282,11 @@ class CatalogueSubmissionService:
             error_summary=error_summary,
             retry_of=retry_of,
             superseded_by_run=child.run_uuid if child else None,
+            # Which supplier catalogue this run read. A re-parse carries the
+            # same source document as the run it re-read, so it resolves too.
+            source_filename=source.filename if source else None,
+            source_received_at=source.received_at if source else None,
+            reparse_of=(metrics or {}).get("reparse_of"),
         )
         
     def list(self) -> list[CatalogueIngestionStatus]: 

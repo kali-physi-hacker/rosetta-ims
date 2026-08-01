@@ -479,6 +479,16 @@ function RunDeskPage() {
             <Link to="/catalogues/review" className="lnk" style={{ fontWeight: 600 }}>← Runs</Link>
           </div>
           <h1>{status.data?.contract_id ?? 'Catalogue run'} <span style={{ fontWeight: 450, fontSize: 12.5, color: 'var(--faint)' }}>· {rows} rows</span></h1>
+          {status.data?.source_filename && (
+            <div style={{ marginTop: 3, fontSize: 11.5, color: 'var(--muted)' }}>
+              scanned from <span className="srcfile" title={
+                `${status.data.source_filename}`
+                + (status.data.source_received_at ? ` · received ${new Date(status.data.source_received_at).toLocaleDateString()}` : '')
+                + (status.data.reparse_of ? ' · this run re-read the stored evidence rather than the file' : '')
+              }>{status.data.source_filename}</span>
+              {status.data.reparse_of && <span style={{ color: 'var(--faint)' }}> · re-parsed, not re-scanned</span>}
+            </div>
+          )}
           {status.data?.retry_of && (
             <div style={{ marginTop: 4, fontSize: 11.5, color: 'var(--muted)' }}>
               ↻ retry of an earlier failed attempt · <Link className="lnk" style={{ fontSize: 11.5 }} to="/catalogues/review/$runId" params={{ runId: status.data.retry_of }}>view attempt 1</Link>
@@ -738,6 +748,7 @@ function RunDeskPage() {
           queue={focusQueue}
           currentId={focus.id}
           allItems={items}
+          sourceFile={status.data?.source_filename ?? null}
           onMove={id => setFocus(f => (f ? { ...f, id } : f))}
           onClose={() => setFocus(null)}
         />
@@ -1162,12 +1173,13 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
 }
 
 // ── focus overlay: one candidate, suggestions-first, reason chips ───────────
-function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose }: {
+function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, onMove, onClose }: {
   runId: string
   lane: LaneId
   queue: SummaryItem[]
   currentId: string
   allItems: SummaryItem[]
+  sourceFile: string | null
   onMove: (id: string) => void
   onClose: () => void
 }) {
@@ -1315,8 +1327,11 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, onMove, onClose
         <div className="fgrid">
           {/* unified evidence card */}
           <div className="panel" style={{ background: 'var(--card)' }}>
-            <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--line2)', fontSize: 10, fontWeight: 750, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>
+            {/* The row's own provenance: which document, which page. */}
+            <div className="srcfile" style={{ padding: '8px 12px', borderBottom: '1px solid var(--line2)', fontSize: 10, fontWeight: 750, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', borderBottomStyle: 'solid' }}
+              title={sourceFile ? `Scanned from ${sourceFile}${evidence?.page ? `, page ${evidence.page}` : ''}` : undefined}>
               Supplier said — verbatim{evidence?.page ? ` · page ${evidence.page}` : ''}
+              {sourceFile && <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}> · {sourceFile}</span>}
             </div>
             {detail.isLoading ? <div style={{ padding: 16 }}><Spinner /></div> : (
               <>

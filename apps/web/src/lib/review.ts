@@ -417,6 +417,11 @@ export interface RunStatus {
   error_summary?: Record<string, any> | string | null
   retry_of?: string | null
   superseded_by_run?: string | null
+  /** The supplier catalogue this run read. */
+  source_filename?: string | null
+  source_received_at?: string | null
+  /** Source run uuid when this run re-read stored evidence instead of a file. */
+  reparse_of?: string | null
 }
 export const TERMINAL_RUN_STATUSES = new Set(['completed', 'completed_with_warnings', 'failed', 'cancelled'])
 export const fetchRunStatus = (runId: string) => reviewApi<RunStatus>(`/catalogues/ingestions/${runId}`)

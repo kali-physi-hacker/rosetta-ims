@@ -36,6 +36,9 @@ interface OfferingPrice {
   is_current: boolean
   source: 'catalogue' | 'manual'
   run_id: string | null
+  /** The supplier catalogue this price was read out of, when it came from a scan. */
+  source_file?: string | null
+  source_received_at?: string | null
 }
 interface OfferingEntry {
   supplier_id: number | null
@@ -649,6 +652,15 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
                             <br />
                             <span className="tw">
                               {h.is_current ? `since ${fmtDay(h.since) ?? '—'}` : `${fmtDay(h.since) ?? '—'} → ${fmtDay(h.until) ?? '—'}`}
+                              {/* "catalogue" does not say WHICH catalogue, and by
+                                  the time anyone questions a cost that is the
+                                  question. */}
+                              {h.source_file && <>
+                                {' · '}
+                                <span className="srcfile" title={`Read from ${h.source_file}${h.source_received_at ? ` · received ${fmtDay(h.source_received_at)}` : ''}`}>
+                                  {h.source_file}
+                                </span>
+                              </>}
                               {' · '}
                               <Link className="lnk" style={{ fontSize: 10.5, textDecoration: 'none' }} to={(h.run_id ? `/catalogues/review/${h.run_id}` : '/admin/audit') as never}>audit →</Link>
                             </span>

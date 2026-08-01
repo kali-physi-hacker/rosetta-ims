@@ -80,6 +80,9 @@ class CatalogueIngestionStatusResponse(BaseModel):
     error_summary: dict[str, Any] | str | None = None
     retry_of: str | None = None
     superseded_by_run: str | None = None
+    source_filename: str | None = None      # the supplier catalogue this run read
+    source_received_at: str | None = None
+    reparse_of: str | None = None           # source run when this re-read stored evidence
 
 
 class ValidationIssueResolutionRequest(BaseModel):
