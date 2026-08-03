@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import os
 import tempfile
+
+import pytest
 from uuid import uuid4
 
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
@@ -726,3 +728,108 @@ def test_diagnostic_attributes_are_kept_without_being_interpreted():
     assert row.raw_fields["packaging"] == "20 pcs/ box"
     assert "220" not in str(row.normalized_fields.get("packaging") or "")
     assert "220" not in str(row.raw_fields["packaging"])
+
+
+# ── Alfamedic prints its bulk ladder as extra ROWS beneath a product, where
+#    Hill's prints the same information as extra COLUMNS beside one. Live
+#    page 20:
+#
+#      ALO250  ALOVEEN Shampoo   1 bot     58.0
+#      (none)                    10 bots   56.0
+#      (none)                    40 bots   54.0
+# ──────────────────────────────────────────────────────────────────────────
+
+def _ladder(item):
+    return [(t["condition"]["quantity"]["amount"], t["benefit"]["discounted_price"]["amount"])
+            for t in item.normalized_fields.get("mbb_terms", [])]
+
+
+def test_a_priced_row_beneath_a_product_becomes_that_products_bulk_tier():
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Packing/ Unit", "250ml/ bot"), ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+        [("Order Units", "40 bots"), ("Price/ Unit (HKD)", "54.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 1, "the tier lines are terms, not catalogue rows"
+    assert out.metadata["tier_rows_attached"] == 2
+    assert _ladder(out.items[0]) == [("10", "56.0"), ("40", "54.0")]
+    term = out.items[0].normalized_fields["mbb_terms"][0]
+    assert term["scope"] == "SUPPLIER_SKU", "the quantity is of this product, not the whole order"
+    assert term["condition"]["condition_type"] == "minimum_quantity"
+    assert term["benefit"]["benefit_type"] == "discounted_unit_price"
+    # Still accounted for: it stopped being a row, so it must be a counted skip.
+    assert len(out.items) + out.skipped_count == len(observations)
+
+
+def test_a_size_variant_is_a_product_not_a_tier():
+    """It carries its own order code. Swallowing it would lose a stocked SKU."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Code", "ALO1000"), ("Packing/ Unit", "1L/ bot"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "190.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2
+    assert (out.items[1].normalized_fields["supplier_sku"]["value"]) == "ALO1000"
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_no_cheaper_than_the_product_is_not_a_discount():
+    """It would quietly corrupt every cost derived from the best tier."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "20 bots"), ("Price/ Unit (HKD)", "61.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_of_one_is_not_a_tier():
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "1 bot"), ("Price/ Unit (HKD)", "56.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_row_does_not_reach_back_across_a_page_break():
+    """The last product on page 20 does not own the first line of page 21."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+    ]) + _alf_rows([
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+    ], page=21)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_row_declaration_must_state_both_halves():
+    """A price with no condition is not a term."""
+    from pydantic import ValidationError
+
+    from schemas.catalogue_pipeline.supplier_contracts.common import (
+        SourceFieldContract, SourceFieldRequirement, SourceFieldRole,
+    )
+    with pytest.raises(ValidationError, match="tier_quantity_field and tier_price_field"):
+        SourceFieldContract(
+            field_key="bulk_tier_rows", role=SourceFieldRole.MBB_TIER_ROW,
+            requirement=SourceFieldRequirement.OPTIONAL, source_path="a row",
+            tier_price_field="cost",
+        )

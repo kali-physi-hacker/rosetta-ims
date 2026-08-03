@@ -92,6 +92,11 @@ class SourceFieldRole(str, Enum):
     # $2,200 / $4,500" columns, one price per row per threshold, which is a
     # fully determined minimum_spend -> discounted_unit_price term.
     MBB_TIER_PRICE = "MBB_TIER_PRICE"
+    # A tier stated as its own ROW rather than its own column: the line under a
+    # product carrying a quantity and a cheaper price and nothing else.
+    # Alfamedic prints its ladder this way; Hill's prints the same information
+    # as MBB_TIER_PRICE columns.
+    MBB_TIER_ROW = "MBB_TIER_ROW"
     BARCODE = "BARCODE"
     VARIANT = "VARIANT"
     SPECIES = "SPECIES"
@@ -226,6 +231,20 @@ class SourceFieldContract(SupplierSourceModel):
             "exact declared heading matches a column, so a fully-labelled heading still wins."
         ),
     )
+    tier_quantity_field: str | None = Field(
+        None,
+        description=(
+            "For MBB_TIER_ROW: the field key carrying the tier's quantity threshold. Alfamedic "
+            "prints '10 bots' in its Order Units column on a line that has no order code and a "
+            "cheaper price — condition and benefit both stated, so the term is fully determined. "
+            "The row is consumed as a term on the product above it rather than becoming a "
+            "catalogue row of its own; a priced line with no identity is not a product."
+        ),
+    )
+    tier_price_field: str | None = Field(
+        None,
+        description="For MBB_TIER_ROW: the field key carrying the tier's discounted unit price.",
+    )
     inherits_from_row_above: bool = Field(
         False,
         description=(
@@ -252,6 +271,17 @@ class SourceFieldContract(SupplierSourceModel):
             "match on. The tier's own condition is still declared, never inferred from position."
         ),
     )
+
+    @model_validator(mode="after")
+    def _tier_rows_declare_both_halves(self):
+        if self.role == SourceFieldRole.MBB_TIER_ROW and not (
+            self.tier_quantity_field and self.tier_price_field
+        ):
+            raise ValueError(
+                "MBB_TIER_ROW must declare tier_quantity_field and tier_price_field — a tier row "
+                "without both halves is a price with no condition, which is not a term"
+            )
+        return self
 
     @model_validator(mode="after")
     def _prefix_matching_needs_a_position(self):

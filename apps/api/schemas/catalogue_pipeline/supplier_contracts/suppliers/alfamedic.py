@@ -151,6 +151,18 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             # "220μL" is the SAMPLE volume a test consumes, not the content of
             # the box, and must never be read as packaging.
             SourceFieldContract(
+                field_key="order_units",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Order Units",
+                aliases=["Order Unit"],
+                description=(
+                    "How many the line is priced for: '1 bot' on a product row, '10 bots' on the "
+                    "bulk-tier line beneath it. Read verbatim; the tier logic parses the count."
+                ),
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
                 field_key="sample_type",
                 role=SourceFieldRole.OTHER,
                 requirement=SourceFieldRequirement.OPTIONAL,
@@ -182,12 +194,26 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 description="Therapeutic section header; any default category still requires business review.",
                 evidence=_EVIDENCE,
             ),
+            # Alfamedic states its bulk ladder as extra ROWS under a product,
+            # where Hill's states the same thing as extra COLUMNS beside one.
+            # Page 20, in printed order:
+            #
+            #   ALO250  ALOVEEN Shampoo   1 bot     58.0   <- the product
+            #   (none)                    10 bots   56.0   <- buy 10, pay 56.0
+            #   (none)                    40 bots   54.0   <- buy 40, pay 54.0
+            #
+            # Both halves are printed, so nothing is inferred: the quantity is
+            # in Order Units and the discounted price is in the price column.
+            # The earlier declaration said these rows "share an order code" —
+            # they carry none at all, which is why they were never captured.
             SourceFieldContract(
                 field_key="bulk_tier_rows",
-                role=SourceFieldRole.MBB_TEXT,
+                role=SourceFieldRole.MBB_TIER_ROW,
                 requirement=SourceFieldRequirement.CONDITIONALLY_REQUIRED,
-                source_path="multiple rows sharing an order code",
-                description="Legacy config notes multi-row tiers; no checked-in source examples prove all tier semantics.",
+                source_path="an unidentified priced row beneath a product row",
+                tier_quantity_field="order_units",
+                tier_price_field="cost",
+                description="Quantity bulk tier printed as its own row beneath the product it applies to.",
                 evidence=_EVIDENCE,
             ),
         ],

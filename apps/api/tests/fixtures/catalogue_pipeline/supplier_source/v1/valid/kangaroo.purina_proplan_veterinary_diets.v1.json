@@ -92,6 +92,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -120,6 +122,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -148,6 +152,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -176,6 +182,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -204,6 +212,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -232,6 +242,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -260,6 +272,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     }

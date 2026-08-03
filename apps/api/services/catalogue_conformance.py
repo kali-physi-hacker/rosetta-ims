@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -111,11 +111,13 @@ def conform_observations(
     )
     carried: dict[str, str] = {}
     carried_page: Any = object()   # a name never carries across a page break
+    parent_index: int | None = None  # the product a tier row would attach to
     skipped = 0        # total, and the number the run's accounting uses
     header_rows = 0
     furniture = 0
     unconformable = 0
     ineligible = 0
+    tier_rows = 0
     for observation, raw_id in zip(observations, raw_observation_ids, strict=True):
         key = observation.observation_key
         if _has_cells(observation):
@@ -125,6 +127,22 @@ def conform_observations(
                 skipped += 1
                 header_rows += 1
                 continue
+            page = observation.source_location.page_number
+            if page != carried_page:
+                # The last product on a page owns nothing on the next one —
+                # neither a name to carry nor a tier to collect.
+                carried, carried_page, parent_index = {}, page, None
+            tier = _tier_row_term(fields, runtime_contract, items, parent_index, raw_id, observation)
+            if tier is not None:
+                # A priced line with no identity, beneath a product: a term on
+                # that product, not a catalogue row of its own.
+                previous, term = tier
+                merged = dict(items[previous].normalized_fields)
+                merged["mbb_terms"] = [*merged.get("mbb_terms", []), term]
+                items[previous] = replace(items[previous], normalized_fields=merged)
+                skipped += 1
+                tier_rows += 1
+                continue
             if _is_ineligible_row(fields, runtime_contract):
                 # Carries neither an identity nor a price: a divider, a blank
                 # spacer, a section title. Evidence, not an item — and counted
@@ -132,9 +150,6 @@ def conform_observations(
                 skipped += 1
                 ineligible += 1
                 continue
-            page = observation.source_location.page_number
-            if page != carried_page:
-                carried, carried_page = {}, page
             inherited = _carry_merged_cells(fields, inheritable, carried, runtime_contract)
             row_issues = (
                 document_issues
@@ -154,6 +169,7 @@ def conform_observations(
                     issues=row_issues,
                 )
             )
+            parent_index = len(items) - 1
             warnings.extend(f"{key}: {issue.message}" for issue in row_issues)
             continue
 
@@ -199,6 +215,7 @@ def conform_observations(
             "conformed_items": len(items),
             "skipped_header_rows": header_rows,
             "skipped_ineligible_rows": ineligible,
+            "tier_rows_attached": tier_rows,
             "skipped_non_tabular_text": furniture,
             "unconformable_items": unconformable,
             "contract_issue_count": len(document_issues) + sum(len(item.issues) for item in items),
@@ -666,6 +683,85 @@ def _carry_merged_cells(
             fields.setdefault(target, carried[key])
         inherited.append(key)
     return tuple(inherited)
+
+
+def _tier_row_term(
+    fields: dict[str, Any],
+    runtime_contract,
+    items: list[ConformedRow],
+    parent_index: int | None,
+    raw_observation_id: UUID,
+    observation: ExtractedEvidence,
+) -> tuple[int, dict[str, Any]] | None:
+    """A bulk tier the supplier printed as its own row, or None.
+
+    Alfamedic prints the ladder beneath the product:
+
+        ALO250  ALOVEEN Shampoo   1 bot     58.0
+        (none)                    10 bots   56.0
+        (none)                    40 bots   54.0
+
+    Both halves are on the page — buy 10, pay 56.00 each — so the term is
+    fully determined and nothing is inferred. Returns the index of the product
+    it belongs to and the term to hang on it.
+
+    Every condition here is load-bearing. The row must carry NO identity (a
+    coded row is a product, even a nameless size variant); it must be cheaper
+    than what it discounts (a tier at the same price is not a discount, and
+    would corrupt every downstream cost); it must ask for more than one; and
+    it must follow a product on the SAME page, because the last row of page 20
+    has nothing to do with the first row of page 21.
+    """
+    declared = next(
+        (f for f in runtime_contract.declaration.fields
+         if getattr(f.role, "value", f.role) == "MBB_TIER_ROW"),
+        None,
+    )
+    if declared is None or parent_index is None:
+        return None
+    identity_fields = runtime_contract.declaration.source_structure.row_identity_fields
+    if any(_text(fields.get(f"source:{key}")) is not None for key in identity_fields):
+        return None
+
+    quantity = _leading_decimal(fields.get(f"source:{declared.tier_quantity_field}"))
+    price = _decimal_or_none(fields.get(f"source:{declared.tier_price_field}"))
+    if quantity is None or quantity <= 1 or price is None or price <= 0:
+        return None
+
+    parent = items[parent_index]
+    base = _decimal_or_none((parent.normalized_fields.get("cost") or {}).get("amount"))
+    if base is not None and price >= base:
+        return None
+
+    pricing = runtime_contract.declaration.pricing
+    basis = pricing.price_basis
+    if basis is None or basis.code is None:
+        return None
+    evidence = {
+        "raw_observation_id": str(raw_observation_id),
+        "field_path": "/raw_cells",
+        "confidence": _confidence_text(fields.get("confidence"), observation.confidence),
+    }
+    term = {
+        "mbb_term_id": str(_stable_term_uuid(evidence, declared.field_key)),
+        # The quantity is of THIS product, unlike Hill's order-value tiers.
+        "scope": "SUPPLIER_SKU",
+        "condition": {
+            "condition_type": "minimum_quantity",
+            "quantity": {"amount": str(quantity), "uom": basis.model_dump(mode="json")},
+        },
+        "benefit": {
+            "benefit_type": "discounted_unit_price",
+            "discounted_price": {
+                "amount": str(price),
+                "currency": pricing.currency,
+                "price_basis": basis.model_dump(mode="json"),
+            },
+        },
+        "description": declared.description,
+        "evidence": evidence,
+    }
+    return parent_index, term
 
 
 def _is_ineligible_row(fields: dict[str, Any], runtime_contract) -> bool:

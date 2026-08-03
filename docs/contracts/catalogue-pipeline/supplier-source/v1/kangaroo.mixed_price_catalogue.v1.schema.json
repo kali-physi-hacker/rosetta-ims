@@ -620,6 +620,32 @@
           "default": null,
           "description": "For MBB_TIER_PRICE: 1-based position of this tier, cheapest threshold first.",
           "title": "Tier Order"
+        },
+        "tier_price_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_ROW: the field key carrying the tier's discounted unit price.",
+          "title": "Tier Price Field"
+        },
+        "tier_quantity_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_ROW: the field key carrying the tier's quantity threshold. Alfamedic prints '10 bots' in its Order Units column on a line that has no order code and a cheaper price — condition and benefit both stated, so the term is fully determined. The row is consumed as a term on the product above it rather than becoming a catalogue row of its own; a priced line with no identity is not a product.",
+          "title": "Tier Quantity Field"
         }
       },
       "required": [
@@ -652,6 +678,7 @@
         "PACKAGING",
         "MBB_TEXT",
         "MBB_TIER_PRICE",
+        "MBB_TIER_ROW",
         "BARCODE",
         "VARIANT",
         "SPECIES",

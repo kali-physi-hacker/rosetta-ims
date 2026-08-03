@@ -107,6 +107,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -145,6 +147,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": true,
       "source_column_prefix": null
     },
@@ -183,6 +187,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -221,6 +227,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -263,6 +271,50 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "order_units",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Order Units",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "Order Unit"
+      ],
+      "description": "How many the line is priced for: '1 bot' on a product row, '10 bots' on the bulk-tier line beneath it. Read verbatim; the tier logic parses the count.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -301,6 +353,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -339,6 +393,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -377,6 +433,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -415,19 +473,21 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
       "field_key": "bulk_tier_rows",
-      "role": "MBB_TEXT",
+      "role": "MBB_TIER_ROW",
       "requirement": "CONDITIONALLY_REQUIRED",
       "source_column": null,
-      "source_path": "multiple rows sharing an order code",
+      "source_path": "an unidentified priced row beneath a product row",
       "composed_from": [],
       "constant_value": null,
       "aliases": [],
-      "description": "Legacy config notes multi-row tiers; no checked-in source examples prove all tier semantics.",
+      "description": "Quantity bulk tier printed as its own row beneath the product it applies to.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -453,6 +513,8 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "tier_quantity_field": "order_units",
+      "tier_price_field": "cost",
       "inherits_from_row_above": false,
       "source_column_prefix": null
     }
