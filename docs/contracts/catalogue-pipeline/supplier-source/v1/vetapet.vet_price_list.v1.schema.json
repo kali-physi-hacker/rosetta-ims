@@ -496,6 +496,19 @@
           "description": "Supplier-format constant value, if not printed per row.",
           "title": "Constant Value"
         },
+        "continues_row_above_when_matching": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Regular expression marking a value that CONTINUES the row above rather than standing alone. Alfamedic names a collar family once and then lists only sizes: 'Classic Collar size 7.5cm', then 'size 10.0cm', 'size 12.5cm'. Those later rows are separate SKUs at separate prices, but their name alone does not say what they are. When a value matches here AND the row above matches too, the text before the row above's match is prefixed, giving 'Classic Collar size 10.0cm'. Nothing is invented: if the row above does not match, no prefix can be derived and the value is left exactly as printed.",
+          "title": "Continues Row Above When Matching"
+        },
         "description": {
           "anyOf": [
             {

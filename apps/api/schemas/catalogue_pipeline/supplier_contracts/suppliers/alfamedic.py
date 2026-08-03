@@ -122,11 +122,21 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                     "gauge_usp",
                     "thread_length",
                     "product_description_text",
+                    # p34 collars: no name column at all, only a size and the
+                    # weight range it suits.
+                    "body_weight",
+                    "suitable_for",
                 ],
                 # Size variants are listed under one merged name cell: the
                 # 250ml line names the product, the 1L line below carries only
                 # its own code, packing and price. Both are stocked SKUs.
                 inherits_from_row_above=True,
+                # Collars and body suits are listed as a family once and then
+                # by size alone — "Classic Collar size 7.5cm", then "size
+                # 10.0cm", "size 12.5cm". 38 rows across three pages. Separate
+                # SKUs at separate prices, whose printed name does not say what
+                # they are.
+                continues_row_above_when_matching=r"^\s*size\b",
                 source_column="Product Name",
                 description="Printed product name.",
                 evidence=_EVIDENCE,
@@ -295,6 +305,50 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Product Description",
                 description="Free-text specification where the supplier uses it instead of a name.",
+                evidence=_EVIDENCE,
+            ),
+            # Apparel and collar attributes. Read verbatim under role OTHER:
+            # a body length is not packaging and a suitable-for range is not a
+            # category, and guessing either would be worse than keeping both
+            # as what the supplier printed.
+            SourceFieldContract(
+                field_key="body_length",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Body Length",
+                description="Garment body length, e.g. '25 cm'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="body_weight",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Body weight",
+                description="Animal weight the size suits, e.g. '1-3 kg'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="suitable_for",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Suitable for",
+                description="Breeds or animals a size suits.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="colour",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Colour",
+                description="Printed colour of an apparel item.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="breed",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Breed",
+                description="Breed guidance printed against a size.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(

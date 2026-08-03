@@ -1128,3 +1128,93 @@ def test_a_composed_name_may_reference_a_field_declared_after_it():
 
     name = out.items[0].normalized_fields["product_name"]["value"]
     assert name == "1/2 Circle Round Body Regular Eye (RHR) 25mm N 13"
+
+
+# ── A supplier names a family once and then lists only what varies:
+#
+#      273310  Classic Collar size 7.5cm
+#      273320  size 10.0cm
+#      273325  size 12.5cm
+#
+#    Separate SKUs at separate prices, whose printed name does not say what
+#    they are. 38 such rows across three pages of the live catalogue.
+# ──────────────────────────────────────────────────────────────────────────
+
+def test_a_size_only_name_is_completed_from_the_family_above_it():
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([
+        [("Order Code", "273310"), ("Product Name", "Classic Collar size 7.5cm"),
+         ("Price/ Unit (HKD)", "250.0")],
+        [("Order Code", "273320"), ("Product Name", "size 10.0cm"), ("Price/ Unit (HKD)", "288.0")],
+        [("Order Code", "273325"), ("Product Name", "size 12.5cm"), ("Price/ Unit (HKD)", "327.0")],
+    ], page=34)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    assert [i.normalized_fields["product_name"]["value"] for i in out.items] == [
+        "Classic Collar size 7.5cm",
+        "Classic Collar size 10.0cm",
+        "Classic Collar size 12.5cm",
+    ]
+    assert len(out.items) == 3, "each size is its own SKU at its own price"
+
+
+def test_a_new_family_takes_over_from_the_old_one():
+    """The catalogue runs one family straight into the next."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([
+        [("Order Code", "273310"), ("Product Name", "Classic Collar size 7.5cm"), ("Price/ Unit (HKD)", "250.0")],
+        [("Order Code", "273320"), ("Product Name", "size 10.0cm"), ("Price/ Unit (HKD)", "288.0")],
+        [("Order Code", "273480"), ("Product Name", "CLIC Collar size 7.5cm"), ("Price/ Unit (HKD)", "257.0")],
+        [("Order Code", "273481"), ("Product Name", "size 10.0cm"), ("Price/ Unit (HKD)", "299.0")],
+    ], page=34)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    names = [i.normalized_fields["product_name"]["value"] for i in out.items]
+    assert names[1] == "Classic Collar size 10.0cm"
+    assert names[3] == "CLIC Collar size 10.0cm", "the newer family wins"
+
+
+def test_nothing_is_invented_when_no_family_can_be_derived():
+    """Live: eight rows read "Size 0 Tiny Dogs" onwards with no family above
+    them that names a size. They stay exactly as printed."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([
+        [("Order Code", "279394"), ("Product Name", "BUSTER Protective Wear"), ("Price/ Unit (HKD)", "100.0")],
+        [("Order Code", "279395"), ("Product Name", "Size 0 Tiny Dogs, Yorkshire Terrier"),
+         ("Price/ Unit (HKD)", "161.0")],
+    ], page=52)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    assert out.items[1].normalized_fields["product_name"]["value"] == "Size 0 Tiny Dogs, Yorkshire Terrier"
+
+
+def test_a_nameless_collar_row_composes_from_what_varies():
+    """Page 34 lists sizes with no name column at all — only the size and the
+    weight range it suits."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([[
+        ("Order Code", "273551"), ("Size", "7.5 cm"), ("Body weight", "1-3 kg"),
+        ("Suitable for", "Pomeranian, Chihuahua"), ("Price/ Unit (HKD)", "426.0"),
+    ]], page=34)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    name = out.items[0].normalized_fields["product_name"]["value"]
+    assert "7.5 cm" in name and "1-3 kg" in name and "Pomeranian" in name
+    extra = out.items[0].raw_fields["additional_fields"]
+    assert extra["size"] == "7.5 cm" and extra["body_weight"] == "1-3 kg"
+
+
+def test_apparel_attributes_are_kept_without_being_read_as_packaging():
+    """A body length is not a pack size and a weight range is not a category."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([[
+        ("Order Code", "273951"), ("Product Name", "BUSTER Body Suit EasyGo for Dogs"),
+        ("Size", "XXXS"), ("Body Length", "25 cm"), ("Colour", "Blue"),
+        ("Packing/ Unit", "1 pc"), ("Price", "172.0"),
+    ]], page=52)
+    row = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic).items[0]
+
+    extra = row.raw_fields["additional_fields"]
+    assert (extra["size"], extra["body_length"], extra["colour"]) == ("XXXS", "25 cm", "Blue")
+    assert row.raw_fields["packaging"] == "1 pc", "packing is still the only packaging"
+    assert row.normalized_fields["product_name"]["value"] == "BUSTER Body Suit EasyGo for Dogs"

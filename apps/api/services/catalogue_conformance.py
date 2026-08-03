@@ -705,8 +705,9 @@ def _carry_merged_cells(
 
     Returns the field keys that were inherited, so provenance can say so.
     """
+    continued = _complete_continuations(fields, runtime_contract, carried)
     if not inheritable:
-        return ()
+        return continued
     identity_fields = runtime_contract.declaration.source_structure.row_identity_fields
     has_identity = any(_text(fields.get(f"source:{key}")) is not None for key in identity_fields)
     inherited: list[str] = []
@@ -725,7 +726,59 @@ def _carry_merged_cells(
         if target:
             fields.setdefault(target, carried[key])
         inherited.append(key)
-    return tuple(inherited)
+    return tuple(inherited) + continued
+
+
+def _complete_continuations(
+    fields: dict[str, Any],
+    runtime_contract,
+    carried: dict[str, str],
+) -> tuple[str, ...]:
+    """Complete a value that continues the row above instead of standing alone.
+
+    A supplier names a family once and then lists only what varies:
+
+        273310  Classic Collar size 7.5cm
+        273320  size 10.0cm
+        273325  size 12.5cm
+
+    Those are separate SKUs at separate prices, and "size 10.0cm" does not say
+    what they are. The text before the row above's own match supplies the rest.
+
+    Nothing is invented. If the row above does not match the same pattern there
+    is no prefix to derive, and the value stays exactly as printed.
+    """
+    completed: list[str] = []
+    for contract_field in runtime_contract.declaration.fields:
+        pattern = getattr(contract_field, "continues_row_above_when_matching", None)
+        if not pattern:
+            continue
+        key = contract_field.field_key
+        value = _text(fields.get(f"source:{key}"))
+        if value is None:
+            continue
+        expression = re.compile(pattern, re.IGNORECASE)
+        if not expression.match(value):
+            carried[key] = value
+            continue
+        # The declared pattern is anchored, because a continuation is only a
+        # continuation when it BEGINS that way. Locating the same marker inside
+        # the row above needs the unanchored form: "Classic Collar size 7.5cm"
+        # carries "size" in the middle, which is exactly the split point.
+        previous = carried.get(key)
+        loose = re.compile(pattern.lstrip("^"), re.IGNORECASE)
+        match = loose.search(previous) if previous else None
+        if match is None or match.start() == 0:
+            continue
+        completed_value = f"{previous[:match.start()].strip()} {value}"
+        fields[f"source:{key}"] = completed_value
+        target = _role_target(contract_field.role)
+        if target:
+            fields[target] = completed_value
+        # The next fragment derives from the completed name, not the fragment.
+        carried[key] = completed_value
+        completed.append(key)
+    return tuple(completed)
 
 
 # "11+1", "9 + 3" — buy the first number, receive the second free.

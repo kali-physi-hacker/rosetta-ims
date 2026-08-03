@@ -79,6 +79,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -104,6 +105,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -129,6 +131,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -154,6 +157,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -179,6 +183,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -204,6 +209,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -229,6 +235,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     },
@@ -254,6 +261,7 @@
       "source_column_occurrence": null,
       "tier_quantity_field": null,
       "tier_price_field": null,
+      "continues_row_above_when_matching": null,
       "inherits_from_row_above": false,
       "source_column_prefix": null
     }

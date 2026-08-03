@@ -67,13 +67,17 @@ material in `Type` and stuffs gauge, needle and product code into one
 free-text cell ("USP 5/0, Tapercut V-5, Z995H (Violet)"). That is three
 composition rules for 30 high-value items a buyer can name faster.
 
-### Apparel and equipment attributes (~260 values)
+### Apparel and equipment attributes — done, except one part that was never product data
 
-`Size` (75), `Body Length` (25), `Body weight` (14), `Suitable for` (14),
-`Colour` (10), `Breed` (10), `Specifications` (32), `Value` (28). Pages 6, 34,
-52. Cheap to add the way `sample_type` and `sample_volume` were — role OTHER,
-carried verbatim, interpreted by nothing — once someone says which a buyer
-wants on a SKU.
+`Size`, `Body Length`, `Body weight`, `Suitable for`, `Colour` and `Breed` are
+now read: 138 values, role OTHER, carried verbatim and interpreted by nothing.
+A body length is not a pack size and a weight range is not a category.
+
+Page 6's `Specifications` / `Value` (60 values) is deliberately left. It is not
+apparel and not product rows: it is a key/value spec sheet for ONE machine
+("Model = BVG-1100", "Methodology = Magnetic bead"), carrying no order code and
+no price, and it is already skipped as ineligible. Declaring fields for it
+would capture nothing.
 
 ## The 335 Alfamedic rows still in review
 

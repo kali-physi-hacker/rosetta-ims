@@ -255,6 +255,18 @@ class SourceFieldContract(SupplierSourceModel):
         None,
         description="For MBB_TIER_ROW: the field key carrying the tier's discounted unit price.",
     )
+    continues_row_above_when_matching: str | None = Field(
+        None,
+        description=(
+            "Regular expression marking a value that CONTINUES the row above rather than standing "
+            "alone. Alfamedic names a collar family once and then lists only sizes: 'Classic Collar "
+            "size 7.5cm', then 'size 10.0cm', 'size 12.5cm'. Those later rows are separate SKUs at "
+            "separate prices, but their name alone does not say what they are. When a value matches "
+            "here AND the row above matches too, the text before the row above's match is prefixed, "
+            "giving 'Classic Collar size 10.0cm'. Nothing is invented: if the row above does not "
+            "match, no prefix can be derived and the value is left exactly as printed."
+        ),
+    )
     inherits_from_row_above: bool = Field(
         False,
         description=(
