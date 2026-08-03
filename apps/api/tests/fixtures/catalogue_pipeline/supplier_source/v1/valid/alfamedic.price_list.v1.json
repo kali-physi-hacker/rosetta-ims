@@ -234,7 +234,8 @@
       "constant_value": null,
       "aliases": [
         "Price/ Unit (HKD)",
-        "Price/Unit (HKD)"
+        "Price/Unit (HKD)",
+        "Price"
       ],
       "description": "Supplier cost field; By Quote is retained as a null-cost/manual-quote case.",
       "evidence": [

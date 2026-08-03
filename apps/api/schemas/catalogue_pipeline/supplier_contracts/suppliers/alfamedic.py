@@ -134,7 +134,13 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.SOURCE_PRICE,
                 requirement=SourceFieldRequirement.REQUIRED,
                 source_column="Price/ Unit (HKD)",
-                aliases=["Price/ Unit (HKD)", "Price/Unit (HKD)"],
+                # The diagnostics and suture tables head this column plainly
+                # "Price" — same meaning, narrower heading because those tables
+                # carry no per-unit qualifier. 146 rows on the live 56-page
+                # catalogue priced that way, and every one of them was read as
+                # having no price at all: 900-100 Pre-anesthetic Panel prints
+                # 1,760.0 and reached review as unpriced.
+                aliases=["Price/ Unit (HKD)", "Price/Unit (HKD)", "Price"],
                 description="Supplier cost field; By Quote is retained as a null-cost/manual-quote case.",
                 evidence=_EVIDENCE,
             ),

@@ -660,3 +660,42 @@ def test_a_name_does_not_carry_across_a_page_break():
     out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
 
     assert "product_name" not in out.items[1].normalized_fields
+
+
+def test_the_plainly_headed_price_column_is_still_a_price():
+    """Alfamedic's diagnostics and suture tables head the column "Price".
+
+    Same meaning, narrower heading — those tables carry no per-unit qualifier.
+    146 rows of one live 56-page catalogue priced that way and every one was
+    read as unpriced: 900-100 Pre-anesthetic Panel prints 1,760.0 and reached
+    review as having no price at all.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([[
+        ("Order Code", "900-100"),
+        ("Product Name", "Pre-anesthetic Panel (7 assay +3)"),
+        ("Sample Type", "Whole Blood/ Plasma/ Serum"),
+        ("Volume", "220μL"),
+        ("Brand", "Skyla"),
+        ("Packing/ Unit", "20 pcs/ box"),
+        ("Order Unit", "1 box"),
+        ("Price", "1,760.0"),
+    ]], page=10)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert out.items[0].normalized_fields["cost"]["amount"] == "1760.0"
+    assert out.items[0].normalized_fields["cost"]["currency"] == "HKD"
+
+
+def test_the_qualified_price_column_still_wins_where_both_appear():
+    """"Price/ Unit (HKD)" is the declared column; the bare alias is a fallback."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([[
+        ("Order Code", "ALO250"),
+        ("Product Name", "ALOVEEN Shampoo"),
+        ("Price/ Unit (HKD)", "58.0"),
+        ("Price", "999.0"),
+    ]])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert out.items[0].normalized_fields["cost"]["amount"] == "58.0"
