@@ -271,6 +271,51 @@
       "source_column_prefix": null
     },
     {
+      "field_key": "regular_retail_price",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Regular Retail Price / 正價",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Hill's regular list retail price, printed beside the recommended one.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's.pdf",
+          "note": "I supplied a 9-page PDF sample confirming bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's 2026 new price.pdf",
+          "note": "I supplied a 6-page 2026 Prescription Diet (Feline) edition; a live extraction run confirmed it replaces the Life Stage column with Disease Category while keeping every other declared column."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",

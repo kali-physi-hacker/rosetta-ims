@@ -137,6 +137,20 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 description="Supplier cost source field used by the supported runtime adapter.",
                 evidence=_EVIDENCE,
             ),
+            # Hill's prints TWO retail prices per row: 正價, the regular list
+            # price, and 建議零售價, the one it recommends selling at. Only the
+            # recommendation was mapped, so the list price — 95 values on the
+            # live 9-page catalogue — was read and then dropped. Kept verbatim
+            # under role OTHER: it is a second retail figure, and calling it
+            # "the" RRP would make two different numbers fight over one field.
+            SourceFieldContract(
+                field_key="regular_retail_price",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Regular Retail Price / 正價",
+                description="Hill's regular list retail price, printed beside the recommended one.",
+                evidence=_EVIDENCE,
+            ),
             SourceFieldContract(
                 field_key="rrp",
                 role=SourceFieldRole.RRP,
