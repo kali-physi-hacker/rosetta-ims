@@ -78,8 +78,11 @@ class ConformanceOutcome:
     """Conformance results plus durable accounting.
 
     ``metadata`` carries machine-readable accounting (conformed / skipped
-    header / unconformable counts) so the run record can distinguish "skipped
-    as header row" from "could not be conformed".
+    header / skipped ineligible / unconformable counts) so the run record can
+    distinguish "skipped as header row" from "was not a catalogue row" from
+    "could not be conformed". ``skipped_count`` is their total: every
+    observation either becomes an item or is counted here, which is the
+    invariant the run's row accounting rests on.
     """
 
     items: tuple[ConformedRow, ...]
@@ -102,10 +105,11 @@ def conform_observations(
     document_issues = _document_issues(observations, runtime_contract)
     warnings: list[str] = [issue.message for issue in document_issues]
     items: list[ConformedRow] = []
-    skipped = 0
+    skipped = 0        # total, and the number the run's accounting uses
+    header_rows = 0
     furniture = 0
     unconformable = 0
-    furniture_rows = 0
+    ineligible = 0
     for observation, raw_id in zip(observations, raw_observation_ids, strict=True):
         key = observation.observation_key
         if _has_cells(observation):
@@ -113,11 +117,14 @@ def conform_observations(
             if fields is None:
                 # Header row — evidence, not a row.
                 skipped += 1
+                header_rows += 1
                 continue
-            if _is_furniture(fields, runtime_contract):
+            if _is_ineligible_row(fields, runtime_contract):
                 # Carries neither an identity nor a price: a divider, a blank
-                # spacer, a section title. Evidence, not an item.
-                furniture_rows += 1
+                # spacer, a section title. Evidence, not an item — and counted
+                # as skipped, like every other row that does not become one.
+                skipped += 1
+                ineligible += 1
                 continue
             row_issues = (
                 document_issues
@@ -180,8 +187,8 @@ def conform_observations(
         skipped_count=skipped,
         metadata={
             "conformed_items": len(items),
-            "skipped_header_rows": skipped,
-            "skipped_furniture_rows": furniture_rows,
+            "skipped_header_rows": header_rows,
+            "skipped_ineligible_rows": ineligible,
             "skipped_non_tabular_text": furniture,
             "unconformable_items": unconformable,
             "contract_issue_count": len(document_issues) + sum(len(item.issues) for item in items),
@@ -603,7 +610,7 @@ def _row_eligibility_issues(
     )
 
 
-def _is_furniture(fields: dict[str, Any], runtime_contract) -> bool:
+def _is_ineligible_row(fields: dict[str, Any], runtime_contract) -> bool:
     """True when the row is part of the document, not part of the catalogue.
 
     A supplier price list is not only items: it has section titles, blank

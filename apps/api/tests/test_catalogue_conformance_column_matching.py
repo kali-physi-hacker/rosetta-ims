@@ -479,7 +479,7 @@ def test_a_section_divider_is_skipped_rather_than_queued_for_review():
     )
 
     assert outcome.items == (), "furniture is evidence, not a catalogue row"
-    assert outcome.metadata["skipped_furniture_rows"] == 1, "and it is counted, not silently dropped"
+    assert outcome.metadata["skipped_ineligible_rows"] == 1, "and it is counted, not silently dropped"
 
 
 def test_a_row_missing_its_code_but_carrying_a_price_is_still_surfaced():
@@ -496,7 +496,7 @@ def test_a_row_missing_its_code_but_carrying_a_price_is_still_surfaced():
     )
 
     assert len(outcome.items) == 1
-    assert outcome.metadata["skipped_furniture_rows"] == 0
+    assert outcome.metadata["skipped_ineligible_rows"] == 0
     assert any(i.issue_code == "CONTRACT_REQUIRED_FIELD_MISSING" and i.field_key == "supplier_sku"
                for i in outcome.items[0].issues)
 
@@ -536,14 +536,14 @@ def test_hills_section_headings_are_furniture_too():
     )
 
     assert outcome.items == ()
-    assert outcome.metadata["skipped_furniture_rows"] == 1
+    assert outcome.metadata["skipped_ineligible_rows"] == 1
 
 
 def test_a_contract_without_declared_identity_fields_keeps_every_row():
     """The rule is opt-in per contract; silence must not start dropping rows."""
     from types import SimpleNamespace
 
-    from services.catalogue_conformance import _is_furniture
+    from services.catalogue_conformance import _is_ineligible_row
 
     def contract(identity_fields):
         return SimpleNamespace(declaration=SimpleNamespace(
@@ -552,8 +552,38 @@ def test_a_contract_without_declared_identity_fields_keeps_every_row():
         ))
 
     bare = {"source:description": "小食 Treats"}
-    assert _is_furniture(bare, contract(["supplier_sku"])) is True
-    assert _is_furniture(bare, contract([])) is False, "no declaration, no skipping"
+    assert _is_ineligible_row(bare, contract(["supplier_sku"])) is True
+    assert _is_ineligible_row(bare, contract([])) is False, "no declaration, no skipping"
     # And identity or price is enough to keep a row either way.
-    assert _is_furniture({"source:supplier_sku": "SPOT1"}, contract(["supplier_sku"])) is False
-    assert _is_furniture({"source:cost": "190.0"}, contract(["supplier_sku"])) is False
+    assert _is_ineligible_row({"source:supplier_sku": "SPOT1"}, contract(["supplier_sku"])) is False
+    assert _is_ineligible_row({"source:cost": "190.0"}, contract(["supplier_sku"])) is False
+
+
+def test_every_observation_is_either_an_item_or_counted_as_skipped():
+    """The run's row accounting rests on this, and nothing else enforces it.
+
+    Adding a new reason to skip a row without adding it to skipped_count made a
+    56-page live run report 2,233 extracted minus 309 skipped against 1,762
+    persisted — 162 rows silently unaccounted for. Cheap to assert here;
+    expensive to notice there.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = (
+        _alfamedic_row([("Order Code", "BGD-RC03-1"), ("Product Name", "CDV Ag Test"),
+                        ("Price/ Unit (HKD)", "190.0"), ("Packing / Unit", "10 tests kit/ box")]),
+        _alfamedic_row([("Product Name", "- Diagnostics, Lab Equipment & Accessories -")]),   # ineligible
+        _alfamedic_row([("Order Code", "Order Code"), ("Product Name", "Product Name"),
+                        ("Price/ Unit (HKD)", "Price/ Unit (HKD)")]),                          # header
+        _alfamedic_row([("Order Code", "SPOT1"), ("Product Name", "Spot Platinum+ Test"),
+                        ("Price/ Unit (HKD)", "2,250.0")]),
+    )
+    outcome = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(outcome.items) + outcome.skipped_count == len(observations)
+    # And the reasons are reported separately, each true on its own: they had
+    # all been reporting the running total, so 0 header rows read as 471.
+    meta = outcome.metadata
+    assert meta["skipped_ineligible_rows"] == 1
+    assert meta["skipped_header_rows"] == 1
+    assert (meta["skipped_header_rows"] + meta["skipped_ineligible_rows"]
+            + meta["skipped_non_tabular_text"]) == outcome.skipped_count
