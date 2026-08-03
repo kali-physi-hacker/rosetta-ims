@@ -372,11 +372,39 @@ class PackagingSourceSemantics(SupplierSourceModel):
     )
     content_measure_source_field: str | None = Field(None, description="Field key proving content amount/UOM.")
     content_measure_uom: UnitOfMeasure | None = Field(None, description="Content-measure UOM when fixed by the format.")
+    purchase_uom_source_field: str | None = Field(
+        None,
+        description=(
+            "Field key whose printed text NAMES the purchase unit after a slash — Alfamedic writes "
+            "'30ml/ bot' and '100 tabs/ box', so the unit varies per row and cannot be a single "
+            "declared value. Only units the vocabulary knows are accepted; anything else is left "
+            "null rather than guessed, because a wrong purchase unit silently rebases every "
+            "per-unit cost derived from it."
+        ),
+    )
+    price_basis_follows_purchase_unit: bool = Field(
+        False,
+        description=(
+            "Price the row in the unit it is SOLD in rather than a fixed basis. Alfamedic prices "
+            "$1,390 per bottle and $1,486 per box; calling both PIECE leaves every per-unit cost "
+            "divided by the wrong denominator. Requires purchase_uom_source_field, and falls back "
+            "to the declared price_basis for a row whose unit could not be read."
+        ),
+    )
     order_increment_source_field: str | None = Field(None, description="Field key proving supplier order multiple.")
     minimum_order_source_field: str | None = Field(None, description="Field key proving minimum order quantity.")
     break_pack_allowed: bool | None = Field(None, description="Whether break-pack purchasing is known from the source.")
     interpretation_rules: list[str] = Field(default_factory=list, description="Supplier-specific packaging interpretation rules.")
     unresolved_semantics: list[str] = Field(default_factory=list, description="Unknown semantics that must remain null.")
+
+    @model_validator(mode="after")
+    def _price_basis_needs_a_unit_to_follow(self):
+        if self.price_basis_follows_purchase_unit and not self.purchase_uom_source_field:
+            raise ValueError(
+                "price_basis_follows_purchase_unit requires purchase_uom_source_field — there is "
+                "nothing for the basis to follow otherwise"
+            )
+        return self
 
     @model_validator(mode="after")
     def _validate_packaging_semantics(self):

@@ -1272,14 +1272,16 @@
       "label": null
     },
     "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
+    "sellable_units_per_purchase_unit_source_field": "pack_size",
     "content_measure_source_field": null,
     "content_measure_uom": null,
-    "order_increment_source_field": "pack_size",
+    "purchase_uom_source_field": "pack_size",
+    "price_basis_follows_purchase_unit": true,
+    "order_increment_source_field": "order_units",
     "minimum_order_source_field": null,
     "break_pack_allowed": null,
     "interpretation_rules": [
-      "Leading count in Packing / Unit is interpreted as supplier order increment, not a price divisor.",
+      "Leading count in Packing / Unit is how many the pack HOLDS; the order multiple is the Order Units column.",
       "Price basis remains per sellable piece in current parser behavior."
     ],
     "unresolved_semantics": [

@@ -253,6 +253,12 @@
           "default": null,
           "description": "Price basis repeated for packaging cross-checks."
         },
+        "price_basis_follows_purchase_unit": {
+          "default": false,
+          "description": "Price the row in the unit it is SOLD in rather than a fixed basis. Alfamedic prices $1,390 per bottle and $1,486 per box; calling both PIECE leaves every per-unit cost divided by the wrong denominator. Requires purchase_uom_source_field, and falls back to the declared price_basis for a row whose unit could not be read.",
+          "title": "Price Basis Follows Purchase Unit",
+          "type": "boolean"
+        },
         "purchase_uom": {
           "anyOf": [
             {
@@ -264,6 +270,19 @@
           ],
           "default": null,
           "description": "Purchase unit when explicitly known."
+        },
+        "purchase_uom_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key whose printed text NAMES the purchase unit after a slash — Alfamedic writes '30ml/ bot' and '100 tabs/ box', so the unit varies per row and cannot be a single declared value. Only units the vocabulary knows are accepted; anything else is left null rather than guessed, because a wrong purchase unit silently rebases every per-unit cost derived from it.",
+          "title": "Purchase Uom Source Field"
         },
         "sellable_unit_uom": {
           "anyOf": [

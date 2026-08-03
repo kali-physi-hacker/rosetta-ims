@@ -31,6 +31,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
 
+from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import UnitCode
 from schemas.catalogue_pipeline.supplier_contracts.common import SourceFieldRequirement
 from services.catalogue_evidence_extraction import ExtractedEvidence
@@ -487,7 +488,7 @@ def _item_from_fields(
     if effective_date is not None:
         normalized["effective_date"] = effective_date
 
-    cost = _cost_proposal(fields.get("cost_price"), runtime_contract, evidence)
+    cost = _cost_proposal(fields.get("cost_price"), runtime_contract, evidence, fields)
     if cost is not None:
         normalized["cost"] = cost
     rrp = _money_proposal(fields.get("rrp"), runtime_contract, evidence)
@@ -896,7 +897,7 @@ def _tier_row_term(
     lifted_cost = None
     if free_goods is not None and price is not None and price > 0:
         lifted_cost = _cost_proposal(
-            fields.get(f"source:{declared.tier_price_field}"), runtime_contract, evidence
+            fields.get(f"source:{declared.tier_price_field}"), runtime_contract, evidence, fields
         )
     return parent_index, term, lifted_cost
 
@@ -1098,12 +1099,25 @@ def _stable_term_uuid(evidence: dict[str, Any], field_key: str) -> uuid.UUID:
     return uuid.uuid5(uuid.NAMESPACE_URL, f"rosetta:mbb-tier:{seed}")
 
 
-def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any]) -> dict[str, Any] | None:
+def _read_purchase_unit(fields: dict[str, Any], semantics) -> str | None:
+    if not semantics.purchase_uom_source_field:
+        return None
+    return _purchase_unit_from_text(_source_field_value(fields, semantics.purchase_uom_source_field))
+
+
+def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any], fields: dict[str, Any] | None = None) -> dict[str, Any] | None:
     if _matches_null_marker(value, runtime_contract.declaration.pricing.null_cost_markers):
         return None
     amount = _decimal_or_none(value)
     pricing = runtime_contract.declaration.pricing
     basis = pricing.price_basis
+    packaging = runtime_contract.declaration.packaging
+    if fields is not None and packaging.price_basis_follows_purchase_unit:
+        # $1,390 is per BOTTLE, not per piece. Leaving it as a fixed basis
+        # divides every per-unit cost by the wrong denominator.
+        read_unit = _read_purchase_unit(fields, packaging)
+        if read_unit:
+            basis = UnitOfMeasure(code=UnitCode(read_unit))
     if amount is None or basis is None or basis.code is None:
         return None
     return {
@@ -1120,6 +1134,39 @@ def _matches_null_marker(value: Any, markers: list[str]) -> bool:
         return False
     lowered = value.strip().lower()
     return any(marker.strip().lower() in lowered for marker in markers if marker.strip())
+
+
+# What a supplier writes after the slash in its packing text, and the unit that
+# is. Only units the vocabulary already knows appear here: a purchase unit that
+# is wrong silently rebases every per-unit cost derived from it, so an unknown
+# word is left null for a human rather than mapped to something close.
+_PURCHASE_UNIT_WORDS = {
+    "box": "BOX", "boxes": "BOX",
+    "bot": "BOTTLE", "bots": "BOTTLE", "bottle": "BOTTLE", "bottles": "BOTTLE",
+    "pack": "PACK", "packs": "PACK", "pkt": "PACK",
+    "tube": "TUBE", "tubes": "TUBE",
+    "bag": "BAG", "bags": "BAG",
+    "vial": "VIAL", "vials": "VIAL",
+    "can": "CAN", "cans": "CAN",
+    "sachet": "SACHET", "sachets": "SACHET",
+    "case": "CASE", "carton": "CARTON", "ctn": "CARTON",
+    "pc": "PIECE", "pcs": "PIECE", "piece": "PIECE", "pieces": "PIECE",
+}
+
+
+def _purchase_unit_from_text(value: Any) -> str | None:
+    """The purchase unit named after the slash: '30ml/ bot' -> BOTTLE.
+
+    Alfamedic's units vary row by row — box, bot, tube, pot, reel — so this
+    cannot be a single declared value. 'pot', 'reel', 'roll' and 'set' are
+    deliberately absent from the vocabulary: the enum has no honest home for
+    them, and OTHER would assert knowledge nobody has.
+    """
+    text = _text(value)
+    if not text or "/" not in text:
+        return None
+    word = re.sub(r"[^a-z]+", " ", text.rsplit("/", 1)[1].lower()).strip()
+    return _PURCHASE_UNIT_WORDS.get(word) or _PURCHASE_UNIT_WORDS.get(word.split(" ")[0] if word else "")
 
 
 def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict[str, Any]) -> dict[str, Any] | None:
@@ -1141,6 +1188,13 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
         uom = getattr(semantics, attribute)
         if uom is not None:
             proposal[attribute] = uom.model_dump(mode="json")
+    # A per-row purchase unit overrides the declared one; a row whose unit the
+    # vocabulary does not know keeps whatever the contract declared.
+    read_unit = _read_purchase_unit(fields, semantics)
+    if read_unit:
+        proposal["purchase_uom"] = {"code": read_unit, "label": None}
+        if semantics.price_basis_follows_purchase_unit:
+            proposal["price_basis"] = {"code": read_unit, "label": None}
     if semantics.break_pack_allowed is not None:
         proposal["break_pack_allowed"] = semantics.break_pack_allowed
     content_source = _source_field_value(fields, semantics.content_measure_source_field)

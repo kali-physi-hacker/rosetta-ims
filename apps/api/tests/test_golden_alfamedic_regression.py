@@ -5,9 +5,10 @@ hand for five Alfamedic SKUs. It is the only human-authored statement of what
 these rows SHOULD come out as, so it is the arbiter when the pipeline changes.
 
 Checked against a real published export of run fef361b2 (the 56-page Alfamedic
-catalogue). Three of the five agree completely. The two that do not are pinned
-as xfail rather than deleted, because the gap is real and a test that quietly
-asserted today's wrong answer would cement it.
+catalogue). Written first with three gaps pinned as strict xfail — the pack's
+contents read as an order quantity, quantity_per_unit never derived, and every
+price basis reported as PIECE. Fixing the contract flipped all three to XPASS,
+so they are plain assertions now. That is what the strict marker is for.
 """
 
 from __future__ import annotations
@@ -91,59 +92,30 @@ def test_the_cost_matches_the_hand_filled_sheet(sku):
     assert Decimal(_row(sku).normalized_fields["cost"]["amount"]) == expected
 
 
-# Only the four whose pack states a COUNT are wrong today. C23811H prints
-# "1 set/ box", so reading the leading count happens to give the right answer —
-# marking it xfail would assert a bug it does not have.
-_MISREAD = pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "KNOWN GAP: the leading count in 'Packing/ Unit' is read as the ORDER INCREMENT, so "
-        "'30ml/ bot' becomes 'order 30 pieces' and '100 tabs/ box' becomes 'order 100 pieces'. "
-        "The catalogue's Order Units column says '1 bot' and '1 box', and the golden sheet "
-        "agrees: you order ONE, and it holds 30 or 100. The contract's own note calls the "
-        "current reading an interpretation, made before Order Units was captured."
-    ),
-)
-
-
-@pytest.mark.parametrize("sku", [
-    pytest.param("EN7502", marks=_MISREAD),
-    pytest.param("AP1900", marks=_MISREAD),
-    pytest.param("ME5701", marks=_MISREAD),
-    pytest.param("VE3255", marks=_MISREAD),
-    "C23811H",
-])
+@pytest.mark.parametrize("sku", sorted(GOLDEN))
 def test_you_order_one_pack_not_its_contents(sku):
+    """You order ONE box; the hundred tablets are what it holds.
+
+    The order multiple comes from the catalogue's own Order Units column
+    ("1 box"), not from the leading count of the packing text.
+    """
     increment = (_row(sku).normalized_fields.get("packaging") or {}).get("order_increment") or {}
     assert Decimal(increment.get("amount", "0")) == Decimal(1)
 
 
 @pytest.mark.parametrize("sku", sorted(GOLDEN))
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "KNOWN GAP: quantity_per_unit is not derived. The sheet records 30 per bottle for "
-        "Entyce and 100 per box for Apoquel, both printed in 'Packing/ Unit'; the pipeline "
-        "records no sellable-units-per-purchase-unit at all."
-    ),
-)
 def test_the_pack_states_how_many_it_holds(sku):
+    """The sheet's quantity_per_unit: 30 per bottle, 100 per box."""
     expected = GOLDEN[sku][3]
     packaging = _row(sku).normalized_fields.get("packaging") or {}
     assert Decimal(packaging.get("sellable_units_per_purchase_unit", "0")) == Decimal(expected)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "KNOWN GAP: the price basis is reported as PIECE for every row, because the contract "
-        "declares one. A price of $1,390 is per BOTTLE — the sheet says so, and both "
-        "'Packing/ Unit' and 'Order Units' print it."
-    ),
-)
 def test_the_price_basis_is_the_unit_the_supplier_sells_in():
+    """$1,390 is per BOTTLE. A fixed PIECE basis divides every per-unit cost
+    by the wrong denominator."""
     bases = {(_row(sku).normalized_fields["cost"]["price_basis"]["code"]) for sku in GOLDEN}
-    assert bases != {"PIECE"}
+    assert bases == {"BOTTLE", "BOX"}, "the unit the supplier sells in, per row"
 
 
 def test_a_product_named_only_by_its_size_is_visible_as_a_gap():

@@ -432,11 +432,24 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
+            # The declared basis is now only the fallback for a row whose unit
+            # cannot be read; the row's own purchase unit wins. "$1,390 per
+            # piece" for a 30ml bottle divides every per-unit cost by 1 instead
+            # of 30.
             price_basis=UnitOfMeasure(code=UnitCode.PIECE),
-            order_increment_source_field="pack_size",
+            purchase_uom_source_field="pack_size",
+            price_basis_follows_purchase_unit=True,
+            # How many the pack holds: the leading count of "30ml/ bot",
+            # "100 tabs/ box". This is the sheet's quantity_per_unit.
+            sellable_units_per_purchase_unit_source_field="pack_size",
+            # You order ONE box, not its hundred tablets. The catalogue says so
+            # in its own column — which was unread until Order Units was mapped,
+            # and until then the leading count of the packing text stood in for
+            # it.
+            order_increment_source_field="order_units",
             break_pack_allowed=None,
             interpretation_rules=[
-                "Leading count in Packing / Unit is interpreted as supplier order increment, not a price divisor.",
+                "Leading count in Packing / Unit is how many the pack HOLDS; the order multiple is the Order Units column.",
                 "Price basis remains per sellable piece in current parser behavior.",
             ],
             unresolved_semantics=[

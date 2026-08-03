@@ -320,13 +320,21 @@ def test_hills_packaging_normalization_keeps_content_separate_from_ordering():
     assert "break_pack_allowed" not in packaging
 
 
-def test_alfamedic_pack_count_is_order_increment_and_by_quote_is_reviewed():
+def test_alfamedic_pack_holds_its_count_and_by_quote_is_reviewed():
+    """"10 pcs/ box" is a box holding ten, priced per box.
+
+    This asserted the opposite until the golden sample sheet was checked
+    against a live export — order_increment 10, no sellable count, basis PIECE.
+    The sheet records minimum_purchase_quantity 1, quantity_per_unit 10, and a
+    purchase unit of box, all of which the catalogue prints.
+    """
     alfamedic = runtime.load_contract(1)
     row_cells = {
         "Order Code": "MS-8",
         "Product Name": "Image Processor",
         "Brand": "Skyla",
         "Packing / Unit": "10 pcs/ box",
+        "Order Units": "1 box",
         "Price/ Unit (HKD)": "By Quote",
     }
 
@@ -334,10 +342,31 @@ def test_alfamedic_pack_count_is_order_increment_and_by_quote_is_reviewed():
     packaging = row.normalized_fields["packaging"]
 
     assert "cost" not in row.normalized_fields
-    assert packaging["price_basis"]["code"] == "PIECE"
-    assert packaging["order_increment"]["amount"] == "10"
-    assert "sellable_units_per_purchase_unit" not in packaging
+    assert packaging["purchase_uom"]["code"] == "BOX"
+    assert packaging["price_basis"]["code"] == "BOX"
+    assert packaging["sellable_units_per_purchase_unit"] == "10"
+    assert packaging["order_increment"]["amount"] == "1", "you order one box"
     assert "CONTRACT_NULL_COST_REQUIRES_REVIEW" in {issue.issue_code for issue in row.issues}
+
+
+def test_a_purchase_unit_the_vocabulary_does_not_know_is_left_null():
+    """Alfamedic also writes "/ pot", "/ reel", "/ roll" and "/ set".
+
+    The enum has no honest home for those, and a wrong purchase unit silently
+    rebases every per-unit cost derived from it — so the row keeps the
+    contract's declared basis rather than being mapped to something close.
+    """
+    alfamedic = runtime.load_contract(1)
+    row = conform_observations((_observation({
+        "Order Code": "ZHG705010",
+        "Product Name": "Haemostatic Gelatin Sponge",
+        "Packing / Unit": "10 pcs/ pot",
+        "Order Units": "1 pot",
+        "Price/ Unit (HKD)": "190.0",
+    }),), (uuid4(),), alfamedic).items[0]
+
+    assert row.normalized_fields["cost"]["price_basis"]["code"] == "PIECE", "the declared fallback"
+    assert "purchase_uom" not in row.normalized_fields["packaging"]
 
 
 def test_unparseable_effective_date_stays_raw_and_requires_review():

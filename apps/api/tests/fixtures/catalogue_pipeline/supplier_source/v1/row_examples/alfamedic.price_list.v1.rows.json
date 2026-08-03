@@ -4,7 +4,7 @@
   "row_evidence_status": "CONFIRMED",
   "supplier_id": 1,
   "supplier_name": "Alfamedic",
-  "notes": "Confirmed source-backed rows from the Alfamedic PDF text layer I supplied. These fixtures standardize the evidence used by the supported runtime adapter.",
+  "notes": "Confirmed source-backed rows from the Alfamedic PDF text layer I supplied. These fixtures standardize the evidence used by the supported runtime adapter. Packaging semantics corrected 2026-08-03 against the golden sample sheet: the packing count is the pack's contents, the Order Unit column is the order multiple, and the price basis is the unit sold.",
   "examples": [
     {
       "example_id": "alfamedic-901-100-price-row",
@@ -30,22 +30,24 @@
         "cost_price": "820.0",
         "pack_size": "10 pcs/ box",
         "units_per_pack": 10,
-        "brand": "Skyla"
+        "brand": "Skyla",
+        "order_units": "1 box"
       },
       "expected_runtime_item": {
         "cost_price": "820.0",
         "units_per_pack": 1,
-        "order_increment_qty": 10,
+        "order_increment_qty": 1,
         "segment": "vet",
         "rrp": null
       },
       "expected_semantics": {
-        "price_basis": "PIECE",
+        "price_basis": "BOX",
         "currency": "HKD",
-        "purchase_uom": null,
+        "purchase_uom": "BOX",
         "break_pack_allowed": null,
         "content_measure": null,
-        "reason": "The contract treats Price/Unit as per sellable piece and the leading pack count as order-increment evidence, not as a price divisor."
+        "reason": "The printed row states both: 'Packing / Unit' is how many the pack HOLDS and 'Order Unit' is how many you order. Price is per purchase unit, so a box of ten is priced per box. Corrected after the golden sample sheet was checked against a live export — the earlier reading treated the packing count as the order multiple and priced everything per piece.",
+        "sellable_units_per_purchase_unit": 10
       }
     },
     {
@@ -69,7 +71,8 @@
         "description": "Image Processor",
         "cost_price": "By Quote",
         "pack_size": "1 unit",
-        "units_per_pack": 1
+        "units_per_pack": 1,
+        "order_units": "1 unit"
       },
       "expected_runtime_item": {
         "cost_price": null,
