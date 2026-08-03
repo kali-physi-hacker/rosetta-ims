@@ -352,9 +352,9 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
 
     def _lookup_composed(column_name: str) -> str | None:
         # A composed name may join printed COLUMNS with values that are not
-        # columns at all — the section banner above the table, for one. Any
-        # field already resolved (the section is set before this loop) answers
-        # by its own field key.
+        # columns at all — the section banner above the table, a field whose
+        # own heading moved between runs. Every simple field is resolved before
+        # composition runs, so any of them answers by its field key.
         resolved = fields.get(f"source:{column_name}")
         if _text(resolved) is not None:
             return _text(resolved)
@@ -391,23 +391,34 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
                 target = _role_target(contract_field.role)
                 if target:
                     fields.setdefault(target, section)
+    def _record(contract_field, value: Any) -> None:
+        target = _role_target(contract_field.role) or f"additional:{contract_field.field_key}"
+        # Preserve every declaration by its stable contract field key even
+        # when multiple fields share one semantic role (for example pack
+        # size and units per case are both PACKAGING).
+        fields[f"source:{contract_field.field_key}"] = value
+        fields.setdefault(target, value)
+
+    # Two passes, so a composed value may name any other field regardless of
+    # declaration order. Composing from field keys rather than raw headings is
+    # what lets a run that renames a column still resolve through that field's
+    # aliases — but it only works if the parts are resolved first.
+    composed: list[Any] = []
     for contract_field in runtime_contract.declaration.fields:
-        target = _role_target(contract_field.role)
-        if target is None:
-            target = f"additional:{contract_field.field_key}"
-        value: Any = _lookup_field(contract_field)
-        if value is None and contract_field.composed_from:
-            parts = [part for part in (_lookup_composed(column) for column in contract_field.composed_from) if part]
-            if parts:
-                value = " ".join(parts)
-        if value is None and contract_field.constant_value is not None:
+        if contract_field.composed_from:
+            composed.append(contract_field)
+        value = _lookup_field(contract_field)
+        if value is None and not contract_field.composed_from and contract_field.constant_value is not None:
             value = contract_field.constant_value
         if value is not None:
-            # Preserve every declaration by its stable contract field key even
-            # when multiple fields share one semantic role (for example pack
-            # size and units per case are both PACKAGING).
-            fields[f"source:{contract_field.field_key}"] = value
-            fields.setdefault(target, value)
+            _record(contract_field, value)
+    for contract_field in composed:
+        if _text(fields.get(f"source:{contract_field.field_key}")) is not None:
+            continue
+        parts = [part for part in (_lookup_composed(name) for name in contract_field.composed_from) if part]
+        value = " ".join(parts) if parts else contract_field.constant_value
+        if value is not None:
+            _record(contract_field, value)
     if observation.confidence is not None:
         fields.setdefault("confidence", str(observation.confidence))
     return fields

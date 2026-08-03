@@ -103,7 +103,26 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 # neighbours under it: needle, gauge, thread length. Only used
                 # when the column itself is absent, so every page that prints a
                 # name keeps its own.
-                composed_from=["section_header", "Needle", "USP", "Length"],
+                # One list covers every nameless shape in the document, because
+                # a composed value simply omits the parts a row does not carry:
+                #   p41 sutures  -> banner + needle + gauge + length
+                #   p42 needles  -> circle + point + eye + size
+                #   p42 ETHICON  -> material + gauge + needle, or material +
+                #                   its free-text description
+                # Parts are field keys, not column headings, so a run that
+                # renames a heading still resolves through that field's aliases.
+                composed_from=[
+                    "section_header",
+                    "suture_type",
+                    "needle_circle_type",
+                    "needle_point_type",
+                    "needle_eye_type",
+                    "size",
+                    "needle",
+                    "gauge_usp",
+                    "thread_length",
+                    "product_description_text",
+                ],
                 # Size variants are listed under one merged name cell: the
                 # 250ml line names the product, the 1L line below carries only
                 # its own code, packing and price. Both are stocked SKUs.
@@ -218,6 +237,64 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Color",
                 description="Thread colour, e.g. 'Violet', 'Undyed'.",
+                evidence=_EVIDENCE,
+            ),
+            # Page 42's needle tables describe a product across several
+            # columns instead of naming it. The heading text is not stable
+            # between runs — one run returned "Product Name (Circle Type)" /
+            # "(Needle Type)" / "(Eye/Size)", the next "Circle Type" /
+            # "Cutting Type" / "Eye Type" / "Size" — so each declares the
+            # other form as an alias and the composed name simply skips
+            # whichever parts a given run did not produce.
+            SourceFieldContract(
+                field_key="suture_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Type",
+                description="Suture material where it is a column rather than a banner: PDS, Vicryl.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="needle_circle_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Circle Type",
+                aliases=["Product Name (Circle Type)"],
+                description="Needle curvature: 1/2 Circle, 3/8 Circle.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="needle_point_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Cutting Type",
+                aliases=["Product Name (Needle Type)"],
+                description="Needle point geometry: Round Body, Reverse Cutting.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="needle_eye_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Eye Type",
+                aliases=["Product Name (Eye/Size)"],
+                description="Needle eye: Regular Eye (RHR/RHC/RTC/RTR), Spring Eye (SHR/STC).",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="size",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Size",
+                description="Printed size: a needle's '25mm N°13', or a collar's 'XXS'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="product_description_text",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Product Description",
+                description="Free-text specification where the supplier uses it instead of a name.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(

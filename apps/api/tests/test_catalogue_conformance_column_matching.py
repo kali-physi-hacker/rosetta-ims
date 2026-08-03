@@ -1086,3 +1086,45 @@ def test_a_row_with_no_band_and_no_name_is_not_given_an_invented_one():
 
     name = (out.items[0].normalized_fields.get("product_name") or {}).get("value")
     assert name is None or "Surgicryl" not in name
+
+
+def test_every_nameless_shape_on_the_needle_page_composes_its_own_name():
+    """Page 42 is five shapes, not one. A composed value omits the parts a row
+    does not carry, so one declaration covers all of them."""
+    alfamedic = runtime.load_contract(1)
+    cases = {
+        # split across four spec columns
+        "Z813": ([("Order Code", "Z813"), ("Circle Type", "1/2 Circle"),
+                  ("Cutting Type", "Round Body"), ("Eye Type", "Regular Eye (RHR)"),
+                  ("Size", "25mm N°13"), ("Price/ Unit (HKD)", "148.0")],
+                 "1/2 Circle Round Body Regular Eye (RHR) 25mm N 13"),
+        # material column + gauge + needle
+        "159045VN": ([("Order Code", "159045VN"), ("Type", "PDS"), ("USP", "USP 2/0"),
+                      ("Needle", "SH round needle, Z317H"), ("Price/ Unit (HKD)", "89.0")],
+                     "PDS SH round needle, Z317H USP 2/0"),
+        # material + one free-text cell carrying gauge, needle and code
+        "154215VN": ([("Order Code", "154215VN"), ("Type", "Vicryl"),
+                      ("Product Description", "USP 0, w/ Needle FSL, V587H"),
+                      ("Price/ Unit (HKD)", "82.0")],
+                     "Vicryl USP 0, w/ Needle FSL, V587H"),
+    }
+    for sku, (pairs, expected) in cases.items():
+        out = conform_observations(_alf_rows([pairs], page=42), (uuid4(),), alfamedic)
+        assert (out.items[0].normalized_fields["product_name"]["value"]) == expected, sku
+
+
+def test_a_composed_name_may_reference_a_field_declared_after_it():
+    """The parts are field keys, so a run that renames a heading still resolves
+    through that field's aliases. That only works if order does not matter."""
+    alfamedic = runtime.load_contract(1)
+    # The earlier rendering of the same page, with the other heading text.
+    out = conform_observations(_alf_rows([[
+        ("Order Code", "Z813"),
+        ("Product Name (Circle Type)", "1/2 Circle"),
+        ("Product Name (Needle Type)", "Round Body"),
+        ("Product Name (Eye/Size)", "Regular Eye (RHR) 25mm N°13"),
+        ("Price/ Unit (HKD)", "148.0"),
+    ]], page=42), (uuid4(),), alfamedic)
+
+    name = out.items[0].normalized_fields["product_name"]["value"]
+    assert name == "1/2 Circle Round Body Regular Eye (RHR) 25mm N 13"

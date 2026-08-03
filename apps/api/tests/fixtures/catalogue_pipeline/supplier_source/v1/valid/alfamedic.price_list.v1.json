@@ -123,9 +123,15 @@
       "source_path": null,
       "composed_from": [
         "section_header",
-        "Needle",
-        "USP",
-        "Length"
+        "suture_type",
+        "needle_circle_type",
+        "needle_point_type",
+        "needle_eye_type",
+        "size",
+        "needle",
+        "gauge_usp",
+        "thread_length",
+        "product_description_text"
       ],
       "constant_value": null,
       "aliases": [],
@@ -494,6 +500,252 @@
       "constant_value": null,
       "aliases": [],
       "description": "Thread colour, e.g. 'Violet', 'Undyed'.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "suture_type",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Type",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Suture material where it is a column rather than a banner: PDS, Vicryl.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "needle_circle_type",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Circle Type",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "Product Name (Circle Type)"
+      ],
+      "description": "Needle curvature: 1/2 Circle, 3/8 Circle.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "needle_point_type",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Cutting Type",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "Product Name (Needle Type)"
+      ],
+      "description": "Needle point geometry: Round Body, Reverse Cutting.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "needle_eye_type",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Eye Type",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "Product Name (Eye/Size)"
+      ],
+      "description": "Needle eye: Regular Eye (RHR/RHC/RTC/RTR), Spring Eye (SHR/STC).",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "size",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Size",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Printed size: a needle's '25mm N°13', or a collar's 'XXS'.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:_alfamedic_HK_pricelist_edition 28_01Mar2026_260226_BW (1).pdf",
+          "note": "I supplied a 56-page PDF sample confirming Price List 28, 01 Mar 2026, Order Code, Product Name, Brand, Packing/Unit, Order Units, and Price/Unit headers."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for order increment parsing, absent RRP, and By Quote cost handling."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_alfamedic_runtime_applies_per_piece_price_and_order_increment",
+          "note": "Tests representative Alfamedic rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "product_description_text",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Product Description",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Free-text specification where the supplier uses it instead of a name.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
