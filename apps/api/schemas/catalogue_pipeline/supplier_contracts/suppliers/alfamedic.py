@@ -98,6 +98,12 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
                 requirement=SourceFieldRequirement.REQUIRED,
+                # Where no Product Name is printed — the suture tables — the
+                # name is the banner plus what distinguishes this row from its
+                # neighbours under it: needle, gauge, thread length. Only used
+                # when the column itself is absent, so every page that prints a
+                # name keeps its own.
+                composed_from=["section_header", "Needle", "USP", "Length"],
                 # Size variants are listed under one merged name cell: the
                 # 250ml line names the product, the 1L line below carries only
                 # its own code, packing and price. Both are stocked SKUs.
@@ -151,6 +157,69 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             # preserved verbatim on the row without being interpreted —
             # "220μL" is the SAMPLE volume a test consumes, not the content of
             # the box, and must never be read as packaging.
+            # The suture pages (41) give every row a code, a gauge, a needle
+            # and a price, and name the material ONCE — in the band printed
+            # across the block:
+            #
+            #   Surgicryl PGA Polyglycolic (Foil Packing) Violet  DS - 3/8 circle
+            #   11201524 | DS24 24mm | EP 2 | USP 3/0 | 75cm | Violet | 328.0
+            #
+            # Captured as its own field so a name can be composed from it, and
+            # so the therapeutic banner on every other page stops being thrown
+            # away. Verbatim: no cleaning, no title-casing.
+            SourceFieldContract(
+                field_key="section_header",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="section_header",
+                description="Banner printed across the table, above its column headings.",
+                evidence=_EVIDENCE,
+            ),
+            # Suture specifications. EP and USP are the SAME thread gauge in
+            # two scales (European and US Pharmacopoeia): USP 3/0 is EP 2. Only
+            # USP goes in the composed name — printing both would state the
+            # thickness twice — but both are kept, because a buyer may search
+            # either.
+            SourceFieldContract(
+                field_key="needle",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Needle",
+                description="Needle code and length, e.g. 'DS24 24mm'. 'Without Needle' for reels.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="gauge_usp",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="USP",
+                description="Thread gauge, US Pharmacopoeia scale.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="gauge_ep",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="EP",
+                description="The same thread gauge, European Pharmacopoeia scale.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="thread_length",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Length",
+                description="Thread length, e.g. '75cm'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="thread_color",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Color",
+                description="Thread colour, e.g. 'Violet', 'Undyed'.",
+                evidence=_EVIDENCE,
+            ),
             SourceFieldContract(
                 field_key="order_units",
                 role=SourceFieldRole.OTHER,

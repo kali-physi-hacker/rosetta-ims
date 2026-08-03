@@ -1019,3 +1019,70 @@ def test_a_discounted_tier_price_is_never_mistaken_for_the_base_price():
     out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
 
     assert out.items[0].normalized_fields.get("cost") in (None, {}), "56.00 is the tier price, not the product's"
+
+
+# ── Alfamedic's suture pages name a product ONCE, in the band printed across
+#    the block. The rows below carry a code, a needle, a gauge and a price —
+#    and no name at all.
+#
+#      Surgicryl PGA Polyglycolic (Foil Packing) Violet   DS - 3/8 circle
+#      11201524 | DS24 24mm | EP 2   | USP 3/0 | 75cm | Violet | 328.0
+#      11351524 | DS24 24mm | EP 3.5 | USP 0   | 75cm | Violet | 328.0
+# ──────────────────────────────────────────────────────────────────────────
+
+BANNER = "Surgicryl PGA Polyglycolic (Foil Packing) Violet   DS - 3/8 circle"
+
+
+def _suture_row(pairs, section=BANNER, key="s"):
+    return ExtractedEvidence(
+        observation_key=key,
+        source_location=SourceLocation(page_number=41, source_object_key=key),
+        raw_cells=tuple(RawCell(cell_reference=None, row_number=1, column_index=i + 1,
+                                column_name=c, raw_value=v) for i, (c, v) in enumerate(pairs)),
+        extraction_method=ExtractionMethod.MODEL_VISION, provider="test",
+        source_metadata={"section": section} if section else {},
+    )
+
+
+def test_a_suture_takes_its_name_from_the_band_above_it_plus_what_makes_it_different():
+    alfamedic = runtime.load_contract(1)
+    rows = (
+        _suture_row([("Order Code", "11201524"), ("Needle", "DS24 24mm"), ("EP", "2"),
+                     ("USP", "3/0"), ("Length", "75cm"), ("Color", "Violet"),
+                     ("Packing/ Unit", "12 pcs/ box"), ("Price", "328.0")], key="a"),
+        _suture_row([("Order Code", "11351524"), ("Needle", "DS24 24mm"), ("EP", "3.5"),
+                     ("USP", "0"), ("Length", "75cm"), ("Color", "Violet"),
+                     ("Packing/ Unit", "12 pcs/ box"), ("Price", "328.0")], key="b"),
+    )
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    names = [(i.normalized_fields.get("product_name") or {}).get("value") for i in out.items]
+    assert all(n and n.startswith("Surgicryl PGA Polyglycolic") for n in names)
+    assert names[0] != names[1], "two gauges are two products and must not share a name"
+    assert "3/0" in names[0] and "DS24 24mm" in names[0] and "75cm" in names[0]
+    # The gauge is stated once. EP is the same measurement in the other scale.
+    assert "EP" not in names[0]
+    extra = out.items[0].raw_fields["additional_fields"]
+    assert extra["gauge_usp"] == "3/0" and extra["gauge_ep"] == "2", "both scales still kept"
+    assert extra["needle"] == "DS24 24mm"
+
+
+def test_a_printed_product_name_always_wins_over_the_band():
+    """Only the suture tables lack a name; every other page keeps its own."""
+    alfamedic = runtime.load_contract(1)
+    rows = (_suture_row([("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+                         ("Price/ Unit (HKD)", "58.0")], section="- Dermatology -"),)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    assert (out.items[0].normalized_fields["product_name"]["value"]) == "ALOVEEN Shampoo"
+    assert out.items[0].raw_fields["additional_fields"]["section_header"] == "- Dermatology -"
+
+
+def test_a_row_with_no_band_and_no_name_is_not_given_an_invented_one():
+    alfamedic = runtime.load_contract(1)
+    rows = (_suture_row([("Order Code", "11201524"), ("Needle", "DS24 24mm"),
+                         ("Price", "328.0")], section=None),)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    name = (out.items[0].normalized_fields.get("product_name") or {}).get("value")
+    assert name is None or "Surgicryl" not in name

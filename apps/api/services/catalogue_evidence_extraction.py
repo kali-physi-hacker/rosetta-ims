@@ -248,6 +248,13 @@ class _VisionTable(BaseModel):
 
     columns: tuple[str, ...]
     rows: tuple[_VisionRow, ...]
+    # The banner printed ACROSS the table, above its column headings. For some
+    # suppliers it is the only place a product's name appears: Alfamedic's
+    # suture pages give each row a code, gauge, needle and price, and name the
+    # material once, in the band over the block. Recorded verbatim against the
+    # rows it spans, because a banner in text_observations is unattached to
+    # anything and cannot be recovered later.
+    section: str | None = None
 
     @model_validator(mode="after")
     def _rows_match_columns(self):
@@ -317,6 +324,7 @@ Return one JSON object with exactly this shape:
   "page_outcome": "evidence",
   "tables": [
     {
+      "section": "banner printed across the table, verbatim; omit when absent",
       "columns": ["this table's printed headings, in printed order"],
       "rows": [
         {
@@ -344,6 +352,10 @@ page_outcome is REQUIRED and must be exactly one of:
 Rules:
 - Emit one tables entry per visually distinct table. Each table owns its
   printed headings; never force two different header families into one array.
+- When a heading band spans the full width above a group of rows, emit that
+  group as its own table and copy the band into that table's "section",
+  verbatim. Some catalogues name a product only there — the rows below carry
+  codes and specifications but no name.
 - Product/offer rows belong in tables. Preserve commercially relevant
   document-level text — effective dates, price-basis policies, promotion
   periods, minimum-order rules and similar terms — in text_observations.
@@ -1013,14 +1025,14 @@ def _vision_observations(
     try:
         observations: list[ExtractedEvidence] = []
         digest_counts: dict[str, int] = {}
-        row_groups: list[tuple[tuple[str, ...], _VisionRow]] = []
+        row_groups: list[tuple[tuple[str, ...], _VisionRow, str | None]] = []
         for table in envelope.tables:
-            row_groups.extend((table.columns, row) for row in table.rows)
+            row_groups.extend((table.columns, row, table.section) for row in table.rows)
         # Recorded compact-v1 fixtures remain readable.
-        row_groups.extend((envelope.columns, row) for row in envelope.rows)
-        row_groups.extend(((), row) for row in envelope.text_observations)
+        row_groups.extend((envelope.columns, row, None) for row in envelope.rows)
+        row_groups.extend(((), row, None) for row in envelope.text_observations)
 
-        for columns, row in row_groups:
+        for columns, row, section in row_groups:
             digest = _observation_digest(columns, row)
             ordinal = digest_counts.get(digest, 0) + 1
             digest_counts[digest] = ordinal
@@ -1061,6 +1073,7 @@ def _vision_observations(
                     model=provider.model,
                     model_version=provider.model,
                     confidence=row.confidence,
+                    source_metadata={"section": section} if section else {},
                 )
             )
     except ValueError as exc:

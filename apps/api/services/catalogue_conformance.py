@@ -351,6 +351,13 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
         return _lookup(*exact, *contract_field.aliases)
 
     def _lookup_composed(column_name: str) -> str | None:
+        # A composed name may join printed COLUMNS with values that are not
+        # columns at all — the section banner above the table, for one. Any
+        # field already resolved (the section is set before this loop) answers
+        # by its own field key.
+        resolved = fields.get(f"source:{column_name}")
+        if _text(resolved) is not None:
+            return _text(resolved)
         aliases: list[str] = []
         for candidate in runtime_contract.declaration.fields:
             if candidate.source_column == column_name or candidate.source_path == column_name:
@@ -374,6 +381,16 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
         return None
 
     fields: dict[str, Any] = {}
+    # The section banner is not a cell, so it is resolved before the column
+    # loop — a composed product name may need it as one of its parts.
+    section = _text((observation.source_metadata or {}).get("section"))
+    if section is not None:
+        for contract_field in runtime_contract.declaration.fields:
+            if contract_field.source_path == _SECTION_HEADER_SOURCE:
+                fields[f"source:{contract_field.field_key}"] = section
+                target = _role_target(contract_field.role)
+                if target:
+                    fields.setdefault(target, section)
     for contract_field in runtime_contract.declaration.fields:
         target = _role_target(contract_field.role)
         if target is None:
@@ -1198,6 +1215,11 @@ def _english_fold(value: str) -> str:
     ascii_only = re.sub(r"[^\x00-\x7f]+", " ", value)
     ascii_only = re.sub(r"[/|*()]+", " ", ascii_only)
     return re.sub(r"\s+", " ", ascii_only).strip().lower()
+
+
+# A contract declares this as source_path when a field's value is the banner
+# printed across the table rather than any column in it.
+_SECTION_HEADER_SOURCE = "section_header"
 
 
 def _column_keys(value: str) -> list[str]:

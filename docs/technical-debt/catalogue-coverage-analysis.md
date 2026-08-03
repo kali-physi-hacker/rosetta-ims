@@ -52,12 +52,20 @@ Correctly ignored. Listed so a future sweep does not re-litigate them.
 `USP` (75), `EP` (59), `Needle` (52), `Length` (38), `Color` (38), `PDS`,
 `Product Name (Circle Type) / (Needle Type) / (Eye/Size)`.
 
-Page 41 has no product-name column at all: a suture's identity IS the
-combination of gauge, needle, length and colour, and the family is in section
-text above the table. Page 42 is the tractable half — the supplier labels three
-columns as name parts, so `composed_from` would build the name with no
-interpretation (~27 rows). Page 41 needs a decision about what a suture's
-product name should be.
+**Page 41 is done.** A table now carries the banner printed across it
+(`_VisionTable.section`), so a contract field can source from
+`section_path="section_header"` and a name can be composed from the banner
+plus what distinguishes a row from its neighbours. Verified on a live
+extraction: all 38 rows get a name, a cost and a distinct identity —
+"Surgicryl PGA Polyglycolic (Foil Packing) Violet DS - 3/8 circle reverse
+cutting DS24 24mm 3/0 75cm".
+
+**Page 42 remains**, and is messier than first thought: 30 rows in FIVE shapes,
+not one. Some carry an ordinary `Product Name`; others split it across
+`Circle Type / Cutting Type / Eye Type / Size`; the ETHICON block puts the
+material in `Type` and stuffs gauge, needle and product code into one
+free-text cell ("USP 5/0, Tapercut V-5, Z995H (Violet)"). That is three
+composition rules for 30 high-value items a buyer can name faster.
 
 ### Apparel and equipment attributes (~260 values)
 
