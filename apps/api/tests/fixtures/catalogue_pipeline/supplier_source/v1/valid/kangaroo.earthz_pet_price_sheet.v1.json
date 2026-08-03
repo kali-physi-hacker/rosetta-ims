@@ -52,6 +52,7 @@
     "row_eligibility_rules": [
       "Rows require OCR/vision extraction; no text-layer row parser can be assumed."
     ],
+    "discontinued_markers": [],
     "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [

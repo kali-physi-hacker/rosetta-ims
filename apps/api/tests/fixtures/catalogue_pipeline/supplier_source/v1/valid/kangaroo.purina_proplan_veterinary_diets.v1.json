@@ -54,6 +54,7 @@
     "row_eligibility_rules": [
       "Rows with SKU# and Supply Price / Pack are candidate catalogue rows."
     ],
+    "discontinued_markers": [],
     "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [

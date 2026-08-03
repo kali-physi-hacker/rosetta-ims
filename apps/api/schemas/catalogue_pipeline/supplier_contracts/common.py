@@ -173,6 +173,16 @@ class SourceStructure(SupplierSourceModel):
     required_headers: list[str] = Field(default_factory=list, description="Headers required before interpretation.")
     optional_headers: list[str] = Field(default_factory=list, description="Headers that may be present.")
     row_eligibility_rules: list[str] = Field(default_factory=list, description="Rules for deciding whether a source row is a catalogue item.")
+    discontinued_markers: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Words a supplier writes on a line it no longer sells. Alfamedic writes DISCON, and "
+            "writes it wherever there is room — in the product name, in the packing column, as the "
+            "order code itself, even in the price column. A row carrying one is not a stocking "
+            "candidate: there is no price to find and no decision a reviewer can make, so it is "
+            "skipped and counted rather than queued. Matched whole-word and case-insensitively."
+        ),
+    )
     row_identity_fields: list[str] = Field(
         default_factory=list,
         description=(

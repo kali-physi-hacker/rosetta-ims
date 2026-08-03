@@ -59,6 +59,7 @@
     "row_eligibility_rules": [
       "Rows with a SKU/product code and wholesale price are candidate catalogue rows."
     ],
+    "discontinued_markers": [],
     "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [

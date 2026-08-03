@@ -80,9 +80,10 @@ class ConformanceOutcome:
     ``metadata`` carries machine-readable accounting (conformed / skipped
     header / skipped ineligible / unconformable counts) so the run record can
     distinguish "skipped as header row" from "was not a catalogue row" from
-    "could not be conformed". ``skipped_count`` is their total: every
-    observation either becomes an item or is counted here, which is the
-    invariant the run's row accounting rests on.
+    "became a bulk term on the row above" from "could not be conformed".
+    ``skipped_count`` is their total, and every ``skipped_*`` key sums to it:
+    each observation either becomes an item or is counted under exactly one
+    reason. That is the invariant the run's row accounting rests on.
     """
 
     items: tuple[ConformedRow, ...]
@@ -118,6 +119,7 @@ def conform_observations(
     unconformable = 0
     ineligible = 0
     tier_rows = 0
+    discontinued = 0
     for observation, raw_id in zip(observations, raw_observation_ids, strict=True):
         key = observation.observation_key
         if _has_cells(observation):
@@ -132,6 +134,11 @@ def conform_observations(
                 # The last product on a page owns nothing on the next one —
                 # neither a name to carry nor a tier to collect.
                 carried, carried_page, parent_index = {}, page, None
+            if _is_discontinued(fields, runtime_contract):
+                # The supplier has withdrawn it. Not a tier, not a product.
+                skipped += 1
+                discontinued += 1
+                continue
             tier = _tier_row_term(fields, runtime_contract, items, parent_index, raw_id, observation)
             if tier is not None:
                 # A priced line with no identity, beneath a product: a term on
@@ -220,7 +227,10 @@ def conform_observations(
             "conformed_items": len(items),
             "skipped_header_rows": header_rows,
             "skipped_ineligible_rows": ineligible,
-            "tier_rows_attached": tier_rows,
+            # Named as a skip so every reason a row did not become an item
+            # lives under one prefix and the set sums to skipped_count.
+            "skipped_tier_rows": tier_rows,
+            "skipped_discontinued_rows": discontinued,
             "skipped_non_tabular_text": furniture,
             "unconformable_items": unconformable,
             "contract_issue_count": len(document_issues) + sum(len(item.issues) for item in items),
@@ -808,6 +818,29 @@ def _tier_row_term(
             fields.get(f"source:{declared.tier_price_field}"), runtime_contract, evidence
         )
     return parent_index, term, lifted_cost
+
+
+def _is_discontinued(fields: dict[str, Any], runtime_contract) -> bool:
+    """True when the supplier has marked this line as no longer sold.
+
+    Alfamedic writes DISCON wherever there is room — in the product name
+    ("Gentamycin 5% DISCON"), in the packing column, as the order code itself,
+    and in the price column — so every mapped value is checked rather than one
+    nominated field. Whole-word and case-insensitive: the live catalogue writes
+    both DISCON and Discon.
+
+    A withdrawn line has no price to find and no decision a reviewer can make,
+    so queueing it only teaches people to skim the queue.
+    """
+    markers = runtime_contract.declaration.source_structure.discontinued_markers
+    if not markers:
+        return False
+    pattern = re.compile(r"\b(?:%s)\b" % "|".join(re.escape(m) for m in markers), re.IGNORECASE)
+    return any(
+        pattern.search(str(value))
+        for key, value in fields.items()
+        if key.startswith("source:") and value is not None
+    )
 
 
 def _is_ineligible_row(fields: dict[str, Any], runtime_contract) -> bool:

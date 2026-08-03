@@ -76,10 +76,13 @@ wants on a SKU.
 | 38 | no name | Only via the suture work above |
 | ~6 | other | — |
 
-Of the no-price rows, a visible share are marked `DISCON` — and not only in the
-name: `Benakor5` and `0317141` carry it in the PACK column. If Alfamedic marks
-discontinued lines that consistently, a contract rule would keep them out of the
-queue entirely rather than asking a reviewer to price something withdrawn.
+Of the no-price rows, some were marked `DISCON` — and not only in the name.
+Across the catalogue the marker appears in four different columns: the product
+name ("Gentamycin 5% DISCON"), the packing column, the order code itself, and
+even the price column ("Discon"). A contract can now declare
+`discontinued_markers`, and such a row is skipped and counted rather than
+queued: there is no price to find and no decision a reviewer can make. 11 rows
+on this catalogue.
 
 ## Three ways the same trap was sprung
 

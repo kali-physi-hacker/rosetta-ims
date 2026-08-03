@@ -60,6 +60,9 @@
     "row_eligibility_rules": [
       "Catalogue item rows contain an order code and product name."
     ],
+    "discontinued_markers": [
+      "DISCON"
+    ],
     "row_identity_fields": [
       "supplier_sku"
     ],

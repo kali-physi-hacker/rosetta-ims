@@ -82,6 +82,7 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             ],
             row_eligibility_rules=["Catalogue item rows contain an order code and product name."],
             row_identity_fields=["supplier_sku"],
+            discontinued_markers=["DISCON"],
             source_location_expectations=["page number", "section header", "table row", "source column"],
         ),
         fields=[

@@ -46,6 +46,7 @@
     "row_eligibility_rules": [
       "One product row per code/price entry when a real sample confirms this shape."
     ],
+    "discontinued_markers": [],
     "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [

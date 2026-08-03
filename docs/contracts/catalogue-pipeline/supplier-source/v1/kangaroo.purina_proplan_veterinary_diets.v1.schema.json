@@ -709,6 +709,14 @@
       "additionalProperties": false,
       "description": "Expected physical structure for a supplier catalogue format.",
       "properties": {
+        "discontinued_markers": {
+          "description": "Words a supplier writes on a line it no longer sells. Alfamedic writes DISCON, and writes it wherever there is room — in the product name, in the packing column, as the order code itself, even in the price column. A row carrying one is not a stocking candidate: there is no price to find and no decision a reviewer can make, so it is skipped and counted rather than queued. Matched whole-word and case-insensitively.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Discontinued Markers",
+          "type": "array"
+        },
         "expected_sections": {
           "description": "Expected PDF/document sections, if known.",
           "items": {

@@ -74,6 +74,7 @@
     "row_eligibility_rules": [
       "One product variant per price-table row."
     ],
+    "discontinued_markers": [],
     "row_identity_fields": [
       "supplier_sku"
     ],

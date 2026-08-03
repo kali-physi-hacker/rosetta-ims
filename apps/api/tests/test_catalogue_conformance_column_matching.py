@@ -587,8 +587,8 @@ def test_every_observation_is_either_an_item_or_counted_as_skipped():
     meta = outcome.metadata
     assert meta["skipped_ineligible_rows"] == 1
     assert meta["skipped_header_rows"] == 1
-    assert (meta["skipped_header_rows"] + meta["skipped_ineligible_rows"]
-            + meta["skipped_non_tabular_text"]) == outcome.skipped_count
+    assert sum(v for k, v in meta.items() if k.startswith("skipped_")) == outcome.skipped_count, \
+        "every reason a row did not become an item must be counted under exactly one skipped_* key"
 
 
 # ── Size variants share one printed name cell. They are separate SKUs and
@@ -755,7 +755,7 @@ def test_a_priced_row_beneath_a_product_becomes_that_products_bulk_tier():
     out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
 
     assert len(out.items) == 1, "the tier lines are terms, not catalogue rows"
-    assert out.metadata["tier_rows_attached"] == 2
+    assert out.metadata["skipped_tier_rows"] == 2
     assert _ladder(out.items[0]) == [("10", "56.0"), ("40", "54.0")]
     term = out.items[0].normalized_fields["mbb_terms"][0]
     assert term["scope"] == "SUPPLIER_SKU", "the quantity is of this product, not the whole order"
@@ -923,17 +923,56 @@ def test_a_free_goods_offer_of_several_units_keeps_both_numbers():
 
 
 def test_a_row_with_neither_a_price_nor_free_goods_is_not_a_term():
-    """A discontinued line carries no quantity and no price. It is not an offer."""
+    """A priced product followed by an unpriced one is two products, not an offer."""
     alfamedic = runtime.load_contract(1)
     observations = _alf_rows([
         [("Order Code", "GE0910"), ("Product Name", "Gentamycin 5%"),
          ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "120.0")],
-        [("Order Code", "GE0920"), ("Product Name", "Gentamycin 5% DISCON")],
+        [("Order Code", "GE0930"), ("Product Name", "Gentamycin 10%")],
     ], page=16)
     out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
 
     assert len(out.items) == 2, "it stays visible rather than being folded into the row above"
     assert out.items[0].normalized_fields.get("mbb_terms") == []
+
+
+# ── The supplier writes DISCON on a line it no longer sells, and writes it
+#    wherever there is room. Live catalogue: in the product name, in the
+#    packing column, as the order code itself, and in the price column. ─────
+
+def test_a_withdrawn_line_is_skipped_wherever_the_marker_is_written():
+    alfamedic = runtime.load_contract(1)
+    for pairs in (
+        [("Order Code", "GE0920"), ("Product Name", "Gentamycin 5% DISCON")],
+        [("Order Code", "Benakor5"), ("Product Name", "Benakor 5mg tabs"), ("Packing/ Unit", "DISCON")],
+        [("Order Code", "DISCON"), ("Product Name", "Oph-C, Ophtocycline")],
+        [("Order Code", "AT9500"), ("Product Name", "Atopica 10mg"), ("Price/ Unit (HKD)", "Discon")],
+    ):
+        out = conform_observations(_alf_rows([pairs], page=16), (uuid4(),), alfamedic)
+        assert out.items == (), f"still queued: {pairs}"
+        assert out.metadata["skipped_discontinued_rows"] == 1
+        assert len(out.items) + out.skipped_count == 1, "counted, not silently dropped"
+
+
+def test_a_live_product_is_not_mistaken_for_a_withdrawn_one():
+    """The marker is matched whole-word, so a name that merely contains those
+    letters is untouched."""
+    alfamedic = runtime.load_contract(1)
+    out = conform_observations(_alf_rows([
+        [("Order Code", "DC1000"), ("Product Name", "Disconnect Valve Assembly"),
+         ("Order Units", "1 unit"), ("Price/ Unit (HKD)", "250.0")],
+    ], page=16), (uuid4(),), alfamedic)
+
+    assert len(out.items) == 1
+    assert out.metadata["skipped_discontinued_rows"] == 0
+
+
+def test_a_contract_that_declares_no_marker_keeps_every_row():
+    hills = runtime.load_contract(14)
+    out = conform_observations(_observation_from_pairs(_BASE_ROW + [
+        ("Gross Wholesale Price 折扣前批發價（每包／罐）", "227.2"),
+    ]) and (_observation_from_pairs(_BASE_ROW),), (uuid4(),), hills)
+    assert out.metadata["skipped_discontinued_rows"] == 0
 
 
 def test_a_price_printed_on_a_free_goods_line_belongs_to_the_product():
