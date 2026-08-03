@@ -136,9 +136,14 @@ def conform_observations(
             if tier is not None:
                 # A priced line with no identity, beneath a product: a term on
                 # that product, not a catalogue row of its own.
-                previous, term = tier
+                previous, term, lifted_cost = tier
                 merged = dict(items[previous].normalized_fields)
                 merged["mbb_terms"] = [*merged.get("mbb_terms", []), term]
+                if lifted_cost is not None and not merged.get("cost"):
+                    # The price cell is merged down the block and the model
+                    # reported it on this line rather than the first. It is the
+                    # product's price, not the offer's.
+                    merged["cost"] = lifted_cost
                 items[previous] = replace(items[previous], normalized_fields=merged)
                 skipped += 1
                 tier_rows += 1
@@ -696,7 +701,7 @@ def _tier_row_term(
     parent_index: int | None,
     raw_observation_id: UUID,
     observation: ExtractedEvidence,
-) -> tuple[int, dict[str, Any]] | None:
+) -> tuple[int, dict[str, Any], dict[str, Any] | None] | None:
     """A bulk tier the supplier printed as its own row, or None.
 
     Alfamedic prints the ladder beneath the product:
@@ -797,7 +802,12 @@ def _tier_row_term(
         "description": declared.description,
         "evidence": evidence,
     }
-    return parent_index, term
+    lifted_cost = None
+    if free_goods is not None and price is not None and price > 0:
+        lifted_cost = _cost_proposal(
+            fields.get(f"source:{declared.tier_price_field}"), runtime_contract, evidence
+        )
+    return parent_index, term, lifted_cost
 
 
 def _is_ineligible_row(fields: dict[str, Any], runtime_contract) -> bool:

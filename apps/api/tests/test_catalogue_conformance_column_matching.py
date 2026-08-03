@@ -934,3 +934,49 @@ def test_a_row_with_neither_a_price_nor_free_goods_is_not_a_term():
 
     assert len(out.items) == 2, "it stays visible rather than being folded into the row above"
     assert out.items[0].normalized_fields.get("mbb_terms") == []
+
+
+def test_a_price_printed_on_a_free_goods_line_belongs_to_the_product():
+    """NU8010 Nutripet, live page 26. One printed row, stacked order units:
+
+        NU8010  Nutripet 200g  ILIUM  200g/tube   1 tube      120.0
+                                                  11+1 tubes
+                                                  21+3 tubes
+
+    The price cell is merged down the block and the model reports it against
+    the MIDDLE line. Read literally the product has no price at all — which is
+    how it reached the review desk as unpriced while carrying two live offers.
+    A free-goods line has no unit price of its own, so a price on one can only
+    be the product's.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "NU8010"), ("Product Name", "Nutripet 200g, Troy"),
+         ("Brand", "ILIUM"), ("Packing/ Unit", "200g/ tube"), ("Order Units", "1 tube")],
+        [("Order Code", "NU8010"), ("Product Name", "Nutripet 200g, Troy"),
+         ("Brand", "ILIUM"), ("Packing/ Unit", "200g/ tube"),
+         ("Order Units", "11+1 tubes"), ("Price/ Unit (HKD)", "120.0")],
+        [("Order Code", "NU8010"), ("Product Name", "Nutripet 200g, Troy"),
+         ("Brand", "ILIUM"), ("Packing/ Unit", "200g/ tube"), ("Order Units", "21+3 tubes")],
+    ], page=26)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 1
+    product = out.items[0]
+    assert product.normalized_fields["cost"]["amount"] == "120.0"
+    assert [(t["condition"]["quantity"]["amount"], t["benefit"]["quantity"]["amount"])
+            for t in product.normalized_fields["mbb_terms"]] == [("11", "1"), ("21", "3")]
+
+
+def test_a_discounted_tier_price_is_never_mistaken_for_the_base_price():
+    """Only a free-goods line's price is the product's. A cheaper tier price
+    is the TIER's, and lifting it would understate the product's cost."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"), ("Order Units", "1 bot")],
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert out.items[0].normalized_fields.get("cost") in (None, {}), "56.00 is the tier price, not the product's"
