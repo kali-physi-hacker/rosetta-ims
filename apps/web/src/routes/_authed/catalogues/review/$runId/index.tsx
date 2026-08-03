@@ -908,6 +908,20 @@ function stagedKind(item: SummaryItem): StagedKind {
 }
 
 /**
+ * A snapshot is taken at an instant, not on a day.
+ *
+ * The version IS the publication's identity and the server holds it immutable:
+ * publishing different material under a version that already exists is refused
+ * outright. Stamping only the date therefore made same-day corrections
+ * impossible — and same-day is the common case, since a misreading is usually
+ * caught within hours of publishing it. Every attempt to republish corrected
+ * prices failed with "already exists with different material input" until the
+ * clock rolled over. Seconds precision lets a correction supersede the row it
+ * corrects instead of colliding with it.
+ */
+const stampVersion = () => `v${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}`
+
+/**
  * Everything staged, in one list, before it becomes real.
  *
  * The dock could only ever show rows whose price MOVED, capped at five — on a
@@ -1018,7 +1032,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
   const [failures, setFailures] = useState<{ sku: string | null; error: string }[]>([])
   const [justPublished, setJustPublished] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
-  const version = `v${new Date().toISOString().slice(0, 10)}`
+  const [version, setVersion] = useState(stampVersion)
 
   const receipt = useQuery({
     queryKey: ['review-receipt', runId],
@@ -1058,6 +1072,11 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
     setTyped('')
     setFailures([])
     setProgress(`0 / ${staged.length}`)
+    // Stamp the snapshot at the moment of publishing, not at render: a retry
+    // after a partial failure is a NEW snapshot and must not reuse the version
+    // whose rows already landed.
+    const version = stampVersion()
+    setVersion(version)
     const result = await fanOut(
       staged,
       async item => {
