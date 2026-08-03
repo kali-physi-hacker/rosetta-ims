@@ -882,3 +882,55 @@ def test_a_repeated_code_that_is_not_cheaper_stays_its_own_row():
 
     assert len(out.items) == 2, "a dearer repeat is not a tier and must not vanish"
     assert _ladder(out.items[0]) == []
+
+
+def test_a_free_goods_offer_is_a_term_not_a_missing_price():
+    """"11+1 bots" is buy eleven, take twelve.
+
+    The benefit is a free unit rather than a cheaper one, so the price column
+    is empty on purpose. Reading that as a missing price sent 17 real offers
+    on one live catalogue to the review desk as defective rows.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "D98110H"), ("Product Name", "DOUXO S3 CALM Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "206.0")],
+        [("Order Code", "D98110H"), ("Product Name", "DOUXO S3 CALM Shampoo"),
+         ("Order Units", "11+1 bots")],
+    ], page=21)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 1, "the offer is a term on the product, not a second product"
+    term = out.items[0].normalized_fields["mbb_terms"][0]
+    assert term["condition"]["quantity"]["amount"] == "11"
+    assert term["benefit"]["benefit_type"] == "free_quantity"
+    assert term["benefit"]["quantity"]["amount"] == "1"
+
+
+def test_a_free_goods_offer_of_several_units_keeps_both_numbers():
+    """ProDen PlaqueOff prints "9+3": pay for nine, receive twelve."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "1302"), ("Product Name", "ProDen PlaqueOff Powder for Dogs"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "300.0")],
+        [("Order Code", "1302"), ("Product Name", "ProDen PlaqueOff Powder for Dogs"),
+         ("Order Units", "9+3 bots")],
+    ], page=20)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    term = out.items[0].normalized_fields["mbb_terms"][0]
+    assert (term["condition"]["quantity"]["amount"], term["benefit"]["quantity"]["amount"]) == ("9", "3")
+
+
+def test_a_row_with_neither_a_price_nor_free_goods_is_not_a_term():
+    """A discontinued line carries no quantity and no price. It is not an offer."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "GE0910"), ("Product Name", "Gentamycin 5%"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "120.0")],
+        [("Order Code", "GE0920"), ("Product Name", "Gentamycin 5% DISCON")],
+    ], page=16)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2, "it stays visible rather than being folded into the row above"
+    assert out.items[0].normalized_fields.get("mbb_terms") == []

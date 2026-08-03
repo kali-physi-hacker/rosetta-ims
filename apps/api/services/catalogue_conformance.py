@@ -685,6 +685,10 @@ def _carry_merged_cells(
     return tuple(inherited)
 
 
+# "11+1", "9 + 3" — buy the first number, receive the second free.
+_FREE_GOODS = re.compile(r"(\d+)\s*\+\s*(\d+)")
+
+
 def _tier_row_term(
     fields: dict[str, Any],
     runtime_contract,
@@ -742,13 +746,20 @@ def _tier_row_term(
         # variant. Swallowing one would lose a stocked SKU.
         return None
 
-    quantity = _leading_decimal(fields.get(f"source:{declared.tier_quantity_field}"))
+    raw_quantity = fields.get(f"source:{declared.tier_quantity_field}")
     price = _decimal_or_none(fields.get(f"source:{declared.tier_price_field}"))
-    if quantity is None or quantity <= 1 or price is None or price <= 0:
+    # "11+1 bots" is buy eleven, take twelve. The benefit is a free unit rather
+    # than a cheaper one, so the price column is empty on purpose — reading
+    # that as a missing price sent 17 real offers to review as defective rows.
+    free_goods = _FREE_GOODS.search(str(raw_quantity or ""))
+    quantity = _leading_decimal(raw_quantity)
+    if quantity is None or quantity <= 1:
+        return None
+    if free_goods is None and (price is None or price <= 0):
         return None
 
     base = _decimal_or_none((parent.normalized_fields.get("cost") or {}).get("amount"))
-    if base is not None and price >= base:
+    if free_goods is None and base is not None and price >= base:
         return None
 
     pricing = runtime_contract.declaration.pricing
@@ -760,6 +771,20 @@ def _tier_row_term(
         "field_path": "/raw_cells",
         "confidence": _confidence_text(fields.get("confidence"), observation.confidence),
     }
+    if free_goods is not None:
+        benefit = {
+            "benefit_type": "free_quantity",
+            "quantity": {"amount": str(Decimal(free_goods.group(2))), "uom": basis.model_dump(mode="json")},
+        }
+    else:
+        benefit = {
+            "benefit_type": "discounted_unit_price",
+            "discounted_price": {
+                "amount": str(price),
+                "currency": pricing.currency,
+                "price_basis": basis.model_dump(mode="json"),
+            },
+        }
     term = {
         "mbb_term_id": str(_stable_term_uuid(evidence, declared.field_key)),
         # The quantity is of THIS product, unlike Hill's order-value tiers.
@@ -768,14 +793,7 @@ def _tier_row_term(
             "condition_type": "minimum_quantity",
             "quantity": {"amount": str(quantity), "uom": basis.model_dump(mode="json")},
         },
-        "benefit": {
-            "benefit_type": "discounted_unit_price",
-            "discounted_price": {
-                "amount": str(price),
-                "currency": pricing.currency,
-                "price_basis": basis.model_dump(mode="json"),
-            },
-        },
+        "benefit": benefit,
         "description": declared.description,
         "evidence": evidence,
     }
