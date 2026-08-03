@@ -392,6 +392,49 @@ def test_radar_keeps_diet_codes_apart(db):
     assert result["similar"][0]["sku_code"] == "10006318", result["similar"][:2]
 
 
+def test_a_promotional_marker_cannot_change_what_a_product_is(db):
+    """The same page, read twice, does not always print the same annotation.
+
+    Measured over three runs of one live Hill's catalogue: 16 of 238 names came
+    back different at least once, almost every difference being "NEW",
+    "(New)", "NEW Packing Size" or "(Coming Soon)" appearing or not. If that
+    moved a match score, the same document could resolve to a different product
+    on a re-parse — so the matcher never sees those words.
+    """
+    bare = "Perfect Weight 1-6 Adult 1-6 Perfect Weight Small & Mini"
+    for marked in (
+        f"{bare} (New)",
+        f"NEW {bare}",
+        f"{bare} NEW Packing Size",
+        f"{bare} (Coming Soon)",
+    ):
+        assert variant_similarity.tokens(marked) == variant_similarity.tokens(bare), marked
+
+
+def test_real_words_are_not_swept_up_with_the_markers(db):
+    """'Derm' is a diet line, not decoration — dropping it would merge products.
+
+    The one name difference across those three runs that was NOT a marker was
+    exactly this word going missing, and the matcher must still feel it.
+    """
+    assert "derm" in variant_similarity.tokens("Hypo treat Derm Hypo Treat")
+    assert variant_similarity.tokens("Hypo treat Derm Hypo Treat") != variant_similarity.tokens("Hypo treat Hypo Treat")
+
+
+def test_a_marked_up_supplier_name_still_finds_the_stocked_product(db):
+    """End to end: the annotation must not cost the row its match."""
+    _stock_the_catalogue(db)
+
+    marked = variant_similarity.duplicate_check(
+        db, name="GI Biome GI Biome Chicken & Vegetable Stew - Digestive/ Fiber Care (Coming Soon)"
+    )
+    bare = variant_similarity.duplicate_check(
+        db, name="GI Biome GI Biome Chicken & Vegetable Stew - Digestive/ Fiber Care"
+    )
+    assert marked["similar"][0]["sku_code"] == bare["similar"][0]["sku_code"] == "10006302"
+    assert marked["top_score"] == bare["top_score"]
+
+
 def test_radar_stays_quiet_for_a_genuinely_new_product(db):
     _stock_the_catalogue(db)
 

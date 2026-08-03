@@ -33,9 +33,18 @@ import models
 # Words that carry no distinguishing power in this catalogue. Kept small on
 # purpose — IDF already discounts common words; this list only removes noise
 # that would otherwise inflate the token count and dilute coverage.
+#
+# "new", "coming", "soon" and "packing" are here for a sharper reason: they are
+# the promotional annotations printed beside a product name, and whether a
+# vision model transcribes them varies BETWEEN RUNS OF THE SAME PAGE. Measured
+# over three runs of one live Hill's catalogue, 16 of 238 names came back
+# different at least once, and every difference but one was a marker appearing
+# or not ("NEW", "(New)", "NEW Packing Size", "(Coming Soon)"). A product's
+# identity cannot depend on that, so the matcher does not see them.
 _STOP = {
     "the", "and", "for", "with", "per", "pack", "packs", "size", "sizes",
-    "new", "pcs", "pc", "ea", "each", "box", "case", "ctn", "carton",
+    "pcs", "pc", "ea", "each", "box", "case", "ctn", "carton",
+    "new", "packing", "coming", "soon",
 }
 
 _SPLIT = re.compile(r"[^a-z0-9]+")
