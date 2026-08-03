@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import models
+from models.ingestion_run import STAGE_LABELS, STAGE_ORDER
 from services import supplier_source_contract_runtime
 from services.source_capability import (
     DEFAULT_UPLOAD_ROOT,
@@ -151,6 +152,17 @@ class CatalogueIngestionStatus:
     source_filename: str | None = None     # the supplier catalogue this run read
     source_received_at: str | None = None
     reparse_of: str | None = None          # source run uuid when this run re-read stored evidence
+
+    # Live progress, present only while the run is working. `stage_label` is
+    # resolved here rather than in the browser so one vocabulary serves every
+    # client, and an unknown stage degrades to the raw key instead of blank.
+    stage: str | None = None
+    stage_label: str | None = None
+    stage_started_at: str | None = None
+    stage_index: int | None = None         # 1-based position in the pipeline
+    stage_count: int | None = None
+    units_done: int | None = None          # pages read so far, within this stage
+    units_total: int | None = None
 
 
 @dataclass(frozen=True)
@@ -287,6 +299,13 @@ class CatalogueSubmissionService:
             source_filename=source.filename if source else None,
             source_received_at=source.received_at if source else None,
             reparse_of=(metrics or {}).get("reparse_of"),
+            stage=run.stage,
+            stage_label=STAGE_LABELS.get(run.stage or "", run.stage),
+            stage_started_at=run.stage_started_at,
+            stage_index=(STAGE_ORDER.index(run.stage) + 1) if run.stage in STAGE_ORDER else None,
+            stage_count=len(STAGE_ORDER) if run.stage else None,
+            units_done=run.units_done,
+            units_total=run.units_total,
         )
         
     def list(self) -> list[CatalogueIngestionStatus]: 

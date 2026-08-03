@@ -87,6 +87,15 @@ class CatalogueIngestionStatusResponse(BaseModel):
     source_received_at: str | None = None
     reparse_of: str | None = None           # source run when this re-read stored evidence
 
+    # Live progress; every field is null unless the run is working right now.
+    stage: str | None = None
+    stage_label: str | None = None
+    stage_started_at: str | None = None
+    stage_index: int | None = None
+    stage_count: int | None = None
+    units_done: int | None = None
+    units_total: int | None = None
+
 
 class ValidationIssueResolutionRequest(BaseModel):
     resolution_status: IssueResolutionStatus

@@ -105,6 +105,75 @@ def claim_queued_run(db: Session, *, ingestion_run_id: UUID, started_at: datetim
     raise InvalidRunTransition(f"Ingestion run {ingestion_run_id} cannot start from status {run.status}")
 
 
+def mark_stage(
+    db: Session,
+    *,
+    ingestion_run_id: UUID,
+    stage: str,
+    units_total: int | None = None,
+    at: datetime | None = None,
+) -> None:
+    """Record which stage a running run has reached.
+
+    Reporting only: nothing in the pipeline reads `stage` back, so a failure to
+    write it must never take the run down with it — see `report_stage` in
+    catalogue_tasks, which swallows exactly that.
+
+    Entering a stage resets the unit counter, so a page count left over from
+    extraction cannot be read as progress through interpretation. The UPDATE is
+    guarded on `running` so a cancelled run is not made to look busy again.
+    """
+
+    db.execute(
+        text(
+            "UPDATE catalogue_ingestion_runs "
+            "SET stage = :stage, stage_started_at = :at, units_done = :done, units_total = :total "
+            "WHERE run_uuid = :run_uuid AND status = :running"
+        ),
+        {
+            "stage": stage,
+            "at": _iso(at or _now()),
+            "done": 0 if units_total else None,
+            "total": units_total,
+            "run_uuid": str(ingestion_run_id),
+            "running": IngestionRunStatus.RUNNING.value,
+        },
+    )
+    db.commit()
+
+
+def mark_stage_progress(db: Session, *, ingestion_run_id: UUID, units_done: int, units_total: int) -> None:
+    """Advance the unit counter inside the current stage (pages read, so far)."""
+
+    db.execute(
+        text(
+            "UPDATE catalogue_ingestion_runs SET units_done = :done, units_total = :total "
+            "WHERE run_uuid = :run_uuid AND status = :running"
+        ),
+        {
+            "done": units_done,
+            "total": units_total,
+            "run_uuid": str(ingestion_run_id),
+            "running": IngestionRunStatus.RUNNING.value,
+        },
+    )
+    db.commit()
+
+
+def _clear_stage(run: models.IngestionRun) -> None:
+    """A finished run is not at a stage.
+
+    Without this a completed run keeps reporting the last stage it happened to
+    be in, and the desk shows "Reading the catalogue" beside a run that ended
+    twenty minutes ago.
+    """
+
+    run.stage = None
+    run.stage_started_at = None
+    run.units_done = None
+    run.units_total = None
+
+
 def complete_run(db: Session, *, result: CatalogueFlowResult, completed_at: datetime | None = None) -> None:
     """Persist terminal successful/warning state for a running run."""
 
@@ -121,6 +190,7 @@ def complete_run(db: Session, *, result: CatalogueFlowResult, completed_at: date
     run.items_extracted = result.rows_extracted
     run.metrics = _metrics_json(result, existing=run.metrics)
     run.error_summary = _summary_json(result) if result.warnings else None
+    _clear_stage(run)
     db.commit()
 
 
@@ -142,6 +212,7 @@ def fail_run(
     run.status = IngestionRunStatus.FAILED.value
     run.completed_at = _iso(completed_at or _now())
     run.error_summary = json.dumps(failure_envelope(error_code, message), sort_keys=True)
+    _clear_stage(run)
     db.commit()
 
 
@@ -156,6 +227,7 @@ def cancel_run(db: Session, *, ingestion_run_id: UUID, reason: str, cancelled_at
     run.status = IngestionRunStatus.CANCELLED.value
     run.completed_at = _iso(cancelled_at or _now())
     run.error_summary = json.dumps({"error_code": "RUN_CANCELLED", "message": _sanitize(reason)}, sort_keys=True)
+    _clear_stage(run)
     db.commit()
 
 

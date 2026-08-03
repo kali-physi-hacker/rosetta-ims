@@ -469,6 +469,15 @@ export interface RunStatus {
   source_received_at?: string | null
   /** Source run uuid when this run re-read stored evidence instead of a file. */
   reparse_of?: string | null
+  /** Where the machine work is right now. Null unless the run is working. */
+  stage?: string | null
+  stage_label?: string | null
+  stage_started_at?: string | null
+  stage_index?: number | null
+  stage_count?: number | null
+  /** Pages read so far within the current stage, when it works in units. */
+  units_done?: number | null
+  units_total?: number | null
 }
 export const TERMINAL_RUN_STATUSES = new Set(['completed', 'completed_with_warnings', 'failed', 'cancelled'])
 export const fetchRunStatus = (runId: string) => reviewApi<RunStatus>(`/catalogues/ingestions/${runId}`)

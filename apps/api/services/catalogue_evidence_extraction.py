@@ -14,12 +14,13 @@ import json
 import os
 import platform
 import re
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 import openpyxl
 import pypdf
@@ -380,8 +381,21 @@ Rules:
 """
 
 
-def extract_evidence(content: bytes, filename: str, content_type: str) -> ExtractionResult:
-    """Extract verbatim observations without performing semantic product parsing."""
+def extract_evidence(
+    content: bytes,
+    filename: str,
+    content_type: str,
+    *,
+    on_unit_complete: Callable[[int, int], None] | None = None,
+) -> ExtractionResult:
+    """Extract verbatim observations without performing semantic product parsing.
+
+    `on_unit_complete(done, total)` is called as each source unit finishes, so a
+    caller can report progress through a long multi-page read. It is advisory:
+    it is called from pool threads, it is never awaited, and anything it raises
+    is swallowed — extraction does not fail because a progress report did.
+    Formats that are a single indivisible unit never call it.
+    """
 
     source_kind, source_format = _classify_source(filename, content_type)
     if not content:
@@ -401,7 +415,7 @@ def extract_evidence(content: bytes, filename: str, content_type: str) -> Extrac
     if source_kind == "csv":
         return _extract_csv(content)
     if source_kind == "pdf":
-        return _extract_pdf(content)
+        return _extract_pdf(content, on_unit_complete=on_unit_complete)
     if source_kind in {"jpeg", "png"}:
         media_type = "image/png" if source_kind == "png" else "image/jpeg"
         return _extract_image(content, media_type=media_type, source_format=source_format)
@@ -688,7 +702,42 @@ def _extract_text(content: bytes, *, source_format: SourceFormat) -> ExtractionR
     )
 
 
-def _extract_pdf(content: bytes) -> ExtractionResult:
+def _unit_progress_reporter(
+    total: int,
+    on_unit_complete: Callable[[int, int], None] | None,
+) -> Callable[[], None]:
+    """Count finished units across pool threads and report each one exactly once.
+
+    A failed page still counts as finished: the bar tracks work attempted, not
+    work that succeeded, so a document with a bad page still reaches its total
+    instead of stalling one short of it.
+    """
+
+    if on_unit_complete is None or total <= 0:
+        return lambda: None
+
+    lock = threading.Lock()
+    done = 0
+
+    def report() -> None:
+        nonlocal done
+        with lock:
+            done += 1
+            current = done
+        try:
+            on_unit_complete(current, total)
+        except Exception:
+            # Progress is a report about the work, never part of it.
+            pass
+
+    return report
+
+
+def _extract_pdf(
+    content: bytes,
+    *,
+    on_unit_complete: Callable[[int, int], None] | None = None,
+) -> ExtractionResult:
     try:
         reader = pypdf.PdfReader(io.BytesIO(content))
         # Owner-locked PDFs (empty user password) already passed the raw stage;
@@ -825,9 +874,20 @@ def _extract_pdf(content: bytes) -> ExtractionResult:
                     provider="pypdf",
                 ), attempt_count
 
+    # Report a page the moment it lands rather than in page order: with a
+    # concurrent pool the pages finish out of order, and waiting for page 1 to
+    # report 1/56 would stall the count behind the slowest early page.
+    report_unit_done = _unit_progress_reporter(len(page_payloads), on_unit_complete)
+
+    def _extract_page_reporting(payload):
+        try:
+            return _extract_page(*payload)
+        finally:
+            report_unit_done()
+
     workers = min(len(page_payloads), _VISION_CONCURRENCY) or 1
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        page_results = list(pool.map(lambda payload: _extract_page(*payload), page_payloads))
+        page_results = list(pool.map(_extract_page_reporting, page_payloads))
 
     # Assemble in page order so observation identity/ordering stays deterministic.
     for page_number, page_observations, page_outcome, error, attempt_count in sorted(

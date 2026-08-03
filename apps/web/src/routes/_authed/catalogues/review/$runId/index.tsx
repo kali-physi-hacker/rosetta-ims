@@ -13,6 +13,7 @@ import { toast } from '@/lib/toast'
 import { promptDialog } from '@/lib/confirm'
 import { skuToPath } from '@/lib/sku'
 import { DESK_CSS } from '@/lib/deskCss'
+import { IngestionProgress } from '@/components/IngestionProgress'
 import {
   fetchSummary, fetchDetail, fetchReceipt, searchVariants, latest, groupOf, isPulled,
   isDecided, isApproved, isStaged, sampleIds, suggestTerms,
@@ -243,7 +244,7 @@ function RunDeskPage() {
   const status = useQuery({
     queryKey: ['review-run-status', runId],
     queryFn: () => fetchRunStatus(runId),
-    refetchInterval: query => (TERMINAL_RUN_STATUSES.has(query.state.data?.status ?? '') ? false : 4000),
+    refetchInterval: query => (TERMINAL_RUN_STATUSES.has(query.state.data?.status ?? '') ? false : 2000),
   })
   const runState = status.data?.status ?? ''
   const reviewable = runState === 'completed' || runState === 'completed_with_warnings'
@@ -436,10 +437,25 @@ function RunDeskPage() {
         <h1>{status.data.contract_id ?? 'Catalogue run'}</h1>
         <div className="life">
           <span className="stage done"><span className="sdot">✓</span>Received</span>
-          <span className="stage now"><span className="sdot">…</span>Reading <span className="scount">still processing — this page refreshes itself</span></span>
+          {/* The rail's "Reading" step now carries the machine's own stage
+              rather than the word "processing", which was true of every one of
+              the seven steps and therefore told you nothing about which. */}
+          <span className="stage now">
+            <span className="sdot">…</span>Reading
+            <span className="scount">
+              {status.data.stage_label ?? 'starting'}
+              {status.data.units_total ? ` · page ${status.data.units_done ?? 0} of ${status.data.units_total}` : ''}
+            </span>
+          </span>
           <span className="stage"><span className="sdot">·</span>Decisions</span>
           <span className="stage"><span className="sdot">·</span>Publish</span>
           <span className="stage"><span className="sdot">·</span>Live</span>
+        </div>
+        <div style={{ marginTop: 14, maxWidth: 520 }}>
+          <IngestionProgress run={status.data} />
+          <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 8 }}>
+            This page refreshes itself — you do not need to reload.
+          </div>
         </div>
       </div>
     )
