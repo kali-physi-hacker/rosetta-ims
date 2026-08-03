@@ -14,6 +14,7 @@ import { promptDialog } from '@/lib/confirm'
 import { skuToPath } from '@/lib/sku'
 import { DESK_CSS } from '@/lib/deskCss'
 import { IngestionProgress } from '@/components/IngestionProgress'
+import { MatchedProduct, MATCHED_PRODUCT_CSS } from '@/components/MatchedProduct'
 import {
   fetchSummary, fetchDetail, fetchReceipt, searchVariants, latest, groupOf, isPulled,
   isDecided, isApproved, isStaged, sampleIds, suggestTerms,
@@ -430,7 +431,7 @@ function RunDeskPage() {
   if (status.data && !reviewable) {
     return (
       <div className="rdesk" style={{ padding: '18px 24px 40px', maxWidth: 1220, margin: '0 auto' }}>
-        <style>{DESK_CSS}</style>
+        <style>{DESK_CSS}{MATCHED_PRODUCT_CSS}</style>
         <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 2 }}>
           <Link to="/catalogues/review" className="lnk" style={{ fontWeight: 600 }}>← Runs</Link>
         </div>
@@ -488,7 +489,7 @@ function RunDeskPage() {
 
   return (
     <div className="rdesk" style={{ padding: '18px 24px 40px', maxWidth: 1220, margin: '0 auto' }}>
-      <style>{DESK_CSS}</style>
+      <style>{DESK_CSS}{MATCHED_PRODUCT_CSS}</style>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
@@ -768,6 +769,7 @@ function RunDeskPage() {
           currentId={focus.id}
           allItems={items}
           sourceFile={status.data?.source_filename ?? null}
+          supplierId={status.data?.supplier_id ?? null}
           onMove={id => setFocus(f => (f ? { ...f, id } : f))}
           onClose={() => setFocus(null)}
         />
@@ -816,7 +818,7 @@ function FailedRunState({ run }: { run: RunStatus }) {
 
   return (
     <div className="rdesk" style={{ padding: '18px 24px 40px', maxWidth: 980, margin: '0 auto' }}>
-      <style>{DESK_CSS}</style>
+      <style>{DESK_CSS}{MATCHED_PRODUCT_CSS}</style>
       <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 2 }}>
         <Link to="/catalogues/review" className="lnk" style={{ fontWeight: 600 }}>← Runs</Link>
       </div>
@@ -1242,13 +1244,14 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
 }
 
 // ── focus overlay: one candidate, suggestions-first, reason chips ───────────
-function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, onMove, onClose }: {
+function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, supplierId, onMove, onClose }: {
   runId: string
   lane: LaneId
   queue: SummaryItem[]
   currentId: string
   allItems: SummaryItem[]
   sourceFile: string | null
+  supplierId: number | null
   onMove: (id: string) => void
   onClose: () => void
 }) {
@@ -1282,11 +1285,14 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, onM
   const [note, setNote] = useState('')
   const [noteOpen, setNoteOpen] = useState(false)
   const [drafting, setDrafting] = useState(false)
+  // Open by default only when there is no product to look at, so an unmatched
+  // row still lands straight on its suggestions.
+  const [repickOpen, setRepickOpen] = useState(false)
   const reason = note.trim() ? `${chip} — ${note.trim()}` : chip
 
   useEffect(() => {
     setPicked(null); setSugg(null); setQuery(''); setHits([]); setNote(''); setNoteOpen(false); setSearching(false)
-    setDrafting(false)
+    setDrafting(false); setRepickOpen(false)
     if (!current) return
     const terms = suggestTerms(current)
     if (terms.length < 2) { setSugg([]); return }
@@ -1369,6 +1375,13 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, onM
   if (!current) return null
   const evidence = detail.data?.evidence?.[0]
   const list = query.trim().length >= 2 ? hits : (sugg ?? [])
+  // Whichever product is in play: the one just picked, else the standing match.
+  const subjectSku = picked?.sku_code
+    ?? (groupOf(current) === 'matched' ? current.canonical_sku : null)
+  // Only a row that ALREADY has a match can collapse its alternatives. On an
+  // unmatched row the list is the workspace, so picking one shows its card
+  // above the list rather than replacing it — you can still compare 1 with 3.
+  const canCollapseRepick = groupOf(current) === 'matched'
   const laneLabel = lane === 'pick' ? 'Needs a pick' : lane === 'new' ? 'New to us' : lane === 'clean' ? 'Clean' : 'Check by hand'
   const pendingLeft = queue.filter(i => !isDecided(i)).length
 
@@ -1445,10 +1458,38 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, onM
             />
           ) : (
           <div className="panel" style={{ background: 'var(--card)' }}>
-            <div style={{ padding: '8px 12px 6px', fontSize: 10, fontWeight: 750, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>
-              {groupOf(current) === 'matched' ? <>Matched → <span className="mono">{current.canonical_sku}</span> — confirm or re-pick</> : 'Best matches — pick one'}
-            </div>
-            <div style={{ padding: '0 11px 4px' }}>
+            {/* The product itself leads, because "is this the same thing?" is
+                the question being asked. The list of alternatives is the
+                answer to a DIFFERENT question — "if not, then what?" — and it
+                only earns the top of the rail when there is no match yet. */}
+            {subjectSku && (
+              <div style={{ padding: '9px 11px 0' }}>
+                <MatchedProduct
+                  sku={subjectSku}
+                  preview={!!picked && picked.sku_code !== current.canonical_sku}
+                  supplierId={supplierId}
+                  rowSupplierSku={current.supplier_sku}
+                  rowCost={current.cost_amount}
+                  rowCostBasis={current.cost_basis}
+                />
+              </div>
+            )}
+
+            {/* Collapsed once a product is on screen: on a matched row the
+                alternatives are noise nine times out of ten, and an open list
+                pushes the decision buttons below the fold. */}
+            {canCollapseRepick && !repickOpen && (
+              <button className="mprod-more" onClick={() => setRepickOpen(true)}>
+                <span>▸</span>
+                {picked ? 'Choose a different product' : 'Not this one — re-pick'}
+                {list.length > 0 && <span style={{ color: 'var(--faint)', marginLeft: 'auto' }}>{list.length} suggested</span>}
+              </button>
+            )}
+
+            <div style={{ padding: '0 11px 4px', display: canCollapseRepick && !repickOpen ? 'none' : undefined }}>
+              <div style={{ padding: '8px 1px 6px', fontSize: 10, fontWeight: 750, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>
+                {groupOf(current) === 'matched' ? 'Re-pick — choose a different product' : 'Best matches — pick one'}
+              </div>
               {sugg === null && query.trim().length < 2 && <div style={{ padding: 8 }}><Spinner size={14} /></div>}
               {list.map((hit, index) => {
                 const delta = hit.offering_cost != null && current.cost_amount != null && hit.offering_cost !== 0

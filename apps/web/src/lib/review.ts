@@ -479,6 +479,15 @@ export interface RunStatus {
   units_done?: number | null
   units_total?: number | null
 }
+/** The product a candidate is matched to, in full.
+ *
+ *  The review desk used to name a match and stop there — "Matched → 50010319"
+ *  — which asks the reviewer to confirm an identity they cannot see. This is
+ *  the same payload the SKU page reads, so the desk shows the real entity
+ *  rather than a second, thinner copy of it that could drift. */
+export const fetchProduct = (sku: string) =>
+  reviewApi<import('./types').Product>(`/products/${encodeURIComponent(sku)}`)
+
 export const TERMINAL_RUN_STATUSES = new Set(['completed', 'completed_with_warnings', 'failed', 'cancelled'])
 export const fetchRunStatus = (runId: string) => reviewApi<RunStatus>(`/catalogues/ingestions/${runId}`)
 /** Re-run the interpretation over evidence the run already holds.
