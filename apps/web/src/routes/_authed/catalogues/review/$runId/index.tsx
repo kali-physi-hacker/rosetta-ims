@@ -10,13 +10,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Spinner } from '@/components/Spinner'
 import { toast } from '@/lib/toast'
+import { promptDialog } from '@/lib/confirm'
 import { skuToPath } from '@/lib/sku'
 import { DESK_CSS } from '@/lib/deskCss'
 import {
   fetchSummary, fetchDetail, fetchReceipt, searchVariants, latest, groupOf, isPulled,
   isDecided, isApproved, isStaged, sampleIds, suggestTerms,
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
-  correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate, openSourceFile,
+  correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate, openSourceFile, unstageCandidate,
   resolveRunIssue, fanOut, fmtDelta, marginPct, per,
   fetchRunStatus, retryRun, reparseRun, failureInfo, TERMINAL_RUN_STATUSES,
   REASON_CHIPS, PULL_THRESHOLD_PCT,
@@ -914,12 +915,13 @@ function stagedKind(item: SummaryItem): StagedKind {
  * rows into "+227 more". You were asked to type a count to confirm a set you
  * could not read. This is that set, grouped by what publishing does to it.
  */
-function StagedReview({ staged, version, typed, setTyped, onPublish, onClose }: {
+function StagedReview({ staged, version, typed, setTyped, onPublish, onUnstage, onClose }: {
   staged: SummaryItem[]
   version: string
   typed: string
   setTyped: (v: string) => void
   onPublish: () => void
+  onUnstage: (item: SummaryItem) => void
   onClose: () => void
 }) {
   const ORDER: StagedKind[] = ['creates', 'moves', 'first', 'holds']
@@ -976,6 +978,8 @@ function StagedReview({ staged, version, typed, setTyped, onPublish, onClose }: 
                     <Link className="lnk" style={{ fontSize: 10.5 }} to={'/sku/$' as never}
                       params={{ _splat: skuToPath(item.canonical_sku) } as never} target="_blank">SKU →</Link>
                   )}
+                  <button className="unstage" title="Take this row out of the dock — it will not publish"
+                    onClick={() => onUnstage(item)}>remove</button>
                 </div>
               ))}
             </div>
@@ -1022,6 +1026,34 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
     enabled: justPublished || stats[0].n > 0,
   })
 
+  /**
+   * Take a row back out of the dock.
+   *
+   * Nothing is deleted — the pipeline is append-only, so this records a
+   * decision that the row is not wanted, and it stops being staged because
+   * "staged" means approved and unpublished. The reason is required: it
+   * outlives the session and answers "why isn't this live?".
+   */
+  async function unstageOne(item: SummaryItem) {
+    const label = item.supplier_sku ?? item.canonical_sku ?? 'This row'
+    const reason = await promptDialog({
+      title: `Remove ${label} from staged?`,
+      message: 'It will not publish. The decision is recorded against the row and cannot be undone — '
+        + 'a reviewed row never goes back to unreviewed.',
+      prompt: { placeholder: 'Why is this not going live?' },
+      confirmLabel: 'Remove from staged',
+      danger: true,
+    })
+    if (!reason?.trim()) return
+    try {
+      await unstageCandidate(runId, item.mastering_candidate_id, reason.trim())
+      onPublished()
+      toast.success(`${label} removed — it will not publish`)
+    } catch (error) {
+      toast.error(String((error as Error)?.message ?? error))
+    }
+  }
+
   async function publishAll() {
     setTyped('')
     setFailures([])
@@ -1058,7 +1090,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
     <div className="dock">
       {reviewOpen && staged.length > 0 && (
         <StagedReview staged={staged} version={version} typed={typed} setTyped={setTyped}
-          onPublish={publishAll} onClose={() => setReviewOpen(false)} />
+          onPublish={publishAll} onUnstage={unstageOne} onClose={() => setReviewOpen(false)} />
       )}
       <div style={{ display: 'flex', gap: 12, padding: '13px 13px 10px', alignItems: 'center' }}>
         <span className="ring" style={{ background: `conic-gradient(${ringStops})` }}><b>{centerPct}%</b></span>

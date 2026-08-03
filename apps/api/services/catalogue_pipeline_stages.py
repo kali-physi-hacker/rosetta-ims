@@ -861,6 +861,16 @@ class MasteringService(_TransactionalService):
         )
 
 
+_APPROVED_STATES = {ReviewStatus.APPROVED.value, ReviewStatus.APPROVED_WITH_OVERRIDE.value}
+
+
+def _is_published(db: Session, candidate) -> bool:
+    """True when a live serving publication came from this candidate."""
+    return db.query(models.CatalogueServingPublication.id).filter_by(
+        mastering_candidate_uuid=candidate.mastering_candidate_uuid, is_current=1
+    ).first() is not None
+
+
 class ReviewDecisionService(_TransactionalService):
     """Record explicit append-only review decisions for mastering candidates."""
 
@@ -914,10 +924,33 @@ class ReviewDecisionService(_TransactionalService):
                     output_ids=(UUID(candidate.review_decision_uuid),) if candidate.review_decision_uuid else (),
                     metrics=StageMetrics(input_count=1, reused_count=1),
                 )
-            raise InvalidStageTransition(
-                f"Mastering Candidate {command.mastering_candidate_id} is {candidate.review_status}; "
-                f"cannot transition to {command.review_status.value}"
-            )
+            # Withdrawing a staged row is the one decision that may follow
+            # another. "Staged" means approved and not yet published, so
+            # nothing has been written to the catalogue and a reviewer who
+            # changes their mind is not rewriting history — the approval stays
+            # in the decision log and this is appended after it.
+            #
+            # Once published the row has left staging, and taking it back is a
+            # different operation on the publication, not on the decision.
+            if (
+                candidate.review_status in _APPROVED_STATES
+                and command.review_status == ReviewStatus.REJECTED
+            ):
+                if _is_published(self.db, candidate):
+                    raise InvalidStageTransition(
+                        f"Mastering Candidate {command.mastering_candidate_id} is already published; "
+                        f"withdraw the publication rather than the decision"
+                    )
+                if not (command.reason or "").strip():
+                    raise InvalidStageTransition(
+                        "Removing a staged row requires a reason — it is the answer to "
+                        "'why isn't this live?' after everyone has forgotten"
+                    )
+            else:
+                raise InvalidStageTransition(
+                    f"Mastering Candidate {command.mastering_candidate_id} is {candidate.review_status}; "
+                    f"cannot transition to {command.review_status.value}"
+                )
 
         snapshot = persistence.mastering_candidate_to_contract(candidate).model_dump(mode="json")
         self.db.add(

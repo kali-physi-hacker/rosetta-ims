@@ -208,6 +208,20 @@ export const decideCandidate = (runId: string, id: string, review_status: Summar
     body: JSON.stringify({ review_status, reason }),
   })
 
+/**
+ * Take a staged row back out of the dock.
+ *
+ * Nothing is deleted: the pipeline is append-only, so this records a REJECTED
+ * decision and the row stops being staged because "staged" means approved and
+ * not yet published. The reason is required — the decision outlives the
+ * session, and "why isn't this live?" is the question it has to answer.
+ *
+ * There is deliberately no way back to PENDING_REVIEW: the server refuses it,
+ * because once a person has decided, the record says they decided.
+ */
+export const unstageCandidate = (runId: string, id: string, reason: string) =>
+  decideCandidate(runId, id, 'REJECTED', reason)
+
 /** Correct the variant match — creates an immutable revision that supersedes this candidate. */
 export const correctVariantMatch = (
   runId: string, id: string, reason: string,

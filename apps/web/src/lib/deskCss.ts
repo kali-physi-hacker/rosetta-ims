@@ -146,6 +146,10 @@ export const DESK_CSS = `
 .rdesk .dsearch .x{border:none;background:none;color:var(--faint);font-size:15px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
 .rdesk .dsearch .x:hover{color:var(--ink2)}
 /* The filename opens the document it names. */
+/* Removing a staged row is deliberate, not decorative: quiet until hovered,
+   then plainly destructive. */
+.rdesk .srow .unstage{font-family:inherit;font-size:10.5px;color:var(--faint);background:none;border:none;padding:2px 4px;cursor:pointer;border-radius:5px}
+.rdesk .srow .unstage:hover{color:var(--red);background:var(--redbg,#FEF2F2)}
 .rdesk .srcfile{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px}
 .rdesk .srcfile:hover{color:var(--accent)}
 .rdesk .lanetag{display:inline-block;font-size:9px;font-weight:750;letter-spacing:.03em;padding:1px 6px;border-radius:99px;border:1px solid;margin-right:7px;white-space:nowrap;vertical-align:1px}
