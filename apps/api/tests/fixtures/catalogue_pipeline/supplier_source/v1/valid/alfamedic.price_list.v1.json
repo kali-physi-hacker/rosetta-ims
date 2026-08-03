@@ -483,7 +483,7 @@
       "role": "MBB_TIER_ROW",
       "requirement": "CONDITIONALLY_REQUIRED",
       "source_column": null,
-      "source_path": "an unidentified priced row beneath a product row",
+      "source_path": "a priced row beneath a product, its code blank or repeated",
       "composed_from": [],
       "constant_value": null,
       "aliases": [],

@@ -705,12 +705,22 @@ def _tier_row_term(
     fully determined and nothing is inferred. Returns the index of the product
     it belongs to and the term to hang on it.
 
-    Every condition here is load-bearing. The row must carry NO identity (a
-    coded row is a product, even a nameless size variant); it must be cheaper
-    than what it discounts (a tier at the same price is not a discount, and
-    would corrupt every downstream cost); it must ask for more than one; and
-    it must follow a product on the SAME page, because the last row of page 20
-    has nothing to do with the first row of page 21.
+    The identity cell is merged across the tier lines, and a vision model
+    renders that two ways on the same document — sometimes leaving the cell
+    blank, sometimes repeating the product's code down the block:
+
+        ALO250  ALOVEEN Shampoo  10 bots  56.0     (repeated)
+        (none)                   10 bots  56.0     (blank)
+
+    Both are the same printed table, so both are tiers. Accepting only the
+    blank form left the repeated form to become duplicate products — 174 extra
+    candidates on one live run, the same SKU three times at three prices.
+
+    Every other condition is load-bearing. The row must be cheaper than what it
+    discounts (a tier at the same price is not a discount, and would corrupt
+    every downstream cost); it must ask for more than one; and it must directly
+    follow that product on the SAME page, because the last row of page 20 has
+    nothing to do with the first row of page 21.
     """
     declared = next(
         (f for f in runtime_contract.declaration.fields
@@ -720,7 +730,16 @@ def _tier_row_term(
     if declared is None or parent_index is None:
         return None
     identity_fields = runtime_contract.declaration.source_structure.row_identity_fields
-    if any(_text(fields.get(f"source:{key}")) is not None for key in identity_fields):
+    parent = items[parent_index] if parent_index < len(items) else None
+    if parent is None:
+        return None
+    own_identity = [_text(fields.get(f"source:{key}")) for key in identity_fields]
+    parent_identity = [
+        _text((parent.raw_fields.get("additional_fields") or {}).get(key)) for key in identity_fields
+    ]
+    if any(v is not None for v in own_identity) and own_identity != parent_identity:
+        # A different code is a different product — even a nameless size
+        # variant. Swallowing one would lose a stocked SKU.
         return None
 
     quantity = _leading_decimal(fields.get(f"source:{declared.tier_quantity_field}"))
@@ -728,7 +747,6 @@ def _tier_row_term(
     if quantity is None or quantity <= 1 or price is None or price <= 0:
         return None
 
-    parent = items[parent_index]
     base = _decimal_or_none((parent.normalized_fields.get("cost") or {}).get("amount"))
     if base is not None and price >= base:
         return None

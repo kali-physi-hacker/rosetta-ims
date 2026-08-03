@@ -1,6 +1,6 @@
 # Columns Alfamedic prints that the contract does not read
 
-Status: recorded, decisions needed
+Status: item 1 built; items 2 and 3 need decisions
 
 The live 56-page catalogue prints **43 distinct headings** the contract does
 not map. Unmapped columns are read and stored as evidence, then dropped at
@@ -44,8 +44,13 @@ Three things follow, and they are one piece of work:
        "Legacy config notes multi-row tiers; no checked-in source examples
         prove all tier semantics."
 
-   The tier rows do **not** share an order code — they carry none. And the
-   semantics are now evidenced by a real 56-page run, so the known ambiguity
+   That declaration is HALF right, which took two runs to see. The identity
+   cell is merged down the tier block and the vision model renders it both
+   ways on the same document — blank on one run, the product's code repeated
+   on the next. Reading only the blank form left the repeated form to become
+   duplicate products (174 extra candidates on one run) and made the captured
+   ladder count swing between 13 and 126. Both forms are tiers. The semantics
+   are now evidenced by real runs, so the known ambiguity
    `ALFAMEDIC_MBB_TIER_BASIS_UNVERIFIED` can be resolved rather than carried.
 
 Until this is done, every Alfamedic product reads as having no bulk pricing,

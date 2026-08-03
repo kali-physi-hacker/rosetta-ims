@@ -833,3 +833,52 @@ def test_a_tier_row_declaration_must_state_both_halves():
             requirement=SourceFieldRequirement.OPTIONAL, source_path="a row",
             tier_price_field="cost",
         )
+
+
+def test_a_tier_row_is_a_tier_whether_or_not_the_code_is_repeated():
+    """The merged identity cell renders two ways, on the same document.
+
+    A vision model sometimes leaves the tier line's code blank and sometimes
+    repeats the product's code down the block. Both are the same printed
+    table. Reading only the blank form turned the repeated form into duplicate
+    products — the same SKU three times at three prices, 174 extra candidates
+    on one live 56-page run — and made the ladder count swing between 13 and
+    31 across two runs of one file.
+    """
+    alfamedic = runtime.load_contract(1)
+    blank = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+        [("Order Units", "40 bots"), ("Price/ Unit (HKD)", "54.0")],
+    ])
+    repeated = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "40 bots"), ("Price/ Unit (HKD)", "54.0")],
+    ])
+    results = []
+    for observations in (blank, repeated):
+        out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+        assert len(out.items) == 1, "one product, not three"
+        results.append(_ladder(out.items[0]))
+
+    assert results[0] == results[1] == [("10", "56.0"), ("40", "54.0")]
+
+
+def test_a_repeated_code_that_is_not_cheaper_stays_its_own_row():
+    """Only a genuine discount is folded away; anything else stays visible."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "EQ001"), ("Product Name", "Bench Centrifuge"),
+         ("Order Units", "1 unit"), ("Price/ Unit (HKD)", "5000.0")],
+        [("Order Code", "EQ001"), ("Product Name", "Bench Centrifuge"),
+         ("Order Units", "2 units"), ("Price/ Unit (HKD)", "5200.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2, "a dearer repeat is not a tier and must not vanish"
+    assert _ladder(out.items[0]) == []

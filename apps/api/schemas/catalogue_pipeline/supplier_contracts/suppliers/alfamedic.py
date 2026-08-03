@@ -204,13 +204,17 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             #
             # Both halves are printed, so nothing is inferred: the quantity is
             # in Order Units and the discounted price is in the price column.
-            # The earlier declaration said these rows "share an order code" —
-            # they carry none at all, which is why they were never captured.
+            # The identity cell is merged down the tier block, and a vision
+            # model renders that two ways on the same document: sometimes
+            # blank, sometimes repeating the product's code. The earlier
+            # declaration named the repeated form and was right about it; the
+            # blank form is just as common. Both are tiers, and reading only
+            # one of them made the same SKU appear three times at three prices.
             SourceFieldContract(
                 field_key="bulk_tier_rows",
                 role=SourceFieldRole.MBB_TIER_ROW,
                 requirement=SourceFieldRequirement.CONDITIONALLY_REQUIRED,
-                source_path="an unidentified priced row beneath a product row",
+                source_path="a priced row beneath a product, its code blank or repeated",
                 tier_quantity_field="order_units",
                 tier_price_field="cost",
                 description="Quantity bulk tier printed as its own row beneath the product it applies to.",
