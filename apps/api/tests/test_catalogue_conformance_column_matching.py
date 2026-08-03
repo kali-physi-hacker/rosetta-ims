@@ -587,3 +587,76 @@ def test_every_observation_is_either_an_item_or_counted_as_skipped():
     assert meta["skipped_header_rows"] == 1
     assert (meta["skipped_header_rows"] + meta["skipped_ineligible_rows"]
             + meta["skipped_non_tabular_text"]) == outcome.skipped_count
+
+
+# ── Size variants share one printed name cell. They are separate SKUs and
+#    have to be stocked as such. Live page 20 of the Alfamedic catalogue:
+#
+#      ALO250   ALOVEEN Shampoo   250ml/bot  58.0
+#      (none)   —                 —          56.0   <- quantity tier
+#      ALO1000  —                 1L/bot     190.0  <- variant, own SKU
+# ──────────────────────────────────────────────────────────────────────────
+
+def _alf_rows(rows, page=20):
+    out = []
+    for index, pairs in enumerate(rows):
+        cells = tuple(
+            RawCell(cell_reference=None, row_number=index + 1, column_index=i + 1,
+                    column_name=col, raw_value=val)
+            for i, (col, val) in enumerate(pairs)
+        )
+        out.append(ExtractedEvidence(
+            observation_key=f"page:{page}:row:{index}",
+            source_location=SourceLocation(page_number=page, row_number=index + 1,
+                                           source_object_key=f"page:{page}:row:{index}"),
+            raw_cells=cells,
+            extraction_method=ExtractionMethod.MODEL_VISION,
+            provider="test",
+        ))
+    return tuple(out)
+
+
+def test_a_size_variant_takes_the_name_it_is_printed_under():
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Packing/ Unit", "250ml/ bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Code", "ALO1000"), ("Packing/ Unit", "1L/ bot"), ("Price/ Unit (HKD)", "190.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2
+    variant = out.items[1]
+    assert variant.normalized_fields["product_name"]["value"] == "ALOVEEN Shampoo"
+    assert variant.normalized_fields["supplier_sku"]["value"] == "ALO1000", "its own SKU, not merged away"
+    assert variant.provenance["inherited_from_row_above"] == ["description"], "and it says so"
+    assert "inherited_from_row_above" not in out.items[0].provenance
+
+
+def test_a_quantity_tier_line_never_acquires_a_name():
+    """A priced line with no code is a tier, not a product. Naming it would
+    invent a SKU that does not exist."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Packing/ Unit", "250ml/ bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Price/ Unit (HKD)", "56.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    tier = next(i for i in out.items if not (i.normalized_fields.get("supplier_sku") or {}).get("value"))
+    assert "product_name" not in tier.normalized_fields
+    assert not tier.provenance.get("inherited_from_row_above")
+
+
+def test_a_name_does_not_carry_across_a_page_break():
+    """The last product on page 20 has nothing to do with the first on page 21."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"), ("Price/ Unit (HKD)", "58.0")],
+    ]) + _alf_rows([
+        [("Order Code", "XYZ999"), ("Packing/ Unit", "1L/ bot"), ("Price/ Unit (HKD)", "190.0")],
+    ], page=21)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert "product_name" not in out.items[1].normalized_fields

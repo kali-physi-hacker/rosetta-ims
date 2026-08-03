@@ -226,6 +226,20 @@ class SourceFieldContract(SupplierSourceModel):
             "exact declared heading matches a column, so a fully-labelled heading still wins."
         ),
     )
+    inherits_from_row_above: bool = Field(
+        False,
+        description=(
+            "Take this field from the nearest row above when the source leaves it blank, because "
+            "the printed cell is merged across those rows. Alfamedic lists size variants that way: "
+            "'ALOVEEN Shampoo 250ml/bot' names the product, and the 1L/bot line below carries its "
+            "own order code, packing and price but no name — the name cell spans both. Those are "
+            "separate SKUs and must be stocked as such, so the value is carried down and the "
+            "field's evidence records that it was inherited rather than printed on that line. "
+            "Only rows carrying their own identity inherit: a price-only line beneath a product is "
+            "a quantity tier, not a variant, and must never acquire a name. Carrying stops at a "
+            "page boundary."
+        ),
+    )
     source_column_prefix: str | None = Field(
         None,
         description=(

@@ -105,6 +105,12 @@ def conform_observations(
     document_issues = _document_issues(observations, runtime_contract)
     warnings: list[str] = [issue.message for issue in document_issues]
     items: list[ConformedRow] = []
+    inheritable = tuple(
+        f.field_key for f in runtime_contract.declaration.fields
+        if getattr(f, "inherits_from_row_above", False)
+    )
+    carried: dict[str, str] = {}
+    carried_page: Any = object()   # a name never carries across a page break
     skipped = 0        # total, and the number the run's accounting uses
     header_rows = 0
     furniture = 0
@@ -126,6 +132,10 @@ def conform_observations(
                 skipped += 1
                 ineligible += 1
                 continue
+            page = observation.source_location.page_number
+            if page != carried_page:
+                carried, carried_page = {}, page
+            inherited = _carry_merged_cells(fields, inheritable, carried, runtime_contract)
             row_issues = (
                 document_issues
                 + _row_eligibility_issues(fields, runtime_contract)
@@ -139,7 +149,7 @@ def conform_observations(
                     raw_id,
                     fields,
                     runtime_contract,
-                    provenance=_provenance("contract_cells"),
+                    provenance=_provenance("contract_cells", inherited_fields=inherited),
                     warnings=tuple(issue.message for issue in row_issues),
                     issues=row_issues,
                 )
@@ -220,8 +230,14 @@ def _contract_is_tabular(runtime_contract) -> bool:
     return value in {"PDF_TABLE", "SPREADSHEET", "CSV"}
 
 
-def _provenance(interpreter: str) -> dict[str, Any]:
-    return {"interpreter": interpreter}
+def _provenance(interpreter: str, *, inherited_fields: tuple[str, ...] = ()) -> dict[str, Any]:
+    provenance: dict[str, Any] = {"interpreter": interpreter}
+    if inherited_fields:
+        # Says plainly that the supplier did not print this on THIS line — the
+        # cell above spans it. Provenance, not a review gate: these rows are
+        # real SKUs and should flow, they just did not carry their own name.
+        provenance["inherited_from_row_above"] = list(inherited_fields)
+    return provenance
 
 
 def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict[str, Any] | None:
@@ -608,6 +624,48 @@ def _row_eligibility_issues(
             message=f"Row mapped no contract source fields; declared eligibility: {rules[0]}",
         ),
     )
+
+
+def _carry_merged_cells(
+    fields: dict[str, Any],
+    inheritable: tuple[str, ...],
+    carried: dict[str, str],
+    runtime_contract,
+) -> tuple[str, ...]:
+    """Fill fields the source left blank because the printed cell is merged.
+
+    A supplier that lists size variants under one heading — "ALOVEEN Shampoo"
+    naming the 250ml line, the 1L line below carrying only its own code, pack
+    and price — is not omitting the name; the cell spans both rows. Those are
+    separate SKUs and have to be stocked as such, so the value carries down.
+
+    Only a row with its own identity inherits. The price-only lines beneath a
+    product are quantity tiers, and a tier that acquired a name would look
+    exactly like a product that does not exist.
+
+    Returns the field keys that were inherited, so provenance can say so.
+    """
+    if not inheritable:
+        return ()
+    identity_fields = runtime_contract.declaration.source_structure.row_identity_fields
+    has_identity = any(_text(fields.get(f"source:{key}")) is not None for key in identity_fields)
+    inherited: list[str] = []
+    for key in inheritable:
+        own = _text(fields.get(f"source:{key}"))
+        if own is not None:
+            carried[key] = own
+            continue
+        if not has_identity or key not in carried:
+            continue
+        contract_field = next(
+            (f for f in runtime_contract.declaration.fields if f.field_key == key), None
+        )
+        fields[f"source:{key}"] = carried[key]
+        target = _role_target(contract_field.role) if contract_field else None
+        if target:
+            fields.setdefault(target, carried[key])
+        inherited.append(key)
+    return tuple(inherited)
 
 
 def _is_ineligible_row(fields: dict[str, Any], runtime_contract) -> bool:

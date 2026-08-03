@@ -125,6 +125,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -172,6 +173,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -214,6 +216,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -256,6 +259,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -298,6 +302,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -340,6 +345,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -382,6 +388,7 @@
       "tier_minimum_spend": "1200",
       "tier_order": 1,
       "source_column_occurrence": 1,
+      "inherits_from_row_above": false,
       "source_column_prefix": "Net Invoice Price*"
     },
     {
@@ -424,6 +431,7 @@
       "tier_minimum_spend": "2200",
       "tier_order": 2,
       "source_column_occurrence": 2,
+      "inherits_from_row_above": false,
       "source_column_prefix": "Net Invoice Price*"
     },
     {
@@ -466,6 +474,7 @@
       "tier_minimum_spend": "4500",
       "tier_order": 3,
       "source_column_occurrence": 3,
+      "inherits_from_row_above": false,
       "source_column_prefix": "Net Invoice Price*"
     },
     {
@@ -508,6 +517,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -550,6 +560,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -592,6 +603,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -634,6 +646,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     }
   ],

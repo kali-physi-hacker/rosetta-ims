@@ -97,6 +97,10 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
                 requirement=SourceFieldRequirement.REQUIRED,
+                # Size variants are listed under one merged name cell: the
+                # 250ml line names the product, the 1L line below carries only
+                # its own code, packing and price. Both are stocked SKUs.
+                inherits_from_row_above=True,
                 source_column="Product Name",
                 description="Printed product name.",
                 evidence=_EVIDENCE,

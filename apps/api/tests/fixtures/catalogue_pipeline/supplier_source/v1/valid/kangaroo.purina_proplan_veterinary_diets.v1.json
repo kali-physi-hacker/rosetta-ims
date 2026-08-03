@@ -92,6 +92,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -119,6 +120,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -146,6 +148,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -173,6 +176,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -200,6 +204,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -227,6 +232,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     },
     {
@@ -254,6 +260,7 @@
       "tier_minimum_spend": null,
       "tier_order": null,
       "source_column_occurrence": null,
+      "inherits_from_row_above": false,
       "source_column_prefix": null
     }
   ],
