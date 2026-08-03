@@ -233,3 +233,27 @@ def test_the_model_is_read_when_a_page_is_sent_so_provenance_follows_the_setting
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+def test_running_out_of_credit_says_so_instead_of_blaming_the_page():
+    """Measured: a 56-page run spent ten minutes retrying and reported
+    "Vision provider could not extract source evidence" once per page, never
+    once saying billing. Nothing about that tells an operator what to do."""
+    class _NoCredit(Exception):
+        status_code = 400
+
+    failure = vision.classify_provider_failure(
+        _NoCredit("Error code: 400 - {'type': 'invalid_request_error', 'message': "
+                  "'Your credit balance is too low to access the Anthropic API.'}")
+    )
+    assert failure.code == "EXTRACTION_CONFIGURATION_ERROR"
+    assert failure.retryable is False, "no retry and no code change will fix it"
+    assert "credit" in failure.public_message
+
+
+def test_a_genuine_bad_request_is_still_a_provider_error():
+    class _BadRequest(Exception):
+        status_code = 400
+
+    failure = vision.classify_provider_failure(_BadRequest("unsupported media type"))
+    assert failure.code == "PROVIDER_ERROR"

@@ -367,6 +367,18 @@ def classify_provider_failure(exc: Exception) -> VisionExtractionFailure:
     never propagated to the client — messages stay sanitized.
     """
 
+    # A provider can refuse for reasons no retry and no code change will fix.
+    # Anthropic returns plain 400 invalid_request_error when the account is out
+    # of credit, which read as "Vision provider could not extract source
+    # evidence" — repeated once per page, 56 times, for ten minutes, without
+    # once saying the word billing. An operator cannot act on that.
+    text = f"{exc}".lower()
+    if any(marker in text for marker in ("credit balance", "billing", "quota", "insufficient funds")):
+        return VisionExtractionFailure(
+            code="EXTRACTION_CONFIGURATION_ERROR",
+            public_message="Vision provider rejected the request: the account has no remaining credit",
+            retryable=False,
+        )
     status = getattr(exc, "code", None)
     if not isinstance(status, int):
         status = getattr(exc, "status_code", None)
