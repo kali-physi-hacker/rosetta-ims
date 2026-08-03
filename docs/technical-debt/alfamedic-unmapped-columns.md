@@ -10,25 +10,47 @@ Most are harmless (`Pages` is a table-of-contents artefact). Three groups are
 not, and each changes meaning rather than merely adding a field, so none was
 guessed at.
 
-## 1. `Order Units` / `Order Unit` — 1,751 rows
+## 1. `Order Units` — 1,751 rows, and the whole bulk-buy ladder
 
-Nearly every row carries it: `1 box`, `1 bot`, `1 unit`. The contract instead
-derives the order increment from the packing text:
+Nearly every row carries it: `1 bot`, `10 bots`, `40 bots`, `6 tubes`. It is
+not decoration and it is not only an ordering unit — **it is the quantity
+threshold of Alfamedic's bulk pricing**, and dropping it means we capture no
+Alfamedic bulk terms at all.
 
-    order_increment_source_field="pack_size"
-    "Leading count in Packing / Unit is interpreted as supplier order
-     increment, not a price divisor."
+The ladder is stated as extra ROWS beneath the product, the way Hill's states
+its ladder as extra columns beside it. Page 20, in printed order:
 
-So for `900-100` — `Packing/ Unit = "20 pcs/ box"`, `Order Unit = "1 box"` —
-we infer the increment from "20 pcs" while the supplier states plainly that
-you order one box. The two agree here, but the inference is doing work the
-document does no longer requires it to do, and where they disagree we would
-believe the inference.
+    ALO250   ALOVEEN Shampoo    1 bot     58.0     <- base price
+    (none)                      10 bots   56.0     <- buy 10, pay 56.0 each
+    (none)                      40 bots   54.0     <- buy 40, pay 54.0 each
+    ALO1000  (size variant)     1 bot    190.0
 
-**Decision needed:** map `Order Units` and let it govern the increment, with
-the packing text as the fallback it was before? That changes ordering
-semantics for every Alfamedic row, so it wants a deliberate call and a
-re-parse to compare, not a quiet alias.
+Both halves of a term are printed — condition (`10 bots`) and benefit
+(`56.0` each) — so this is a fully determined minimum_quantity ->
+discounted_unit_price term, exactly the shape `MBB_TIER_PRICE` already
+normalizes for Hill's.
+
+Three things follow, and they are one piece of work:
+
+1. `Order Units` must be mapped. Today 1,751 printed values are discarded.
+2. The tier rows carry no order code, so they currently reach the review desk
+   as orphan priced lines (~35 of them) rather than as terms on the product
+   above. They need attaching to the preceding coded row — the same "carry
+   from the row above" mechanism the size-variant fix uses, inverted.
+3. The contract says the opposite of what the document does:
+
+       field_key="bulk_tier_rows"
+       source_path="multiple rows sharing an order code"
+       "Legacy config notes multi-row tiers; no checked-in source examples
+        prove all tier semantics."
+
+   The tier rows do **not** share an order code — they carry none. And the
+   semantics are now evidenced by a real 56-page run, so the known ambiguity
+   `ALFAMEDIC_MBB_TIER_BASIS_UNVERIFIED` can be resolved rather than carried.
+
+Until this is done, every Alfamedic product reads as having no bulk pricing,
+which is the same failure the Hill's MOV ladder had before its columns were
+mapped.
 
 ## 2. Suture identity columns — pages 41-42, 65 rows
 
@@ -55,11 +77,33 @@ product name IS, and belong with someone who buys them.
 
 ## 3. Descriptive attributes
 
-`Specifications` (32), `Therapeutic Class` (24), `Body Length` (25), `Body
-weight` (14), `Suitable for` (14), `Consumables` (14). Cheap to add the way
+`Specifications` (32), `Body Length` (25), `Body weight` (14), `Suitable for`
+(14), `Size` (57), `Colour` (10), `Breed` (10) — the last few are apparel and
+collar sizing on pages 34 and 52. Cheap to add the way
 `sample_type` and `sample_volume` were — role OTHER, carried verbatim,
 interpreted by nothing. Worth doing when someone can say which of them a buyer
 actually wants on a SKU.
+
+### Not product data
+
+`Pages` (62), `Therapeutic Class` (24), `Consumables` (14), `Instruments &
+Equipment` (11), `Pet Care` (9) are all page 3 — the table of contents.
+Correctly ignored; listed here so a future sweep does not re-litigate them.
+
+### Declared but never populated
+
+Two contract fields matched nothing across 2,233 observations, because both
+declare a `source_path` pseudo-column that no cell can carry and no code
+implements:
+
+| Field | Declares | Reality |
+| --- | --- | --- |
+| `category` | `source_path="section_header"` | section headers exist, as TEXT observations, unattached to rows |
+| `bulk_tier_rows` | `source_path="multiple rows sharing an order code"` | tier rows carry NO order code (see 1 above) |
+
+Neither is a bug — both are honest "we know this exists, we do not capture it"
+notes. They are listed so nobody reads the contract as claiming coverage it
+does not have.
 
 ## How to re-check
 
