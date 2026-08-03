@@ -716,6 +716,14 @@
           "title": "Row Eligibility Rules",
           "type": "array"
         },
+        "row_identity_fields": {
+          "description": "Field keys that identify a source row as a catalogue item — usually the order code. A row carrying none of them AND no price is furniture (a section divider, a blank spacer, a continuation line) and is skipped rather than queued for review: asking a human to adjudicate '小食 Treats' teaches them to skim the queue. A row missing its code but carrying a PRICE is the opposite case — a real item we failed to read — and is still surfaced. Leave empty to keep every row.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Row Identity Fields",
+          "type": "array"
+        },
         "skip_rules": {
           "description": "Rows or sections intentionally skipped.",
           "items": {

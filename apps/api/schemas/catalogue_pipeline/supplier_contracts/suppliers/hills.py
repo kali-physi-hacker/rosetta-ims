@@ -96,6 +96,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
                 "Regular Retail Price / 正價",
             ],
             row_eligibility_rules=["One product variant per price-table row."],
+            row_identity_fields=["supplier_sku"],
             source_location_expectations=["page number", "table row", "source column"],
         ),
         fields=[

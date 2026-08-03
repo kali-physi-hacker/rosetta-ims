@@ -41,8 +41,8 @@
     ],
     "required_headers": [
       "sku#",
-      "\u6279\u767c\u50f9",
-      "\u5efa\u8b70\u96f6\u552e\u50f9"
+      "批發價",
+      "建議零售價"
     ],
     "optional_headers": [
       "size",
@@ -52,6 +52,7 @@
     "row_eligibility_rules": [
       "Rows require OCR/vision extraction; no text-layer row parser can be assumed."
     ],
+    "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [
       "page number",
@@ -81,7 +82,11 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "description",
@@ -104,7 +109,11 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "pack_size",
@@ -127,13 +136,17 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "cost",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
-      "source_column": "\u6279\u767c\u50f9",
+      "source_column": "批發價",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -150,13 +163,17 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
-      "source_column": "\u5efa\u8b70\u96f6\u552e\u50f9",
+      "source_column": "建議零售價",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -173,7 +190,11 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "promotion_text",
@@ -196,7 +217,11 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     }
   ],
   "pricing": {

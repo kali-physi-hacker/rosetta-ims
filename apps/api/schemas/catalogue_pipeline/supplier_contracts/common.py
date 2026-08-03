@@ -168,6 +168,17 @@ class SourceStructure(SupplierSourceModel):
     required_headers: list[str] = Field(default_factory=list, description="Headers required before interpretation.")
     optional_headers: list[str] = Field(default_factory=list, description="Headers that may be present.")
     row_eligibility_rules: list[str] = Field(default_factory=list, description="Rules for deciding whether a source row is a catalogue item.")
+    row_identity_fields: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Field keys that identify a source row as a catalogue item — usually the order code. "
+            "A row carrying none of them AND no price is furniture (a section divider, a blank "
+            "spacer, a continuation line) and is skipped rather than queued for review: asking a "
+            "human to adjudicate '小食 Treats' teaches them to skim the queue. A row missing its "
+            "code but carrying a PRICE is the opposite case — a real item we failed to read — and "
+            "is still surfaced. Leave empty to keep every row."
+        ),
+    )
     skip_rules: list[str] = Field(default_factory=list, description="Rows or sections intentionally skipped.")
     source_location_expectations: list[str] = Field(
         default_factory=list,

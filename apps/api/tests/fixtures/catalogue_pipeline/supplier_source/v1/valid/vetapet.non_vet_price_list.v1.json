@@ -35,17 +35,18 @@
       }
     ],
     "required_headers": [
-      "CODE NO / \u7de8\u865f",
-      "PRODUCT NAME / \u7522\u54c1\u540d\u7a31",
-      "\u6279\u767c\u50f9 / WHOLESALE PRICE"
+      "CODE NO / 編號",
+      "PRODUCT NAME / 產品名稱",
+      "批發價 / WHOLESALE PRICE"
     ],
     "optional_headers": [
-      "\u91cd\u91cf / SIZE",
-      "\u96f6\u552e\u50f9 / RETAIL PRICE"
+      "重量 / SIZE",
+      "零售價 / RETAIL PRICE"
     ],
     "row_eligibility_rules": [
       "One product row per code/price entry when a real sample confirms this shape."
     ],
+    "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [
       "page number",
@@ -59,7 +60,7 @@
       "field_key": "supplier_sku",
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
-      "source_column": "CODE NO / \u7de8\u865f",
+      "source_column": "CODE NO / 編號",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -71,13 +72,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
       "requirement": "REQUIRED",
-      "source_column": "PRODUCT NAME / \u7522\u54c1\u540d\u7a31",
+      "source_column": "PRODUCT NAME / 產品名稱",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -89,13 +94,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
-      "source_column": "\u91cd\u91cf / SIZE",
+      "source_column": "重量 / SIZE",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -107,13 +116,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "cost",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
-      "source_column": "\u6279\u767c\u50f9 / WHOLESALE PRICE",
+      "source_column": "批發價 / WHOLESALE PRICE",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -125,13 +138,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
-      "source_column": "\u96f6\u552e\u50f9 / RETAIL PRICE",
+      "source_column": "零售價 / RETAIL PRICE",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -143,7 +160,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "species",
@@ -161,7 +182,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "segment",
@@ -179,7 +204,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "category",
@@ -197,7 +226,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     }
   ],
   "pricing": {

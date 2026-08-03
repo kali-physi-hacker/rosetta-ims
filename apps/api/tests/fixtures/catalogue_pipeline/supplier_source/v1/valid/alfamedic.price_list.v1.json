@@ -60,6 +60,9 @@
     "row_eligibility_rules": [
       "Catalogue item rows contain an order code and product name."
     ],
+    "row_identity_fields": [
+      "supplier_sku"
+    ],
     "skip_rules": [],
     "source_location_expectations": [
       "page number",
@@ -100,7 +103,11 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "description",
@@ -133,7 +140,11 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "brand",
@@ -166,18 +177,22 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": "Packing / Unit",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
       "aliases": [],
-      "description": "Raw packing text; used by the current parser to derive order increment only.",
+      "description": "Raw packing text; used by the current parser to derive order increment only. Absent on services.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -199,7 +214,11 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "cost",
@@ -235,7 +254,11 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "segment",
@@ -268,7 +291,11 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "category",
@@ -301,7 +328,11 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "bulk_tier_rows",
@@ -334,7 +365,11 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary records current-state extraction behavior as diagnostic evidence, not canonical truth."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     }
   ],
   "pricing": {

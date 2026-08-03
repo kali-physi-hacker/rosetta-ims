@@ -81,6 +81,7 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 "Price/ Unit (HKD)",
             ],
             row_eligibility_rules=["Catalogue item rows contain an order code and product name."],
+            row_identity_fields=["supplier_sku"],
             source_location_expectations=["page number", "section header", "table row", "source column"],
         ),
         fields=[
@@ -111,9 +112,17 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="pack_size",
                 role=SourceFieldRole.PACKAGING,
-                requirement=SourceFieldRequirement.REQUIRED,
+                # Not every line in this catalogue is a packaged good. The
+                # diagnostics section sells services — "Spot Platinum+ allergy
+                # test", "PAX Complete Test" — which are priced per test and
+                # print no packing at all. Requiring one blocked 13 real priced
+                # items on a live run for lacking a field their own supplier
+                # does not print. Packaging that IS printed is still read, and
+                # a row whose packaging is genuinely unresolved still surfaces
+                # downstream rather than being assumed.
+                requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Packing / Unit",
-                description="Raw packing text; used by the current parser to derive order increment only.",
+                description="Raw packing text; used by the current parser to derive order increment only. Absent on services.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(

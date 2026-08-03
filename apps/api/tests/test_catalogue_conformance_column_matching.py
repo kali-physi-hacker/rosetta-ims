@@ -458,3 +458,102 @@ def test_text_only_lines_under_tabular_contract_are_furniture_not_blocking(monke
     reviewed = conform_observations((banner,), (uuid4(),), hills)
     assert reviewed.metadata["unconformable_items"] == 1
     assert any(issue.issue_code == "CONTRACT_ROW_UNCONFORMABLE" for item in reviewed.items for issue in item.issues)
+
+
+# ── A price list is not only items: it has section titles, blank spacers and
+#    continuation lines, and a vision model returns them as table rows because
+#    that is what they look like. On one live Alfamedic run 38 of 52 blocked
+#    rows were furniture — which is how a review queue stops being read. ─────
+
+def _alfamedic_row(pairs):
+    return _observation_from_pairs(pairs)
+
+
+def test_a_section_divider_is_skipped_rather_than_queued_for_review():
+    """Nobody should be asked to adjudicate the words "Dry Food"."""
+    alfamedic = runtime.load_contract(1)
+    outcome = conform_observations(
+        (_alfamedic_row([("Product Name", "- Diagnostics, Lab Equipment & Accessories -")]),),
+        (uuid4(),),
+        alfamedic,
+    )
+
+    assert outcome.items == (), "furniture is evidence, not a catalogue row"
+    assert outcome.metadata["skipped_furniture_rows"] == 1, "and it is counted, not silently dropped"
+
+
+def test_a_row_missing_its_code_but_carrying_a_price_is_still_surfaced():
+    """The protective case: that is an item we failed to read, not furniture.
+
+    Seen for real — a live Gemini run left four rows with an order code and no
+    price, and those must reach a human rather than vanish into a skip count.
+    """
+    alfamedic = runtime.load_contract(1)
+    outcome = conform_observations(
+        (_alfamedic_row([("Product Name", "Bioguard CDV Ag Test"), ("Price/ Unit (HKD)", "190.0")]),),
+        (uuid4(),),
+        alfamedic,
+    )
+
+    assert len(outcome.items) == 1
+    assert outcome.metadata["skipped_furniture_rows"] == 0
+    assert any(i.issue_code == "CONTRACT_REQUIRED_FIELD_MISSING" and i.field_key == "supplier_sku"
+               for i in outcome.items[0].issues)
+
+
+def test_a_service_without_a_pack_size_is_a_normal_catalogue_row():
+    """A lab test is priced per test and prints no packing.
+
+    Requiring one blocked 13 real priced items on a live run for lacking a
+    field their own supplier does not print.
+    """
+    alfamedic = runtime.load_contract(1)
+    outcome = conform_observations(
+        (_alfamedic_row([
+            ("Order Code", "SPOT1"),
+            ("Product Name", "Spot Platinum+ Test for Canine/ Feline/ Equine only"),
+            ("Price/ Unit (HKD)", "2,250.0"),
+        ]),),
+        (uuid4(),),
+        alfamedic,
+    )
+
+    assert len(outcome.items) == 1
+    # Document-level "header not observed" issues are expected on a one-row
+    # fixture; what must be gone is the ROW being blocked for its own packing.
+    assert not [i for i in outcome.items[0].issues
+                if i.severity == "BLOCKING" and i.field_key == "pack_size"]
+    # The thousands separator is not a reason to lose a price either.
+    assert outcome.items[0].normalized_fields["cost"]["amount"] == "2250.0"
+
+
+def test_hills_section_headings_are_furniture_too():
+    hills = runtime.load_contract(14)
+    outcome = conform_observations(
+        (_observation_from_pairs([("Product Description 產品名稱", "小食 Treats")]),),
+        (uuid4(),),
+        hills,
+    )
+
+    assert outcome.items == ()
+    assert outcome.metadata["skipped_furniture_rows"] == 1
+
+
+def test_a_contract_without_declared_identity_fields_keeps_every_row():
+    """The rule is opt-in per contract; silence must not start dropping rows."""
+    from types import SimpleNamespace
+
+    from services.catalogue_conformance import _is_furniture
+
+    def contract(identity_fields):
+        return SimpleNamespace(declaration=SimpleNamespace(
+            source_structure=SimpleNamespace(row_identity_fields=identity_fields),
+            pricing=SimpleNamespace(cost_source_field="cost"),
+        ))
+
+    bare = {"source:description": "小食 Treats"}
+    assert _is_furniture(bare, contract(["supplier_sku"])) is True
+    assert _is_furniture(bare, contract([])) is False, "no declaration, no skipping"
+    # And identity or price is enough to keep a row either way.
+    assert _is_furniture({"source:supplier_sku": "SPOT1"}, contract(["supplier_sku"])) is False
+    assert _is_furniture({"source:cost": "190.0"}, contract(["supplier_sku"])) is False

@@ -55,12 +55,13 @@
       "WHOLESALE PRICE",
       "RETAIL PRICE",
       "TERMS",
-      "SIZE / PACK / \u91cd\u91cf",
-      "SUGGESTED RETAIL PRICE / RETAIL PRICE / \u96f6\u552e\u50f9"
+      "SIZE / PACK / 重量",
+      "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價"
     ],
     "row_eligibility_rules": [
       "One product row per code/price entry."
     ],
+    "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [
       "page number",
@@ -74,7 +75,7 @@
       "field_key": "supplier_sku",
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
-      "source_column": "CODE NO / \u7de8\u865f",
+      "source_column": "CODE NO / 編號",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -86,13 +87,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
       "requirement": "REQUIRED",
-      "source_column": "PRODUCT NAME / \u7522\u54c1\u540d\u7a31",
+      "source_column": "PRODUCT NAME / 產品名稱",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -104,13 +109,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
-      "source_column": "SIZE / PACK / \u91cd\u91cf",
+      "source_column": "SIZE / PACK / 重量",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -122,13 +131,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "cost",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
-      "source_column": "WHOLESALE PRICE / \u6279\u767c\u50f9",
+      "source_column": "WHOLESALE PRICE / 批發價",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -140,13 +153,17 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
-      "source_column": "SUGGESTED RETAIL PRICE / RETAIL PRICE / \u96f6\u552e\u50f9",
+      "source_column": "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
@@ -158,7 +175,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "species",
@@ -176,7 +197,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "segment",
@@ -194,7 +219,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     },
     {
       "field_key": "category",
@@ -212,7 +241,11 @@
           "reference": "external-sample:Vetapet.pdf",
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "source_column_prefix": null
     }
   ],
   "pricing": {

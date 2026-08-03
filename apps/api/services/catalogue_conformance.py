@@ -105,6 +105,7 @@ def conform_observations(
     skipped = 0
     furniture = 0
     unconformable = 0
+    furniture_rows = 0
     for observation, raw_id in zip(observations, raw_observation_ids, strict=True):
         key = observation.observation_key
         if _has_cells(observation):
@@ -112,6 +113,11 @@ def conform_observations(
             if fields is None:
                 # Header row — evidence, not a row.
                 skipped += 1
+                continue
+            if _is_furniture(fields, runtime_contract):
+                # Carries neither an identity nor a price: a divider, a blank
+                # spacer, a section title. Evidence, not an item.
+                furniture_rows += 1
                 continue
             row_issues = (
                 document_issues
@@ -175,6 +181,7 @@ def conform_observations(
         metadata={
             "conformed_items": len(items),
             "skipped_header_rows": skipped,
+            "skipped_furniture_rows": furniture_rows,
             "skipped_non_tabular_text": furniture,
             "unconformable_items": unconformable,
             "contract_issue_count": len(document_issues) + sum(len(item.issues) for item in items),
@@ -594,6 +601,28 @@ def _row_eligibility_issues(
             message=f"Row mapped no contract source fields; declared eligibility: {rules[0]}",
         ),
     )
+
+
+def _is_furniture(fields: dict[str, Any], runtime_contract) -> bool:
+    """True when the row is part of the document, not part of the catalogue.
+
+    A supplier price list is not only items: it has section titles, blank
+    spacer rows and continuation lines, and a vision model returns them as
+    table rows because that is what they look like. Blocking them puts furniture
+    in a reviewer's queue — 38 of 52 blocked rows on one live Alfamedic run
+    were exactly this, which is how a queue stops being read.
+
+    The test is deliberately narrow. A row without its order code but WITH a
+    price is not furniture; it is an item whose code we failed to read, and it
+    still goes to review.
+    """
+    identity_fields = runtime_contract.declaration.source_structure.row_identity_fields
+    if not identity_fields:
+        return False
+    if any(_text(fields.get(f"source:{key}")) is not None for key in identity_fields):
+        return False
+    price_field = runtime_contract.declaration.pricing.cost_source_field
+    return price_field is None or _text(fields.get(f"source:{price_field}")) is None
 
 
 def _required_field_issues(
