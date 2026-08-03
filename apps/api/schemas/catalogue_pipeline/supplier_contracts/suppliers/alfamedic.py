@@ -144,6 +144,28 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 description="Supplier cost field; By Quote is retained as a null-cost/manual-quote case.",
                 evidence=_EVIDENCE,
             ),
+            # The diagnostics tables carry two attributes that belong to the
+            # product and to nothing else in the pipeline: what you put in the
+            # test and how much of it. Declared with role OTHER so they are
+            # preserved verbatim on the row without being interpreted —
+            # "220μL" is the SAMPLE volume a test consumes, not the content of
+            # the box, and must never be read as packaging.
+            SourceFieldContract(
+                field_key="sample_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Sample Type",
+                description="Specimen a diagnostic test accepts (whole blood / plasma / serum).",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="sample_volume",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Volume",
+                description="Specimen volume one test consumes. Not pack content.",
+                evidence=_EVIDENCE,
+            ),
             SourceFieldContract(
                 field_key="segment",
                 role=SourceFieldRole.SEGMENT,

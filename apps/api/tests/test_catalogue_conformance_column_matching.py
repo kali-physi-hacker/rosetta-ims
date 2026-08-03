@@ -699,3 +699,30 @@ def test_the_qualified_price_column_still_wins_where_both_appear():
     out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
 
     assert out.items[0].normalized_fields["cost"]["amount"] == "58.0"
+
+
+def test_diagnostic_attributes_are_kept_without_being_interpreted():
+    """Sample Type and Volume describe the test; they are not packaging.
+
+    "220μL" is what one test CONSUMES. Read as pack content it would say a box
+    of 20 holds 220μL, and every per-unit cost off it would be wrong — so the
+    fields are carried verbatim and nothing downstream reads them as packaging.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([[
+        ("Order Code", "900-100"),
+        ("Product Name", "Pre-anesthetic Panel (7 assay +3)"),
+        ("Sample Type", "Whole Blood/ Plasma/ Serum"),
+        ("Volume", "220μL"),
+        ("Packing/ Unit", "20 pcs/ box"),
+        ("Price", "1,760.0"),
+    ]], page=10)
+    row = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic).items[0]
+
+    extra = row.raw_fields["additional_fields"]
+    assert extra["sample_type"] == "Whole Blood/ Plasma/ Serum"
+    assert extra["sample_volume"] == "220μL"
+    # The packing column is still the only thing read as packaging.
+    assert row.raw_fields["packaging"] == "20 pcs/ box"
+    assert "220" not in str(row.normalized_fields.get("packaging") or "")
+    assert "220" not in str(row.raw_fields["packaging"])
