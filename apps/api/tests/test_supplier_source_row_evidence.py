@@ -92,6 +92,21 @@ def test_kpn_kangaroo_row_evidence_is_deferred_as_technical_debt():
         assert fixture["technical_debt"][0]["status"] == "DRAFT_PR_LATER"
 
 
+def test_new_kpn_and_kangaroo_bundle_row_evidence_tracks_layout_segmentation_debt():
+    fixtures = _fixtures_by_contract_id()
+    expected_suppliers = {
+        "kpn_trading.catalogue_bundle.v1": 15,
+        "kangaroo_pet_nutrition.catalogue_bundle.v1": 81,
+    }
+
+    for contract_id, supplier_id in expected_suppliers.items():
+        fixture = fixtures[contract_id]
+        assert fixture["supplier_id"] == supplier_id
+        assert fixture["row_evidence_status"] == "TECHNICAL_DEBT"
+        assert fixture["examples"] == []
+        assert fixture["technical_debt"][0]["status"] == "OPEN"
+
+
 def test_vetapet_row_evidence_requires_confirmation_before_runtime_support():
     fixtures = _fixtures_by_contract_id()
 

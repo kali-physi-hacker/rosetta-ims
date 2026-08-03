@@ -1,0 +1,22 @@
+{
+  "contract_id": "kangaroo_pet_nutrition.catalogue_bundle.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "TECHNICAL_DEBT",
+  "supplier_id": 81,
+  "supplier_name": "Kangaroo Pet Nutrition",
+  "notes": "Supplier ID 81 and explicit Kangaroo Pet Nutrition source markers determine applicability. Page positions and observed brands are not routing criteria. Runtime row examples remain blocked because observed layouts use different price bases.",
+  "examples": [],
+  "technical_debt": [
+    {
+      "debt_id": "KANGAROO-PET-NUTRITION-LAYOUT-SEGMENTATION",
+      "status": "OPEN",
+      "summary": "Detect Kangaroo Pet Nutrition supplier identity and table layout from source content before runtime interpretation.",
+      "needed_confirmation": [
+        "Representative source-located rows for the ZIWI package-price layout.",
+        "Representative source-located rows for the ZIWI case and per-can layout.",
+        "Representative source-located rows for the Ecuphar wholesale/RRP layout.",
+        "Order constraints and promotion scope for each detected layout."
+      ]
+    }
+  ]
+}

@@ -44,6 +44,8 @@ def test_selects_only_supported_supplier_source_contracts():
     assert hills.slug == "hills.price_list.v1"
     assert alfamedic is not None
     assert alfamedic.slug == "alfamedic.price_list.v1"
+    assert runtime.load_contract(15) is None
+    assert runtime.load_contract(81) is None
     assert runtime.load_contract(91) is None
     assert runtime.load_contract(90) is None
     assert runtime.load_contract(999) is None
@@ -78,6 +80,17 @@ def test_resolves_exact_supported_contract_and_rejects_mismatch_or_unknown_versi
 
 
 def test_exact_resolution_rejects_unverified_or_partial_contracts_without_fallback():
+    for supplier_id, contract_id in (
+        (15, "kpn_trading.catalogue_bundle.v1"),
+        (81, "kangaroo_pet_nutrition.catalogue_bundle.v1"),
+    ):
+        with pytest.raises(runtime.SupplierContractUnsupportedError, match="not SUPPORTED"):
+            runtime.resolve_supplier_contract(
+                supplier_id=supplier_id,
+                contract_id=contract_id,
+                contract_version="v1",
+            )
+
     with pytest.raises(runtime.SupplierContractUnsupportedError, match="not SUPPORTED"):
         runtime.resolve_supplier_contract(
             supplier_id=91,

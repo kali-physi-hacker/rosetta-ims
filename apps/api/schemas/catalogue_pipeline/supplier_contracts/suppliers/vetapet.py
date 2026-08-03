@@ -7,6 +7,7 @@ from schemas.catalogue_pipeline.enums import IssueSeverity, SourceFormat, UnitCo
 from schemas.catalogue_pipeline.supplier_contracts.common import (
     SUPPLIER_SOURCE_SCHEMA_VERSION,
     AmbiguityRule,
+    MbbSourceSemantics,
     PackagingSourceSemantics,
     PricingSourceSemantics,
     SemanticResolutionStatus,
@@ -63,6 +64,14 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             evidence=evidence_items,
         ),
         SourceFieldContract(
+            field_key="brand",
+            role=SourceFieldRole.BRAND,
+            requirement=SourceFieldRequirement.OPTIONAL,
+            source_path="product_name or section_header",
+            description="Product brand extracted from product name (e.g., Zoetis, Antinol, Dermoscent) or section header.",
+            evidence=evidence_items,
+        ),
+        SourceFieldContract(
             field_key="pack_size",
             role=SourceFieldRole.PACKAGING,
             requirement=SourceFieldRequirement.OPTIONAL,
@@ -84,6 +93,14 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             requirement=SourceFieldRequirement.OPTIONAL,
             source_column="SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價" if segment == "vet" else "零售價 / RETAIL PRICE",
             description="Suggested retail or retail price field.",
+            evidence=evidence_items,
+        ),
+        SourceFieldContract(
+            field_key="promotion_text",
+            role=SourceFieldRole.MBB_TEXT,
+            requirement=SourceFieldRequirement.OPTIONAL,
+            source_column="TERMS / REMARKS",
+            description="Bulk buy terms, promotional offers, or discount conditions (e.g., 'Buy 20+ at special price', 'Buy 3 get 1 free').",
             evidence=evidence_items,
         ),
         SourceFieldContract(
@@ -196,6 +213,16 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 "Purchase UOM, order increment, and break-pack rules are not proven by checked-in source evidence.",
             ],
         ),
+        mbb=MbbSourceSemantics(
+            source_fields=["promotion_text"],
+            condition_patterns=["buy quantity threshold", "spend threshold"],
+            benefit_patterns=["free units", "percentage discount", "fixed price per unit"],
+            requires_validation_issue_when=[
+                "The qualifying products or exact threshold basis are not explicit.",
+                "Stacking rules or exclusions are not defined."
+            ],
+            notes="Vetapet uses various MBB formats including 'Buy X get Y free', 'Buy X+ at special price', and percentage discounts.",
+        ),
         validation_rules=_VET_VALIDATION_RULES,
         known_ambiguities=[
             AmbiguityRule(
@@ -205,7 +232,7 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 blocks_supported_status=True,
             )
         ],
-        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "pack_size", "cost", "rrp", "species", "segment", "category"),
+        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category"),
         created_at=DECLARATION_CREATED_AT,
         created_by=DECLARATION_CREATED_BY,
     )
@@ -258,6 +285,16 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 "Price basis, purchase UOM, sellable unit, order increment, and break-pack rules are unresolved.",
             ],
         ),
+        mbb=MbbSourceSemantics(
+            source_fields=["promotion_text"],
+            condition_patterns=["buy quantity threshold", "spend threshold"],
+            benefit_patterns=["free units", "percentage discount", "fixed price per unit"],
+            requires_validation_issue_when=[
+                "The qualifying products or exact threshold basis are not explicit.",
+                "Stacking rules or exclusions are not defined."
+            ],
+            notes="Vetapet uses various MBB formats including 'Buy X get Y free', 'Buy X+ at special price', and percentage discounts.",
+        ),
         validation_rules=[
             SupplierValidationRule(
                 rule_id="vetapet_non_vet.cost_below_rrp_unverified",
@@ -282,7 +319,7 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 review_guidance="Confirm whether the wholesale price is per sellable unit, pack, case, or another basis.",
             ),
         ],
-        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "pack_size", "cost", "rrp", "species", "segment", "category"),
+        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category"),
         created_at=DECLARATION_CREATED_AT,
         created_by=DECLARATION_CREATED_BY,
     )

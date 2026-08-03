@@ -1,0 +1,407 @@
+{
+  "schema_version": "catalogue.supplier_source_contract.v1",
+  "contract_id": "kangaroo_pet_nutrition.catalogue_bundle.v1",
+  "contract_version": "v1",
+  "supplier": {
+    "supplier_id": 81,
+    "supplier_name": "Kangaroo Pet Nutrition",
+    "supplier_code": "KANGAR"
+  },
+  "document_type": "CATALOGUE",
+  "format_name": "Kangaroo Pet Nutrition catalogue bundle",
+  "source_format": "PDF_TABLE",
+  "support_status": "PARTIALLY_VERIFIED",
+  "effective_from": null,
+  "effective_to": null,
+  "evidence": [
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "reference": "external-sample:KPN_Kangaroo.pdf",
+      "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+    },
+    {
+      "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+      "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+      "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+    }
+  ],
+  "source_structure": {
+    "source_format": "PDF_TABLE",
+    "expected_sheet_names": [],
+    "expected_sections": [],
+    "table_regions": [
+      {
+        "name": "kangaroo_pet_nutrition_identified_sections",
+        "selector": "Catalogue sections attributed to supplier ID 81 or explicitly marked Kangaroo Pet Nutrition / KANGAR",
+        "header_row": null,
+        "notes": "ZIWI Peak and Ecuphar are observed examples. A valid catalogue may contain either, both, or other explicitly attributed brands."
+      }
+    ],
+    "required_headers": [],
+    "optional_headers": [
+      "產品編號",
+      "產品內容",
+      "批發價",
+      "包裝",
+      "重量",
+      "每箱",
+      "每罐",
+      "建議零售價",
+      "With effect from"
+    ],
+    "row_eligibility_rules": [
+      "The ingestion supplier must be ID 81, or the enclosing source section must explicitly identify Kangaroo Pet Nutrition / KANGAR.",
+      "Never select this contract from page number or brand presence alone.",
+      "Rows require a product code, description, and printed wholesale price."
+    ],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "source document and page",
+      "supplier identity marker or ingestion supplier identity",
+      "brand/section heading",
+      "table row",
+      "source column"
+    ]
+  },
+  "fields": [
+    {
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "產品編號",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "SKU#",
+        "Product Code"
+      ],
+      "description": "Product code printed on the eligible Kangaroo Pet Nutrition row.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "brand",
+      "role": "BRAND",
+      "requirement": "REQUIRED",
+      "source_column": null,
+      "source_path": "brand, portfolio, or product-line heading",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "ZIWI Peak or the row-level Ecuphar portfolio brand/product line.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": "產品內容",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "產品名稱",
+        "Product Description"
+      ],
+      "description": "Printed English/Chinese product description.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": "包裝 / 重量",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "包裝",
+        "重量",
+        "Size"
+      ],
+      "description": "Printed content size or packaging text.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "units_per_case",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": "每箱包數 / 每箱罐數",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "每箱",
+        "每箱包數",
+        "每箱罐數",
+        "Units Per Case"
+      ],
+      "description": "Printed case configuration for layouts that expose it.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "wholesale_price",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "批發價",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "每包批發價",
+        "每箱批發價",
+        "Wholesale Price"
+      ],
+      "description": "Wholesale amount preserved with its exact printed source heading.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "rrp",
+      "role": "RRP",
+      "requirement": "OPTIONAL",
+      "source_column": "建議零售價",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "每包建議零售價",
+        "每箱建議零售價",
+        "每罐建議零售價"
+      ],
+      "description": "Recommended retail amount preserved with its printed price basis.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "effective_date",
+      "role": "EFFECTIVE_DATE",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "document or section effective-date label",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Document- or section-level effective date.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    },
+    {
+      "field_key": "promotion_text",
+      "role": "MBB_TEXT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "document, section, or row promotion notes",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Printed promotion or spend-discount terms.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        }
+      ]
+    }
+  ],
+  "pricing": {
+    "cost_source_field": "wholesale_price",
+    "rrp_source_field": "rrp",
+    "currency": "HKD",
+    "price_basis": null,
+    "price_basis_status": "UNRESOLVED",
+    "autoswap_cost_rrp_allowed": false,
+    "null_cost_markers": [],
+    "notes": "Observed ZIWI dry layouts price packages, ZIWI wet layouts expose case and per-can amounts, and Ecuphar uses another layout. Preserve the source heading and leave price basis unresolved at bundle level."
+  },
+  "packaging": {
+    "packaging_source_field": "pack_size",
+    "purchase_uom": null,
+    "price_basis": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
+    "interpretation_rules": [
+      "Treat content size as a measure, not a sellable-unit count.",
+      "Treat units per case as case configuration only.",
+      "Do not infer purchase UOM, order increment, or break-pack permission from case configuration."
+    ],
+    "unresolved_semantics": [
+      "Purchase UOM varies between ZIWI dry, ZIWI wet, and Ecuphar layouts.",
+      "Sellable units per purchase unit are not established at bundle level.",
+      "Break-pack permission is not established by the source."
+    ]
+  },
+  "mbb": {
+    "source_fields": [
+      "promotion_text"
+    ],
+    "supported_scopes": [],
+    "condition_patterns": [
+      "spend threshold"
+    ],
+    "benefit_patterns": [
+      "percentage discount"
+    ],
+    "requires_validation_issue_when": [
+      "The qualifying products, threshold basis, or stacking rules are not explicit."
+    ],
+    "notes": "Promotion text remains evidence until its scope is confirmed."
+  },
+  "validation_rules": [],
+  "known_ambiguities": [
+    {
+      "issue_code": "KANGAROO_PET_NUTRITION_BUNDLE_PRICE_BASIS_VARIES",
+      "condition": "Observed supplier layouts mix package, case, per-can, and simple price bases.",
+      "review_guidance": "Detect the row/table layout before interpreting price amounts.",
+      "blocks_supported_status": true
+    },
+    {
+      "issue_code": "KANGAROO_PET_NUTRITION_SUPPLIER_IDENTITY_REQUIRED",
+      "condition": "A source may contain multiple suppliers or only a subset of previously observed brands.",
+      "review_guidance": "Select this declaration only from ingestion supplier ID 81 or an explicit Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand.",
+      "blocks_supported_status": true
+    }
+  ],
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.extracted_evidence.v1",
+    "staging_item_contract_id": "catalogue.normalized_row.v1",
+    "raw_observation_fields": [
+      "supplier_sku",
+      "brand",
+      "description",
+      "pack_size",
+      "units_per_case",
+      "wholesale_price",
+      "rrp",
+      "effective_date",
+      "promotion_text"
+    ],
+    "staging_raw_field_keys": [
+      "supplier_sku",
+      "brand",
+      "description",
+      "pack_size",
+      "units_per_case",
+      "wholesale_price",
+      "rrp",
+      "effective_date",
+      "promotion_text"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "brand",
+      "description",
+      "pack_size",
+      "units_per_case",
+      "wholesale_price",
+      "rrp",
+      "effective_date",
+      "promotion_text"
+    ]
+  },
+  "created_at": "2026-07-30T00:00:00Z",
+  "created_by": "catalogue-contract-integration",
+  "updated_at": null,
+  "updated_by": null,
+  "metadata": {
+    "routing_strategy": "supplier_identity_and_content_markers",
+    "sample_reference": "KPN_Kangaroo.pdf",
+    "observed_brands": "ZIWI Peak, Ecuphar"
+  }
+}
