@@ -883,3 +883,63 @@ def test_suspiciously_sparse_page_is_warned_not_failed(monkeypatch):
     assert result.status == ExtractionStatus.COMPLETE
     sparse_warnings = [w for w in result.warnings if "suspiciously sparse" in w]
     assert sparse_warnings and sparse_warnings[0].startswith("page:2")
+
+
+def test_a_section_banner_with_no_rows_does_not_fail_the_page(monkeypatch):
+    """Emitting a table per banner means some banners have no rows on this page.
+
+    Live: a 56-page Alfamedic run failed three times, on a different page each
+    time, one of them for exactly this — a "- Genito-urinary -" heading whose
+    rows continue overleaf. Refusing the page discarded every row it did have.
+    """
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    envelope = {
+        "page_outcome": "evidence",
+        "tables": [
+            {"section": "- Genito-urinary -", "columns": ["Order Code", "Price"], "rows": []},
+            {"section": "- Dermatology -", "columns": ["Order Code", "Price"],
+             "rows": [{"cells": ["ALO250", "58.0"], "confidence": "0.95"}]},
+        ],
+    }
+    monkeypatch.setattr(evidence_service, "_call_vision",
+                        lambda content, *, media_type: evidence_service._VisionResponse(text=json.dumps(envelope)))
+    content = _pdf_with_pages([""])
+    result = catalogue_evidence_extraction.extract_evidence(content, "a.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert len(result.observations) == 1, "the empty banner contributes nothing and blocks nothing"
+    assert result.observations[0].source_metadata["section"] == "- Dermatology -"
+
+
+def test_a_page_with_no_catalogue_rows_may_still_carry_document_text(monkeypatch):
+    """A page can genuinely have no product lines and still print an effective
+    date. Refusing it discarded the classification AND the text."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    envelope = {
+        "page_outcome": "no_catalogue_evidence",
+        "tables": [],
+        "text_observations": [{"text": "Effective on 01 Mar 2026", "confidence": "0.9"}],
+    }
+    monkeypatch.setattr(evidence_service, "_call_vision",
+                        lambda content, *, media_type: evidence_service._VisionResponse(text=json.dumps(envelope)))
+    content = _pdf_with_pages([""])
+    result = catalogue_evidence_extraction.extract_evidence(content, "a.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert result.unit_outcomes[0].status.value == "NO_CATALOGUE_EVIDENCE"
+
+
+def test_a_page_classified_empty_that_carries_product_rows_is_still_refused(monkeypatch):
+    """That is the case the rule exists for — it would hide a truncated table."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    envelope = {
+        "page_outcome": "no_catalogue_evidence",
+        "tables": [{"columns": ["Order Code"], "rows": [{"cells": ["ALO250"], "confidence": "0.9"}]}],
+    }
+    monkeypatch.setattr(evidence_service, "_call_vision",
+                        lambda content, *, media_type: evidence_service._VisionResponse(text=json.dumps(envelope)))
+    content = _pdf_with_pages([""])
+    result = catalogue_evidence_extraction.extract_evidence(content, "a.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.FAILED
+    assert result.errors[0].code == "MALFORMED_PROVIDER_RESPONSE"

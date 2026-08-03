@@ -258,8 +258,12 @@ class _VisionTable(BaseModel):
 
     @model_validator(mode="after")
     def _rows_match_columns(self):
-        if not self.columns or not self.rows:
-            raise ValueError("vision table requires columns and rows")
+        # Columns with no rows is a heading whose rows are on the next page —
+        # common once a table is emitted per section banner. It carries no
+        # evidence, so the envelope drops it; refusing the whole page over it
+        # would lose every row the page DOES have.
+        if not self.columns:
+            raise ValueError("vision table requires columns")
         for row in self.rows:
             if row.text is not None:
                 raise ValueError("table rows must use cells; document text belongs in text_observations")
@@ -290,11 +294,17 @@ class _VisionEnvelope(BaseModel):
 
     @model_validator(mode="after")
     def _outcome_matches_rows(self):
-        has_evidence = bool(self.tables or self.text_observations or self.rows)
+        rows_present = bool(self.rows or any(table.rows for table in self.tables))
+        has_evidence = bool(rows_present or self.text_observations)
         if self.page_outcome == "evidence" and not has_evidence:
             raise ValueError("page_outcome 'evidence' requires table or text evidence")
-        if self.page_outcome == "no_catalogue_evidence" and has_evidence:
-            raise ValueError("page_outcome 'no_catalogue_evidence' cannot carry evidence")
+        # The rule exists to catch a page classified empty that actually held
+        # product ROWS, which would hide truncation. Document-level text is not
+        # a product row: a page can genuinely have no catalogue lines and still
+        # print an effective date or a policy note, and refusing it discards
+        # both the classification and the text.
+        if self.page_outcome == "no_catalogue_evidence" and rows_present:
+            raise ValueError("page_outcome 'no_catalogue_evidence' cannot carry catalogue rows")
         if self.tables and (self.columns or self.rows):
             raise ValueError("use tables or legacy columns/rows, not both")
         for row in self.rows:
@@ -1027,6 +1037,7 @@ def _vision_observations(
         digest_counts: dict[str, int] = {}
         row_groups: list[tuple[tuple[str, ...], _VisionRow, str | None]] = []
         for table in envelope.tables:
+            # An empty table is a banner whose rows sit on the next page.
             row_groups.extend((table.columns, row, table.section) for row in table.rows)
         # Recorded compact-v1 fixtures remain readable.
         row_groups.extend((envelope.columns, row, None) for row in envelope.rows)
