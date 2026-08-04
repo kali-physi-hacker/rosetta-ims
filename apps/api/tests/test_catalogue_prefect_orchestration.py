@@ -261,10 +261,10 @@ def _install_vision(monkeypatch, rows: list[dict[str, str]]) -> None:
     GEMINI_API_KEY and replace the vision seam with a deterministic envelope.
     """
 
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr(
         extraction,
-        "_call_gemini_vision",
+        "_call_vision",
         lambda content, *, media_type: extraction._VisionResponse(text=_vision_envelope(rows)),
     )
 

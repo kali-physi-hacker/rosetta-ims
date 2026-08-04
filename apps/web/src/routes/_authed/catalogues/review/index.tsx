@@ -1,37 +1,25 @@
-// Catalogue review — front door. Every ingestion run, newest first; a run opens
-// its board (see the run board route for the review flow itself).
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+// Catalogue review — a queue, not a log. Runs grouped by supplier contract,
+// latest first; the newest run per contract shows its live review progress,
+// older runs collapse to their receipts, failures explain themselves.
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { Spinner } from '@/components/Spinner'
-import { C } from '@/lib/tokens'
-import { reviewApi } from '@/lib/review'
+import { toast } from '@/lib/toast'
+import { DESK_CSS } from '@/lib/deskCss'
+import { fetchSummary, latest, isStaged, isApproved, isDecided, reviewApi, failureInfo, retryRun, type RunStatus } from '@/lib/review'
 
 export const Route = createFileRoute('/_authed/catalogues/review/')({ component: ReviewRunsPage })
 
-interface RunRow {
-  ingestion_run_id: string
-  supplier_id: number | null
-  contract_id: string | null
-  status: string
-  submitted_at: string
-  completed_at: string | null
-  items_extracted: number | null
-}
+type RunRow = RunStatus
 
-const STATUS_PILL: Record<string, { bg: string; color: string }> = {
-  completed: { bg: C.greenBg, color: C.green },
-  completed_with_warnings: { bg: '#DBEAFE', color: '#1E40AF' },
-  failed: { bg: C.redBg, color: C.redInk },
-  processing: { bg: C.warnBg, color: C.amberInk },
-  queued: { bg: C.monoBg, color: C.sub },
-}
-
-const MONO = 'ui-monospace, "SF Mono", Menlo, monospace'
+const FAILED = new Set(['failed'])
+const WORKING = new Set(['queued', 'processing'])
 
 function fmtWhen(iso: string | null): string {
   if (!iso) return '—'
   const d = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + 'Z')
-  return isNaN(d.getTime()) ? iso : d.toLocaleString()
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
 
 function ReviewRunsPage() {
@@ -40,65 +28,140 @@ function ReviewRunsPage() {
     queryFn: () => reviewApi<RunRow[]>('/catalogues/ingestions/run_ids'),
   })
 
-  const rows = [...(runs.data ?? [])].sort((a, b) => (b.submitted_at ?? '').localeCompare(a.submitted_at ?? ''))
+  const groups = useMemo(() => {
+    const sorted = [...(runs.data ?? [])].sort((a, b) => (b.submitted_at ?? '').localeCompare(a.submitted_at ?? ''))
+    const map = new Map<string, RunRow[]>()
+    for (const run of sorted) {
+      const key = run.contract_id ?? 'unknown contract'
+      map.set(key, [...(map.get(key) ?? []), run])
+    }
+    // groups whose latest run is newest come first
+    return [...map.entries()].sort((a, b) => (b[1][0].submitted_at ?? '').localeCompare(a[1][0].submitted_at ?? ''))
+  }, [runs.data])
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100 }}>
-      <div style={{ marginBottom: 16 }}>
-        <h1 style={{ fontSize: 18, fontWeight: 800, color: C.ink, margin: 0 }}>Catalogue review</h1>
-        <div style={{ fontSize: 12.5, color: C.muted, marginTop: 4 }}>
-          Pick a run to review its mastering candidates — board to see, room to decide, commit to change.
-        </div>
+    <div className="rdesk" style={{ padding: '18px 24px 40px', maxWidth: 980, margin: '0 auto' }}>
+      <style>{DESK_CSS}</style>
+      <h1>Catalogue review</h1>
+      <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4 }}>
+        Each run opens its desk — decide, stage, publish, receipt, all in one place.
       </div>
 
-      {runs.isLoading && <Spinner />}
-      {runs.isError && (
-        <div style={{ color: C.bad, fontSize: 13 }}>{String((runs.error as Error)?.message ?? runs.error)}</div>
-      )}
+      {runs.isLoading && <div style={{ marginTop: 16 }}><Spinner /></div>}
+      {runs.isError && <div style={{ marginTop: 16, color: 'var(--red)', fontSize: 13 }}>{String((runs.error as Error)?.message ?? runs.error)}</div>}
 
-      {runs.data && (
-        <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
-            <thead>
-              <tr style={{ background: C.wash, textAlign: 'left' }}>
-                {['Run', 'Contract', 'Status', 'Rows', 'Submitted', ''].map(h => (
-                  <th key={h} style={{ padding: '9px 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: C.muted }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(run => {
-                const pill = STATUS_PILL[run.status] ?? STATUS_PILL.queued
-                return (
-                  <tr key={run.ingestion_run_id} style={{ borderTop: `1px solid ${C.monoBg}` }}>
-                    <td style={{ padding: '10px 14px', fontFamily: MONO, fontSize: 11.5, color: C.sub }}>{run.ingestion_run_id.slice(0, 8)}</td>
-                    <td style={{ padding: '10px 14px', color: C.ink }}>{run.contract_id ?? '—'}</td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, borderRadius: 999, padding: '2px 9px', background: pill.bg, color: pill.color }}>{run.status}</span>
-                    </td>
-                    <td style={{ padding: '10px 14px', fontFamily: MONO, fontSize: 11.5, color: C.sub }}>{run.items_extracted ?? '—'}</td>
-                    <td style={{ padding: '10px 14px', color: C.muted }}>{fmtWhen(run.submitted_at)}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                      <Link
-                        to="/catalogues/review/$runId"
-                        params={{ runId: run.ingestion_run_id }}
-                        style={{ fontSize: 12, fontWeight: 650, color: C.indigoStrong, textDecoration: 'none' }}
-                      >
-                        Open board →
-                      </Link>
-                    </td>
-                  </tr>
-                )
-              })}
-              {rows.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: C.muted, fontSize: 13 }}>
-                  No ingestion runs yet — submit a catalogue from the Catalogues page.
-                </td></tr>
-              )}
-            </tbody>
-          </table>
+      {groups.map(([contract, rows]) => (
+        <ContractGroup key={contract} contract={contract} rows={rows} />
+      ))}
+      {runs.data && groups.length === 0 && (
+        <div className="panel" style={{ marginTop: 14, padding: 22, textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
+          No runs yet — submit a catalogue from the Catalogues page.
         </div>
       )}
+    </div>
+  )
+}
+
+function ContractGroup({ contract, rows }: { contract: string; rows: RunRow[] }) {
+  const usable = rows.filter(r => !FAILED.has(r.status))
+  const failures = rows.filter(r => FAILED.has(r.status))
+  const [showFailures, setShowFailures] = useState(false)
+  const newest = usable[0]
+
+  return (
+    <div className="panel" style={{ marginTop: 14 }}>
+      <div className="laneh">
+        <span className="ln">{contract}</span>
+        <span className="lc">{rows.length} run{rows.length === 1 ? '' : 's'}</span>
+        {failures.length > 0 && (
+          <span className="lnk" style={{ marginLeft: 'auto', fontSize: 11 }} onClick={() => setShowFailures(open => !open)}>
+            {showFailures ? 'hide' : 'show'} {failures.length} failed
+          </span>
+        )}
+      </div>
+
+      {usable.map((run, index) => (
+        <div key={run.ingestion_run_id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '9px 14px', borderTop: index ? '1px solid var(--line2)' : 'none', opacity: index === 0 ? 1 : 0.65, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11.5, color: 'var(--faint)', width: 110, flex: 'none' }}>{fmtWhen(run.submitted_at)}</span>
+          <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{run.items_extracted != null ? `${run.items_extracted} rows` : WORKING.has(run.status) ? 'processing…' : '—'}</span>
+          {index === 0 && !WORKING.has(run.status) ? <RunProgress runId={run.ingestion_run_id} /> : <span style={{ flex: 1 }} />}
+          {index === 0 ? (
+            <Link className="btn pri sm" to="/catalogues/review/$runId" params={{ runId: run.ingestion_run_id }}>Open desk →</Link>
+          ) : (
+            <Link className="lnk" style={{ fontSize: 11.5 }} to="/catalogues/review/$runId/commit" params={{ runId: run.ingestion_run_id }}>receipt →</Link>
+          )}
+        </div>
+      ))}
+      {usable.length === 0 && (
+        <div style={{ padding: '12px 14px', fontSize: 12, color: 'var(--faint)' }}>Every submission of this catalogue failed so far.</div>
+      )}
+
+      {showFailures && failures.map(run => <FailedRunRow key={run.ingestion_run_id} run={run} />)}
+    </div>
+  )
+}
+
+// Live progress chips for the newest run of a contract — one summary fetch.
+function RunProgress({ runId }: { runId: string }) {
+  const summary = useQuery({ queryKey: ['review-summary', runId], queryFn: () => fetchSummary(runId), staleTime: 30_000 })
+  if (summary.isLoading) return <span style={{ flex: 1, fontSize: 11, color: 'var(--faint)' }}>…</span>
+  if (summary.isError || !summary.data) return <span style={{ flex: 1 }} />
+  const items = latest(summary.data.items)
+  const needsYou = items.filter(i => !isDecided(i)).length
+  const staged = items.filter(isStaged).length
+  const live = items.filter(i => i.published).length
+  const done = items.length > 0 && needsYou === 0 && staged === 0
+  return (
+    <span style={{ flex: 1, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {needsYou > 0 && <span className="bdg warn">{needsYou} to decide</span>}
+      {staged > 0 && <span className="bdg acc">{staged} staged</span>}
+      {live > 0 && <span className="bdg ok"><span className="st" />{live} live</span>}
+      {done && live === 0 && <span className="bdg neu">reviewed · nothing published</span>}
+      {items.length > 0 && items.every(i => isApproved(i) && i.published) && <span className="bdg ok">complete ✓</span>}
+    </span>
+  )
+}
+
+
+function FailedRunRow({ run }: { run: RunRow }) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [busy, setBusy] = useState(false)
+  const failure = failureInfo(run.error_summary)
+  const superseded = run.superseded_by_run
+
+  async function onRetry() {
+    setBusy(true)
+    try {
+      const result = await retryRun(run.ingestion_run_id)
+      toast.success('Retry queued — same file, new run')
+      queryClient.invalidateQueries({ queryKey: ['review-runs'] })
+      navigate({ to: '/catalogues/review/$runId', params: { runId: result.ingestion_run_id } })
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    } finally { setBusy(false) }
+  }
+
+  if (superseded) {
+    return (
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '7px 14px', borderTop: '1px solid var(--line2)', opacity: 0.55 }}>
+        <span style={{ fontSize: 11.5, color: 'var(--faint)', width: 110, flex: 'none' }}>{fmtWhen(run.submitted_at)}</span>
+        <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>↻ superseded — retried as a newer run</span>
+        <Link className="lnk" style={{ fontSize: 11, marginLeft: 'auto' }} to="/catalogues/review/$runId" params={{ runId: superseded }}>open the retry →</Link>
+      </div>
+    )
+  }
+  return (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 14px', borderTop: '1px solid var(--line2)', flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 11.5, color: 'var(--faint)', width: 110, flex: 'none' }}>{fmtWhen(run.submitted_at)}</span>
+      <span className="bdg bad" title={failure?.code}>failed — {failure ? failure.sentence.replace(/\.$/, '') : 'no details recorded'}</span>
+      {failure && failure.attempts > 1 && <span style={{ fontSize: 10.5, color: 'var(--faint)' }}>{failure.attempts} attempts</span>}
+      <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+        {failure?.retryable
+          ? <button className="btn sm" disabled={busy} onClick={onRetry}>{busy ? 'Queuing…' : 'Retry'}</button>
+          : <span style={{ fontSize: 10.5, color: 'var(--faint)' }}>fix the file &amp; re-upload</span>}
+        <Link className="lnk" style={{ fontSize: 11 }} to="/catalogues/review/$runId" params={{ runId: run.ingestion_run_id }}>details</Link>
+      </span>
     </div>
   )
 }

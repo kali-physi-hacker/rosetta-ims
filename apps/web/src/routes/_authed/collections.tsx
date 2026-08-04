@@ -169,7 +169,7 @@ function CollectionsPage() {
           ) : (
             <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
               {viewing.products.map((p: any) => (
-                <Link key={p.sku_code} to={`/items/${p.sku_code}` as never} style={{ display: 'flex', gap: '10px', padding: '8px 4px', borderBottom: '1px solid #F8FAFC', textDecoration: 'none', alignItems: 'baseline' }}>
+                <Link key={p.sku_code} to={`/sku/${p.sku_code}` as never} style={{ display: 'flex', gap: '10px', padding: '8px 4px', borderBottom: '1px solid #F8FAFC', textDecoration: 'none', alignItems: 'baseline' }}>
                   <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '12px', color: C.indigoInk, width: '88px' }}>{p.sku_code}</span>
                   <span style={{ flex: 1, fontSize: '13px', color: C.ink }}>{p.name}</span>
                   <span style={{ fontSize: '11px', color: C.faint }}>{p.category}</span>

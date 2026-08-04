@@ -22,6 +22,7 @@ import { Route as AuthedCollectionsRouteImport } from './routes/_authed/collecti
 import { Route as AuthedConfigRouteImport } from './routes/_authed/config'
 import { Route as AuthedDataReviewRouteImport } from './routes/_authed/data-review'
 import { Route as AuthedLogicRouteImport } from './routes/_authed/logic'
+import { Route as AuthedNewInventoryRouteImport } from './routes/_authed/new-inventory'
 import { Route as AuthedPlaybookRouteImport } from './routes/_authed/playbook'
 import { Route as AuthedSsotSpecRouteImport } from './routes/_authed/ssot-spec'
 import { Route as AuthedStockRouteImport } from './routes/_authed/stock'
@@ -102,6 +103,11 @@ const AuthedDataReviewRoute = AuthedDataReviewRouteImport.update({
 const AuthedLogicRoute = AuthedLogicRouteImport.update({
   id: '/logic',
   path: '/logic',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedNewInventoryRoute = AuthedNewInventoryRouteImport.update({
+  id: '/new-inventory',
+  path: '/new-inventory',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedPlaybookRoute = AuthedPlaybookRouteImport.update({
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/config': typeof AuthedConfigRoute
   '/data-review': typeof AuthedDataReviewRoute
   '/logic': typeof AuthedLogicRoute
+  '/new-inventory': typeof AuthedNewInventoryRoute
   '/playbook': typeof AuthedPlaybookRoute
   '/ssot-spec': typeof AuthedSsotSpecRoute
   '/stock': typeof AuthedStockRoute
@@ -237,6 +244,7 @@ export interface FileRoutesByTo {
   '/config': typeof AuthedConfigRoute
   '/data-review': typeof AuthedDataReviewRoute
   '/logic': typeof AuthedLogicRoute
+  '/new-inventory': typeof AuthedNewInventoryRoute
   '/playbook': typeof AuthedPlaybookRoute
   '/ssot-spec': typeof AuthedSsotSpecRoute
   '/stock': typeof AuthedStockRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/_authed/config': typeof AuthedConfigRoute
   '/_authed/data-review': typeof AuthedDataReviewRoute
   '/_authed/logic': typeof AuthedLogicRoute
+  '/_authed/new-inventory': typeof AuthedNewInventoryRoute
   '/_authed/playbook': typeof AuthedPlaybookRoute
   '/_authed/ssot-spec': typeof AuthedSsotSpecRoute
   '/_authed/stock': typeof AuthedStockRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/config'
     | '/data-review'
     | '/logic'
+    | '/new-inventory'
     | '/playbook'
     | '/ssot-spec'
     | '/stock'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
     | '/config'
     | '/data-review'
     | '/logic'
+    | '/new-inventory'
     | '/playbook'
     | '/ssot-spec'
     | '/stock'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/_authed/config'
     | '/_authed/data-review'
     | '/_authed/logic'
+    | '/_authed/new-inventory'
     | '/_authed/playbook'
     | '/_authed/ssot-spec'
     | '/_authed/stock'
@@ -485,6 +497,13 @@ declare module '@tanstack/react-router' {
       path: '/logic'
       fullPath: '/logic'
       preLoaderRoute: typeof AuthedLogicRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/new-inventory': {
+      id: '/_authed/new-inventory'
+      path: '/new-inventory'
+      fullPath: '/new-inventory'
+      preLoaderRoute: typeof AuthedNewInventoryRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/playbook': {
@@ -617,6 +636,7 @@ interface AuthedRouteChildren {
   AuthedConfigRoute: typeof AuthedConfigRoute
   AuthedDataReviewRoute: typeof AuthedDataReviewRoute
   AuthedLogicRoute: typeof AuthedLogicRoute
+  AuthedNewInventoryRoute: typeof AuthedNewInventoryRoute
   AuthedPlaybookRoute: typeof AuthedPlaybookRoute
   AuthedSsotSpecRoute: typeof AuthedSsotSpecRoute
   AuthedStockRoute: typeof AuthedStockRoute
@@ -645,6 +665,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedConfigRoute: AuthedConfigRoute,
   AuthedDataReviewRoute: AuthedDataReviewRoute,
   AuthedLogicRoute: AuthedLogicRoute,
+  AuthedNewInventoryRoute: AuthedNewInventoryRoute,
   AuthedPlaybookRoute: AuthedPlaybookRoute,
   AuthedSsotSpecRoute: AuthedSsotSpecRoute,
   AuthedStockRoute: AuthedStockRoute,

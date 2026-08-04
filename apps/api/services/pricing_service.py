@@ -1,6 +1,7 @@
 """GP computation, pricing recommendations, and margin range logic."""
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from models import ProductVariant, ProductChannel, ProductSupplier, StockLevel, SalesVelocity, CategoryRule
 from services import offering_costs
@@ -38,15 +39,14 @@ def get_primary_cost(product: ProductVariant) -> float | None:
 def effective_pack_cost(ps: ProductSupplier | None) -> float | None:
     """Whole-pack display cost, consistent with get_unit_cost (offering-first).
 
-    When a current offering price exists it is the truth; the whole-pack
-    equivalent keeps the on-screen relation ``pack cost / units_per_pack =
-    unit cost`` intact. Otherwise the legacy editable basic_cost shows.
+    The offering price is the truth; the whole-pack equivalent keeps the
+    on-screen relation ``pack cost / units_per_pack = unit cost`` intact.
     """
     if not ps:
         return None
     unit = offering_costs.unit_cost_for_link(ps)
     if unit is None:
-        return ps.basic_cost if ps.basic_cost else None
+        return None
     if ps.units_per_pack and ps.units_per_pack > 1:
         return round(unit * ps.units_per_pack, 4)
     return unit
@@ -62,29 +62,15 @@ def effective_cost_source(ps: ProductSupplier | None) -> str | None:
     return ps.cost_source
 
 
-def _legacy_unit_cost(basic_cost, units_per_pack):
-    """Pre-config formula — kept only as the shadow-equivalence reference in tests."""
-    if basic_cost is None:
-        return None
-    if units_per_pack and units_per_pack > 1:
-        return basic_cost / units_per_pack
-    return basic_cost
-
-
 def get_unit_cost(ps: ProductSupplier | None) -> float | None:
     """Cost of ONE SELL-UNIT — offering-first, the single cost all margin math runs on.
 
-    The catalogue pipeline writes supplier cost to the SupplierOffering price
-    history (basis-aware, per-sell-unit derived); when a current offering
-    price exists for this (supplier, variant) link it IS the cost. Links with
-    no offering yet fall back to the legacy whole-pack basic_cost divided by
-    units_per_pack (formula in config, transform_engine 'unit_cost')."""
+    Cost is written to the SupplierOffering price history (basis-aware,
+    per-sell-unit derived) by the catalogue pipeline and by every human cost
+    edit; the current price on this (supplier, variant) link IS the cost."""
     if not ps:
         return None
-    from_offering = offering_costs.unit_cost_for_link(ps)
-    if from_offering is not None:
-        return from_offering
-    return engine.evaluate("unit_cost", {"basic_cost": ps.basic_cost, "units_per_pack": ps.units_per_pack})
+    return offering_costs.unit_cost_for_link(ps)
 
 
 def _legacy_term_unit_cost(kind, base_unit_cost, min_qty, free_qty, discount_pct, unit_cost):
@@ -115,13 +101,51 @@ def _term_unit_cost(term, base_unit_cost: float | None) -> float | None:
     return None
 
 
+@dataclass(frozen=True)
+class _CatalogueTerm:
+    """A published catalogue bulk term, in the shape the margin code reads.
+
+    The pipeline's typed terms live on the offering and the hand-entered ones
+    on the legacy link, so the two never met. Rather than teach every consumer
+    a second shape, a catalogue term arrives here already priced per sellable
+    unit and answering the same questions a legacy term does.
+    """
+
+    id: str
+    kind: str
+    min_qty: float | None
+    min_spend: float | None
+    note: str | None
+    unit_cost: float | None
+    source: str = "catalogue"
+
+
+def _catalogue_terms(ps: ProductSupplier | None) -> list[_CatalogueTerm]:
+    return [
+        _CatalogueTerm(
+            id=t["id"],
+            # 'tier' so the stated price is read directly rather than run
+            # through a percentage formula it has no percentage for.
+            kind="tier",
+            min_qty=t["min_qty"],
+            min_spend=t["min_spend"],
+            note=t["note"],
+            unit_cost=t["effective_unit_cost"],
+        )
+        for t in offering_costs.bulk_terms_for_link(ps)
+        if t["effective_unit_cost"] is not None
+    ]
+
+
 def best_mbb(ps: ProductSupplier | None, base_unit_cost: float | None):
     """(cheapest achievable per-sell-unit cost, winning term) across this supplier's MBB terms.
-    Falls back to the legacy flat scalars for any row not yet migrated to relational terms."""
+    Considers both the hand-entered terms on the link and the published catalogue
+    terms on its offering — a headline "best bulk cost" that ignored half of them
+    would contradict the table right beside it."""
     if not ps:
         return (None, None)
     best_cost, best_term = None, None
-    for term in (getattr(ps, "mbb_term_list", None) or []):
+    for term in list(getattr(ps, "mbb_term_list", None) or []) + _catalogue_terms(ps):
         c = _term_unit_cost(term, base_unit_cost)
         if c is not None and (best_cost is None or c < best_cost):
             best_cost, best_term = c, term
@@ -140,6 +164,8 @@ def _cost_to_hit_mbb(term, base_unit_cost: float | None, achieved_unit_cost: flo
     (e.g. "buy 10 get 3 free" at $215 basic reads $2,150 to hit, not 10 × the $165 effective)."""
     if term is None:
         return None
+    if getattr(term, 'source', None) == 'catalogue' and term.min_spend:
+        return round(term.min_spend, 0)
     if term.kind == 'buy_x_get_y' and base_unit_cost and term.min_qty:
         return round(base_unit_cost * term.min_qty, 0)
     if term.kind == 'spend_discount' and term.min_spend:
@@ -284,6 +310,7 @@ def channel_to_dict(channel: ProductChannel, cost: float | None, gp_floor: float
         "has_dispensing_fee": bool(channel.has_dispensing_fee),
         "channel_fee_pct":    channel.channel_fee_pct,
         "units_per_listing":  channel.units_per_listing,
+        "order_multiple":     channel.order_multiple,
         "gp_pct":             gp_pct,
         "recommendation":     recommendation,
         "gap_pct":            gap_pct,
@@ -436,6 +463,31 @@ def compute_data_grade(primary_cost, channels, supplier_name=None, sku_code=None
     return 'C' if (not has_cost or not has_any_price or not has_supplier or not valid_sku) else 'A'
 
 
+def expiry_batches(product: ProductVariant) -> list[dict]:
+    """Batch expiry for a variant, soonest first, with days-to-expiry precomputed.
+
+    `days` is negative for a batch that has already lapsed — expired stock is a
+    write-off, not something to sell through, so callers must not fold the two
+    together the way the old <90d summary tile did.
+    """
+    from datetime import date
+    today = date.today()
+    out = []
+    for e in (product.expiry_tracking or []):
+        try:
+            days = (date.fromisoformat(e.expiry_date) - today).days
+        except (ValueError, AttributeError, TypeError):
+            continue
+        out.append({
+            "batch_ref":   e.batch_ref,
+            "expiry_date": e.expiry_date,
+            "qty":         e.qty,
+            "location":    e.location,
+            "days":        days,
+        })
+    return sorted(out, key=lambda b: b["days"])
+
+
 def _oos_days(out_at: str | None, restock_at: str | None) -> int | None:
     """Length of an out-of-stock period in days: out_at → restock_at, or out_at → today if ongoing."""
     from datetime import date
@@ -454,6 +506,7 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
     weekly_demand = _vel.weekly_demand if _vel else 0.0
     woc           = engine.evaluate("woc", {"total_qty": total_qty, "weekly_demand": weekly_demand})
     sales_120d    = engine.evaluate("sales_120d", {"weekly_demand": weekly_demand})
+    _expiry       = expiry_batches(product)
     # Per-channel weekly demand (algo multichannel sync); None if no velocity row yet.
     wd_by_channel = {
         "clinic":  getattr(_vel, "weekly_demand_clinic", None),
@@ -501,6 +554,7 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
             "code":          sup.supplier.code  if sup.supplier else None,
             "supplier_sku":  sup.supplier_sku,
             "barcode":       sup.barcode,
+            "rrp":           sup.rrp,
             "basic_cost":    effective_pack_cost(sup),
             "cost_source_effective": effective_cost_source(sup),
             "mbb_term_list": [
@@ -510,6 +564,7 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
                  "effective_unit_cost": _term_unit_cost(t, get_unit_cost(sup))}
                 for t in sorted(getattr(sup, "mbb_term_list", []) or [], key=lambda x: x.sort_order)
             ],
+            "catalogue_term_list": offering_costs.bulk_terms_for_link(sup),
             "units_per_pack": sup.units_per_pack,
             "is_primary":    bool(sup.is_primary),
             "is_preferred":  False,  # set below
@@ -525,7 +580,7 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
             ],
         }
         for sup in product.product_suppliers
-        if sup.supplier or sup.supplier_sku or sup.basic_cost or offering_costs.unit_cost_for_link(sup) is not None
+        if sup.supplier or sup.supplier_sku or offering_costs.unit_cost_for_link(sup) is not None
     ]
     # Sort by effective cost ascending (nulls last); lowest true cost = preferred
     _sup_list.sort(key=lambda s: (s["basic_cost"] is None, s["basic_cost"] or 0))
@@ -567,7 +622,12 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
         "weekly_demand": weekly_demand,
         "weekly_demand_by_channel": wd_by_channel,   # {clinic, hktv, shopify} weekly demand, or None
         "sales_trend":   sales_trend,                # [{month:'YYYY-MM', units}] last ~5 months, or None
+        "sales_120d":    sales_120d,                 # demand-derived 120-day units (computed above)
         "woc":           woc,
+        # Inventory data-quality letter — A actionable / C do-not-use. Computed
+        # here so every surface (list, stream, detail) agrees on the grade.
+        "data_grade":    compute_data_grade(primary_cost, product.channels, supplier_name, product.sku_code),
+        "cost_source":   (ps.cost_source if ps else None),
         "primary_cost":  primary_cost,
         "gp_floor":      gp_floor,
         "channels":      channels,
@@ -586,40 +646,10 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
         "uom_verified_at":      ps.uom_verified_at      if ps else None,
         "uom_verified_by":      ps.uom_verified_by      if ps else None,
         "pack_source":          ps.pack_source          if ps else 'sheet',
+        # Batch expiry (algo-dashboard sync). Soonest first; `days` < 0 = lapsed.
+        "expiry_batches":       _expiry,
+        "expiry_days":          _expiry[0]["days"] if _expiry else None,
         # Shadow values — last value seen from Sheet sync
-        "basic_cost_sheet":     ps.basic_cost_sheet     if ps else None,
-        "units_per_pack_sheet": ps.units_per_pack_sheet if ps else None,
-        # Discrepancy flags — Sheet value disagrees with IMS-locked value
-        "cost_sheet_conflict": bool(
-            ps and ps.basic_cost_sheet is not None and ps.basic_cost is not None
-            and ps.cost_source in ('po_issued', 'invoice_matched', 'catalogue')
-            and abs(ps.basic_cost_sheet - ps.basic_cost) / max(ps.basic_cost_sheet, ps.basic_cost) > 0.001
-        ) if ps else False,
-        "pack_sheet_conflict": bool(
-            ps and ps.units_per_pack_sheet is not None and ps.units_per_pack is not None
-            and (ps.uom_verified_at is not None or ps.pack_source == 'catalogue')
-            and ps.units_per_pack_sheet != ps.units_per_pack
-        ) if ps else False,
-        # Sales velocity
-        "sales_120d":      sales_120d,
-        # Cost confidence (Story 1.5)
-        "cost_source":        ps.cost_source     if ps else 'manual',
-        "cost_source_ref":    ps.cost_source_ref if ps else None,
-        "cost_updated_at":    ps.cost_updated_at if ps else None,
-        "cost_is_stale":      _is_cost_stale(ps),
-        # Ordering terms (order multiple / MOQ) — from the primary supplier link; NULL until set.
-        # Read-only exposure for the UI / CSV export. Does not feed any margin math.
-        "order_increment_qty":   ps.order_increment_qty   if ps else None,
-        "order_increment_uom":   ps.order_increment_uom   if ps else None,
-        "minimum_order_qty":     ps.minimum_order_qty     if ps else None,
-        "minimum_order_uom":     ps.minimum_order_uom     if ps else None,
-        "minimum_order_source":  ps.minimum_order_source  if ps else None,
-        "pricing_note":          ps.pricing_note          if ps else None,
-        # Data quality grade (inventory completeness — reconciliation lives in procurement)
-        "data_grade": compute_data_grade(
-            primary_cost, product.channels,
-            supplier_name=supplier_name, sku_code=product.sku_code,
-        ),
     }
 
     if include_margin_range:

@@ -1,15 +1,18 @@
 """AI product tagging + categorization for catalogue onboarding.
 
 Runs a batched Claude Haiku pass over extracted catalogue items and returns, per
-item, free-form (Shopify-style) tags plus a suggested SKU category. Reuses the
-extraction service's model + JSON-salvage helper. Degrades to empty suggestions
-when ANTHROPIC_API_KEY is unset, so onboarding never breaks.
+item, free-form (Shopify-style) tags plus a suggested SKU category. Degrades to
+empty suggestions when ANTHROPIC_API_KEY is unset, so onboarding never breaks.
+
+Not reachable from the API — the entry point is `retag_products.py`, run by hand
+inside the container. Do not confuse with `tag_service`, which is the non-AI tag
+CRUD the routers use.
 """
 import os
 import json
 import re
 
-from services.extraction_service import _loads_json_array
+from services.json_salvage import loads_json_array
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 MODEL = "claude-haiku-4-5-20251001"
@@ -318,7 +321,7 @@ def suggest_tags(items: list[dict]) -> list[dict]:
                 model=MODEL, max_tokens=MAX_TOKENS,
                 messages=[{"role": "user", "content": prompt}],
             )
-            parsed = _loads_json_array(msg.content[0].text)
+            parsed = loads_json_array(msg.content[0].text)
         except Exception:
             continue   # leave this batch's items with empty suggestions
 

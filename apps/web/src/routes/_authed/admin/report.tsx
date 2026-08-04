@@ -196,7 +196,7 @@ function DrillPanel({ title, rows, loading, truncated, onClose }: { title: strin
           {loading && <p style={{ padding: '20px', color: '#94A3B8', fontSize: '13px' }}>Loading…</p>}
           {!loading && rows.length === 0 && <p style={{ padding: '20px', color: '#94A3B8', fontSize: '13px' }}>No items.</p>}
           {!loading && rows.map((row, i) => {
-            const href = row.sku ? `/items/${encodeURIComponent(row.sku)}` : null
+            const href = row.sku ? `/sku/${encodeURIComponent(row.sku)}` : null
             const inner = (
               <>
                 <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.label}</div>

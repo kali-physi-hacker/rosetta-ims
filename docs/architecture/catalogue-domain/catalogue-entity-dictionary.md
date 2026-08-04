@@ -642,7 +642,7 @@ Supplier Product above: `raw_pack_text="24 cans/case"` → `units_per_pack=24`, 
 | Attribute | Business meaning | Type/format | Required? | Example | Rules/source |
 |---|---|---|---|---|---|
 | amount | The published cost | Decimal | Yes | `240.0` | `ProductSupplier.basic_cost`, `models.py:207` |
-| **currency** | Currency of the amount | ISO code | Yes **[intended]** | `HKD` | ⚠ **Not stored** — HKD assumed, symbols stripped at ingest (`extraction_service.py:282`) |
+| **currency** | Currency of the amount | ISO code | Yes **[intended]** | `HKD` | ⚠ **Not stored** — HKD assumed, symbols stripped at ingest (`catalogue_conformance.py:787`) |
 | **price_basis** | per_sell_unit \| per_pack | Enum | Yes **[intended]** | `per_pack` | ⚠ **Implicit** — encoded only via `units_per_pack` in persistence; explicit in the Pydantic supplier-source contract |
 | pack_ref | The Packaging Configuration the basis refers to | Ref | Yes | 24/case | via `units_per_pack` |
 | **effective_from** | When this price takes effect | Date | Yes **[intended]** | `2024-04-01` | ⚠ **Not stored** — printed on the catalogue, dropped |
@@ -941,7 +941,7 @@ Only gaps supported by repository evidence are listed. File references are indic
 | **Product vs Variant** | Family (Product) has many Variants (SKUs) | One `products` row per SKU; variant flattened into name (`catalogues.py:1319`) | **No family entity above the SKU**; cross-variant roll-ups are a name heuristic (`clientssot/families.py`) | Introduce `Product` parent; make Variant its child. (Clean 1:1 today, so additive.) |
 | **Brand** | Canonical reference | String `Product.brand` + `SupplierBrand` join (`models.py:157,136`) | **No canonical Brand table**; rename fans out across strings (`brands.py:111-119`) | Promote Brand to a reference table; keep `SupplierBrand` as the carries-link. |
 | **Unit of Measure** | Controlled vocabulary w/ dimension | Free strings `uom`/`pack_unit`/`weight_unit` | No enforced vocabulary; `tab`/`tablet` variants possible | Add a small UoM reference (symbol + dimension). |
-| **Supplier Price — currency** | Every price has a currency | Bare `Float` cost/price fields; HKD assumed, symbols stripped (`extraction_service.py:282`) | **No currency column** anywhere | Add `currency` (default HKD) to every priced record. |
+| **Supplier Price — currency** | Every price has a currency | Bare `Float` cost/price fields; HKD assumed, symbols stripped (`catalogue_conformance.py:787`) | **No currency column** anywhere | Add `currency` (default HKD) to every priced record. |
 | **Supplier Price — basis** | Explicit per_unit vs per_pack | Implicit via `units_per_pack`; `basic_cost` means pack in some endpoints, unit in others (`products.py:473` vs `:302`) | **No explicit basis**; a naming footgun (A3) | Store explicit `price_basis`; disambiguate the `basic_cost` label. |
 | **Supplier Price — history/effective period** | Effective-dated, append-on-change | Current value + one `basic_cost_sheet` shadow + `cost_updated_at` (`models.py:217,226`) | **No price timeline**; catalogue effective date discarded | Add effective-dated Supplier Price history. |
 | **Packaging — unknown vs 1** | "unknown pack" ≠ "pack of 1" | `units_per_pack` NULL/≤1 both return pack cost as unit cost (`transform_engine.py:79`) | **NULL≡1 ambiguity**; data-grade ignores pack presence (`pricing_service.py:390-400`) | Treat NULL distinctly; flag multipacks with no pack size. |

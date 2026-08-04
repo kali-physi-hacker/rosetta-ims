@@ -203,8 +203,9 @@ provider errors.
 ## Typed Evidence Extraction, then Post-Raw Interpretation
 
 Extraction and interpretation are now separate pipeline boundaries. The legacy
-combined extract-and-interpret path (`services.extraction_service.extract`)
-serves only v1 endpoints and is not reachable from orchestration.
+combined extract-and-interpret path (`services/extraction_service.py`) has been
+deleted — its only callers were the v1 upload/reparse endpoints, retired in
+51ac687. `test_legacy_semantic_extraction_module_stays_deleted` keeps it gone.
 
 **Extraction** (`services.catalogue_evidence_extraction` behind the
 `catalogue_extraction_adapter` policy) is contract-independent and records only

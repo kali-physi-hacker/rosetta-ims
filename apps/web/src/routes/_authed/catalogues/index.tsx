@@ -10,6 +10,8 @@ import { authHeaders } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { API_BASE } from '@/lib/config'
 import { reviewApi } from '@/lib/review'
+import { IngestionProgress } from '@/components/IngestionProgress'
+import type { RunStatus } from '@/lib/review'
 
 const API = API_BASE
 const MONO = 'ui-monospace, "SF Mono", Menlo, monospace'
@@ -35,7 +37,28 @@ interface BatchFile {
   runId: string | null            // ingestion run id returned by the queued pipeline
   sizeMB: number
   startedAt: number | null
+  /** Live progress from the run, refreshed by the poller while it works. */
+  progress: RunProgressFields | null
 }
+
+/** The subset of the run payload the progress indicator reads. */
+type RunProgressFields = Pick<
+  RunStatus,
+  'status' | 'stage' | 'stage_label' | 'stage_started_at' | 'stage_index' | 'stage_count'
+  | 'units_done' | 'units_total' | 'started_at'
+>
+
+const progressFrom = (run: any): RunProgressFields => ({
+  status: run?.status ?? null,
+  stage: run?.stage ?? null,
+  stage_label: run?.stage_label ?? null,
+  stage_started_at: run?.stage_started_at ?? null,
+  stage_index: run?.stage_index ?? null,
+  stage_count: run?.stage_count ?? null,
+  units_done: run?.units_done ?? null,
+  units_total: run?.units_total ?? null,
+  started_at: run?.started_at ?? null,
+})
 
 // Path is Root / Region / Supplier / [Brand] / file — supplier is the 3rd segment.
 function inferSupplierFolder(relPath: string): string {
@@ -200,7 +223,7 @@ function CataloguesPage() {
         supplierId: batchSupplierId ?? matchSupplierId(folder, suppliers),
         status: 'queued', itemCount: null, error: null,
         fmt: null, supplierStatus: null, runId: null,
-        sizeMB: f.size / 1e6, startedAt: null,
+        sizeMB: f.size / 1e6, startedAt: null, progress: null,
       })
     }
     picked.sort((a, b) =>
@@ -278,20 +301,23 @@ function CataloguesPage() {
     }
     const DEADLINE = Date.now() + 45 * 60_000   // dense catalogues can take a while
     while (Date.now() < DEADLINE) {
-      await new Promise(resolve => setTimeout(resolve, 5000))
+      await new Promise(resolve => setTimeout(resolve, 2500))
       try {
         const res = await fetch(`${API}/catalogues/ingestions/${runId}`, { headers: authHeaders() })
         if (!res.ok) continue
         const run = await res.json()
         const terminal = TERMINAL[run.status]
         if (!terminal) {
-          setBatchFiles(prev => prev.map(x => x.key === key ? { ...x, supplierStatus: run.status } : x))
+          setBatchFiles(prev => prev.map(x => x.key === key
+            ? { ...x, supplierStatus: run.status, progress: progressFrom(run) }
+            : x))
           continue
         }
         setBatchFiles(prev => prev.map(x => x.key === key
           ? { ...x, status: terminal.status,
               itemCount: run.items_extracted ?? null,
               supplierStatus: run.status,
+              progress: null,
               error: terminal.status === 'error' ? String(terminal.note(run) ?? 'ingestion failed') : x.error }
           : x))
         return
@@ -330,7 +356,7 @@ function CataloguesPage() {
           if (terminal) return
         }
       } catch { /* transient reconnect failure */ }
-      await new Promise(resolve => setTimeout(resolve, 5000))
+      await new Promise(resolve => setTimeout(resolve, 2500))
     }
   }
 
@@ -523,7 +549,7 @@ function CataloguesPage() {
                     const meta: string[] = []
                     if (b.sizeMB >= 0.1) meta.push(`${b.sizeMB.toFixed(1)} MB`)
                     if (b.status === 'uploading') meta.push('uploading…')
-                    if (b.status === 'processing') meta.push(b.supplierStatus ? `pipeline: ${b.supplierStatus}` : 'queued for processing')
+                    // The stage line replaces this while processing — see below.
                     if (b.status === 'done' && b.fmt) meta.push(b.fmt.toUpperCase())
                     return (
                       <div key={b.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 12px', borderTop: `1px solid ${C.monoBg}`, fontSize: 12 }}>
@@ -534,6 +560,13 @@ function CataloguesPage() {
                           <div style={{ color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.name}>{b.name}</div>
                           {meta.length > 0 && (
                             <div style={{ fontSize: 10.5, color: b.status === 'uploading' ? '#1E40AF' : C.faint, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={meta.join(' · ')}>{meta.join(' · ')}</div>
+                          )}
+                          {b.status === 'processing' && (
+                            <div style={{ fontSize: 10.5, color: C.faint, marginTop: 3 }}>
+                              {b.progress
+                                ? <IngestionProgress run={b.progress} />
+                                : 'queued for processing'}
+                            </div>
                           )}
                         </div>
                         <span style={{ flex: '0 0 auto', color: b.status === 'error' ? C.redInk : '#16A34A', fontWeight: 600, maxWidth: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }} title={b.error ?? ''}>

@@ -7,19 +7,26 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 import database
 import models
-from permissions import require_capability
+from permissions import has_capability, require_capability
 from services import audit_log
 from services import catalogue_pipeline_persistence as persistence
 from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
+from services import variant_similarity
+from services import catalogue_golden_export
+from orchestration import catalogue_reparse
+from orchestration.catalogue_source_loader import load_and_verify_source_asset
+from orchestration.catalogue_types import RunNotFound, SourceVerificationError
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus
 from services.catalogue_submission import (
+    RetryNotAllowedError,
+    SourceFileMissingError,
     CatalogueIngestionStatus,
     CatalogueSubmissionCommand,
     CatalogueSubmissionError,
@@ -74,6 +81,20 @@ class CatalogueIngestionStatusResponse(BaseModel):
     items_extracted: int | None = None
     metrics: dict[str, Any] | None = None
     error_summary: dict[str, Any] | str | None = None
+    retry_of: str | None = None
+    superseded_by_run: str | None = None
+    source_filename: str | None = None      # the supplier catalogue this run read
+    source_received_at: str | None = None
+    reparse_of: str | None = None           # source run when this re-read stored evidence
+
+    # Live progress; every field is null unless the run is working right now.
+    stage: str | None = None
+    stage_label: str | None = None
+    stage_started_at: str | None = None
+    stage_index: int | None = None
+    stage_count: int | None = None
+    units_done: int | None = None
+    units_total: int | None = None
 
 
 class ValidationIssueResolutionRequest(BaseModel):
@@ -233,6 +254,41 @@ def get_catalogue_ingestion_status(
 
 
 @router.post(
+    "/ingestions/{run_uuid}/retry",
+    response_model=CatalogueSubmissionResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def retry_catalogue_ingestion(
+    run_uuid: UUID,
+    request: Request,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Retry a failed run: re-submit its stored file as a new run with lineage."""
+    service = CatalogueSubmissionService(db)
+    try:
+        result = service.retry(run_uuid, submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")))
+    except Exception as exc:
+        raise _http_error(exc) from exc
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.ingestion_retry",
+            actor=user,
+            entity_type="ingestion_run",
+            entity_id=str(result.ingestion_run_id),
+            entity_label=result.contract_id,
+            details={"retry_of": str(run_uuid), "supplier_id": result.supplier_id, "status": result.status},
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception("catalogue retry %s was durably submitted but audit logging failed", result.ingestion_run_id)
+    return _submission_response(result)
+
+
+@router.post(
     "/ingestions/{run_uuid}/validation-issues/{validation_issue_id}/resolve",
     response_model=PipelineActionResponse,
 )
@@ -373,6 +429,21 @@ def correct_catalogue_mastering_candidate(
     """Supersede a pending candidate with a human-corrected revision."""
     _load_run_or_404(db, run_uuid)
     _load_run_candidate_or_404(db, run_uuid, mastering_candidate_id)
+    # Correcting a match is ordinary review work. Drafting a *new* canonical
+    # product writes name, category and status — the three fields
+    # `product_sensitive` already governs everywhere else — so it is held to
+    # the same bar rather than riding in on catalogue_onboard.
+    variant_resolution = body.product_variant_resolution or {}
+    if str(variant_resolution.get("state") or "") == "CONFIRMED_CREATE" and not variant_resolution.get("canonical_sku"):
+        if not has_capability(getattr(user, "role", None), "product_sensitive"):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error_code": "CREATE_PRODUCT_FORBIDDEN",
+                    "message": "Creating a canonical product needs the product_sensitive capability. "
+                               "You can still match this row to an existing product, or reject it.",
+                },
+            )
     try:
         result = stages.MasteringService(db, commit=False).revise_candidate(
             stages.ReviseMasteringCandidateCommand(
@@ -637,6 +708,179 @@ def search_catalogue_product_variants(
     return review_summary.search_product_variants(db, run_uuid, q, limit)
 
 
+
+class ReparseRequest(BaseModel):
+    """Where to pick the flow back up. Only conformance today — see ReparseStage."""
+
+    from_stage: str = "conformance"
+
+
+@router.post("/ingestions/{run_uuid}/reparse", response_model=CatalogueSubmissionResponse, status_code=202)
+def reparse_catalogue_ingestion(
+    run_uuid: UUID,
+    request: Request,
+    body: ReparseRequest | None = None,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Re-run the interpretation over evidence this run already holds.
+
+    The supplier contract is consumed at conformance, which reaches no model
+    provider — so a mapping change needs the stored observations re-read, not
+    the pages re-scanned. Costs nothing at the provider and takes about a
+    second where a retry takes a minute and a half.
+
+    Creates a NEW run linked by parent_run_id; the source run's decisions are
+    append-only and are left alone.
+    """
+    stage = (body.from_stage if body else "conformance")
+    service = CatalogueSubmissionService(db)
+    try:
+        result = service.reparse(
+            run_uuid,
+            from_stage=stage,
+            submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+        )
+    except Exception as exc:
+        raise _http_error(exc) from exc
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.ingestion_reparse",
+            actor=user,
+            entity_type="ingestion_run",
+            entity_id=str(result.ingestion_run_id),
+            entity_label=result.contract_id,
+            details={"reparse_of": str(run_uuid), "from_stage": stage, "supplier_id": result.supplier_id},
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception("catalogue re-parse %s was queued but audit logging failed", result.ingestion_run_id)
+    return _submission_response(result)
+
+
+# What the browser should do with each source format. A price list is read, not
+# downloaded, so anything a browser renders opens inline; the rest downloads.
+_INLINE_MEDIA = {
+    "PDF": "application/pdf",
+    "JPEG": "image/jpeg",
+    "PNG": "image/png",
+    "CSV": "text/csv",
+    "TEXT": "text/plain",
+}
+_DOWNLOAD_MEDIA = {
+    "SPREADSHEET": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+
+@router.get("/ingestions/{run_uuid}/source")
+def get_catalogue_source_file(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """The supplier catalogue this run read, as the file itself.
+
+    Goes through the same verified loader the pipeline uses, so a file that has
+    been moved, truncated or altered since the scan fails here rather than
+    being served as if it were the document the prices came from.
+
+    A re-parse never opened a file, so it serves its source run's document —
+    which is the same document, and the one its evidence came from.
+    """
+    target = run_uuid
+    if catalogue_reparse.is_reparse(db, run_uuid):
+        run = db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
+        origin = catalogue_reparse.evidence_source_run(db, run) if run else None
+        if origin is not None:
+            target = UUID(origin.run_uuid)
+    try:
+        asset = load_and_verify_source_asset(db, ingestion_run_id=target)
+    except RunNotFound as exc:
+        raise HTTPException(404, _detail("INGESTION_RUN_NOT_FOUND", str(exc))) from exc
+    except SourceVerificationError as exc:
+        # Says which of the checks failed — "missing", "checksum does not match" —
+        # because "the file changed since we scanned it" is the answer a reviewer needs.
+        raise HTTPException(410, _detail("SOURCE_FILE_UNAVAILABLE", str(exc))) from exc
+
+    fmt = (asset.source_format or "").upper()
+    media = _INLINE_MEDIA.get(fmt) or _DOWNLOAD_MEDIA.get(fmt) or "application/octet-stream"
+    disposition = "inline" if fmt in _INLINE_MEDIA else "attachment"
+    safe_name = asset.original_filename.replace('"', "")
+    return Response(
+        content=asset.content,
+        media_type=media,
+        headers={"Content-Disposition": f'{disposition}; filename="{safe_name}"'},
+    )
+
+
+@router.get("/ingestions/{run_uuid}/receipt/golden.csv")
+def export_published_golden_csv(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """This run's published items in the golden-sample sheet's exact columns.
+
+    For regression testing: the sheet is 122 hand-filled SKUs that say what the
+    packaging, price basis, sellable unit and bulk terms really are. Exporting
+    our published output in the same 20 columns, in the same order, makes the
+    two directly diffable.
+    """
+    _load_run_or_404(db, run_uuid)
+    body = catalogue_golden_export.golden_csv(db, run_uuid)
+    return Response(
+        content=body,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="rosetta-published-{run_uuid}.csv"'},
+    )
+
+
+@router.get("/ingestions/{run_uuid}/receipt/golden")
+def export_published_golden_rows(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """The same rows as JSON, for a test harness that would rather not parse CSV."""
+    _load_run_or_404(db, run_uuid)
+    return {
+        "ingestion_run_id": str(run_uuid),
+        "columns": list(catalogue_golden_export.GOLDEN_COLUMNS),
+        "rows": catalogue_golden_export.golden_rows(db, run_uuid),
+    }
+
+
+@router.get("/ingestions/{run_uuid}/duplicate-check")
+def check_for_duplicate_product(
+    run_uuid: UUID,
+    name: str = Query("", description="The draft product name being typed."),
+    barcode: str | None = Query(None, description="Barcode from the supplier row, when it has one."),
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """What stands between this create draft and a new SKU.
+
+    Blockers are facts (a barcode or an identical name already owned by a
+    product) and cannot be overridden. `similar` is judgement — above
+    `threshold` the reviewer must say what makes their row different, and that
+    reason is stored on the decision.
+    """
+    _load_run_or_404(db, run_uuid)
+    return variant_similarity.duplicate_check(db, name=name, barcode=barcode)
+
+
+@router.get("/ingestions/{run_uuid}/receipt")
+def get_run_receipt(
+    run_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Publish receipt — the offering price rows this run wrote (old → new per SKU)."""
+    return review_summary.run_receipt(db, run_uuid)
+
 @router.get("/ingestions/{run_uuid}/serving")
 def get_serving_layer(
     run_uuid: UUID,
@@ -825,6 +1069,10 @@ def _http_error(exc: Exception) -> HTTPException:
         return HTTPException(status_code=409, detail=_detail("SUPPLIER_CONTRACT_MISMATCH", str(exc)))
     if isinstance(exc, SupplierContractSelectionError):
         return HTTPException(status_code=422, detail=_detail("UNSUPPORTED_SUPPLIER_CONTRACT", str(exc)))
+    if isinstance(exc, RetryNotAllowedError):
+        return HTTPException(status_code=409, detail=_detail("RETRY_NOT_ALLOWED", str(exc)))
+    if isinstance(exc, SourceFileMissingError):
+        return HTTPException(status_code=410, detail=_detail("SOURCE_FILE_MISSING", str(exc)))
     if isinstance(exc, SubmissionIdempotencyConflict):
         return HTTPException(status_code=409, detail=_detail("IDEMPOTENCY_CONFLICT", str(exc)))
     if isinstance(exc, EmptyUploadError):

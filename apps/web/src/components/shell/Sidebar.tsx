@@ -41,6 +41,7 @@ const NAV: NavItem[] = [
   { href: '/am-walkthrough', label: 'AM Walkthrough', icon: 'play' },
   { href: '/tech-stack',     label: 'Tech Stack',     icon: 'stack' },
   { href: '/',               label: 'All Inventory',  icon: 'box' },
+  { href: '/new-inventory',  label: 'Inventory (new)', icon: 'box' },
   { href: '/collections',    label: 'Collections',    icon: 'grid' },
 ]
 const NAV_CLIENTS: NavItem[] = [{ href: '/clients', label: 'Clientbase', icon: 'client' }]
@@ -81,7 +82,11 @@ function NavSection({ items, label, pathname }: { items: NavItem[]; label: strin
 }
 
 const SIDE_CSS = `
-.side{width:230px;background:#0F172A;color:#94A3B8;flex:none;display:flex;flex-direction:column;transition:width .2s cubic-bezier(.4,0,.2,1);height:100vh;overflow-y:auto;overflow-x:hidden}
+/* The scroller belongs to the nav list, not to this container. With it here
+   the whole column scrolled, so once the nav outgrew the viewport its links
+   spilled over the pinned user box and collapse button instead of scrolling
+   under them — visible on every page at <=760px of height. */
+.side{width:230px;background:#0F172A;color:#94A3B8;flex:none;display:flex;flex-direction:column;transition:width .2s cubic-bezier(.4,0,.2,1);height:100vh;overflow:hidden}
 .side.collapsed{width:64px}
 .side .side-top{display:flex;align-items:center;gap:10px;padding:15px 15px 12px;flex:none}
 .side .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#4F46E5,#7C74F0);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
@@ -91,7 +96,7 @@ const SIDE_CSS = `
 .side .brandwrap .b1 .ims{color:#94A3B8;font-size:11px;font-weight:600;margin-left:2px}
 .side .brandwrap .b2{font-size:8.5px;letter-spacing:.09em;color:#64748B;text-transform:uppercase}
 .side.collapsed .brandwrap{opacity:0}
-.side .nav{flex:1;min-height:0;padding-bottom:6px}
+.side .nav{flex:1 1 auto;min-height:0;padding-bottom:6px;overflow-y:auto;overflow-x:hidden}
 .side .navsec{padding:2px 8px}
 .side .navlbl{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#475569;padding:10px 11px 4px;white-space:nowrap}
 .side.collapsed .navlbl{visibility:hidden;height:8px;padding:4px 0}

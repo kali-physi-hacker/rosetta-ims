@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 import models
 
 _SESSION_CACHE_KEY = "offering_unit_costs"
+_BULK_TERMS_CACHE_KEY = "offering_bulk_terms"
 
 
 def unit_cost_for_link(ps: models.ProductSupplier | None) -> float | None:
@@ -52,6 +53,7 @@ def invalidate(session: Session) -> None:
     session that applies and then reads sees the price it just wrote."""
 
     session.info.pop(_SESSION_CACHE_KEY, None)
+    session.info.pop(_BULK_TERMS_CACHE_KEY, None)
 
 
 def record_supplier_cost(
@@ -81,26 +83,7 @@ def record_supplier_cost(
     unit_cost = round(pack_cost / units, 4) if units and units > 1 else pack_cost
     now = _utcnow_iso()
 
-    offering = (
-        db.query(models.SupplierOffering)
-        .filter_by(supplier_id=link.supplier_id, product_variant_id=link.product_id)
-        .first()
-    )
-    if offering is None:
-        offering = models.SupplierOffering(
-            supplier_product_key=f"supplier:{link.supplier_id}:offer:link:{link.id}",
-            legacy_product_supplier_id=link.id,
-            supplier_id=link.supplier_id,
-            product_variant_id=link.product_id,
-            supplier_sku=link.supplier_sku,
-            barcode=link.barcode,
-            status="active",
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(offering)
-        db.flush()
-
+    offering = _ensure_offering(db, link, now)
     variant = db.get(models.ProductVariant, link.product_id)
     db.query(models.CatalogueSupplierPrice).filter_by(
         supplier_product_id=offering.id, is_current=1
@@ -120,6 +103,88 @@ def record_supplier_cost(
     invalidate(db)
 
 
+def _ensure_offering(db: Session, link: models.ProductSupplier, now: str) -> models.SupplierOffering:
+    offering = (
+        db.query(models.SupplierOffering)
+        .filter_by(supplier_id=link.supplier_id, product_variant_id=link.product_id)
+        .first()
+    )
+    if offering is None:
+        offering = models.SupplierOffering(
+            supplier_product_key=f"supplier:{link.supplier_id}:offer:link:{link.id}",
+            legacy_product_supplier_id=link.id,
+            supplier_id=link.supplier_id,
+            product_variant_id=link.product_id,
+            supplier_sku=link.supplier_sku,
+            barcode=link.barcode,
+            status="active",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(offering)
+        db.flush()
+    return offering
+
+
+def set_offering_packaging(
+    db: Session,
+    link: models.ProductSupplier,
+    *,
+    purchase_uom: str | None,
+    sellable_units: float | None,
+) -> None:
+    """Record this supplier's packaging — what one purchase unit is called and
+    how many sell units it contains — on the link's SupplierOffering, the
+    domain home for packaging. Supersedes the current packaging row; whichever
+    half isn't provided carries forward. No-op when nothing changes or the
+    link has no supplier/variant. Does not commit.
+    """
+
+    if link.supplier_id is None or link.product_id is None:
+        return
+    label = purchase_uom.strip() if isinstance(purchase_uom, str) and purchase_uom.strip() else None
+    if label is None and sellable_units is None:
+        return
+    now = _utcnow_iso()
+    offering = _ensure_offering(db, link, now)
+    current = (
+        db.query(models.CataloguePackagingConfiguration)
+        .filter_by(supplier_product_id=offering.id, superseded_at=None)
+        .order_by(models.CataloguePackagingConfiguration.id.desc())
+        .first()
+    )
+    if label is None and current is not None:
+        label = current.purchase_uom_label or current.purchase_uom_code
+    units = float(sellable_units) if sellable_units is not None else (
+        float(current.sellable_units_per_purchase_unit)
+        if current is not None and current.sellable_units_per_purchase_unit is not None
+        else None
+    )
+    if current is not None:
+        cur_label = current.purchase_uom_label or current.purchase_uom_code
+        cur_units = (
+            float(current.sellable_units_per_purchase_unit)
+            if current.sellable_units_per_purchase_unit is not None
+            else None
+        )
+        if cur_label == label and cur_units == units:
+            return
+        current.superseded_at = now
+    variant = db.get(models.ProductVariant, link.product_id)
+    db.add(
+        models.CataloguePackagingConfiguration(
+            supplier_product_id=offering.id,
+            purchase_uom_code=(label or "PACK").upper().replace(" ", "_"),
+            purchase_uom_label=label,
+            sellable_unit_uom_code="UNIT",
+            sellable_unit_uom_label=(variant.uom if variant else None),
+            sellable_units_per_purchase_unit=units,
+            created_at=now,
+        )
+    )
+    invalidate(db)
+
+
 def variant_offerings(db: Session, variant_id: int) -> list[dict]:
     """Read model for the SKU page's supplier-offerings lane.
 
@@ -128,8 +193,8 @@ def variant_offerings(db: Session, variant_id: int) -> list[dict]:
     offering's effective-dated rows, each attributed in plain words:
     'catalogue' when a committed run wrote it, 'manual' otherwise. Lineage ids
     ride along ONLY to power audit links — the page never renders them.
-    Suppliers with no offering price yet report source 'legacy' with the
-    editable basic_cost as their current cost.
+    Every supplier link has an offering price (the domain owns cost), so an
+    entry without one means no cost has been recorded for that supplier yet.
     """
 
     links = (
@@ -197,6 +262,10 @@ def _offering_entry(
             .order_by(models.CatalogueSupplierPrice.id.desc())
             .all()
         )
+        # Which supplier catalogue this price was read out of. "catalogue" as a
+        # source word does not say WHICH document, and by the time anyone asks
+        # about a cost, that is usually the question.
+        scanned = _scanned_files(db, {p.ingestion_run_uuid for p in price_rows if p.ingestion_run_uuid})
         history = [
             {
                 "unit_cost": _per_sell_unit(float(price.amount), price.price_basis_uom_code, pack_tuple),
@@ -207,6 +276,8 @@ def _offering_entry(
                 "is_current": bool(price.is_current),
                 "source": "catalogue" if price.ingestion_run_uuid else "manual",
                 "run_id": price.ingestion_run_uuid,
+                "source_file": scanned.get(price.ingestion_run_uuid or "", {}).get("filename"),
+                "source_received_at": scanned.get(price.ingestion_run_uuid or "", {}).get("received_at"),
             }
             for price in price_rows
         ]
@@ -223,12 +294,123 @@ def _offering_entry(
         "history": history,
         "packaging": packaging,
         "legacy": {
-            "basic_cost": link.basic_cost if link else None,
             "units_per_pack": link.units_per_pack if link else None,
             "cost_source": link.cost_source if link else None,
             "cost_updated_at": link.cost_updated_at if link else None,
         },
     }
+
+
+def bulk_terms_for_link(ps: models.ProductSupplier | None) -> list[dict]:
+    """Published catalogue bulk terms for this supplier link, if any.
+
+    The pipeline writes typed MBB terms against the OFFERING
+    (``catalogue_supplier_mbb_terms.supplier_product_id``), while the legacy
+    hand-entered terms hang off the ProductSupplier link
+    (``mbb_terms.product_supplier_id``). Nothing joins the two, so a published
+    term was invisible on every read surface — this is the offering-first read
+    that makes it visible, in the same shape the page already renders.
+
+    Bulk-safe in the same way unit cost is: one query per session, not one per
+    product.
+    """
+
+    supplier_id = getattr(ps, "supplier_id", None)
+    product_id = getattr(ps, "product_id", None)
+    if ps is None or supplier_id is None or product_id is None:
+        return []
+    if not isinstance(ps, models.ProductSupplier):
+        return []
+    session = Session.object_session(ps)
+    if session is None:
+        return []
+    return _bulk_terms_map(session).get((supplier_id, product_id), [])
+
+
+def _term_effective_unit_cost(
+    term: models.CatalogueSupplierMbbTerm,
+    base_unit_cost: float | None,
+    pack: tuple[str | None, str | None, float | None] | None,
+) -> float | None:
+    """What one sellable unit costs once the term's condition is met.
+
+    A stated price carries its own basis, so it converts exactly like a
+    catalogue price does. The relative benefits have nothing to convert — they
+    are a fraction of a base cost that is already per sellable unit.
+    """
+    if term.benefit_type == "discounted_unit_price" and term.discounted_price_amount is not None:
+        return _per_sell_unit(
+            float(term.discounted_price_amount), term.discounted_price_basis_uom_code, pack
+        )
+    if base_unit_cost is None:
+        return None
+    if term.benefit_type == "percentage_discount" and term.percentage_discount is not None:
+        return base_unit_cost * (1 - float(term.percentage_discount) / 100)
+    if term.benefit_type == "fixed_discount" and term.fixed_discount_amount is not None:
+        return max(base_unit_cost - float(term.fixed_discount_amount), 0.0)
+    if term.benefit_type == "free_quantity" and term.free_quantity_amount is not None:
+        paid = float(term.condition_quantity_amount or 0)
+        free = float(term.free_quantity_amount)
+        if paid > 0 and free > 0:
+            # You pay for `paid` and take home `paid + free`.
+            return base_unit_cost * paid / (paid + free)
+    return None
+
+
+def _bulk_terms_map(session: Session) -> dict[tuple[int, int], list[dict]]:
+    cached = session.info.get(_BULK_TERMS_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    rows = (
+        session.query(models.CatalogueSupplierMbbTerm, models.SupplierOffering)
+        .join(
+            models.SupplierOffering,
+            models.SupplierOffering.id == models.CatalogueSupplierMbbTerm.supplier_product_id,
+        )
+        .filter(
+            models.CatalogueSupplierMbbTerm.is_active == 1,
+            models.CatalogueSupplierMbbTerm.superseded_at.is_(None),
+            models.SupplierOffering.product_variant_id.isnot(None),
+        )
+        .order_by(models.CatalogueSupplierMbbTerm.id)
+        .all()
+    )
+    out: dict[tuple[int, int], list[dict]] = {}
+    if rows:
+        packaging = _packaging_map(session)
+        unit_costs = _session_map(session)
+        scanned = _scanned_files(session, {t.ingestion_run_uuid for t, _ in rows if t.ingestion_run_uuid})
+        for term, offering in rows:
+            key = (offering.supplier_id, offering.product_variant_id)
+            pack = packaging.get(offering.id)
+            file_row = scanned.get(term.ingestion_run_uuid or "", {})
+            out.setdefault(key, []).append({
+                # Namespaced so it can never be mistaken for a legacy term id —
+                # these are read-only here and corrected in the review desk.
+                "id": f"catalogue:{term.id}",
+                "source": "catalogue",
+                "scope": term.scope,
+                "condition_type": term.condition_type,
+                "min_qty": float(term.condition_quantity_amount) if term.condition_quantity_amount is not None else None,
+                "min_qty_uom": term.condition_quantity_uom_label or term.condition_quantity_uom_code,
+                "min_spend": float(term.condition_spend_amount) if term.condition_spend_amount is not None else None,
+                "benefit_type": term.benefit_type,
+                "unit_price": float(term.discounted_price_amount) if term.discounted_price_amount is not None else None,
+                "unit_price_basis": term.discounted_price_basis_uom_label or term.discounted_price_basis_uom_code,
+                "discount_pct": float(term.percentage_discount) if term.percentage_discount is not None else None,
+                "free_qty": float(term.free_quantity_amount) if term.free_quantity_amount is not None else None,
+                "effective_unit_cost": _term_effective_unit_cost(term, unit_costs.get(key), pack),
+                "note": term.description,
+                "run_id": term.ingestion_run_uuid,
+                "source_file": file_row.get("filename"),
+                "source_received_at": file_row.get("received_at"),
+            })
+        for terms in out.values():
+            terms.sort(key=lambda t: (t["min_spend"] or 0, t["min_qty"] or 0))
+
+    session.info[_BULK_TERMS_CACHE_KEY] = out
+    return out
 
 
 def _utcnow_iso() -> str:
@@ -237,13 +419,14 @@ def _utcnow_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _session_map(session: Session) -> dict[tuple[int, int], float]:
-    cached = session.info.get(_SESSION_CACHE_KEY)
-    if cached is not None:
-        return cached
+def _packaging_map(session: Session) -> dict[int, tuple[str | None, str | None, float | None]]:
+    """offering id -> (purchase uom, sellable uom, sellable units per purchase unit).
 
+    Every price and every stated bulk price carries a basis, so both readers
+    need this to say what one sellable unit costs.
+    """
     packaging: dict[int, tuple[str | None, str | None, float | None]] = {}
-    packaging_rows = (
+    rows = (
         session.query(
             models.CataloguePackagingConfiguration.supplier_product_id,
             models.CataloguePackagingConfiguration.purchase_uom_code,
@@ -254,8 +437,17 @@ def _session_map(session: Session) -> dict[tuple[int, int], float]:
         .order_by(models.CataloguePackagingConfiguration.id)
         .all()
     )
-    for offering_id, purchase, sellable, per_purchase in packaging_rows:
+    for offering_id, purchase, sellable, per_purchase in rows:
         packaging[offering_id] = (purchase, sellable, float(per_purchase) if per_purchase is not None else None)
+    return packaging
+
+
+def _session_map(session: Session) -> dict[tuple[int, int], float]:
+    cached = session.info.get(_SESSION_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    packaging = _packaging_map(session)
 
     out: dict[tuple[int, int], float] = {}
     price_rows = (
@@ -281,6 +473,26 @@ def _session_map(session: Session) -> dict[tuple[int, int], float]:
 
     session.info[_SESSION_CACHE_KEY] = out
     return out
+
+
+def _scanned_files(db: Session, run_uuids: set[str]) -> dict[str, dict]:
+    """run uuid -> the supplier catalogue file that run read.
+
+    A re-parse reads the evidence of an earlier run rather than a file of its
+    own, but it is the same document, and the source row is carried across —
+    so this resolves for re-parsed runs too.
+    """
+    if not run_uuids:
+        return {}
+    rows = (
+        db.query(models.IngestionRun.run_uuid, models.CatalogueSourceDocument.filename,
+                 models.CatalogueSourceDocument.received_at)
+        .join(models.CatalogueSourceDocument,
+              models.CatalogueSourceDocument.id == models.IngestionRun.catalogue_source_document_id)
+        .filter(models.IngestionRun.run_uuid.in_(run_uuids))
+        .all()
+    )
+    return {run: {"filename": filename, "received_at": received} for run, filename, received in rows}
 
 
 def _per_sell_unit(

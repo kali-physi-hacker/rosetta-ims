@@ -217,13 +217,22 @@ def test_hills_runtime_flags_cost_rrp_swap_without_autoswap():
     assert "not below" in flags[0]["detail"]
 
 
-def test_alfamedic_runtime_applies_per_piece_price_and_order_increment():
+def test_alfamedic_runtime_orders_one_pack_not_its_contents():
+    """The order multiple is the Order Units column, not the packing count.
+
+    This asserted order_increment_qty == 10 for "10 pcs/box" until the golden
+    sample sheet was checked against a live export: the sheet records
+    minimum_purchase_quantity 1 and quantity_per_unit 10 — you order one box,
+    and it holds ten. The catalogue prints both, and only the packing text was
+    being read.
+    """
     row = {
         "supplier_sku": "901-100",
         "description": "Skyla cartridge",
         "cost_price": 820.0,
         "rrp": 999.0,
         "pack_size": "10 pcs/box",
+        "order_units": "1 box",
         "units_per_pack": 10,
         "brand": "Skyla",
     }
@@ -232,8 +241,7 @@ def test_alfamedic_runtime_applies_per_piece_price_and_order_increment():
 
     assert flags == []
     assert items[0]["cost_price"] == 820.0
-    assert items[0]["units_per_pack"] == 1
-    assert items[0]["order_increment_qty"] == 10
+    assert items[0]["order_increment_qty"] == 1, "one box"
     assert items[0]["segment"] == "vet"
     assert items[0]["rrp"] is None
 

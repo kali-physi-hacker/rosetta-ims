@@ -8,6 +8,7 @@ from uuid import UUID
 
 from prefect import flow
 
+from models.ingestion_run import IngestionStage
 from services import catalogue_pipeline_stages as stages
 
 from .catalogue_tasks import (
@@ -23,6 +24,7 @@ from .catalogue_tasks import (
     prepare_eligible_candidates_task,
     raw_stage_task,
     record_run_failure_task,
+    report_stage,
     resolve_recorded_contract_task,
     terminal_replay_result_task,
 )
@@ -64,17 +66,26 @@ def catalogue_ingestion_flow(*, ingestion_run_id: UUID) -> CatalogueFlowResult:
         # that reads the file. STAGING extracts and persists verbatim evidence.
         # INTERMEDIATE applies the supplier contract, persists normalized
         # claims, validates them and prepares mastering candidates.
+        # Each stage announces itself before it runs, so a run that takes
+        # minutes says what it is doing rather than only that it is alive.
+        report_stage(run_id, IngestionStage.VERIFYING_SOURCE.value)
         raw = raw_stage_task(run_id)
+        report_stage(run_id, IngestionStage.RESOLVING_CONTRACT.value)
         runtime_contract = resolve_recorded_contract_task(run_id)
+        report_stage(run_id, IngestionStage.EXTRACTING.value)
         evidence = extract_source_evidence_task(run_id)
+        report_stage(run_id, IngestionStage.RECORDING_EVIDENCE.value)
         raw_ids, raw_created, raw_reused = capture_extracted_evidence_task(raw.run_identity, evidence.observations)
+        report_stage(run_id, IngestionStage.INTERPRETING.value)
         conformance = normalize_evidence_task(raw_ids, runtime_contract)
         staging_ids, staging_created, staging_reused = build_normalized_rows_task(conformance)
+        report_stage(run_id, IngestionStage.VALIDATING.value)
         validation_created, validation_reused, blocking_count = evaluate_normalized_rows_task(
             run_id,
             staging_ids,
             tuple(conformance.metadata.get("known_ambiguity_issues", ())),
         )
+        report_stage(run_id, IngestionStage.PREPARING_REVIEW.value)
         candidate_created, candidate_reused, candidate_warnings = prepare_eligible_candidates_task(
             raw.run_identity,
             staging_ids,

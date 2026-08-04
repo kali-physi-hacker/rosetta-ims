@@ -81,6 +81,8 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 "Price/ Unit (HKD)",
             ],
             row_eligibility_rules=["Catalogue item rows contain an order code and product name."],
+            row_identity_fields=["supplier_sku"],
+            discontinued_markers=["DISCON"],
             source_location_expectations=["page number", "section header", "table row", "source column"],
         ),
         fields=[
@@ -96,6 +98,45 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
                 requirement=SourceFieldRequirement.REQUIRED,
+                # Where no Product Name is printed — the suture tables — the
+                # name is the banner plus what distinguishes this row from its
+                # neighbours under it: needle, gauge, thread length. Only used
+                # when the column itself is absent, so every page that prints a
+                # name keeps its own.
+                # One list covers every nameless shape in the document, because
+                # a composed value simply omits the parts a row does not carry:
+                #   p41 sutures  -> banner + needle + gauge + length
+                #   p42 needles  -> circle + point + eye + size
+                #   p42 ETHICON  -> material + gauge + needle, or material +
+                #                   its free-text description
+                # Parts are field keys, not column headings, so a run that
+                # renames a heading still resolves through that field's aliases.
+                composed_from=[
+                    "section_header",
+                    "suture_type",
+                    "needle_circle_type",
+                    "needle_point_type",
+                    "needle_eye_type",
+                    "size",
+                    "needle",
+                    "gauge_usp",
+                    "thread_length",
+                    "product_description_text",
+                    # p34 collars: no name column at all, only a size and the
+                    # weight range it suits.
+                    "body_weight",
+                    "suitable_for",
+                ],
+                # Size variants are listed under one merged name cell: the
+                # 250ml line names the product, the 1L line below carries only
+                # its own code, packing and price. Both are stocked SKUs.
+                inherits_from_row_above=True,
+                # Collars and body suits are listed as a family once and then
+                # by size alone — "Classic Collar size 7.5cm", then "size
+                # 10.0cm", "size 12.5cm". 38 rows across three pages. Separate
+                # SKUs at separate prices, whose printed name does not say what
+                # they are.
+                continues_row_above_when_matching=r"^\s*size\b",
                 source_column="Product Name",
                 description="Printed product name.",
                 evidence=_EVIDENCE,
@@ -111,9 +152,17 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="pack_size",
                 role=SourceFieldRole.PACKAGING,
-                requirement=SourceFieldRequirement.REQUIRED,
+                # Not every line in this catalogue is a packaged good. The
+                # diagnostics section sells services — "Spot Platinum+ allergy
+                # test", "PAX Complete Test" — which are priced per test and
+                # print no packing at all. Requiring one blocked 13 real priced
+                # items on a live run for lacking a field their own supplier
+                # does not print. Packaging that IS printed is still read, and
+                # a row whose packaging is genuinely unresolved still surfaces
+                # downstream rather than being assumed.
+                requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Packing / Unit",
-                description="Raw packing text; used by the current parser to derive order increment only.",
+                description="Raw packing text; used by the current parser to derive order increment only. Absent on services.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(
@@ -121,8 +170,213 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.SOURCE_PRICE,
                 requirement=SourceFieldRequirement.REQUIRED,
                 source_column="Price/ Unit (HKD)",
-                aliases=["Price/ Unit (HKD)", "Price/Unit (HKD)"],
+                # The diagnostics and suture tables head this column plainly
+                # "Price" — same meaning, narrower heading because those tables
+                # carry no per-unit qualifier. 146 rows on the live 56-page
+                # catalogue priced that way, and every one of them was read as
+                # having no price at all: 900-100 Pre-anesthetic Panel prints
+                # 1,760.0 and reached review as unpriced.
+                aliases=["Price/ Unit (HKD)", "Price/Unit (HKD)", "Price"],
                 description="Supplier cost field; By Quote is retained as a null-cost/manual-quote case.",
+                evidence=_EVIDENCE,
+            ),
+            # The diagnostics tables carry two attributes that belong to the
+            # product and to nothing else in the pipeline: what you put in the
+            # test and how much of it. Declared with role OTHER so they are
+            # preserved verbatim on the row without being interpreted —
+            # "220μL" is the SAMPLE volume a test consumes, not the content of
+            # the box, and must never be read as packaging.
+            # The suture pages (41) give every row a code, a gauge, a needle
+            # and a price, and name the material ONCE — in the band printed
+            # across the block:
+            #
+            #   Surgicryl PGA Polyglycolic (Foil Packing) Violet  DS - 3/8 circle
+            #   11201524 | DS24 24mm | EP 2 | USP 3/0 | 75cm | Violet | 328.0
+            #
+            # Captured as its own field so a name can be composed from it, and
+            # so the therapeutic banner on every other page stops being thrown
+            # away. Verbatim: no cleaning, no title-casing.
+            SourceFieldContract(
+                field_key="section_header",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="section_header",
+                description="Banner printed across the table, above its column headings.",
+                evidence=_EVIDENCE,
+            ),
+            # Suture specifications. EP and USP are the SAME thread gauge in
+            # two scales (European and US Pharmacopoeia): USP 3/0 is EP 2. Only
+            # USP goes in the composed name — printing both would state the
+            # thickness twice — but both are kept, because a buyer may search
+            # either.
+            SourceFieldContract(
+                field_key="needle",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Needle",
+                description="Needle code and length, e.g. 'DS24 24mm'. 'Without Needle' for reels.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="gauge_usp",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="USP",
+                description="Thread gauge, US Pharmacopoeia scale.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="gauge_ep",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="EP",
+                description="The same thread gauge, European Pharmacopoeia scale.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="thread_length",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Length",
+                description="Thread length, e.g. '75cm'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="thread_color",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Color",
+                description="Thread colour, e.g. 'Violet', 'Undyed'.",
+                evidence=_EVIDENCE,
+            ),
+            # Page 42's needle tables describe a product across several
+            # columns instead of naming it. The heading text is not stable
+            # between runs — one run returned "Product Name (Circle Type)" /
+            # "(Needle Type)" / "(Eye/Size)", the next "Circle Type" /
+            # "Cutting Type" / "Eye Type" / "Size" — so each declares the
+            # other form as an alias and the composed name simply skips
+            # whichever parts a given run did not produce.
+            SourceFieldContract(
+                field_key="suture_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Type",
+                description="Suture material where it is a column rather than a banner: PDS, Vicryl.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="needle_circle_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Circle Type",
+                aliases=["Product Name (Circle Type)"],
+                description="Needle curvature: 1/2 Circle, 3/8 Circle.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="needle_point_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Cutting Type",
+                aliases=["Product Name (Needle Type)"],
+                description="Needle point geometry: Round Body, Reverse Cutting.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="needle_eye_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Eye Type",
+                aliases=["Product Name (Eye/Size)"],
+                description="Needle eye: Regular Eye (RHR/RHC/RTC/RTR), Spring Eye (SHR/STC).",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="size",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Size",
+                description="Printed size: a needle's '25mm N°13', or a collar's 'XXS'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="product_description_text",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Product Description",
+                description="Free-text specification where the supplier uses it instead of a name.",
+                evidence=_EVIDENCE,
+            ),
+            # Apparel and collar attributes. Read verbatim under role OTHER:
+            # a body length is not packaging and a suitable-for range is not a
+            # category, and guessing either would be worse than keeping both
+            # as what the supplier printed.
+            SourceFieldContract(
+                field_key="body_length",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Body Length",
+                description="Garment body length, e.g. '25 cm'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="body_weight",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Body weight",
+                description="Animal weight the size suits, e.g. '1-3 kg'.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="suitable_for",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Suitable for",
+                description="Breeds or animals a size suits.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="colour",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Colour",
+                description="Printed colour of an apparel item.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="breed",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Breed",
+                description="Breed guidance printed against a size.",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="order_units",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Order Units",
+                aliases=["Order Unit"],
+                description=(
+                    "How many the line is priced for: '1 bot' on a product row, '10 bots' on the "
+                    "bulk-tier line beneath it. Read verbatim; the tier logic parses the count."
+                ),
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="sample_type",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Sample Type",
+                description="Specimen a diagnostic test accepts (whole blood / plasma / serum).",
+                evidence=_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="sample_volume",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="Volume",
+                description="Specimen volume one test consumes. Not pack content.",
                 evidence=_EVIDENCE,
             ),
             SourceFieldContract(
@@ -141,12 +395,30 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
                 description="Therapeutic section header; any default category still requires business review.",
                 evidence=_EVIDENCE,
             ),
+            # Alfamedic states its bulk ladder as extra ROWS under a product,
+            # where Hill's states the same thing as extra COLUMNS beside one.
+            # Page 20, in printed order:
+            #
+            #   ALO250  ALOVEEN Shampoo   1 bot     58.0   <- the product
+            #   (none)                    10 bots   56.0   <- buy 10, pay 56.0
+            #   (none)                    40 bots   54.0   <- buy 40, pay 54.0
+            #
+            # Both halves are printed, so nothing is inferred: the quantity is
+            # in Order Units and the discounted price is in the price column.
+            # The identity cell is merged down the tier block, and a vision
+            # model renders that two ways on the same document: sometimes
+            # blank, sometimes repeating the product's code. The earlier
+            # declaration named the repeated form and was right about it; the
+            # blank form is just as common. Both are tiers, and reading only
+            # one of them made the same SKU appear three times at three prices.
             SourceFieldContract(
                 field_key="bulk_tier_rows",
-                role=SourceFieldRole.MBB_TEXT,
+                role=SourceFieldRole.MBB_TIER_ROW,
                 requirement=SourceFieldRequirement.CONDITIONALLY_REQUIRED,
-                source_path="multiple rows sharing an order code",
-                description="Legacy config notes multi-row tiers; no checked-in source examples prove all tier semantics.",
+                source_path="a priced row beneath a product, its code blank or repeated",
+                tier_quantity_field="order_units",
+                tier_price_field="cost",
+                description="Quantity bulk tier printed as its own row beneath the product it applies to.",
                 evidence=_EVIDENCE,
             ),
         ],
@@ -160,11 +432,24 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
+            # The declared basis is now only the fallback for a row whose unit
+            # cannot be read; the row's own purchase unit wins. "$1,390 per
+            # piece" for a 30ml bottle divides every per-unit cost by 1 instead
+            # of 30.
             price_basis=UnitOfMeasure(code=UnitCode.PIECE),
-            order_increment_source_field="pack_size",
+            purchase_uom_source_field="pack_size",
+            price_basis_follows_purchase_unit=True,
+            # How many the pack holds: the leading count of "30ml/ bot",
+            # "100 tabs/ box". This is the sheet's quantity_per_unit.
+            sellable_units_per_purchase_unit_source_field="pack_size",
+            # You order ONE box, not its hundred tablets. The catalogue says so
+            # in its own column — which was unread until Order Units was mapped,
+            # and until then the leading count of the packing text stood in for
+            # it.
+            order_increment_source_field="order_units",
             break_pack_allowed=None,
             interpretation_rules=[
-                "Leading count in Packing / Unit is interpreted as supplier order increment, not a price divisor.",
+                "Leading count in Packing / Unit is how many the pack HOLDS; the order multiple is the Order Units column.",
                 "Price basis remains per sellable piece in current parser behavior.",
             ],
             unresolved_semantics=[

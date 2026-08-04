@@ -378,7 +378,7 @@ export interface paths {
          * @description Full per-supplier terms for the Manage Suppliers editor — includes the ordering-term columns
          *     (order/minimum increment + UOM, source, pricing note) and cost provenance the main product
          *     serializer omits. Read-only; effective_unit_cost is offering-first (catalogue pipeline price
-         *     when one exists, else basic_cost / cost-basis units). basic_cost stays the raw editable field.
+         *     from the supplier's current offering price).
          */
         get: operations["list_supplier_links_products__sku__suppliers_get"];
         put?: never;
@@ -387,6 +387,51 @@ export interface paths {
          * @description Link a supplier to this product.
          */
         post: operations["add_supplier_link_products__sku__suppliers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{sku}/onboarding-audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Onboarding Audit
+         * @description Historical catalogue-onboarding decisions for one SKU. The matching flow
+         *     that wrote these is retired; the append-only history stays readable here
+         *     (it previously lived on the removed /catalogues/audit endpoint).
+         */
+        get: operations["list_onboarding_audit_products__sku__onboarding_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{sku}/offerings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Variant Offerings
+         * @description Supplier-offerings lane for the SKU page: per supplier — current cost
+         *     with plain-word source (catalogue / manual / legacy), effective-dated
+         *     price history, and the current packaging configuration. Lineage ids are
+         *     included only to power audit links; the page renders none of them.
+         */
+        get: operations["list_variant_offerings_products__sku__offerings_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -664,66 +709,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/products/{sku}/cost/accept-sheet": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Accept Sheet Cost
-         * @description Accept the Sheet shadow cost as the new IMS cost (Sheet was right).
-         */
-        post: operations["accept_sheet_cost_products__sku__cost_accept_sheet_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/products/{sku}/cost/dismiss-conflict": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Dismiss Cost Conflict
-         * @description Mark IMS cost as correct; sync shadow to live to clear the conflict flag.
-         */
-        post: operations["dismiss_cost_conflict_products__sku__cost_dismiss_conflict_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/products/{sku}/uom/accept-sheet": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Accept Sheet Uom
-         * @description Accept Sheet pack size as the verified IMS value (Sheet was right).
-         */
-        post: operations["accept_sheet_uom_products__sku__uom_accept_sheet_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/products/{sku}/channels/{channel}/price": {
         parameters: {
             query?: never;
@@ -739,6 +724,23 @@ export interface paths {
         head?: never;
         /** Update Channel Price */
         patch: operations["update_channel_price_products__sku__channels__channel__price_patch"];
+        trace?: never;
+    };
+    "/products/{sku}/channels/{channel}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Channel Config */
+        patch: operations["update_channel_config_products__sku__channels__channel__patch"];
         trace?: never;
     };
     "/products/{sku}/stock/adjust": {
@@ -1104,6 +1106,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogues/ingestions/{run_uuid}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Catalogue Ingestion
+         * @description Retry a failed run: re-submit its stored file as a new run with lineage.
+         */
+        post: operations["retry_catalogue_ingestion_catalogues_ingestions__run_uuid__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalogues/ingestions/{run_uuid}/validation-issues/{validation_issue_id}/resolve": {
         parameters: {
             query?: never;
@@ -1304,6 +1326,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogues/ingestions/{run_uuid}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Run Receipt
+         * @description Publish receipt — the offering price rows this run wrote (old → new per SKU).
+         */
+        get: operations["get_run_receipt_catalogues_ingestions__run_uuid__receipt_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalogues/ingestions/{run_uuid}/serving": {
         parameters: {
             query?: never;
@@ -1368,26 +1410,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/sync/sheet": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Sync From Sheet
-         * @description Fetch the Google Sheet SKU master and upsert all products, costs, stock, and sales velocity.
-         */
-        post: operations["sync_from_sheet_sync_sheet_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/sync/algo": {
         parameters: {
             query?: never;
@@ -1402,23 +1424,6 @@ export interface paths {
          * @description Pull real sales (Shopify) + inventory expiry from the algo-dashboard Postgres into IMS.
          */
         post: operations["sync_from_algo_dashboard_sync_algo_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/sync/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Sync Status */
-        get: operations["sync_status_sync_status_get"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2462,6 +2467,10 @@ export interface components {
             metrics?: Record<string, never> | null;
             /** Error Summary */
             error_summary?: Record<string, never> | string | null;
+            /** Retry Of */
+            retry_of?: string | null;
+            /** Superseded By Run */
+            superseded_by_run?: string | null;
         };
         /** CatalogueSubmissionResponse */
         CatalogueSubmissionResponse: {
@@ -2525,6 +2534,23 @@ export interface components {
             current_password: string;
             /** New Password */
             new_password: string;
+        };
+        /**
+         * ChannelConfigUpdate
+         * @description Per-channel selling configuration — each selling item owns its own
+         *     price, visibility, listing multiple and dispensing-fee flag.
+         */
+        ChannelConfigUpdate: {
+            /** Selling Price */
+            selling_price?: number | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Units Per Listing */
+            units_per_listing?: number | null;
+            /** Order Multiple */
+            order_multiple?: number | null;
+            /** Has Dispensing Fee */
+            has_dispensing_fee?: boolean | null;
         };
         /** ChannelPriceUpdate */
         ChannelPriceUpdate: {
@@ -3337,10 +3363,14 @@ export interface components {
             supplier_sku?: string | null;
             /** Barcode */
             barcode?: string | null;
+            /** Rrp */
+            rrp?: number | null;
             /** Basic Cost */
             basic_cost?: number | null;
             /** Units Per Pack */
             units_per_pack?: number | null;
+            /** Pack Unit */
+            pack_unit?: string | null;
             /** Is Primary */
             is_primary?: boolean | null;
             /** Order Increment Qty */
@@ -4043,6 +4073,70 @@ export interface operations {
             };
         };
     };
+    list_onboarding_audit_products__sku__onboarding_audit_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                sku: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_variant_offerings_products__sku__offerings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sku: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     sku_history_products__sku__sku_history_get: {
         parameters: {
             query?: never;
@@ -4589,103 +4683,6 @@ export interface operations {
             };
         };
     };
-    accept_sheet_cost_products__sku__cost_accept_sheet_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sku: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    dismiss_cost_conflict_products__sku__cost_dismiss_conflict_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sku: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    accept_sheet_uom_products__sku__uom_accept_sheet_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sku: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UomVerify"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     update_channel_price_products__sku__channels__channel__price_patch: {
         parameters: {
             query?: never;
@@ -4699,6 +4696,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ChannelPriceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_channel_config_products__sku__channels__channel__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sku: string;
+                channel: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChannelConfigUpdate"];
             };
         };
         responses: {
@@ -5388,6 +5421,37 @@ export interface operations {
             };
         };
     };
+    retry_catalogue_ingestion_catalogues_ingestions__run_uuid__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueSubmissionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     resolve_catalogue_validation_issue_catalogues_ingestions__run_uuid__validation_issues__validation_issue_id__resolve_post: {
         parameters: {
             query?: never;
@@ -5737,6 +5801,37 @@ export interface operations {
             };
         };
     };
+    get_run_receipt_catalogues_ingestions__run_uuid__receipt_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_serving_layer_catalogues_ingestions__run_uuid__serving_get: {
         parameters: {
             query?: never;
@@ -5821,47 +5916,7 @@ export interface operations {
             };
         };
     };
-    sync_from_sheet_sync_sheet_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
     sync_from_algo_dashboard_sync_algo_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    sync_status_sync_status_get: {
         parameters: {
             query?: never;
             header?: never;

@@ -19,7 +19,7 @@ import main  # noqa: E402
 import models  # noqa: E402
 from dependencies import require_user  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
-from services import catalogue_submission, extraction_service, tagging_service  # noqa: E402
+from services import catalogue_submission, tagging_service  # noqa: E402
 from services.catalogue_submission import (  # noqa: E402
     CatalogueSubmissionCommand,
     CatalogueSubmissionService,
@@ -48,7 +48,6 @@ def _auth(monkeypatch):
     previous_v2 = main.alias_app.dependency_overrides.get(require_user)
     main.app.dependency_overrides[require_user] = lambda: _Admin()
     main.alias_app.dependency_overrides[require_user] = lambda: _Admin()
-    monkeypatch.setattr(extraction_service, "extract", lambda *a, **k: pytest.fail("v2 submission must not extract"))
     monkeypatch.setattr(tagging_service, "suggest_tags", lambda *a, **k: pytest.fail("v2 submission must not tag"))
     yield
     if previous_root is None:

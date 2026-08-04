@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import os
 import tempfile
+
+import pytest
 from uuid import uuid4
 
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
@@ -36,6 +38,123 @@ def _observation(cells: dict[str, str]) -> ExtractedEvidence:
         extraction_method=ExtractionMethod.MODEL_VISION,
         provider="test",
     )
+
+
+def _observation_from_pairs(pairs: list[tuple[str, str]]) -> ExtractedEvidence:
+    """A row whose headings may REPEAT — which a dict cannot express."""
+    return ExtractedEvidence(
+        observation_key="row-1",
+        source_location=SourceLocation(row_number=1, source_object_key="row-1"),
+        raw_cells=tuple(
+            RawCell(cell_reference=None, row_number=1, column_index=index + 1, column_name=column, raw_value=value)
+            for index, (column, value) in enumerate(pairs)
+        ),
+        extraction_method=ExtractionMethod.MODEL_VISION,
+        provider="test",
+    )
+
+
+# The MOV thresholds live in a banner spanning three columns, so the vision
+# model keeps them in the heading on some pages and truncates all three to an
+# identical "Net Invoice Price*" on others. Both shapes must yield the same
+# ladder — on the live Hill's run the truncated shape covers 59 of 238 rows.
+_BASE_ROW = [
+    ("Product Code 產品編號", "1141HG"),
+    ("Product Range 產品系列", "Everyday Diet"),
+    ("Life Stage 生命階段", "Adult 1-6"),
+    ("Product Description 產品名稱", "Small Bite Lamb & Rice"),
+    ("Size 重量", "3kg"),
+    ("Order Multiple 訂貨單位", "1"),
+    ("Gross Wholesale Price 折扣前批發價（每包／罐）", "227.2"),
+]
+
+
+def _tiers(fields) -> list[tuple[str, str]]:
+    return [
+        (str(term["condition"]["spend"]["amount"]), str(term["benefit"]["discounted_price"]["amount"]))
+        for term in fields["mbb_terms"]
+    ]
+
+
+def test_tier_columns_are_read_left_to_right_however_they_are_labelled():
+    """Every heading shape a live run has actually produced for these columns.
+
+    Truncated is Gemini on pages 2-3; the percentage labels are Claude on
+    pages 1-2 of the same document; the MOV form is both providers elsewhere.
+    A ladder must come out the same from all of them.
+    """
+    hills = runtime.load_contract(14)
+    for labels in (
+        ["Net Invoice Price* 折扣批發價*"] * 3,
+        ["Net Invoice Price* 折扣批發價* (0%)",
+         "Net Invoice Price* 折扣批發價* (4%)",
+         "Net Invoice Price* 折扣批發價* (6%)"],
+        ["Net Invoice Price* 折扣批發價* (MOV $1,200)",
+         "Net Invoice Price* 折扣批發價* (MOV $2,200)",
+         "Net Invoice Price* 折扣批發價* (MOV $4,500)"],
+    ):
+        row = _BASE_ROW + list(zip(labels, ["215.8", "206.8", "202.2"]))
+        outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+        assert _tiers(outcome.items[0].normalized_fields) == [
+            ("1200", "215.8"), ("2200", "206.8"), ("4500", "202.2")
+        ], f"failed for {labels[0]!r}"
+
+
+def test_repeated_tier_headings_are_read_left_to_right():
+    """Page 3 of the live catalogue: three columns, one indistinguishable heading."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [
+        ("Net Invoice Price* 折扣批發價*", "215.8"),
+        ("Net Invoice Price* 折扣批發價*", "206.8"),
+        ("Net Invoice Price* 折扣批發價*", "202.2"),
+    ]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+
+    assert _tiers(outcome.items[0].normalized_fields) == [
+        ("1200", "215.8"), ("2200", "206.8"), ("4500", "202.2")
+    ], "leftmost column is the lowest threshold, as the document prints them"
+
+
+def test_the_named_thresholds_still_win_where_the_model_kept_them():
+    """Page 1: the headings name their own tier. Position must not override that."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [
+        ("Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200", "151.8"),
+        ("Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200", "145.4"),
+        ("Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500", "142.2"),
+    ]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+
+    assert _tiers(outcome.items[0].normalized_fields) == [
+        ("1200", "151.8"), ("2200", "145.4"), ("4500", "142.2")
+    ]
+
+
+def test_a_column_outside_the_family_is_never_read_as_a_tier():
+    """Prefix matching must not swallow the gross price sitting next to them."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [("Net Invoice Price* 折扣批發價* (0%)", "215.8")]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+    fields = outcome.items[0].normalized_fields
+    assert _tiers(fields) == [("1200", "215.8")]
+    assert fields["cost"]["amount"] == "227.2", "the gross wholesale column is untouched"
+
+
+def test_a_single_tier_column_does_not_become_three_identical_terms():
+    """The flat-ladder bug: one column answering every tier is not a discount."""
+    hills = runtime.load_contract(14)
+    row = _BASE_ROW + [("Net Invoice Price* 折扣批發價*", "215.8")]
+    outcome = conform_observations((_observation_from_pairs(row),), (uuid4(),), hills)
+
+    assert _tiers(outcome.items[0].normalized_fields) == [("1200", "215.8")]
+
+
+def test_rows_without_any_tier_column_carry_no_terms():
+    """Pages 4-9 are prescription diets — the catalogue prints no ladder for them."""
+    hills = runtime.load_contract(14)
+    outcome = conform_observations((_observation_from_pairs(_BASE_ROW),), (uuid4(),), hills)
+
+    assert outcome.items[0].normalized_fields["mbb_terms"] == []
 
 
 def test_real_gemini_bilingual_headers_map_through_the_contract():
@@ -201,13 +320,21 @@ def test_hills_packaging_normalization_keeps_content_separate_from_ordering():
     assert "break_pack_allowed" not in packaging
 
 
-def test_alfamedic_pack_count_is_order_increment_and_by_quote_is_reviewed():
+def test_alfamedic_pack_holds_its_count_and_by_quote_is_reviewed():
+    """"10 pcs/ box" is a box holding ten, priced per box.
+
+    This asserted the opposite until the golden sample sheet was checked
+    against a live export — order_increment 10, no sellable count, basis PIECE.
+    The sheet records minimum_purchase_quantity 1, quantity_per_unit 10, and a
+    purchase unit of box, all of which the catalogue prints.
+    """
     alfamedic = runtime.load_contract(1)
     row_cells = {
         "Order Code": "MS-8",
         "Product Name": "Image Processor",
         "Brand": "Skyla",
         "Packing / Unit": "10 pcs/ box",
+        "Order Units": "1 box",
         "Price/ Unit (HKD)": "By Quote",
     }
 
@@ -215,10 +342,31 @@ def test_alfamedic_pack_count_is_order_increment_and_by_quote_is_reviewed():
     packaging = row.normalized_fields["packaging"]
 
     assert "cost" not in row.normalized_fields
-    assert packaging["price_basis"]["code"] == "PIECE"
-    assert packaging["order_increment"]["amount"] == "10"
-    assert "sellable_units_per_purchase_unit" not in packaging
+    assert packaging["purchase_uom"]["code"] == "BOX"
+    assert packaging["price_basis"]["code"] == "BOX"
+    assert packaging["sellable_units_per_purchase_unit"] == "10"
+    assert packaging["order_increment"]["amount"] == "1", "you order one box"
     assert "CONTRACT_NULL_COST_REQUIRES_REVIEW" in {issue.issue_code for issue in row.issues}
+
+
+def test_a_purchase_unit_the_vocabulary_does_not_know_is_left_null():
+    """Alfamedic also writes "/ pot", "/ reel", "/ roll" and "/ set".
+
+    The enum has no honest home for those, and a wrong purchase unit silently
+    rebases every per-unit cost derived from it — so the row keeps the
+    contract's declared basis rather than being mapped to something close.
+    """
+    alfamedic = runtime.load_contract(1)
+    row = conform_observations((_observation({
+        "Order Code": "ZHG705010",
+        "Product Name": "Haemostatic Gelatin Sponge",
+        "Packing / Unit": "10 pcs/ pot",
+        "Order Units": "1 pot",
+        "Price/ Unit (HKD)": "190.0",
+    }),), (uuid4(),), alfamedic).items[0]
+
+    assert row.normalized_fields["cost"]["price_basis"]["code"] == "PIECE", "the declared fallback"
+    assert "purchase_uom" not in row.normalized_fields["packaging"]
 
 
 def test_unparseable_effective_date_stays_raw_and_requires_review():
@@ -341,3 +489,761 @@ def test_text_only_lines_under_tabular_contract_are_furniture_not_blocking(monke
     reviewed = conform_observations((banner,), (uuid4(),), hills)
     assert reviewed.metadata["unconformable_items"] == 1
     assert any(issue.issue_code == "CONTRACT_ROW_UNCONFORMABLE" for item in reviewed.items for issue in item.issues)
+
+
+# ── A price list is not only items: it has section titles, blank spacers and
+#    continuation lines, and a vision model returns them as table rows because
+#    that is what they look like. On one live Alfamedic run 38 of 52 blocked
+#    rows were furniture — which is how a review queue stops being read. ─────
+
+def _alfamedic_row(pairs):
+    return _observation_from_pairs(pairs)
+
+
+def test_a_section_divider_is_skipped_rather_than_queued_for_review():
+    """Nobody should be asked to adjudicate the words "Dry Food"."""
+    alfamedic = runtime.load_contract(1)
+    outcome = conform_observations(
+        (_alfamedic_row([("Product Name", "- Diagnostics, Lab Equipment & Accessories -")]),),
+        (uuid4(),),
+        alfamedic,
+    )
+
+    assert outcome.items == (), "furniture is evidence, not a catalogue row"
+    assert outcome.metadata["skipped_ineligible_rows"] == 1, "and it is counted, not silently dropped"
+
+
+def test_a_row_missing_its_code_but_carrying_a_price_is_still_surfaced():
+    """The protective case: that is an item we failed to read, not furniture.
+
+    Seen for real — a live Gemini run left four rows with an order code and no
+    price, and those must reach a human rather than vanish into a skip count.
+    """
+    alfamedic = runtime.load_contract(1)
+    outcome = conform_observations(
+        (_alfamedic_row([("Product Name", "Bioguard CDV Ag Test"), ("Price/ Unit (HKD)", "190.0")]),),
+        (uuid4(),),
+        alfamedic,
+    )
+
+    assert len(outcome.items) == 1
+    assert outcome.metadata["skipped_ineligible_rows"] == 0
+    assert any(i.issue_code == "CONTRACT_REQUIRED_FIELD_MISSING" and i.field_key == "supplier_sku"
+               for i in outcome.items[0].issues)
+
+
+def test_a_service_without_a_pack_size_is_a_normal_catalogue_row():
+    """A lab test is priced per test and prints no packing.
+
+    Requiring one blocked 13 real priced items on a live run for lacking a
+    field their own supplier does not print.
+    """
+    alfamedic = runtime.load_contract(1)
+    outcome = conform_observations(
+        (_alfamedic_row([
+            ("Order Code", "SPOT1"),
+            ("Product Name", "Spot Platinum+ Test for Canine/ Feline/ Equine only"),
+            ("Price/ Unit (HKD)", "2,250.0"),
+        ]),),
+        (uuid4(),),
+        alfamedic,
+    )
+
+    assert len(outcome.items) == 1
+    # Document-level "header not observed" issues are expected on a one-row
+    # fixture; what must be gone is the ROW being blocked for its own packing.
+    assert not [i for i in outcome.items[0].issues
+                if i.severity == "BLOCKING" and i.field_key == "pack_size"]
+    # The thousands separator is not a reason to lose a price either.
+    assert outcome.items[0].normalized_fields["cost"]["amount"] == "2250.0"
+
+
+def test_hills_section_headings_are_furniture_too():
+    hills = runtime.load_contract(14)
+    outcome = conform_observations(
+        (_observation_from_pairs([("Product Description 產品名稱", "小食 Treats")]),),
+        (uuid4(),),
+        hills,
+    )
+
+    assert outcome.items == ()
+    assert outcome.metadata["skipped_ineligible_rows"] == 1
+
+
+def test_a_contract_without_declared_identity_fields_keeps_every_row():
+    """The rule is opt-in per contract; silence must not start dropping rows."""
+    from types import SimpleNamespace
+
+    from services.catalogue_conformance import _is_ineligible_row
+
+    def contract(identity_fields):
+        return SimpleNamespace(declaration=SimpleNamespace(
+            source_structure=SimpleNamespace(row_identity_fields=identity_fields),
+            pricing=SimpleNamespace(cost_source_field="cost"),
+        ))
+
+    bare = {"source:description": "小食 Treats"}
+    assert _is_ineligible_row(bare, contract(["supplier_sku"])) is True
+    assert _is_ineligible_row(bare, contract([])) is False, "no declaration, no skipping"
+    # And identity or price is enough to keep a row either way.
+    assert _is_ineligible_row({"source:supplier_sku": "SPOT1"}, contract(["supplier_sku"])) is False
+    assert _is_ineligible_row({"source:cost": "190.0"}, contract(["supplier_sku"])) is False
+
+
+def test_every_observation_is_either_an_item_or_counted_as_skipped():
+    """The run's row accounting rests on this, and nothing else enforces it.
+
+    Adding a new reason to skip a row without adding it to skipped_count made a
+    56-page live run report 2,233 extracted minus 309 skipped against 1,762
+    persisted — 162 rows silently unaccounted for. Cheap to assert here;
+    expensive to notice there.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = (
+        _alfamedic_row([("Order Code", "BGD-RC03-1"), ("Product Name", "CDV Ag Test"),
+                        ("Price/ Unit (HKD)", "190.0"), ("Packing / Unit", "10 tests kit/ box")]),
+        _alfamedic_row([("Product Name", "- Diagnostics, Lab Equipment & Accessories -")]),   # ineligible
+        _alfamedic_row([("Order Code", "Order Code"), ("Product Name", "Product Name"),
+                        ("Price/ Unit (HKD)", "Price/ Unit (HKD)")]),                          # header
+        _alfamedic_row([("Order Code", "SPOT1"), ("Product Name", "Spot Platinum+ Test"),
+                        ("Price/ Unit (HKD)", "2,250.0")]),
+    )
+    outcome = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(outcome.items) + outcome.skipped_count == len(observations)
+    # And the reasons are reported separately, each true on its own: they had
+    # all been reporting the running total, so 0 header rows read as 471.
+    meta = outcome.metadata
+    assert meta["skipped_ineligible_rows"] == 1
+    assert meta["skipped_header_rows"] == 1
+    assert sum(v for k, v in meta.items() if k.startswith("skipped_")) == outcome.skipped_count, \
+        "every reason a row did not become an item must be counted under exactly one skipped_* key"
+
+
+# ── Size variants share one printed name cell. They are separate SKUs and
+#    have to be stocked as such. Live page 20 of the Alfamedic catalogue:
+#
+#      ALO250   ALOVEEN Shampoo   250ml/bot  58.0
+#      (none)   —                 —          56.0   <- quantity tier
+#      ALO1000  —                 1L/bot     190.0  <- variant, own SKU
+# ──────────────────────────────────────────────────────────────────────────
+
+def _alf_rows(rows, page=20):
+    out = []
+    for index, pairs in enumerate(rows):
+        cells = tuple(
+            RawCell(cell_reference=None, row_number=index + 1, column_index=i + 1,
+                    column_name=col, raw_value=val)
+            for i, (col, val) in enumerate(pairs)
+        )
+        out.append(ExtractedEvidence(
+            observation_key=f"page:{page}:row:{index}",
+            source_location=SourceLocation(page_number=page, row_number=index + 1,
+                                           source_object_key=f"page:{page}:row:{index}"),
+            raw_cells=cells,
+            extraction_method=ExtractionMethod.MODEL_VISION,
+            provider="test",
+        ))
+    return tuple(out)
+
+
+def test_a_size_variant_takes_the_name_it_is_printed_under():
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Packing/ Unit", "250ml/ bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Code", "ALO1000"), ("Packing/ Unit", "1L/ bot"), ("Price/ Unit (HKD)", "190.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2
+    variant = out.items[1]
+    assert variant.normalized_fields["product_name"]["value"] == "ALOVEEN Shampoo"
+    assert variant.normalized_fields["supplier_sku"]["value"] == "ALO1000", "its own SKU, not merged away"
+    assert variant.provenance["inherited_from_row_above"] == ["description"], "and it says so"
+    assert "inherited_from_row_above" not in out.items[0].provenance
+
+
+def test_a_quantity_tier_line_never_acquires_a_name():
+    """A priced line with no code is a tier, not a product. Naming it would
+    invent a SKU that does not exist."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Packing/ Unit", "250ml/ bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Price/ Unit (HKD)", "56.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    tier = next(i for i in out.items if not (i.normalized_fields.get("supplier_sku") or {}).get("value"))
+    assert "product_name" not in tier.normalized_fields
+    assert not tier.provenance.get("inherited_from_row_above")
+
+
+def test_a_name_does_not_carry_across_a_page_break():
+    """The last product on page 20 has nothing to do with the first on page 21."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"), ("Price/ Unit (HKD)", "58.0")],
+    ]) + _alf_rows([
+        [("Order Code", "XYZ999"), ("Packing/ Unit", "1L/ bot"), ("Price/ Unit (HKD)", "190.0")],
+    ], page=21)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert "product_name" not in out.items[1].normalized_fields
+
+
+def test_the_plainly_headed_price_column_is_still_a_price():
+    """Alfamedic's diagnostics and suture tables head the column "Price".
+
+    Same meaning, narrower heading — those tables carry no per-unit qualifier.
+    146 rows of one live 56-page catalogue priced that way and every one was
+    read as unpriced: 900-100 Pre-anesthetic Panel prints 1,760.0 and reached
+    review as having no price at all.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([[
+        ("Order Code", "900-100"),
+        ("Product Name", "Pre-anesthetic Panel (7 assay +3)"),
+        ("Sample Type", "Whole Blood/ Plasma/ Serum"),
+        ("Volume", "220μL"),
+        ("Brand", "Skyla"),
+        ("Packing/ Unit", "20 pcs/ box"),
+        ("Order Unit", "1 box"),
+        ("Price", "1,760.0"),
+    ]], page=10)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert out.items[0].normalized_fields["cost"]["amount"] == "1760.0"
+    assert out.items[0].normalized_fields["cost"]["currency"] == "HKD"
+
+
+def test_the_qualified_price_column_still_wins_where_both_appear():
+    """"Price/ Unit (HKD)" is the declared column; the bare alias is a fallback."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([[
+        ("Order Code", "ALO250"),
+        ("Product Name", "ALOVEEN Shampoo"),
+        ("Price/ Unit (HKD)", "58.0"),
+        ("Price", "999.0"),
+    ]])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert out.items[0].normalized_fields["cost"]["amount"] == "58.0"
+
+
+def test_diagnostic_attributes_are_kept_without_being_interpreted():
+    """Sample Type and Volume describe the test; they are not packaging.
+
+    "220μL" is what one test CONSUMES. Read as pack content it would say a box
+    of 20 holds 220μL, and every per-unit cost off it would be wrong — so the
+    fields are carried verbatim and nothing downstream reads them as packaging.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([[
+        ("Order Code", "900-100"),
+        ("Product Name", "Pre-anesthetic Panel (7 assay +3)"),
+        ("Sample Type", "Whole Blood/ Plasma/ Serum"),
+        ("Volume", "220μL"),
+        ("Packing/ Unit", "20 pcs/ box"),
+        ("Price", "1,760.0"),
+    ]], page=10)
+    row = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic).items[0]
+
+    extra = row.raw_fields["additional_fields"]
+    assert extra["sample_type"] == "Whole Blood/ Plasma/ Serum"
+    assert extra["sample_volume"] == "220μL"
+    # The packing column is still the only thing read as packaging.
+    assert row.raw_fields["packaging"] == "20 pcs/ box"
+    assert "220" not in str(row.normalized_fields.get("packaging") or "")
+    assert "220" not in str(row.raw_fields["packaging"])
+
+
+# ── Alfamedic prints its bulk ladder as extra ROWS beneath a product, where
+#    Hill's prints the same information as extra COLUMNS beside one. Live
+#    page 20:
+#
+#      ALO250  ALOVEEN Shampoo   1 bot     58.0
+#      (none)                    10 bots   56.0
+#      (none)                    40 bots   54.0
+# ──────────────────────────────────────────────────────────────────────────
+
+def _ladder(item):
+    return [(t["condition"]["quantity"]["amount"], t["benefit"]["discounted_price"]["amount"])
+            for t in item.normalized_fields.get("mbb_terms", [])]
+
+
+def test_a_priced_row_beneath_a_product_becomes_that_products_bulk_tier():
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Packing/ Unit", "250ml/ bot"), ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+        [("Order Units", "40 bots"), ("Price/ Unit (HKD)", "54.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 1, "the tier lines are terms, not catalogue rows"
+    assert out.metadata["skipped_tier_rows"] == 2
+    assert _ladder(out.items[0]) == [("10", "56.0"), ("40", "54.0")]
+    term = out.items[0].normalized_fields["mbb_terms"][0]
+    assert term["scope"] == "SUPPLIER_SKU", "the quantity is of this product, not the whole order"
+    assert term["condition"]["condition_type"] == "minimum_quantity"
+    assert term["benefit"]["benefit_type"] == "discounted_unit_price"
+    # Still accounted for: it stopped being a row, so it must be a counted skip.
+    assert len(out.items) + out.skipped_count == len(observations)
+
+
+def test_a_size_variant_is_a_product_not_a_tier():
+    """It carries its own order code. Swallowing it would lose a stocked SKU."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Code", "ALO1000"), ("Packing/ Unit", "1L/ bot"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "190.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2
+    assert (out.items[1].normalized_fields["supplier_sku"]["value"]) == "ALO1000"
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_no_cheaper_than_the_product_is_not_a_discount():
+    """It would quietly corrupt every cost derived from the best tier."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "20 bots"), ("Price/ Unit (HKD)", "61.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_of_one_is_not_a_tier():
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "1 bot"), ("Price/ Unit (HKD)", "56.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_row_does_not_reach_back_across_a_page_break():
+    """The last product on page 20 does not own the first line of page 21."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+    ]) + _alf_rows([
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+    ], page=21)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_tier_row_declaration_must_state_both_halves():
+    """A price with no condition is not a term."""
+    from pydantic import ValidationError
+
+    from schemas.catalogue_pipeline.supplier_contracts.common import (
+        SourceFieldContract, SourceFieldRequirement, SourceFieldRole,
+    )
+    with pytest.raises(ValidationError, match="tier_quantity_field and tier_price_field"):
+        SourceFieldContract(
+            field_key="bulk_tier_rows", role=SourceFieldRole.MBB_TIER_ROW,
+            requirement=SourceFieldRequirement.OPTIONAL, source_path="a row",
+            tier_price_field="cost",
+        )
+
+
+def test_a_tier_row_is_a_tier_whether_or_not_the_code_is_repeated():
+    """The merged identity cell renders two ways, on the same document.
+
+    A vision model sometimes leaves the tier line's code blank and sometimes
+    repeats the product's code down the block. Both are the same printed
+    table. Reading only the blank form turned the repeated form into duplicate
+    products — the same SKU three times at three prices, 174 extra candidates
+    on one live 56-page run — and made the ladder count swing between 13 and
+    31 across two runs of one file.
+    """
+    alfamedic = runtime.load_contract(1)
+    blank = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+        [("Order Units", "40 bots"), ("Price/ Unit (HKD)", "54.0")],
+    ])
+    repeated = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "58.0")],
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "40 bots"), ("Price/ Unit (HKD)", "54.0")],
+    ])
+    results = []
+    for observations in (blank, repeated):
+        out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+        assert len(out.items) == 1, "one product, not three"
+        results.append(_ladder(out.items[0]))
+
+    assert results[0] == results[1] == [("10", "56.0"), ("40", "54.0")]
+
+
+def test_a_repeated_code_that_is_not_cheaper_stays_its_own_row():
+    """Only a genuine discount is folded away; anything else stays visible."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "EQ001"), ("Product Name", "Bench Centrifuge"),
+         ("Order Units", "1 unit"), ("Price/ Unit (HKD)", "5000.0")],
+        [("Order Code", "EQ001"), ("Product Name", "Bench Centrifuge"),
+         ("Order Units", "2 units"), ("Price/ Unit (HKD)", "5200.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2, "a dearer repeat is not a tier and must not vanish"
+    assert _ladder(out.items[0]) == []
+
+
+def test_a_free_goods_offer_is_a_term_not_a_missing_price():
+    """"11+1 bots" is buy eleven, take twelve.
+
+    The benefit is a free unit rather than a cheaper one, so the price column
+    is empty on purpose. Reading that as a missing price sent 17 real offers
+    on one live catalogue to the review desk as defective rows.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "D98110H"), ("Product Name", "DOUXO S3 CALM Shampoo"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "206.0")],
+        [("Order Code", "D98110H"), ("Product Name", "DOUXO S3 CALM Shampoo"),
+         ("Order Units", "11+1 bots")],
+    ], page=21)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 1, "the offer is a term on the product, not a second product"
+    term = out.items[0].normalized_fields["mbb_terms"][0]
+    assert term["condition"]["quantity"]["amount"] == "11"
+    assert term["benefit"]["benefit_type"] == "free_quantity"
+    assert term["benefit"]["quantity"]["amount"] == "1"
+
+
+def test_a_free_goods_offer_of_several_units_keeps_both_numbers():
+    """ProDen PlaqueOff prints "9+3": pay for nine, receive twelve."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "1302"), ("Product Name", "ProDen PlaqueOff Powder for Dogs"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "300.0")],
+        [("Order Code", "1302"), ("Product Name", "ProDen PlaqueOff Powder for Dogs"),
+         ("Order Units", "9+3 bots")],
+    ], page=20)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    term = out.items[0].normalized_fields["mbb_terms"][0]
+    assert (term["condition"]["quantity"]["amount"], term["benefit"]["quantity"]["amount"]) == ("9", "3")
+
+
+def test_a_row_with_neither_a_price_nor_free_goods_is_not_a_term():
+    """A priced product followed by an unpriced one is two products, not an offer."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "GE0910"), ("Product Name", "Gentamycin 5%"),
+         ("Order Units", "1 bot"), ("Price/ Unit (HKD)", "120.0")],
+        [("Order Code", "GE0930"), ("Product Name", "Gentamycin 10%")],
+    ], page=16)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 2, "it stays visible rather than being folded into the row above"
+    assert out.items[0].normalized_fields.get("mbb_terms") == []
+
+
+# ── The supplier writes DISCON on a line it no longer sells, and writes it
+#    wherever there is room. Live catalogue: in the product name, in the
+#    packing column, as the order code itself, and in the price column. ─────
+
+def test_a_withdrawn_line_is_skipped_wherever_the_marker_is_written():
+    alfamedic = runtime.load_contract(1)
+    for pairs in (
+        [("Order Code", "GE0920"), ("Product Name", "Gentamycin 5% DISCON")],
+        [("Order Code", "Benakor5"), ("Product Name", "Benakor 5mg tabs"), ("Packing/ Unit", "DISCON")],
+        [("Order Code", "DISCON"), ("Product Name", "Oph-C, Ophtocycline")],
+        [("Order Code", "AT9500"), ("Product Name", "Atopica 10mg"), ("Price/ Unit (HKD)", "Discon")],
+    ):
+        out = conform_observations(_alf_rows([pairs], page=16), (uuid4(),), alfamedic)
+        assert out.items == (), f"still queued: {pairs}"
+        assert out.metadata["skipped_discontinued_rows"] == 1
+        assert len(out.items) + out.skipped_count == 1, "counted, not silently dropped"
+
+
+def test_a_live_product_is_not_mistaken_for_a_withdrawn_one():
+    """The marker is matched whole-word, so a name that merely contains those
+    letters is untouched."""
+    alfamedic = runtime.load_contract(1)
+    out = conform_observations(_alf_rows([
+        [("Order Code", "DC1000"), ("Product Name", "Disconnect Valve Assembly"),
+         ("Order Units", "1 unit"), ("Price/ Unit (HKD)", "250.0")],
+    ], page=16), (uuid4(),), alfamedic)
+
+    assert len(out.items) == 1
+    assert out.metadata["skipped_discontinued_rows"] == 0
+
+
+def test_a_contract_that_declares_no_marker_keeps_every_row():
+    hills = runtime.load_contract(14)
+    out = conform_observations(_observation_from_pairs(_BASE_ROW + [
+        ("Gross Wholesale Price 折扣前批發價（每包／罐）", "227.2"),
+    ]) and (_observation_from_pairs(_BASE_ROW),), (uuid4(),), hills)
+    assert out.metadata["skipped_discontinued_rows"] == 0
+
+
+def test_a_price_printed_on_a_free_goods_line_belongs_to_the_product():
+    """NU8010 Nutripet, live page 26. One printed row, stacked order units:
+
+        NU8010  Nutripet 200g  ILIUM  200g/tube   1 tube      120.0
+                                                  11+1 tubes
+                                                  21+3 tubes
+
+    The price cell is merged down the block and the model reports it against
+    the MIDDLE line. Read literally the product has no price at all — which is
+    how it reached the review desk as unpriced while carrying two live offers.
+    A free-goods line has no unit price of its own, so a price on one can only
+    be the product's.
+    """
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "NU8010"), ("Product Name", "Nutripet 200g, Troy"),
+         ("Brand", "ILIUM"), ("Packing/ Unit", "200g/ tube"), ("Order Units", "1 tube")],
+        [("Order Code", "NU8010"), ("Product Name", "Nutripet 200g, Troy"),
+         ("Brand", "ILIUM"), ("Packing/ Unit", "200g/ tube"),
+         ("Order Units", "11+1 tubes"), ("Price/ Unit (HKD)", "120.0")],
+        [("Order Code", "NU8010"), ("Product Name", "Nutripet 200g, Troy"),
+         ("Brand", "ILIUM"), ("Packing/ Unit", "200g/ tube"), ("Order Units", "21+3 tubes")],
+    ], page=26)
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert len(out.items) == 1
+    product = out.items[0]
+    assert product.normalized_fields["cost"]["amount"] == "120.0"
+    assert [(t["condition"]["quantity"]["amount"], t["benefit"]["quantity"]["amount"])
+            for t in product.normalized_fields["mbb_terms"]] == [("11", "1"), ("21", "3")]
+
+
+def test_a_discounted_tier_price_is_never_mistaken_for_the_base_price():
+    """Only a free-goods line's price is the product's. A cheaper tier price
+    is the TIER's, and lifting it would understate the product's cost."""
+    alfamedic = runtime.load_contract(1)
+    observations = _alf_rows([
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"), ("Order Units", "1 bot")],
+        [("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+         ("Order Units", "10 bots"), ("Price/ Unit (HKD)", "56.0")],
+    ])
+    out = conform_observations(observations, tuple(uuid4() for _ in observations), alfamedic)
+
+    assert out.items[0].normalized_fields.get("cost") in (None, {}), "56.00 is the tier price, not the product's"
+
+
+# ── Alfamedic's suture pages name a product ONCE, in the band printed across
+#    the block. The rows below carry a code, a needle, a gauge and a price —
+#    and no name at all.
+#
+#      Surgicryl PGA Polyglycolic (Foil Packing) Violet   DS - 3/8 circle
+#      11201524 | DS24 24mm | EP 2   | USP 3/0 | 75cm | Violet | 328.0
+#      11351524 | DS24 24mm | EP 3.5 | USP 0   | 75cm | Violet | 328.0
+# ──────────────────────────────────────────────────────────────────────────
+
+BANNER = "Surgicryl PGA Polyglycolic (Foil Packing) Violet   DS - 3/8 circle"
+
+
+def _suture_row(pairs, section=BANNER, key="s"):
+    return ExtractedEvidence(
+        observation_key=key,
+        source_location=SourceLocation(page_number=41, source_object_key=key),
+        raw_cells=tuple(RawCell(cell_reference=None, row_number=1, column_index=i + 1,
+                                column_name=c, raw_value=v) for i, (c, v) in enumerate(pairs)),
+        extraction_method=ExtractionMethod.MODEL_VISION, provider="test",
+        source_metadata={"section": section} if section else {},
+    )
+
+
+def test_a_suture_takes_its_name_from_the_band_above_it_plus_what_makes_it_different():
+    alfamedic = runtime.load_contract(1)
+    rows = (
+        _suture_row([("Order Code", "11201524"), ("Needle", "DS24 24mm"), ("EP", "2"),
+                     ("USP", "3/0"), ("Length", "75cm"), ("Color", "Violet"),
+                     ("Packing/ Unit", "12 pcs/ box"), ("Price", "328.0")], key="a"),
+        _suture_row([("Order Code", "11351524"), ("Needle", "DS24 24mm"), ("EP", "3.5"),
+                     ("USP", "0"), ("Length", "75cm"), ("Color", "Violet"),
+                     ("Packing/ Unit", "12 pcs/ box"), ("Price", "328.0")], key="b"),
+    )
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    names = [(i.normalized_fields.get("product_name") or {}).get("value") for i in out.items]
+    assert all(n and n.startswith("Surgicryl PGA Polyglycolic") for n in names)
+    assert names[0] != names[1], "two gauges are two products and must not share a name"
+    assert "3/0" in names[0] and "DS24 24mm" in names[0] and "75cm" in names[0]
+    # The gauge is stated once. EP is the same measurement in the other scale.
+    assert "EP" not in names[0]
+    extra = out.items[0].raw_fields["additional_fields"]
+    assert extra["gauge_usp"] == "3/0" and extra["gauge_ep"] == "2", "both scales still kept"
+    assert extra["needle"] == "DS24 24mm"
+
+
+def test_a_printed_product_name_always_wins_over_the_band():
+    """Only the suture tables lack a name; every other page keeps its own."""
+    alfamedic = runtime.load_contract(1)
+    rows = (_suture_row([("Order Code", "ALO250"), ("Product Name", "ALOVEEN Shampoo"),
+                         ("Price/ Unit (HKD)", "58.0")], section="- Dermatology -"),)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    assert (out.items[0].normalized_fields["product_name"]["value"]) == "ALOVEEN Shampoo"
+    assert out.items[0].raw_fields["additional_fields"]["section_header"] == "- Dermatology -"
+
+
+def test_a_row_with_no_band_and_no_name_is_not_given_an_invented_one():
+    alfamedic = runtime.load_contract(1)
+    rows = (_suture_row([("Order Code", "11201524"), ("Needle", "DS24 24mm"),
+                         ("Price", "328.0")], section=None),)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    name = (out.items[0].normalized_fields.get("product_name") or {}).get("value")
+    assert name is None or "Surgicryl" not in name
+
+
+def test_every_nameless_shape_on_the_needle_page_composes_its_own_name():
+    """Page 42 is five shapes, not one. A composed value omits the parts a row
+    does not carry, so one declaration covers all of them."""
+    alfamedic = runtime.load_contract(1)
+    cases = {
+        # split across four spec columns
+        "Z813": ([("Order Code", "Z813"), ("Circle Type", "1/2 Circle"),
+                  ("Cutting Type", "Round Body"), ("Eye Type", "Regular Eye (RHR)"),
+                  ("Size", "25mm N°13"), ("Price/ Unit (HKD)", "148.0")],
+                 "1/2 Circle Round Body Regular Eye (RHR) 25mm N 13"),
+        # material column + gauge + needle
+        "159045VN": ([("Order Code", "159045VN"), ("Type", "PDS"), ("USP", "USP 2/0"),
+                      ("Needle", "SH round needle, Z317H"), ("Price/ Unit (HKD)", "89.0")],
+                     "PDS SH round needle, Z317H USP 2/0"),
+        # material + one free-text cell carrying gauge, needle and code
+        "154215VN": ([("Order Code", "154215VN"), ("Type", "Vicryl"),
+                      ("Product Description", "USP 0, w/ Needle FSL, V587H"),
+                      ("Price/ Unit (HKD)", "82.0")],
+                     "Vicryl USP 0, w/ Needle FSL, V587H"),
+    }
+    for sku, (pairs, expected) in cases.items():
+        out = conform_observations(_alf_rows([pairs], page=42), (uuid4(),), alfamedic)
+        assert (out.items[0].normalized_fields["product_name"]["value"]) == expected, sku
+
+
+def test_a_composed_name_may_reference_a_field_declared_after_it():
+    """The parts are field keys, so a run that renames a heading still resolves
+    through that field's aliases. That only works if order does not matter."""
+    alfamedic = runtime.load_contract(1)
+    # The earlier rendering of the same page, with the other heading text.
+    out = conform_observations(_alf_rows([[
+        ("Order Code", "Z813"),
+        ("Product Name (Circle Type)", "1/2 Circle"),
+        ("Product Name (Needle Type)", "Round Body"),
+        ("Product Name (Eye/Size)", "Regular Eye (RHR) 25mm N°13"),
+        ("Price/ Unit (HKD)", "148.0"),
+    ]], page=42), (uuid4(),), alfamedic)
+
+    name = out.items[0].normalized_fields["product_name"]["value"]
+    assert name == "1/2 Circle Round Body Regular Eye (RHR) 25mm N 13"
+
+
+# ── A supplier names a family once and then lists only what varies:
+#
+#      273310  Classic Collar size 7.5cm
+#      273320  size 10.0cm
+#      273325  size 12.5cm
+#
+#    Separate SKUs at separate prices, whose printed name does not say what
+#    they are. 38 such rows across three pages of the live catalogue.
+# ──────────────────────────────────────────────────────────────────────────
+
+def test_a_size_only_name_is_completed_from_the_family_above_it():
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([
+        [("Order Code", "273310"), ("Product Name", "Classic Collar size 7.5cm"),
+         ("Price/ Unit (HKD)", "250.0")],
+        [("Order Code", "273320"), ("Product Name", "size 10.0cm"), ("Price/ Unit (HKD)", "288.0")],
+        [("Order Code", "273325"), ("Product Name", "size 12.5cm"), ("Price/ Unit (HKD)", "327.0")],
+    ], page=34)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    assert [i.normalized_fields["product_name"]["value"] for i in out.items] == [
+        "Classic Collar size 7.5cm",
+        "Classic Collar size 10.0cm",
+        "Classic Collar size 12.5cm",
+    ]
+    assert len(out.items) == 3, "each size is its own SKU at its own price"
+
+
+def test_a_new_family_takes_over_from_the_old_one():
+    """The catalogue runs one family straight into the next."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([
+        [("Order Code", "273310"), ("Product Name", "Classic Collar size 7.5cm"), ("Price/ Unit (HKD)", "250.0")],
+        [("Order Code", "273320"), ("Product Name", "size 10.0cm"), ("Price/ Unit (HKD)", "288.0")],
+        [("Order Code", "273480"), ("Product Name", "CLIC Collar size 7.5cm"), ("Price/ Unit (HKD)", "257.0")],
+        [("Order Code", "273481"), ("Product Name", "size 10.0cm"), ("Price/ Unit (HKD)", "299.0")],
+    ], page=34)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    names = [i.normalized_fields["product_name"]["value"] for i in out.items]
+    assert names[1] == "Classic Collar size 10.0cm"
+    assert names[3] == "CLIC Collar size 10.0cm", "the newer family wins"
+
+
+def test_nothing_is_invented_when_no_family_can_be_derived():
+    """Live: eight rows read "Size 0 Tiny Dogs" onwards with no family above
+    them that names a size. They stay exactly as printed."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([
+        [("Order Code", "279394"), ("Product Name", "BUSTER Protective Wear"), ("Price/ Unit (HKD)", "100.0")],
+        [("Order Code", "279395"), ("Product Name", "Size 0 Tiny Dogs, Yorkshire Terrier"),
+         ("Price/ Unit (HKD)", "161.0")],
+    ], page=52)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    assert out.items[1].normalized_fields["product_name"]["value"] == "Size 0 Tiny Dogs, Yorkshire Terrier"
+
+
+def test_a_nameless_collar_row_composes_from_what_varies():
+    """Page 34 lists sizes with no name column at all — only the size and the
+    weight range it suits."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([[
+        ("Order Code", "273551"), ("Size", "7.5 cm"), ("Body weight", "1-3 kg"),
+        ("Suitable for", "Pomeranian, Chihuahua"), ("Price/ Unit (HKD)", "426.0"),
+    ]], page=34)
+    out = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic)
+
+    name = out.items[0].normalized_fields["product_name"]["value"]
+    assert "7.5 cm" in name and "1-3 kg" in name and "Pomeranian" in name
+    extra = out.items[0].raw_fields["additional_fields"]
+    assert extra["size"] == "7.5 cm" and extra["body_weight"] == "1-3 kg"
+
+
+def test_apparel_attributes_are_kept_without_being_read_as_packaging():
+    """A body length is not a pack size and a weight range is not a category."""
+    alfamedic = runtime.load_contract(1)
+    rows = _alf_rows([[
+        ("Order Code", "273951"), ("Product Name", "BUSTER Body Suit EasyGo for Dogs"),
+        ("Size", "XXXS"), ("Body Length", "25 cm"), ("Colour", "Blue"),
+        ("Packing/ Unit", "1 pc"), ("Price", "172.0"),
+    ]], page=52)
+    row = conform_observations(rows, tuple(uuid4() for _ in rows), alfamedic).items[0]
+
+    extra = row.raw_fields["additional_fields"]
+    assert (extra["size"], extra["body_length"], extra["colour"]) == ("XXXS", "25 cm", "Blue")
+    assert row.raw_fields["packaging"] == "1 pc", "packing is still the only packaging"
+    assert row.normalized_fields["product_name"]["value"] == "BUSTER Body Suit EasyGo for Dogs"

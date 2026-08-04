@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 from decimal import Decimal
@@ -49,6 +50,10 @@ def _reset(session):
         models.CatalogueSupplierPrice,
         models.CataloguePackagingConfiguration,
         models.SupplierOffering,
+        # Legacy links are seeded by the backfill-identity test and are matched
+        # on (supplier_id, supplier_sku) — leaving one behind silently changes a
+        # sibling test's PROPOSED_CREATE into a PROPOSED_MATCH.
+        models.ProductSupplier,
         models.CatalogueReviewDecision,
         models.CatalogueMasteringCandidate,
         models.CatalogueValidationIssue,
@@ -584,7 +589,217 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
     assert serving.is_current == 1
 
 
+def test_picking_the_variant_settles_an_ambiguous_offering(db):
+    """The "needs a pick" lane has to be exitable.
+
+    Two products can claim one supplier SKU — in the live Hill's run 6238 is
+    both a feline and a canine wet food — so the pipeline marks the OFFERING
+    ambiguous and refuses to guess. The desk only ever corrected the product
+    variant, which left the offering AMBIGUOUS: the row bounced straight back
+    into the lane and approve died on "Candidate requires a resolved supplier
+    identity before approval". The reviewer had made the call; nothing recorded
+    it.
+
+    Choosing the product is the pick, so confirming the variant must settle the
+    offer with it.
+    """
+    _seed_context(db)
+    product = _seed_product(db)
+    other = models.ProductVariant(
+        sku_code="STAGE-SKU-ALT", name="The other claimant", category="Food", status="ACTIVE",
+        storage_rule="any", created_at="2026-01-01T00:00:00", updated_at="2026-01-01T00:00:00",
+    )
+    db.add(other)
+    db.flush()
+    # Two legacy links, one supplier SKU, two different products: the collision.
+    for target in (product, other):
+        db.add(models.ProductSupplier(
+            product_id=target.id, supplier_id=14, supplier_sku="10447",
+            cost_source="manual", pack_source="manual", updated_at="2026-01-01T00:00:00",
+        ))
+    db.flush()
+
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = stages.MasteringService(db).prepare_candidate(
+        stages.PrepareMasteringCandidateCommand(
+            catalogue_item_id=staging_id, idempotency_key="ambiguous-offer",
+        )
+    ).output_ids[0]
+
+    row = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(candidate_id)).one()
+    assert json.loads(row.supplier_product_resolution_json)["state"] == "AMBIGUOUS", \
+        "two links on one supplier SKU must produce an ambiguous offer"
+
+    # The reviewer picks the product. They never touch the offering.
+    revision = stages.MasteringService(db).revise_candidate(
+        stages.ReviseMasteringCandidateCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            reason="This row is the first product.",
+            product_variant_resolution={
+                "state": "CONFIRMED_MATCH",
+                "canonical_sku": product.sku_code,
+                "product_variant_id": product.sku_code,
+                "product_variant_name": product.name,
+            },
+        )
+    ).output_ids[0]
+
+    revised = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(revision)).one()
+    supplier = json.loads(revised.supplier_product_resolution_json)
+    assert supplier["state"] == "CONFIRMED_MATCH", "the offer must settle with the variant"
+    assert supplier["supplier_product_id"], "and it must name which offering"
+
+    # Which is the whole point: it can now be approved.
+    decision = stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=revision,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-08-01T00:05:00+00:00",
+            reason="Picked.",
+            idempotency_key="approve-picked",
+        )
+    )
+    assert decision.metrics.created_count == 1
+
+
+def test_supplier_identity_survives_the_offering_backfill_renaming_it(db):
+    """A candidate must not become unapprovable because a row was renamed.
+
+    `supplier_product_id` is frozen when the candidate is prepared, and which
+    form it froze depends on what existed at that moment. Before the offering
+    baseline backfill a supplier match could only come from the legacy
+    ProductSupplier fallback, so the candidate holds
+    "legacy-product-supplier:{n}". The backfill then created a real
+    SupplierOffering for that same link under "supplier:{sid}:offer:link:{n}",
+    the matcher started preferring it, and the identity check compared two
+    names for one row and refused — 182 pending candidates, the whole queue,
+    409 on approve.
+    """
+    _seed_context(db)
+    product = _seed_product(db)
+    link = models.ProductSupplier(
+        product_id=product.id, supplier_id=14, supplier_sku="10447",
+        cost_source="manual", pack_source="manual", updated_at="2026-07-23T00:00:00",
+    )
+    db.add(link)
+    db.flush()
+
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = stages.MasteringService(db).prepare_candidate(
+        stages.PrepareMasteringCandidateCommand(
+            catalogue_item_id=staging_id,
+            idempotency_key="legacy-identity",
+            supplier_product_resolution={
+                "state": "PROPOSED_MATCH",
+                "supplier_id": 14,
+                # The pre-backfill form, exactly as 182 real candidates hold it.
+                "supplier_product_id": f"legacy-product-supplier:{link.id}",
+                "supplier_sku": "10447",
+            },
+            product_variant_resolution={
+                "state": "PROPOSED_MATCH",
+                "product_variant_id": product.sku_code,
+                "canonical_sku": product.sku_code,
+                "product_variant_name": product.name,
+            },
+        )
+    ).output_ids[0]
+
+    # The backfill lands: the same link becomes a first-class offering under a
+    # different key. Nothing about the supplier's identity has changed.
+    db.add(models.SupplierOffering(
+        supplier_product_key=f"supplier:14:offer:link:{link.id}",
+        legacy_product_supplier_id=link.id,
+        supplier_id=14, supplier_sku="10447", product_variant_id=product.id,
+        status="active", created_at="2026-07-31T00:00:00",
+    ))
+    db.flush()
+
+    decision = stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-07-31T00:05:00+00:00",
+            reason="Still the same supplier offering.",
+            idempotency_key="approve-after-backfill",
+        )
+    )
+    assert decision.metrics.created_count == 1
+
+
+def test_apply_and_publish_resolve_an_offering_under_any_key_scheme(db):
+    """Every checkpoint must find the offering by identity, not by key string.
+
+    `supplier_product_key` looks like an identity and isn't: the same row is
+    minted as "supplier:{sid}:offer:{sku}" by the pipeline and
+    "supplier:{sid}:offer:link:{n}" by offering_costs and the baseline backfill.
+    Looking up by key alone broke twice in a row — apply tried to INSERT a
+    duplicate and died on UNIQUE (supplier_id, supplier_sku), and once apply
+    was taught to adopt, publish then reported the perfectly good applied state
+    as missing. This drives the whole chain against a differently-keyed row.
+    """
+    _seed_context(db)
+    product = _seed_product(db)
+    db.add(models.SupplierOffering(
+        supplier_product_key="supplier:14:offer:link:9911",   # NOT the key apply computes
+        legacy_product_supplier_id=9911,
+        supplier_id=14, supplier_sku="10447", product_variant_id=product.id,
+        status="active", created_at="2026-07-31T00:00:00",
+    ))
+    db.flush()
+
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = _prepare_candidate(db, staging_id, key="any-key-scheme")
+
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-07-31T00:05:00+00:00",
+            reason="Approved.",
+            idempotency_key="approve-any-key",
+        )
+    )
+    stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(
+            mastering_candidate_id=candidate_id,
+            applied_at="2026-07-31T00:06:00+00:00",
+        )
+    )
+
+    offerings = db.query(models.SupplierOffering).filter_by(supplier_id=14, supplier_sku="10447").all()
+    assert len(offerings) == 1, "apply must adopt the existing offering, not insert a second"
+    assert offerings[0].supplier_product_key == "supplier:14:offer:link:9911", "the adopted row keeps its key"
+
+    # And publish must find that same row rather than declaring the applied
+    # state missing — the failure the reviewer actually hit.
+    result = stages.ServingPublicationService(db).publish(
+        stages.PublishServingItemCommand(
+            mastering_candidate_id=candidate_id,
+            publication_version="2026-07-31T00:07:00Z",
+            idempotency_key="publish-any-key",
+        )
+    )
+    assert result.metrics.created_count == 1
+    assert db.query(models.CatalogueServingPublication).filter_by(is_current=1).count() == 1
+
+
 def test_unmatched_canonical_product_cannot_be_approved_or_applied(db):
+    """PROPOSED_CREATE stays unapprovable even though CONFIRMED_CREATE is now allowed.
+
+    The difference is a human. PROPOSED_CREATE is only the matcher reporting
+    that it found nothing; a row still cannot reach apply until someone fills
+    in a draft and confirms it.
+    """
     _seed_context(db)
     raw_id = _capture_raw(db)
     staging_id = _build_claim(db, raw_id)
@@ -606,7 +821,7 @@ def test_unmatched_canonical_product_cannot_be_approved_or_applied(db):
         )
     ).output_ids[0]
 
-    with pytest.raises(stages.AmbiguousProductVariant, match="creation is not implemented"):
+    with pytest.raises(stages.AmbiguousProductVariant, match="must match an existing canonical product"):
         stages.ReviewDecisionService(db).record_decision(
             stages.RecordReviewDecisionCommand(
                 mastering_candidate_id=candidate_id,

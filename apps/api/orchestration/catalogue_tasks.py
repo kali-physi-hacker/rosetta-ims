@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+import time
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -21,8 +23,16 @@ from .catalogue_extraction_adapter import (
     extract_source_result,
 )
 from .catalogue_raw_stage import complete_raw_stage
-from .catalogue_run_lifecycle import claim_queued_run, complete_run, fail_run, terminal_result_for_replay
+from .catalogue_run_lifecycle import (
+    claim_queued_run,
+    complete_run,
+    fail_run,
+    mark_stage,
+    mark_stage_progress,
+    terminal_result_for_replay,
+)
 from .catalogue_source_loader import load_and_verify_source_asset
+from . import catalogue_reparse
 from .catalogue_stage_adapter import (
     evidence_from_persisted_observation,
     mastering_command_for_claim,
@@ -39,6 +49,11 @@ from .catalogue_types import (
 )
 
 
+# Nobody watching a progress bar can perceive faster than this, and each write
+# is a transaction competing with the extraction it is reporting on.
+_PROGRESS_WRITE_INTERVAL_SECONDS = 1.0
+
+
 @task(name="load-and-claim-catalogue-run", retries=0)
 def load_and_claim_run_task(ingestion_run_id: str) -> None:
     db = database.SessionLocal()
@@ -46,6 +61,57 @@ def load_and_claim_run_task(ingestion_run_id: str) -> None:
         claim_queued_run(db, ingestion_run_id=UUID(ingestion_run_id))
     finally:
         db.close()
+
+
+def report_stage(ingestion_run_id: str, stage: str, *, units_total: int | None = None) -> None:
+    """Record where the run has reached, for anything watching it.
+
+    Deliberately NOT a task and deliberately silent on failure. Progress is a
+    report about the work; a run that completes perfectly but could not write
+    "interpreting" to a column has not failed, and must not be recorded as
+    having done so.
+    """
+
+    db = database.SessionLocal()
+    try:
+        mark_stage(db, ingestion_run_id=UUID(ingestion_run_id), stage=stage, units_total=units_total)
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
+def _unit_progress_writer(ingestion_run_id: str):
+    """A callback that writes page progress, throttled to at most one write/sec.
+
+    Pages land from several pool threads at once. Writing every one of them
+    would put an unbounded number of small transactions in the path of the
+    extraction itself, and nobody watching a bar can perceive faster than about
+    a second anyway. The final unit always writes, so the count never rests
+    short of its total.
+    """
+
+    lock = threading.Lock()
+    last_written = 0.0
+
+    def write(done: int, total: int) -> None:
+        nonlocal last_written
+        now = time.monotonic()
+        with lock:
+            if done < total and now - last_written < _PROGRESS_WRITE_INTERVAL_SECONDS:
+                return
+            last_written = now
+        db = database.SessionLocal()
+        try:
+            mark_stage_progress(
+                db, ingestion_run_id=UUID(ingestion_run_id), units_done=done, units_total=total
+            )
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+
+    return write
 
 
 @task(name="terminal-catalogue-run-replay", retries=0)
@@ -67,6 +133,9 @@ def raw_stage_task(ingestion_run_id: str) -> RawStageResult:
 
     db = database.SessionLocal()
     try:
+        # A re-parse never opens the file — see reparse_raw_stage.
+        if catalogue_reparse.is_reparse(db, UUID(ingestion_run_id)):
+            return catalogue_reparse.reparse_raw_stage(db, ingestion_run_id=UUID(ingestion_run_id))
         return complete_raw_stage(db, ingestion_run_id=UUID(ingestion_run_id))
     finally:
         db.close()
@@ -99,13 +168,23 @@ def extract_source_evidence_task(ingestion_run_id: str) -> EvidenceOutcome:
     surviving beyond the raw stage.
     """
 
+    # A re-parse already has the evidence — it exists to change what we make of
+    # it, not to re-derive it. Reading the RAW layer here keeps the rest of the
+    # flow identical and never reaches the provider.
     db = database.SessionLocal()
     try:
+        if catalogue_reparse.is_reparse(db, UUID(ingestion_run_id)):
+            stored = catalogue_reparse.load_stored_evidence(db, ingestion_run_id=UUID(ingestion_run_id))
+            return EvidenceOutcome(
+                observations=stored.observations,
+                rejected_units=0,
+                warnings=(f"re-parsed {len(stored.observations)} stored observations from run {stored.source_run_uuid}",),
+            )
         asset = load_and_verify_source_asset(db, ingestion_run_id=UUID(ingestion_run_id))
     finally:
         db.close()
     started_at = datetime.now(timezone.utc)
-    result = extract_source_result(asset)
+    result = extract_source_result(asset, on_unit_complete=_unit_progress_writer(ingestion_run_id))
     db = database.SessionLocal()
     try:
         from services.catalogue_extraction_attempts import persist_extraction_attempt

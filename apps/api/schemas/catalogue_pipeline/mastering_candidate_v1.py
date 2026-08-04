@@ -43,6 +43,37 @@ class SupplierProductResolution(ResolutionBase):
     barcode: str | None = Field(None, description="Supplier/offering barcode.")
 
 
+class DuplicateCandidate(ContractModel):
+    """A product the duplicate radar surfaced while a create draft was open."""
+
+    sku_code: str = Field(..., description="Existing canonical SKU the radar matched.")
+    name: str | None = Field(None, description="Existing product name.")
+    score: Decimal = Field(..., ge=Decimal("0"), le=Decimal("1"), description="Name similarity at the time of the decision.")
+
+
+class ProposedVariantDraft(ContractModel):
+    """A human's filled-in intent to create a canonical product.
+
+    Present only on CONFIRMED_CREATE. It exists because the pipeline cannot
+    supply what `products` requires: `category` is non-nullable and also picks
+    the SKU digit, and the extractor's `proposed_name` is frequently malformed
+    (it concatenates a range label with a product label, giving names like
+    "i/d i/d Adult 1+ Canned"). A person writes the name.
+    """
+
+    name: str = Field(..., min_length=2, description="Product name a human wrote. Not the extractor's proposed_name.")
+    category: str = Field(..., min_length=1, description="Item category; must map to a SKU digit.")
+    brand: str | None = Field(None, description="Brand, free text, matching the existing column.")
+    uom: str | None = Field(None, description="Sell unit.")
+    pack_unit: str | None = Field(None, description="Purchasing pack noun.")
+    storage_rule: str | None = Field(None, description="Storage rule; defaults to 'any'.")
+    duplicate_ack: str | None = Field(None, description="Why this is not the near-duplicate the radar showed.")
+    checked_against: list[DuplicateCandidate] = Field(
+        default_factory=list,
+        description="What the radar found when the human confirmed — freezes the evidence they acted on.",
+    )
+
+
 class ProductVariantResolution(ResolutionBase):
     """Resolution of the canonical inventory identity / Product Variant."""
 
@@ -51,6 +82,16 @@ class ProductVariantResolution(ResolutionBase):
     product_variant_name: str | None = Field(None, description="Canonical variant name.")
     product_family_id: str | None = Field(None, description="Optional Product Family enrichment.")
     proposed_name: str | None = Field(None, description="Name to use when proposing creation.")
+    proposed_variant: ProposedVariantDraft | None = Field(
+        None,
+        description="Filled-in create intent. Required for CONFIRMED_CREATE; the SKU itself is minted at apply.",
+    )
+    created_product_sku: str | None = Field(
+        None,
+        description="SKU apply actually minted for this candidate. Written by apply, never by a reviewer — "
+                    "it is what the create decision turned into, and it makes replay and publish resolve the row "
+                    "like an ordinary match.",
+    )
 
     @model_validator(mode="after")
     def _state_has_variant_identity(self):
@@ -60,6 +101,10 @@ class ProductVariantResolution(ResolutionBase):
         if self.state in {ResolutionState.PROPOSED_CREATE, ResolutionState.CONFIRMED_CREATE}:
             if not (self.canonical_sku or self.proposed_name or self.product_variant_name):
                 raise ValueError("created Product Variant resolution requires canonical_sku, proposed_name, or product_variant_name")
+        # PROPOSED_CREATE is the machine's guess and carries no draft. Confirming
+        # a create is a human act, and the draft is the evidence of it.
+        if self.state is ResolutionState.CONFIRMED_CREATE and self.proposed_variant is None and not self.canonical_sku:
+            raise ValueError("CONFIRMED_CREATE requires proposed_variant (name + category)")
         return self
 
 

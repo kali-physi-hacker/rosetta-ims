@@ -40,7 +40,6 @@ from schemas.catalogue_pipeline.enums import ExtractionMethod  # noqa: E402
 from services import catalogue_evidence_extraction  # noqa: E402
 from services import catalogue_conformance  # noqa: E402
 from services import catalogue_pipeline_stages as stages  # noqa: E402
-from services import extraction_service  # noqa: E402
 from services.catalogue_submission import CatalogueSubmissionCommand, CatalogueSubmissionService  # noqa: E402
 
 
@@ -76,9 +75,8 @@ def forbid_understanding(monkeypatch):
 
     monkeypatch.setattr(anthropic, "Anthropic", _forbidden("anthropic.Anthropic"))
     monkeypatch.setattr(catalogue_evidence_extraction, "extract_evidence", _forbidden("evidence extraction"))
-    monkeypatch.setattr(catalogue_evidence_extraction, "_call_gemini_vision", _forbidden("vision OCR"))
+    monkeypatch.setattr(catalogue_evidence_extraction, "_call_vision", _forbidden("vision OCR"))
     monkeypatch.setattr(catalogue_conformance, "conform_observations", _forbidden("conformance"))
-    monkeypatch.setattr(extraction_service, "extract", _forbidden("legacy extraction"))
     monkeypatch.setattr(pypdf.PageObject, "extract_text", _forbidden("PDF text extraction"))
     monkeypatch.setattr(stages.ExtractedEvidenceService, "capture", _forbidden("raw observation persistence"))
     monkeypatch.setattr(stages.NormalizedRowService, "build_item", _forbidden("staging persistence"))
@@ -348,10 +346,10 @@ def test_extraction_consumes_durable_reference_after_raw_completes(db, monkeypat
     # PDF extraction routes to the vision provider (stubbed here) to produce
     # column-labeled cells; the point of this test is that extraction reloads
     # the DURABLE stored original, not any in-memory raw-stage object.
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr(
         catalogue_evidence_extraction,
-        "_call_gemini_vision",
+        "_call_vision",
         lambda content, *, media_type: catalogue_evidence_extraction._VisionResponse(
             text=json.dumps(
                 {
@@ -466,6 +464,28 @@ def test_raw_stage_attempt_rows_contain_only_file_level_facts():
     }
 
 
+def test_legacy_semantic_extraction_module_stays_deleted():
+    """`services/extraction_service.py` is gone; it must not come back.
+
+    It served only the v1 upload/reparse endpoints, removed in 51ac687, leaving
+    ~530 lines of unreachable Claude calls behind a module the README still
+    described as "the OCR pipeline" — the real OCR is Gemini vision inside
+    catalogue_evidence_extraction. Three boundary tests used to monkeypatch
+    `extraction_service.extract` to prove the v2 pipeline never called it;
+    deleting the module is the stronger version of that guarantee, and this
+    asserts it holds.
+    """
+    import importlib
+
+    backend_root = Path(__file__).resolve().parent.parent
+    assert not (backend_root / "services" / "extraction_service.py").exists(), (
+        "services/extraction_service.py is back — the v1 extraction path is retired; "
+        "the v2 pipeline is catalogue_evidence_extraction -> catalogue_conformance"
+    )
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("services.extraction_service")
+
+
 def test_raw_stage_module_import_boundary():
     """Architectural regression test over the TRANSITIVE import closure.
 
@@ -485,7 +505,6 @@ def test_raw_stage_module_import_boundary():
         "google",
         "pytesseract",
         "PIL",
-        "services.extraction_service",
         "services.catalogue_evidence_extraction",
         "services.catalogue_conformance",
         "services.tagging_service",

@@ -4,8 +4,7 @@ One attempt to extract data from one uploaded supplier catalogue file (a
 CatalogueImport / Catalogue Source Asset, in v1 terms). This module is
 intentionally isolated: it defines a new table and imports existing v1
 classes for read-only relationship convenience only — it never edits
-models.py, and nothing in routers/v1 or services/extraction_service.py
-references it. Wiring a real upload into creating one of these rows is a
+models.py, and nothing in routers/v1 references it. Wiring a real upload into creating one of these rows is a
 separate, later change (CIS-104.2).
 
 Reprocessing a source document always creates a new row (a new `id`) rather
@@ -43,6 +42,39 @@ TERMINAL_STATUSES = frozenset({
     IngestionRunStatus.FAILED.value,
     IngestionRunStatus.CANCELLED.value,
 })
+
+
+class IngestionStage(str, enum.Enum):
+    """Where the machine work has reached, in the order the flow runs it.
+
+    Named for what a person waiting on the run would say is happening, not for
+    the internal layer boundaries — "reading the file" rather than STAGING.
+    The layer names still govern the code; they are simply not what someone
+    watching a progress bar needs to be told.
+    """
+
+    VERIFYING_SOURCE = "verifying_source"       # RAW: file preserved, hashed, audited
+    RESOLVING_CONTRACT = "resolving_contract"   # which supplier contract governs this run
+    EXTRACTING = "extracting"                   # STAGING: the vision pass — the long one
+    RECORDING_EVIDENCE = "recording_evidence"   # persisting verbatim observations
+    INTERPRETING = "interpreting"               # INTERMEDIATE: conformance against the contract
+    VALIDATING = "validating"                   # issues raised against normalized rows
+    PREPARING_REVIEW = "preparing_review"       # mastering candidates for the review desk
+
+
+# What each stage is called in the interface. Kept beside the enum so a stage
+# added to the flow without a label is obvious at the point of the change.
+STAGE_LABELS: dict[str, str] = {
+    IngestionStage.VERIFYING_SOURCE.value: "Verifying the file",
+    IngestionStage.RESOLVING_CONTRACT.value: "Resolving the supplier contract",
+    IngestionStage.EXTRACTING.value: "Reading the catalogue",
+    IngestionStage.RECORDING_EVIDENCE.value: "Recording what was read",
+    IngestionStage.INTERPRETING.value: "Interpreting against the contract",
+    IngestionStage.VALIDATING.value: "Checking for problems",
+    IngestionStage.PREPARING_REVIEW.value: "Preparing the review desk",
+}
+
+STAGE_ORDER: tuple[str, ...] = tuple(stage.value for stage in IngestionStage)
 
 
 @dataclass
@@ -118,6 +150,21 @@ class IngestionRun(Base):
     status = Column(String, nullable=False, default=IngestionRunStatus.QUEUED.value)
     started_at = Column(String, nullable=True)      # ISO datetime; null while queued
     completed_at = Column(String, nullable=True)    # ISO datetime; set once status is terminal
+
+    # Live progress — where the machine work is RIGHT NOW.
+    #
+    # `status` only distinguishes queued from running, so a 56-page catalogue
+    # showed the word "running" and nothing else for several minutes. These
+    # columns are written as the flow advances, which is what makes a long run
+    # legible while it is still going rather than only once it has finished.
+    #
+    # All nullable and never read by the pipeline itself: progress is a report
+    # about the work, never an input to it. A run that pre-dates these columns,
+    # or a worker that dies mid-stage, simply reports nothing.
+    stage = Column(String, nullable=True)            # see IngestionStage
+    stage_started_at = Column(String, nullable=True)  # ISO datetime; when the current stage began
+    units_done = Column(Integer, nullable=True)      # pages/worksheets finished within the stage
+    units_total = Column(Integer, nullable=True)     # pages/worksheets the stage will attempt
 
     # Operational facts.
     items_extracted = Column(Integer, nullable=True)

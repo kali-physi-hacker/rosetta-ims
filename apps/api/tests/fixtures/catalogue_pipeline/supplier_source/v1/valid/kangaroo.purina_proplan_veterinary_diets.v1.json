@@ -16,7 +16,7 @@
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-      "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+      "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
       "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
     },
     {
@@ -54,6 +54,8 @@
     "row_eligibility_rules": [
       "Rows with SKU# and Supply Price / Pack are candidate catalogue rows."
     ],
+    "discontinued_markers": [],
+    "row_identity_fields": [],
     "skip_rules": [],
     "source_location_expectations": [
       "page number",
@@ -79,7 +81,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {
@@ -87,7 +89,15 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "description",
@@ -102,7 +112,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {
@@ -110,7 +120,15 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "packs_per_case",
@@ -125,7 +143,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {
@@ -133,7 +151,15 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "pack_size",
@@ -148,7 +174,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {
@@ -156,7 +182,15 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "cost",
@@ -171,7 +205,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {
@@ -179,7 +213,15 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "rrp",
@@ -194,7 +236,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {
@@ -202,7 +244,15 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "effective_date",
@@ -217,7 +267,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {
@@ -225,7 +275,15 @@
           "reference": "label I supplied: KPN Kangaroo",
           "note": "I supplied the supplier identity; numeric Rosetta supplier id was not present in the clean checkout."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     }
   ],
   "pricing": {
@@ -252,6 +310,8 @@
     "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
     "content_measure_uom": null,
+    "purchase_uom_source_field": null,
+    "price_basis_follows_purchase_unit": false,
     "order_increment_source_field": null,
     "minimum_order_source_field": null,
     "break_pack_allowed": null,
@@ -282,7 +342,7 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:\u2714 Proplan PPVD & PPSD Product List 202412 New packing.pdf",
+          "reference": "external-sample:✔ Proplan PPVD & PPSD Product List 202412 New packing.pdf",
           "note": "I supplied a 3-page Excel-produced PDF sample with Product List, Packs/Case, Size, Supply Price/Pack HK$, Retail Price/Pack HK$, SKU, and Effective from DEC 2024."
         },
         {

@@ -17,6 +17,7 @@ from pypdf.generic import (
 from orchestration.catalogue_stage_adapter import raw_input_from_extracted_evidence
 from schemas.catalogue_pipeline.enums import ExtractionMethod, SourceFormat
 from services import catalogue_evidence_extraction as evidence_service
+from services import catalogue_vision_provider as vision_provider
 from services import catalogue_evidence_extraction
 from services.catalogue_evidence_extraction import ExtractionStatus
 
@@ -104,7 +105,7 @@ def test_csv_preserves_coordinates_raw_values_empty_cells_and_duplicate_rows():
 
 
 def test_vision_extraction_records_actual_provider_metadata_and_png_media_type(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     called: dict[str, str] = {}
 
     def fake_vision(content: bytes, *, media_type: str):
@@ -127,7 +128,7 @@ def test_vision_extraction_records_actual_provider_metadata_and_png_media_type(m
             request_id="msg_test_123",
         )
 
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
 
     result = catalogue_evidence_extraction.extract_evidence(b"png-bytes", "catalogue.png", "image/png")
 
@@ -135,15 +136,15 @@ def test_vision_extraction_records_actual_provider_metadata_and_png_media_type(m
     assert called["media_type"] == "image/png"
     observation = result.observations[0]
     assert observation.extraction_method == ExtractionMethod.MODEL_VISION
-    assert observation.provider == "google"
+    assert observation.provider == "anthropic"
     assert observation.provider_request_id == "msg_test_123"
-    assert observation.model == evidence_service.GEMINI_MODEL
+    assert observation.model == vision_provider.DEFAULT_ANTHROPIC_MODEL
     assert observation.confidence == Decimal("0.91")
     assert observation.source_location.bounding_box.width == Decimal("200")
 
 
 def test_vision_response_rejects_semantic_product_fields(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
 
     def fake_vision(_content: bytes, *, media_type: str):
         assert media_type == "image/jpeg"
@@ -163,7 +164,7 @@ def test_vision_response_rejects_semantic_product_fields(monkeypatch):
             )
         )
 
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
 
     result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
 
@@ -173,7 +174,7 @@ def test_vision_response_rejects_semantic_product_fields(monkeypatch):
 
 
 def test_vision_response_rejects_normalized_numeric_raw_cells(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
 
     def fake_vision(_content: bytes, *, media_type: str):
         assert media_type == "image/jpeg"
@@ -187,7 +188,7 @@ def test_vision_response_rejects_normalized_numeric_raw_cells(monkeypatch):
             )
         )
 
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
 
     result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
 
@@ -355,9 +356,9 @@ def test_garbled_or_unreliable_text_layer_is_classified_for_vision():
 
 
 def test_empty_vision_array_without_outcome_fails_the_page(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     fake_vision, _ = _vision_stub([{"rows": []}])
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
     content = _pdf_pages([{"text": None, "image": True}])
 
     result = catalogue_evidence_extraction.extract_evidence(content, "empty.pdf", "application/pdf")
@@ -369,9 +370,9 @@ def test_empty_vision_array_without_outcome_fails_the_page(monkeypatch):
 
 
 def test_evidence_outcome_with_empty_array_is_malformed_not_empty_page(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     fake_vision, _ = _vision_stub([{"page_outcome": "evidence", "rows": []}])
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
 
     result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
 
@@ -380,9 +381,9 @@ def test_evidence_outcome_with_empty_array_is_malformed_not_empty_page(monkeypat
 
 
 def test_explicit_no_catalogue_evidence_page_is_accounted_without_fake_observations(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     fake_vision, _ = _vision_stub([{"page_outcome": "no_catalogue_evidence", "rows": []}])
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
     content = _pdf_pages([{"text": None, "image": True}])
 
     result = catalogue_evidence_extraction.extract_evidence(content, "cover.pdf", "application/pdf")
@@ -395,10 +396,10 @@ def test_explicit_no_catalogue_evidence_page_is_accounted_without_fake_observati
 
 
 def test_no_catalogue_evidence_with_observations_is_malformed(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     payload = {"page_outcome": "no_catalogue_evidence", "rows": _EVIDENCE_PAYLOAD["rows"]}
     fake_vision, _ = _vision_stub([payload])
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
 
     result = catalogue_evidence_extraction.extract_evidence(b"jpeg-bytes", "catalogue.jpg", "image/jpeg")
 
@@ -433,31 +434,41 @@ def test_vision_observation_identity_is_stable_across_reordered_retries():
     assert len(keys_a) == 3  # the duplicate row keeps a distinct ordinal identity
 
 
-def test_provider_failure_classification_reads_gemini_http_status():
-    # google-genai API errors carry the HTTP status on `.code`; classification
-    # keys off that (429/5xx retry, 401/403 config, other 4xx non-retryable).
-    class _ApiError(Exception):
+def test_provider_failure_classification_reads_either_vendors_http_status():
+    """Both SDKs report the status; the pipeline's retry policy is one rule.
+
+    google-genai puts it on `.code`, Anthropic on `.status_code` — and 529
+    (overloaded) is Anthropic's, which must read as retryable like any 5xx.
+    """
+
+    class _GoogleError(Exception):
         def __init__(self, code):
             super().__init__(f"gemini {code}")
             self.code = code
 
-    rate_limited = evidence_service._classify_provider_failure(_ApiError(429))
-    assert rate_limited.retryable is True
-    assert rate_limited.code == "TRANSIENT_PROVIDER_ERROR"
+    class _AnthropicError(Exception):
+        def __init__(self, status_code):
+            super().__init__(f"anthropic {status_code}")
+            self.status_code = status_code
 
-    server = evidence_service._classify_provider_failure(_ApiError(503))
-    assert server.retryable is True
+    for error in (_GoogleError, _AnthropicError):
+        rate_limited = vision_provider.classify_provider_failure(error(429))
+        assert rate_limited.retryable is True
+        assert rate_limited.code == "TRANSIENT_PROVIDER_ERROR"
 
-    unauthorized = evidence_service._classify_provider_failure(_ApiError(401))
-    assert unauthorized.retryable is False
-    assert unauthorized.code == "EXTRACTION_CONFIGURATION_ERROR"
+        assert vision_provider.classify_provider_failure(error(503)).retryable is True
+        assert vision_provider.classify_provider_failure(error(529)).retryable is True
 
-    bad_request = evidence_service._classify_provider_failure(_ApiError(400))
-    assert bad_request.retryable is False
-    assert bad_request.code == "PROVIDER_ERROR"
+        unauthorized = vision_provider.classify_provider_failure(error(401))
+        assert unauthorized.retryable is False
+        assert unauthorized.code == "EXTRACTION_CONFIGURATION_ERROR"
+
+        bad_request = vision_provider.classify_provider_failure(error(400))
+        assert bad_request.retryable is False
+        assert bad_request.code == "PROVIDER_ERROR"
 
     # Network-level failures have no HTTP status -> conservative message heuristic.
-    timeout = evidence_service._classify_provider_failure(TimeoutError("deadline exceeded / connection timeout"))
+    timeout = vision_provider.classify_provider_failure(TimeoutError("deadline exceeded / connection timeout"))
     assert timeout.retryable is True
 
 
@@ -514,7 +525,6 @@ def test_stage3_extraction_import_boundary():
     )
     forbidden = {
         "services.catalogue_conformance",       # Intermediate layer
-        "services.extraction_service",             # legacy semantic extraction
         "services.catalogue_pipeline_stages",      # staging/validation/mastering/serving services
         "services.tagging_service",
         "services.sku_service",
@@ -533,8 +543,8 @@ def test_vision_provider_is_reachable_only_through_the_stage3_provider_seam():
     backend_root = Path(__file__).resolve().parent.parent
     seam = (backend_root / "services" / "catalogue_evidence_extraction.py").read_text()
     tree = ast.parse(seam)
-    # No AI provider is imported at module top level — the client (google.genai)
-    # loads lazily inside the vision function only.
+    # No AI provider is imported at module top level — neither client (anthropic,
+    # google.genai) loads until a page is actually sent.
     top_level = set()
     for node in tree.body:
         if isinstance(node, ast.Import):
@@ -543,6 +553,15 @@ def test_vision_provider_is_reachable_only_through_the_stage3_provider_seam():
             top_level.add(node.module.split(".")[0])
     assert "google" not in top_level, "vision provider client must stay behind the function-level seam"
     assert "anthropic" not in top_level
+    # Same rule inside the provider module, which is where the clients now live.
+    provider_tree = ast.parse((backend_root / "services" / "catalogue_vision_provider.py").read_text())
+    provider_top = set()
+    for node in provider_tree.body:
+        if isinstance(node, ast.Import):
+            provider_top.update(a.name.split(".")[0] for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            provider_top.add(node.module.split(".")[0])
+    assert not {"google", "anthropic"} & provider_top, "clients load lazily, inside the call"
 
 
 # ── Fix 1 follow-up: typed page modes, decorative vs material images ────────
@@ -633,7 +652,7 @@ def _vision_envelope(rows: list[dict[str, str]]) -> str:
 
 
 def test_pdf_pages_are_extracted_via_vision_into_column_labeled_cells(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     seen: dict[str, str] = {}
 
     def fake_vision(content: bytes, *, media_type: str):
@@ -643,7 +662,7 @@ def test_pdf_pages_are_extracted_via_vision_into_column_labeled_cells(monkeypatc
             request_id="msg_pdf_1",
         )
 
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake_vision)
     content = _pdf_with_pages(["Hills Catalogue"])
 
     result = catalogue_evidence_extraction.extract_evidence(content, "hills.pdf", "application/pdf")
@@ -655,7 +674,7 @@ def test_pdf_pages_are_extracted_via_vision_into_column_labeled_cells(monkeypatc
     assert len(result.observations) == 1
     observation = result.observations[0]
     assert observation.extraction_method == ExtractionMethod.MODEL_VISION
-    assert observation.provider == "google"
+    assert observation.provider == "anthropic"
     assert observation.provider_request_id == "msg_pdf_1"
     assert observation.source_location.page_number == 1
     assert observation.confidence == Decimal("0.95")
@@ -711,7 +730,7 @@ def test_vision_envelope_preserves_multiple_tables_and_document_level_text():
 
 
 def test_pdf_retries_only_the_transiently_failed_page(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     calls = 0
 
     def transient_then_success(_content: bytes, *, media_type: str):
@@ -731,7 +750,7 @@ def test_pdf_retries_only_the_transiently_failed_page(monkeypatch):
 
     monkeypatch.setattr(
         evidence_service,
-        "_call_gemini_vision",
+        "_call_vision",
         transient_then_success,
     )
 
@@ -748,7 +767,7 @@ def test_pdf_retries_only_the_transiently_failed_page(monkeypatch):
 
 
 def test_pdf_without_configured_vision_provider_is_a_configuration_error(monkeypatch):
-    for _key in ("GEMINI_API_KEY", "GOOGLE_API_KEY"):
+    for _key in ("ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"):
         monkeypatch.delenv(_key, raising=False)
     content = _pdf_with_pages(["Product Code | Size\n10447 | 82g"])
 
@@ -757,8 +776,8 @@ def test_pdf_without_configured_vision_provider_is_a_configuration_error(monkeyp
     assert result.status == ExtractionStatus.FAILED
     assert result.observations == ()
     assert result.errors[0].code == "EXTRACTION_CONFIGURATION_ERROR"
-    assert result.errors[0].provider == "google"
-    assert result.errors[0].message == "PDF evidence extraction requires a configured vision provider"
+    assert result.errors[0].provider == "anthropic"
+    assert result.errors[0].message == "PDF evidence extraction requires a configured anthropic vision provider"
 
 
 def test_csv_cells_carry_column_name_from_header_row():
@@ -800,7 +819,7 @@ def test_strict_json_object_recovers_trailing_structural_debris():
 def test_retry_backoff_sleeps_linearly_then_succeeds(monkeypatch):
     """Backoff sequence: base x1 before retry 1, base x2 before retry 2; no
     sleep on success and none after a permanent failure."""
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     monkeypatch.setattr(evidence_service, "_VISION_RETRY_BACKOFF_SECONDS", 7.0)
     sleeps: list[float] = []
     monkeypatch.setattr(evidence_service.time, "sleep", lambda s: sleeps.append(s))
@@ -815,7 +834,7 @@ def test_retry_backoff_sleeps_linearly_then_succeeds(monkeypatch):
             )
         return evidence_service._VisionResponse(text=json.dumps(_EVIDENCE_PAYLOAD))
 
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", flaky_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", flaky_vision)
     result = catalogue_evidence_extraction.extract_evidence(_pdf_with_pages([None]), "x.pdf", "application/pdf")
 
     assert result.status == ExtractionStatus.COMPLETE
@@ -830,7 +849,7 @@ def test_retry_backoff_sleeps_linearly_then_succeeds(monkeypatch):
             code="EXTRACTION_CONFIGURATION_ERROR", public_message="bad config", retryable=False
         )
 
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", permanent_vision)
+    monkeypatch.setattr(evidence_service, "_call_vision", permanent_vision)
     failed = catalogue_evidence_extraction.extract_evidence(_pdf_with_pages([None]), "x.pdf", "application/pdf")
     assert failed.status == ExtractionStatus.FAILED
     assert sleeps == []
@@ -839,7 +858,7 @@ def test_retry_backoff_sleeps_linearly_then_succeeds(monkeypatch):
 def test_suspiciously_sparse_page_is_warned_not_failed(monkeypatch):
     """A valid evidence page with 1 row next to a 10-row sibling gets a
     completeness warning; the run still completes."""
-    monkeypatch.setenv("GEMINI_API_KEY", "configured-for-test")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
 
     dense = {
         "page_outcome": "evidence",
@@ -855,7 +874,7 @@ def test_suspiciously_sparse_page_is_warned_not_failed(monkeypatch):
         "rows": [{"text": "LONE-1 | Only row | HK$1.00", "box": [0, 0, 100, 10], "confidence": "0.9"}],
     }
     fake, _ = _vision_stub([dense, sparse])
-    monkeypatch.setattr(evidence_service, "_call_gemini_vision", fake)
+    monkeypatch.setattr(evidence_service, "_call_vision", fake)
 
     result = catalogue_evidence_extraction.extract_evidence(
         _pdf_with_pages([None, None]), "two-pages.pdf", "application/pdf"
@@ -864,3 +883,63 @@ def test_suspiciously_sparse_page_is_warned_not_failed(monkeypatch):
     assert result.status == ExtractionStatus.COMPLETE
     sparse_warnings = [w for w in result.warnings if "suspiciously sparse" in w]
     assert sparse_warnings and sparse_warnings[0].startswith("page:2")
+
+
+def test_a_section_banner_with_no_rows_does_not_fail_the_page(monkeypatch):
+    """Emitting a table per banner means some banners have no rows on this page.
+
+    Live: a 56-page Alfamedic run failed three times, on a different page each
+    time, one of them for exactly this — a "- Genito-urinary -" heading whose
+    rows continue overleaf. Refusing the page discarded every row it did have.
+    """
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    envelope = {
+        "page_outcome": "evidence",
+        "tables": [
+            {"section": "- Genito-urinary -", "columns": ["Order Code", "Price"], "rows": []},
+            {"section": "- Dermatology -", "columns": ["Order Code", "Price"],
+             "rows": [{"cells": ["ALO250", "58.0"], "confidence": "0.95"}]},
+        ],
+    }
+    monkeypatch.setattr(evidence_service, "_call_vision",
+                        lambda content, *, media_type: evidence_service._VisionResponse(text=json.dumps(envelope)))
+    content = _pdf_with_pages([""])
+    result = catalogue_evidence_extraction.extract_evidence(content, "a.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert len(result.observations) == 1, "the empty banner contributes nothing and blocks nothing"
+    assert result.observations[0].source_metadata["section"] == "- Dermatology -"
+
+
+def test_a_page_with_no_catalogue_rows_may_still_carry_document_text(monkeypatch):
+    """A page can genuinely have no product lines and still print an effective
+    date. Refusing it discarded the classification AND the text."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    envelope = {
+        "page_outcome": "no_catalogue_evidence",
+        "tables": [],
+        "text_observations": [{"text": "Effective on 01 Mar 2026", "confidence": "0.9"}],
+    }
+    monkeypatch.setattr(evidence_service, "_call_vision",
+                        lambda content, *, media_type: evidence_service._VisionResponse(text=json.dumps(envelope)))
+    content = _pdf_with_pages([""])
+    result = catalogue_evidence_extraction.extract_evidence(content, "a.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.COMPLETE
+    assert result.unit_outcomes[0].status.value == "NO_CATALOGUE_EVIDENCE"
+
+
+def test_a_page_classified_empty_that_carries_product_rows_is_still_refused(monkeypatch):
+    """That is the case the rule exists for — it would hide a truncated table."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
+    envelope = {
+        "page_outcome": "no_catalogue_evidence",
+        "tables": [{"columns": ["Order Code"], "rows": [{"cells": ["ALO250"], "confidence": "0.9"}]}],
+    }
+    monkeypatch.setattr(evidence_service, "_call_vision",
+                        lambda content, *, media_type: evidence_service._VisionResponse(text=json.dumps(envelope)))
+    content = _pdf_with_pages([""])
+    result = catalogue_evidence_extraction.extract_evidence(content, "a.pdf", "application/pdf")
+
+    assert result.status == ExtractionStatus.FAILED
+    assert result.errors[0].code == "MALFORMED_PROVIDER_RESPONSE"

@@ -152,8 +152,9 @@ def _rows_for_push(db) -> list[dict]:
             continue
         ps = primary.get(p.id)
         unit_cost = None
-        if ps and ps.basic_cost:
-            unit_cost = round(ps.basic_cost / ps.units_per_pack, 4) if ps.units_per_pack else ps.basic_cost
+        pack_cost = pricing_service.effective_pack_cost(ps) if ps else None
+        if pack_cost:
+            unit_cost = round(pack_cost / ps.units_per_pack, 4) if ps.units_per_pack else pack_cost
         prim_sup = ps.supplier_id if ps else None
         alt_ids = [s for s in dict.fromkeys(alts.get(p.id, [])) if s and s != prim_sup]
         rows.append({

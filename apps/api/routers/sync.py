@@ -1,33 +1,22 @@
 """
-Google Sheet sync endpoints.
+Outbound sync endpoints.
 
-POST /sync/sheet        Re-sync all products FROM the SSOT Google Sheet (pull)
-GET  /sync/status       When was the last pull and what changed
-POST /sync/push-sheet   Push IMS-owned columns TO the SSOT sheet (write; dry-run by default)
+POST /sync/algo         Pull real sales + inventory expiry from the algo-dashboard Postgres
+POST /sync/push-sheet   Push IMS-owned columns TO the reporting Google Sheet (dry-run by default)
+
+The inbound Google Sheet ingestion was retired — the sheet is no longer a
+source of product, cost or stock data. Cost lives in supplier offerings and
+arrives through catalogue review; stock is adjusted in the app.
 """
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 import database
 import models
-from services.sheet_sync import run_sync, read_last_sync
 from services import sheet_push, audit_log, algo_sync
 from permissions import require_capability
 
 router = APIRouter(prefix="/sync", tags=["sync"])
-
-
-@router.post("/sheet")
-def sync_from_sheet(request: Request, db: Session = Depends(database.get_db),
-                    user: models.User = Depends(require_capability("sheet"))):
-    """Fetch the Google Sheet SKU master and upsert all products, costs, stock, and sales velocity."""
-    audit_log.record(db, action="sheet.pull", actor=user, entity_type="sheet",
-                     entity_label="SSOT sheet", request=request, commit=True)
-    result = run_sync()
-    if "error" in result:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=500, detail=result["error"])
-    return result
 
 
 @router.post("/algo")
@@ -44,14 +33,6 @@ def sync_from_algo_dashboard(request: Request, db: Session = Depends(database.ge
         return algo_sync.run_algo_sync(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Algo sync failed: {e}")
-
-
-@router.get("/status")
-def sync_status():
-    last = read_last_sync()
-    if not last:
-        return {"synced": False, "synced_at": None}
-    return {"synced": True, **last}
 
 
 @router.post("/push-sheet")

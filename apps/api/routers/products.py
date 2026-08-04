@@ -11,7 +11,7 @@ from datetime import datetime, date
 
 import models
 import database
-from services.pricing_service import product_to_dict
+from services.pricing_service import product_to_dict, effective_pack_cost, expiry_batches
 from services import offering_costs, tag_service, audit, audit_log
 from dependencies import get_current_user, require_user
 from permissions import require_capability, has_capability, SENSITIVE_PRODUCT_FIELDS
@@ -53,6 +53,70 @@ def _verified_skus(db: Session) -> set:
         else:
             verified.add(str(sku))
     return verified
+
+
+def _catalogue_reviewed_skus(db: Session) -> dict:
+    """SKU -> who reviewed it in the catalogue review desk, and when.
+
+    A SKU is here because a human worked its candidate to APPROVED and
+    published it — the review the pipeline actually records. This is a
+    different, narrower fact than the legacy ``hitl_verified`` flag above,
+    which comes from the retired matching flow's audit trail and says nothing
+    about the review desk.
+
+    Keyed by the published canonical SKU; the newest current publication wins
+    where a SKU has several suppliers published.
+    """
+    rows = (
+        db.query(
+            models.CatalogueServingPublication.canonical_sku,
+            models.CatalogueServingPublication.published_at,
+            models.CatalogueMasteringCandidate.reviewed_by,
+            models.CatalogueMasteringCandidate.reviewed_at,
+            models.CatalogueMasteringCandidate.ingestion_run_uuid,
+        )
+        .outerjoin(
+            models.CatalogueMasteringCandidate,
+            models.CatalogueMasteringCandidate.mastering_candidate_uuid
+            == models.CatalogueServingPublication.mastering_candidate_uuid,
+        )
+        .filter(models.CatalogueServingPublication.is_current == 1)
+        .order_by(models.CatalogueServingPublication.published_at)
+        .all()
+    )
+    return {
+        str(sku): {
+            "by": reviewed_by,
+            "at": reviewed_at or published_at,
+            # Carried for the audit link only — the SKU page never renders it.
+            "run": run_uuid,
+        }
+        for sku, published_at, reviewed_by, reviewed_at, run_uuid in rows
+        if sku
+    }
+
+
+_REVIEWED_CACHE: dict = {"t": 0.0, "skus": None}
+
+
+def _catalogue_reviewed_cached(db: Session) -> dict:
+    """`_catalogue_reviewed_skus` with the same short TTL as the legacy set, so a
+    page-by-page load of the inventory list runs it once rather than per page."""
+    import time
+    if _REVIEWED_CACHE["skus"] is not None and (time.monotonic() - _REVIEWED_CACHE["t"]) < 20:
+        return _REVIEWED_CACHE["skus"]
+    skus = _catalogue_reviewed_skus(db)
+    _REVIEWED_CACHE.update(t=time.monotonic(), skus=skus)
+    return skus
+
+
+def _mark_reviewed(row: dict, reviewed: dict) -> dict:
+    entry = reviewed.get(row["sku_code"])
+    row["catalogue_reviewed"] = entry is not None
+    row["catalogue_reviewed_by"] = entry["by"] if entry else None
+    row["catalogue_reviewed_at"] = entry["at"] if entry else None
+    row["catalogue_review_run_id"] = entry["run"] if entry else None
+    return row
 
 
 _VERIFIED_CACHE: dict = {"t": 0.0, "skus": None}
@@ -141,6 +205,7 @@ def _base_query(db: Session):
         selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.supplier),
         selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.mbb_term_list),
         selectinload(models.ProductVariant.sales_velocity),
+        selectinload(models.ProductVariant.expiry_tracking),
     )
 
 
@@ -187,12 +252,14 @@ def list_products(
 
     cat_rules = _load_cat_rules(db)
     verified_skus = _verified_skus_cached(db)
+    reviewed_skus = _catalogue_reviewed_cached(db)
     ordered = q.order_by(models.ProductVariant.category, models.ProductVariant.name)
     eff_offset = offset if offset is not None else (page - 1) * limit
 
     def _mark(rows):
         for r in rows:
             r["hitl_verified"] = r["sku_code"] in verified_skus
+            _mark_reviewed(r, reviewed_skus)
         return rows
 
     if low_stock:
@@ -239,6 +306,7 @@ def stream_products(status: Optional[str] = Query(None)):
             ordered = q.order_by(models.ProductVariant.category, models.ProductVariant.name)
             cat_rules = _load_cat_rules(db)
             verified = _verified_skus_cached(db)
+            reviewed = _catalogue_reviewed_cached(db)
             yield orjson.dumps({"_meta": {"total": ordered.count(),
                                           "now": datetime.utcnow().isoformat()}}) + b"\n"
             # Modest yield_per keeps memory flat and makes rows arrive in small, frequent bursts
@@ -247,6 +315,7 @@ def stream_products(status: Optional[str] = Query(None)):
             for p in ordered.yield_per(200):
                 d = product_to_dict(p, cat_rules)
                 d["hitl_verified"] = d["sku_code"] in verified
+                _mark_reviewed(d, reviewed)
                 yield orjson.dumps(d) + b"\n"
         finally:
             db.close()
@@ -516,17 +585,18 @@ def get_summary(db: Session = Depends(database.get_db)):
     cat_rules = _load_cat_rules(db)
     dicts = [product_to_dict(p, cat_rules) for p in active_products]
 
-    today = date.today()
-    expiring_soon = 0
+    # Expired stock is written off; expiring stock is sold through or discounted.
+    # The old single <90d count merged the two, so it read high and pointed nowhere.
+    expiring_soon = expired_stock = 0
     for p in active_products:
-        for exp in p.expiry_tracking:
-            try:
-                days = (date.fromisoformat(exp.expiry_date) - today).days
-                if days < 90:
-                    expiring_soon += 1
-                    break
-            except (ValueError, AttributeError):
-                pass
+        soonest = expiry_batches(p)
+        if not soonest:
+            continue
+        days = soonest[0]["days"]
+        if days < 0:
+            expired_stock += 1
+        elif days < 90:
+            expiring_soon += 1
 
     price_alerts = sum(
         1 for d in dicts
@@ -538,7 +608,8 @@ def get_summary(db: Session = Depends(database.get_db)):
         "inactive_count":    inactive_count,
         "discontinued_count": discontinued_count,
         "low_stock_count":   sum(1 for d in dicts if d["woc"] is not None and d["woc"] < 2),
-        "expiring_soon":     expiring_soon,
+        "expiring_soon":     expiring_soon,   # soonest batch inside 90 days, not yet lapsed
+        "expired_stock":     expired_stock,   # soonest batch already lapsed — a write-off
         "price_alerts":      price_alerts,
     }
 
@@ -652,7 +723,7 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
     """Full per-supplier terms for the Manage Suppliers editor — includes the ordering-term columns
     (order/minimum increment + UOM, source, pricing note) and cost provenance the main product
     serializer omits. Read-only; effective_unit_cost is offering-first (catalogue pipeline price
-    when one exists, else basic_cost / cost-basis units). basic_cost stays the raw editable field."""
+    from the supplier's current offering price)."""
     from services.pricing_service import effective_cost_source, get_unit_cost
     product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
     if not product:
@@ -666,7 +737,7 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
             "id": s.id, "supplier_id": s.supplier_id,
             "name": s.supplier.name if s.supplier else None, "code": s.supplier.code if s.supplier else None,
             "supplier_sku": s.supplier_sku, "barcode": s.barcode,
-            "basic_cost": s.basic_cost, "units_per_pack": s.units_per_pack,
+            "basic_cost": effective_pack_cost(s), "units_per_pack": s.units_per_pack,
             "effective_unit_cost": get_unit_cost(s),
             "cost_source_effective": effective_cost_source(s),
             "order_increment_qty": s.order_increment_qty, "order_increment_uom": s.order_increment_uom,
@@ -756,6 +827,7 @@ def get_product(sku: str, db: Session = Depends(database.get_db)):
           .join(models.Tag, models.ProductTag.tag_id == models.Tag.id)
           .filter(models.ProductTag.product_id == product.id).all() if src == "shopify"})
     d["hitl_verified"] = _is_verified(db, sku)
+    _mark_reviewed(d, _catalogue_reviewed_cached(db))
     return d
 
 
@@ -876,7 +948,7 @@ def update_product(
         "uom": product.uom, "pack_unit": product.pack_unit,
         "min_purchase_qty": product.min_purchase_qty, "min_sellable_qty": product.min_sellable_qty,
         "weight_g": product.weight_g, "weight_unit": product.weight_unit,
-        "basic_cost": (ps.basic_cost if ps else None),
+        "basic_cost": effective_pack_cost(ps),
         "units_per_pack": (ps.units_per_pack if ps else None),
     }
     before = dict(_fields)
@@ -905,7 +977,7 @@ def update_product(
 
     if ps:
         if body.basic_cost is not None:
-            ps.basic_cost  = body.basic_cost
+            offering_costs.record_supplier_cost(db, ps, pack_cost=body.basic_cost)
             ps.cost_source = 'manual'
             ps.updated_at  = now
         if body.units_per_pack is not None:
@@ -921,7 +993,7 @@ def update_product(
         "uom": product.uom, "pack_unit": product.pack_unit,
         "min_purchase_qty": product.min_purchase_qty, "min_sellable_qty": product.min_sellable_qty,
         "weight_g": product.weight_g, "weight_unit": product.weight_unit,
-        "basic_cost": (ps.basic_cost if ps else None),
+        "basic_cost": effective_pack_cost(ps),
         "units_per_pack": (ps.units_per_pack if ps else None),
     }
     changes = audit_log.diff(before, after)
@@ -1003,7 +1075,7 @@ def _apply_product_update(product, ps, data: dict, now: str, editor_name: str):
         "min_purchase_qty": product.min_purchase_qty, "min_sellable_qty": product.min_sellable_qty,
         "weight_g": product.weight_g, "weight_unit": product.weight_unit,
         "segment": product.segment,
-        "basic_cost": (ps.basic_cost if ps else None),
+        "basic_cost": effective_pack_cost(ps),
         "supplier_id": (ps.supplier_id if ps else None),
         "units_per_pack": (ps.units_per_pack if ps else None),
         "barcode": (ps.barcode if ps else None),
@@ -1040,21 +1112,17 @@ def _apply_product_update(product, ps, data: dict, now: str, editor_name: str):
     if ps:
         if data.get("_supplier_id") is not None:
             ps.supplier_id = data["_supplier_id"]; ps.updated_at = now
-        if data.get("basic_cost") is not None:
-            ps.basic_cost = data["basic_cost"]; ps.cost_source = "manual"; ps.updated_at = now
+        _pack_cost = data.get("basic_cost")
         if data.get("units_per_pack") is not None:
             ps.units_per_pack = data["units_per_pack"]; ps.pack_source = "manual"; ps.updated_at = now
-        # Pack-safe cost from the reading-export's per-sell-unit "Unit Cost (HKD)": restore the
-        # stored whole-pack basic_cost (inverse of get_unit_cost). Explicit basic_cost wins.
-        if data.get("unit_cost_in") is not None and data.get("basic_cost") is None:
+        # Pack-safe cost from the reading-export's per-sell-unit "Unit Cost (HKD)":
+        # scale it back to the whole pack. An explicit pack cost wins.
+        if data.get("unit_cost_in") is not None and _pack_cost is None:
             _u = data["unit_cost_in"]
-            if ps.uom_verified_at and ps.units_per_pack and ps.units_per_pack > 1:
-                ps.basic_cost = round(_u * ps.units_per_pack, 4)
-            else:
-                ps.basic_cost = _u
+            _pack_cost = round(_u * ps.units_per_pack, 4) if (ps.uom_verified_at and ps.units_per_pack and ps.units_per_pack > 1) else _u
+        if _pack_cost is not None:
             ps.cost_source = "manual"; ps.updated_at = now
-        if data.get("basic_cost") is not None or data.get("unit_cost_in") is not None:
-            offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
+            offering_costs.record_supplier_cost(db, ps, pack_cost=_pack_cost)
         if "barcode" in data:      ps.barcode      = (str(data["barcode"]).strip() or None);      ps.updated_at = now
         if "supplier_sku" in data: ps.supplier_sku = (str(data["supplier_sku"]).strip() or None); ps.updated_at = now
         # Ordering terms (order multiple / MOQ) — descriptive metadata; nothing here feeds cost.
@@ -1253,8 +1321,10 @@ class SupplierLink(BaseModel):
     supplier_id:           Optional[int]   = None
     supplier_sku:          Optional[str]   = None
     barcode:               Optional[str]   = None
+    rrp:                   Optional[float] = None   # supplier's recommended retail price
     basic_cost:            Optional[float] = None
     units_per_pack:        Optional[int]   = None   # COST BASIS units = sellable units covered by basic_cost
+    pack_unit:             Optional[str]   = None   # this supplier's purchase-unit label (tray, case…) — writes offering packaging
     is_primary:            Optional[bool]  = None
     # Supplier ordering terms (descriptive; do NOT feed unit cost). Sentinel "" clears a field.
     order_increment_qty:   Optional[int]   = None
@@ -1380,7 +1450,7 @@ def add_supplier_link(sku: str, body: SupplierLink,
     link = models.ProductSupplier(
         product_id=product.id, supplier_id=body.supplier_id,
         supplier_sku=_clean_str(body.supplier_sku), barcode=_clean_str(body.barcode),
-        basic_cost=body.basic_cost, units_per_pack=body.units_per_pack,
+        rrp=body.rrp, units_per_pack=body.units_per_pack,
         cost_source='manual', pack_source='manual',
         order_increment_qty=body.order_increment_qty, order_increment_uom=oi_uom,
         minimum_order_qty=body.minimum_order_qty, minimum_order_uom=mo_uom,
@@ -1389,7 +1459,10 @@ def add_supplier_link(sku: str, body: SupplierLink,
     )
     db.add(link)
     db.flush()
-    offering_costs.record_supplier_cost(db, link, pack_cost=link.basic_cost)
+    offering_costs.record_supplier_cost(db, link, pack_cost=body.basic_cost)
+    if body.pack_unit is not None or body.units_per_pack is not None:
+        offering_costs.set_offering_packaging(
+            db, link, purchase_uom=_clean_str(body.pack_unit), sellable_units=body.units_per_pack)
     _audit_product(db, current_user, "product.supplier_add", product,
                    supplier_id=body.supplier_id, supplier=sup.name)
     product.updated_at = now
@@ -1421,11 +1494,17 @@ def update_supplier_link(sku: str, ps_id: int, body: SupplierLink,
     sent = body.model_dump(exclude_unset=True)
     if "supplier_sku" in sent:  link.supplier_sku = _clean_str(sent["supplier_sku"])
     if "barcode" in sent:       link.barcode = _clean_str(sent["barcode"])
+    if "rrp" in sent:           link.rrp = sent["rrp"]
     if sent.get("basic_cost") is not None:
-        link.basic_cost = sent["basic_cost"]; link.cost_source = 'manual'; link.cost_updated_at = now
-        offering_costs.record_supplier_cost(db, link, pack_cost=link.basic_cost)
+        link.cost_source = 'manual'; link.cost_updated_at = now
+        offering_costs.record_supplier_cost(db, link, pack_cost=sent["basic_cost"])
     if sent.get("units_per_pack") is not None:
         link.units_per_pack = sent["units_per_pack"]; link.pack_source = 'manual'
+    if "pack_unit" in sent or sent.get("units_per_pack") is not None:
+        offering_costs.set_offering_packaging(
+            db, link,
+            purchase_uom=_clean_str(sent["pack_unit"]) if "pack_unit" in sent else None,
+            sellable_units=sent.get("units_per_pack"))
     # Supplier ordering terms — descriptive; do NOT feed unit cost.
     if "order_increment_qty" in sent:   link.order_increment_qty = sent["order_increment_qty"]
     if "order_increment_uom" in sent:   link.order_increment_uom = _clean_str(sent["order_increment_uom"])
@@ -1464,7 +1543,8 @@ def delete_supplier_link(sku: str, ps_id: int,
     remaining = [ps for ps in product.product_suppliers if ps.id != ps_id]
     db.delete(link)
     if was_primary and remaining and not any(ps.is_primary for ps in remaining):
-        remaining.sort(key=lambda ps: (ps.basic_cost is None, ps.basic_cost or 0))
+        remaining.sort(key=lambda ps: (
+            effective_pack_cost(ps) is None, effective_pack_cost(ps) or 0))
         remaining[0].is_primary = 1
         remaining[0].updated_at = now
     _audit_product(db, current_user, "product.supplier_delete", product,
@@ -1610,12 +1690,11 @@ def lock_invoice_cost(
         raise HTTPException(status_code=400, detail="No supplier record — add a supplier first")
 
     now = datetime.utcnow().isoformat()
-    ps.basic_cost          = body.confirmed_cost
     ps.cost_source         = 'invoice_matched'
     ps.cost_source_ref     = body.invoice_ref
     ps.cost_updated_at     = now
     ps.updated_at          = now
-    offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
+    offering_costs.record_supplier_cost(db, ps, pack_cost=body.confirmed_cost)
     product.last_manual_edit_at = now
     product.last_manual_edit_by = current_user.display_name if current_user else None
     product.updated_at          = now
@@ -1634,74 +1713,6 @@ def lock_invoice_cost(
 def _get_primary_ps(product):
     ps = next((p for p in product.product_suppliers if p.is_primary), None)
     return ps or (product.product_suppliers[0] if product.product_suppliers else None)
-
-
-@router.post("/{sku:path}/cost/accept-sheet")
-def accept_sheet_cost(sku: str, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
-    """Accept the Sheet shadow cost as the new IMS cost (Sheet was right)."""
-    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    ps = _get_primary_ps(product)
-    if not ps:
-        raise HTTPException(status_code=404, detail="No supplier record found")
-    if ps.basic_cost_sheet is None:
-        raise HTTPException(status_code=400, detail="No Sheet shadow value to accept")
-    now = datetime.utcnow().isoformat()
-    ps.basic_cost      = ps.basic_cost_sheet
-    # A human chose to accept the Sheet value — that's a manual confirmation,
-    # not an OCR-catalogue cost. 'manual' (> 'sheet') protects it from re-seeds.
-    ps.cost_source     = 'manual'
-    ps.cost_updated_at = now
-    ps.updated_at      = now
-    offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
-    _audit_product(db, _user, "product.cost_accept_sheet", product, basic_cost=ps.basic_cost)
-    db.commit()
-    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
-    cat_rules = _load_cat_rules(db)
-    return product_to_dict(updated, cat_rules, include_margin_range=True)
-
-
-@router.post("/{sku:path}/cost/dismiss-conflict")
-def dismiss_cost_conflict(sku: str, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
-    """Mark IMS cost as correct; sync shadow to live to clear the conflict flag."""
-    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    ps = _get_primary_ps(product)
-    if not ps:
-        raise HTTPException(status_code=404, detail="No supplier record found")
-    now = datetime.utcnow().isoformat()
-    ps.basic_cost_sheet = ps.basic_cost   # shadow now matches live — conflict cleared
-    ps.updated_at       = now
-    _audit_product(db, _user, "product.cost_dismiss_conflict", product, basic_cost=ps.basic_cost)
-    db.commit()
-    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
-    cat_rules = _load_cat_rules(db)
-    return product_to_dict(updated, cat_rules, include_margin_range=True)
-
-
-@router.post("/{sku:path}/uom/accept-sheet")
-def accept_sheet_uom(sku: str, body: UomVerify, db: Session = Depends(database.get_db), _user: models.User = Depends(require_capability("product_edit"))):
-    """Accept Sheet pack size as the verified IMS value (Sheet was right)."""
-    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    ps = _get_primary_ps(product)
-    if not ps:
-        raise HTTPException(status_code=404, detail="No supplier record found")
-    if ps.units_per_pack_sheet is None:
-        raise HTTPException(status_code=400, detail="No Sheet shadow value to accept")
-    now = datetime.utcnow().isoformat()
-    ps.units_per_pack   = ps.units_per_pack_sheet
-    ps.uom_verified_at  = now
-    ps.uom_verified_by  = body.verified_by
-    ps.updated_at       = now
-    _audit_product(db, _user, "product.uom_accept_sheet", product, units_per_pack=ps.units_per_pack)
-    db.commit()
-    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
-    cat_rules = _load_cat_rules(db)
-    return product_to_dict(updated, cat_rules, include_margin_range=True)
 
 
 class ChannelPriceUpdate(BaseModel):
@@ -1732,6 +1743,78 @@ def update_channel_price(
     pc.updated_at = datetime.utcnow().isoformat()
     _audit_product(db, _user, "product.price_update", product, channel=channel, **{"from": _old_price, "to": body.selling_price})
     db.commit()
+
+    updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
+    cat_rules = _load_cat_rules(db)
+    return product_to_dict(updated, cat_rules, include_margin_range=True)
+
+
+class ChannelConfigUpdate(BaseModel):
+    """Per-channel selling configuration — each selling item owns its own
+    price, visibility, listing multiple and dispensing-fee flag."""
+    selling_price:      Optional[float] = None
+    is_active:          Optional[bool]  = None
+    units_per_listing:  Optional[int]   = None   # sell-units per listing; <= 1 clears to single-unit
+    order_multiple:     Optional[int]   = None   # customers buy in multiples of N listings; <= 1 clears
+    has_dispensing_fee: Optional[bool]  = None
+
+
+@router.patch("/{sku:path}/channels/{channel}")
+def update_channel_config(
+    sku: str,
+    channel: str,
+    body: ChannelConfigUpdate,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("product_edit")),
+):
+    product = db.query(models.ProductVariant).filter(models.ProductVariant.sku_code == sku).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    pc = db.query(models.ProductChannel).filter(
+        models.ProductChannel.product_id == product.id,
+        models.ProductChannel.channel == channel,
+    ).first()
+    sent = body.model_dump(exclude_unset=True)
+    created = False
+    if not pc:
+        # Upsert: a selling item can be added from the SKU page, not only by
+        # the platform syncs. The channel vocabulary stays closed.
+        if channel not in ("clinic", "shopify", "hktv"):
+            raise HTTPException(status_code=400, detail=f"Unknown channel '{channel}' — must be clinic, shopify or hktv")
+        pc = models.ProductChannel(
+            product_id=product.id, channel=channel,
+            is_active=1 if sent.get("is_active", True) else 0,
+            has_dispensing_fee=0,
+            updated_at=datetime.utcnow().isoformat(),
+        )
+        db.add(pc)
+        created = True
+
+    changes = {}
+    if "selling_price" in sent:
+        changes["price"] = {"from": pc.selling_price, "to": sent["selling_price"]}
+        pc.selling_price = sent["selling_price"]
+    if "is_active" in sent:
+        changes["is_active"] = {"from": bool(pc.is_active), "to": bool(sent["is_active"])}
+        pc.is_active = 1 if sent["is_active"] else 0
+    if "units_per_listing" in sent:
+        v = sent["units_per_listing"]
+        nv = v if v is not None and v > 1 else None
+        changes["units_per_listing"] = {"from": pc.units_per_listing, "to": nv}
+        pc.units_per_listing = nv
+    if "order_multiple" in sent:
+        v = sent["order_multiple"]
+        nv = v if v is not None and v > 1 else None
+        changes["order_multiple"] = {"from": pc.order_multiple, "to": nv}
+        pc.order_multiple = nv
+    if "has_dispensing_fee" in sent:
+        changes["has_dispensing_fee"] = {"from": bool(pc.has_dispensing_fee), "to": bool(sent["has_dispensing_fee"])}
+        pc.has_dispensing_fee = 1 if sent["has_dispensing_fee"] else 0
+    if changes or created:
+        pc.updated_at = datetime.utcnow().isoformat()
+        _audit_product(db, _user, "product.channel_add" if created else "product.channel_update",
+                       product, channel=channel, changes=changes)
+        db.commit()
 
     updated = _base_query(db).filter(models.ProductVariant.sku_code == sku).first()
     cat_rules = _load_cat_rules(db)
@@ -1832,13 +1915,12 @@ def update_product_cost(sku: str, body: CostUpdate, db: Session = Depends(databa
         )
 
     now = datetime.utcnow().isoformat()
-    _old_cost = ps.basic_cost
-    ps.basic_cost      = body.basic_cost
+    _old_cost = effective_pack_cost(ps)
     ps.cost_source     = body.cost_source
     ps.cost_source_ref = body.cost_source_ref
     ps.cost_updated_at = now
     ps.updated_at      = now
-    offering_costs.record_supplier_cost(db, ps, pack_cost=ps.basic_cost)
+    offering_costs.record_supplier_cost(db, ps, pack_cost=body.basic_cost)
     _audit_product(db, _user, "product.cost_update", product, **{"from": _old_cost, "to": body.basic_cost, "source": body.cost_source})
     db.commit()
 

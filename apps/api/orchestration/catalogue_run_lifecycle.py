@@ -23,6 +23,58 @@ from .catalogue_types import (
 )
 
 
+# Envelope v2 vocabulary — the failure's lifecycle stage and whether a retry
+# of the same bytes can plausibly succeed. Codes missing from these maps get
+# the conservative defaults (recording / not retryable).
+_STAGE_BY_CODE = {
+    "SOURCE_VERIFICATION_ERROR": "reading",
+    "SOURCE_PAGE_READ_ERROR": "reading",
+    "SPREADSHEET_SHEET_READ_ERROR": "reading",
+    "EXTRACTION_EVIDENCE_ERROR": "understanding",
+    "EXTRACTION_CONFIGURATION_ERROR": "understanding",
+    "TRANSIENT_PROVIDER_ERROR": "understanding",
+    "PROVIDER_ERROR": "understanding",
+    "RECORDED_CONTRACT_ERROR": "recording",
+    "INVALID_RUN_TRANSITION": "recording",
+    "DUPLICATE_RUN_CLAIM": "recording",
+    "TERMINAL_RUN_REPLAY": "recording",
+    "RUN_CANCELLED": "recording",
+    "CATALOGUE_ORCHESTRATION_ERROR": "recording",
+}
+_RETRYABLE_CODES = {
+    "TRANSIENT_PROVIDER_ERROR",
+    "PROVIDER_ERROR",
+    "EXTRACTION_EVIDENCE_ERROR",
+    "SOURCE_PAGE_READ_ERROR",
+    "INVALID_RUN_TRANSITION",
+    "DUPLICATE_RUN_CLAIM",
+    "TERMINAL_RUN_REPLAY",
+    "CATALOGUE_ORCHESTRATION_ERROR",
+}
+
+
+def failure_envelope(error_code: str, message: str) -> dict:
+    """Build the structured failure envelope (v2).
+
+    Attempt loops upstream join the same message with semicolons — that
+    stutter becomes an ``attempts`` count and a single clean sentence; any
+    genuinely different messages ride along in ``detail``.
+    """
+
+    parts = [part.strip() for part in str(message).split(";") if part.strip()]
+    unique = list(dict.fromkeys(parts)) or [_sanitize(message) or "Run failed"]
+    envelope = {
+        "error_code": error_code,
+        "message": _sanitize(unique[0]),
+        "stage": _STAGE_BY_CODE.get(error_code, "recording"),
+        "retryable": error_code in _RETRYABLE_CODES,
+        "attempts": max(len(parts), 1),
+    }
+    if len(unique) > 1:
+        envelope["detail"] = _sanitize("; ".join(unique[1:]))[:400]
+    return envelope
+
+
 def claim_queued_run(db: Session, *, ingestion_run_id: UUID, started_at: datetime | None = None) -> None:
     """Atomically move one queued run to running."""
 
@@ -53,6 +105,75 @@ def claim_queued_run(db: Session, *, ingestion_run_id: UUID, started_at: datetim
     raise InvalidRunTransition(f"Ingestion run {ingestion_run_id} cannot start from status {run.status}")
 
 
+def mark_stage(
+    db: Session,
+    *,
+    ingestion_run_id: UUID,
+    stage: str,
+    units_total: int | None = None,
+    at: datetime | None = None,
+) -> None:
+    """Record which stage a running run has reached.
+
+    Reporting only: nothing in the pipeline reads `stage` back, so a failure to
+    write it must never take the run down with it — see `report_stage` in
+    catalogue_tasks, which swallows exactly that.
+
+    Entering a stage resets the unit counter, so a page count left over from
+    extraction cannot be read as progress through interpretation. The UPDATE is
+    guarded on `running` so a cancelled run is not made to look busy again.
+    """
+
+    db.execute(
+        text(
+            "UPDATE catalogue_ingestion_runs "
+            "SET stage = :stage, stage_started_at = :at, units_done = :done, units_total = :total "
+            "WHERE run_uuid = :run_uuid AND status = :running"
+        ),
+        {
+            "stage": stage,
+            "at": _iso(at or _now()),
+            "done": 0 if units_total else None,
+            "total": units_total,
+            "run_uuid": str(ingestion_run_id),
+            "running": IngestionRunStatus.RUNNING.value,
+        },
+    )
+    db.commit()
+
+
+def mark_stage_progress(db: Session, *, ingestion_run_id: UUID, units_done: int, units_total: int) -> None:
+    """Advance the unit counter inside the current stage (pages read, so far)."""
+
+    db.execute(
+        text(
+            "UPDATE catalogue_ingestion_runs SET units_done = :done, units_total = :total "
+            "WHERE run_uuid = :run_uuid AND status = :running"
+        ),
+        {
+            "done": units_done,
+            "total": units_total,
+            "run_uuid": str(ingestion_run_id),
+            "running": IngestionRunStatus.RUNNING.value,
+        },
+    )
+    db.commit()
+
+
+def _clear_stage(run: models.IngestionRun) -> None:
+    """A finished run is not at a stage.
+
+    Without this a completed run keeps reporting the last stage it happened to
+    be in, and the desk shows "Reading the catalogue" beside a run that ended
+    twenty minutes ago.
+    """
+
+    run.stage = None
+    run.stage_started_at = None
+    run.units_done = None
+    run.units_total = None
+
+
 def complete_run(db: Session, *, result: CatalogueFlowResult, completed_at: datetime | None = None) -> None:
     """Persist terminal successful/warning state for a running run."""
 
@@ -67,8 +188,9 @@ def complete_run(db: Session, *, result: CatalogueFlowResult, completed_at: date
     run.status = result.terminal_status
     run.completed_at = _iso(completed_at or _now())
     run.items_extracted = result.rows_extracted
-    run.metrics = _metrics_json(result)
+    run.metrics = _metrics_json(result, existing=run.metrics)
     run.error_summary = _summary_json(result) if result.warnings else None
+    _clear_stage(run)
     db.commit()
 
 
@@ -89,7 +211,8 @@ def fail_run(
         raise InvalidRunTransition(f"Ingestion run {ingestion_run_id} cannot fail from {run.status}")
     run.status = IngestionRunStatus.FAILED.value
     run.completed_at = _iso(completed_at or _now())
-    run.error_summary = json.dumps({"error_code": error_code, "message": _sanitize(message)}, sort_keys=True)
+    run.error_summary = json.dumps(failure_envelope(error_code, message), sort_keys=True)
+    _clear_stage(run)
     db.commit()
 
 
@@ -104,6 +227,7 @@ def cancel_run(db: Session, *, ingestion_run_id: UUID, reason: str, cancelled_at
     run.status = IngestionRunStatus.CANCELLED.value
     run.completed_at = _iso(cancelled_at or _now())
     run.error_summary = json.dumps({"error_code": "RUN_CANCELLED", "message": _sanitize(reason)}, sort_keys=True)
+    _clear_stage(run)
     db.commit()
 
 
@@ -139,7 +263,12 @@ def _run(db: Session, ingestion_run_id: UUID) -> models.IngestionRun:
     return run
 
 
-def _metrics_json(result: CatalogueFlowResult) -> str:
+# Provenance written before the flow ran — how this run came to exist, not what
+# it did. Completing a run replaces its metrics wholesale, which would erase it.
+_PRESERVED_METRIC_KEYS = ("reparse_of", "reparse_from_stage")
+
+
+def _metrics_json(result: CatalogueFlowResult, *, existing: str | None = None) -> str:
     metrics = IngestionRunMetrics(
         rows_seen=result.rows_extracted,
         warnings_count=len(result.warnings),
@@ -163,6 +292,14 @@ def _metrics_json(result: CatalogueFlowResult) -> str:
             "human_review_required": result.human_review_required,
         }
     )
+    if existing:
+        try:
+            previous = json.loads(existing) or {}
+        except ValueError:
+            previous = {}
+        for key in _PRESERVED_METRIC_KEYS:
+            if key in previous:
+                payload[key] = previous[key]
     return json.dumps({key: value for key, value in payload.items() if value is not None}, sort_keys=True)
 
 
