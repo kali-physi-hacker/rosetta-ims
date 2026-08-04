@@ -110,6 +110,32 @@
       "source_column_prefix": null
     },
     {
+      "field_key": "brand",
+      "role": "BRAND",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "section_header",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
@@ -171,6 +197,32 @@
       "constant_value": null,
       "aliases": [],
       "description": "Suggested retail or retail price field.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "promotion_text",
+      "role": "MBB_TEXT",
+      "requirement": "OPTIONAL",
+      "source_column": "TERMS / REMARKS",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Bulk buy terms, promotional offers, or discount conditions (e.g., 'Buy 20+ at special price', 'Buy 3 get 1 free').",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -297,12 +349,24 @@
     ]
   },
   "mbb": {
-    "source_fields": [],
+    "source_fields": [
+      "promotion_text"
+    ],
     "supported_scopes": [],
-    "condition_patterns": [],
-    "benefit_patterns": [],
-    "requires_validation_issue_when": [],
-    "notes": null
+    "condition_patterns": [
+      "buy quantity threshold",
+      "spend threshold"
+    ],
+    "benefit_patterns": [
+      "free units",
+      "percentage discount",
+      "fixed price per unit"
+    ],
+    "requires_validation_issue_when": [
+      "The qualifying products or exact threshold basis are not explicit.",
+      "Stacking rules or exclusions are not defined."
+    ],
+    "notes": "Vetapet uses various MBB formats including 'Buy X get Y free', 'Buy X+ at special price', and percentage discounts."
   },
   "validation_rules": [
     {
@@ -341,9 +405,11 @@
     "raw_observation_fields": [
       "supplier_sku",
       "description",
+      "brand",
       "pack_size",
       "cost",
       "rrp",
+      "promotion_text",
       "species",
       "segment",
       "category"
@@ -351,9 +417,11 @@
     "staging_raw_field_keys": [
       "supplier_sku",
       "description",
+      "brand",
       "pack_size",
       "cost",
       "rrp",
+      "promotion_text",
       "species",
       "segment",
       "category"
@@ -361,9 +429,11 @@
     "staging_proposed_field_keys": [
       "supplier_sku",
       "description",
+      "brand",
       "pack_size",
       "cost",
       "rrp",
+      "promotion_text",
       "species",
       "segment",
       "category"

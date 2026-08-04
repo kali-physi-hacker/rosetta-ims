@@ -67,8 +67,14 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             field_key="brand",
             role=SourceFieldRole.BRAND,
             requirement=SourceFieldRequirement.OPTIONAL,
-            source_path="product_name or section_header",
-            description="Product brand extracted from product name (e.g., Zoetis, Antinol, Dermoscent) or section header.",
+            # `section_header` exactly — it is the only source_path the
+            # conformance engine resolves (the banner spanning the table).
+            # "product_name or section_header" reads as a column name, matches
+            # no column, and captured nothing. Pulling a brand back out of the
+            # product name is not something the engine does, so that half of
+            # the intent is dropped rather than left as a claim we do not meet.
+            source_path="section_header",
+            description="Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
             evidence=evidence_items,
         ),
         SourceFieldContract(

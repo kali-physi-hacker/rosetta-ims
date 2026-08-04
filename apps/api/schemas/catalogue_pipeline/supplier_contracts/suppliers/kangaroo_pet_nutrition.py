@@ -121,8 +121,18 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
-                requirement=SourceFieldRequirement.REQUIRED,
-                source_path="brand, portfolio, or product-line heading",
+                # OPTIONAL, not required. The brand is printed as a banner above
+                # the table, never as a column on the row, and a REQUIRED field
+                # the engine cannot populate raises a BLOCKING
+                # CONTRACT_REQUIRED_FIELD_MISSING on every row — a well-formed
+                # row included. Whether we know the brand is not a reason to
+                # refuse the price the supplier printed.
+                requirement=SourceFieldRequirement.OPTIONAL,
+                # `section_header` is the one source_path the conformance engine
+                # implements: the banner spanning the table, carried on the
+                # observation's source_metadata. Prose here reads as a column
+                # name, matches nothing, and captures nothing.
+                source_path="section_header",
                 description="ZIWI Peak or the row-level Ecuphar portfolio brand/product line.",
                 evidence=_KANGAROO_PET_NUTRITION_EVIDENCE,
             ),

@@ -145,8 +145,13 @@ KPN_TRADING_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
-                requirement=SourceFieldRequirement.REQUIRED,
-                source_path="brand or section heading",
+                # OPTIONAL for the same reason as Kangaroo: the brand is a
+                # banner, not a column, and a REQUIRED field that cannot resolve
+                # blocks every row in the catalogue.
+                requirement=SourceFieldRequirement.OPTIONAL,
+                # The one source_path the engine resolves — the banner printed
+                # across the table.
+                source_path="section_header",
                 description="Printed row or section brand; observed brands are examples, not routing criteria.",
                 evidence=_KPN_TRADING_EVIDENCE,
             ),
