@@ -1,0 +1,21 @@
+# Test environment for apps/api.
+#
+# Runtime pins come from requirements.txt so the suite runs against the same
+# versions the image builds with. Anything below is needed to RUN the tests and
+# is deliberately absent from the runtime image.
+#
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+#   .venv/bin/python -m pytest -q
+#
+# Do not run the suite against a bare interpreter. Ambient packages drift from
+# the pins — a machine carrying bcrypt 5.x instead of the pinned 4.3.0 fails
+# test_catalogue_pipeline_e2e_acceptance.py at collection with "password cannot
+# be longer than 72 bytes", which looks like a code defect and is not one.
+
+-r requirements.txt
+
+pytest==8.4.2
+
+# FastAPI's TestClient is a thin wrapper over httpx and will not import without
+# it. Eight test modules use TestClient; the runtime image needs none of it.
+httpx==0.28.1
