@@ -74,10 +74,6 @@ def eval_formula(expr: str, inputs: dict):
 # ── Default configuration = the exact formulas/values hard-coded before Phase A ───────────
 # Seeded verbatim into the DB, and used as the in-process fallback → behaviour-neutral.
 _DEFAULTS = [
-    dict(key="unit_cost", name="Unit cost (per sell-unit)", category="cost", output_field="unit_cost",
-         inputs=["basic_cost", "units_per_pack"], kind="formula",
-         formula="None if basic_cost is None else (basic_cost / units_per_pack if (units_per_pack or 0) > 1 else basic_cost)",
-         description="Per-sell-unit supplier cost: whole-pack basic_cost divided by pack size when pack > 1."),
     dict(key="gross_gp", name="Gross GP%", category="margin", output_field="gp_pct",
          inputs=["price", "cost"], kind="formula",
          formula="None if (not price or price <= 0 or cost is None or cost <= 0) else round((price - cost) / price, 4)",
@@ -323,7 +319,6 @@ def _create_active(db, editor: str, note: str | None, parent_id: int | None):
 # evaluate to a number/None on these without raising. The sandbox already guarantees a formula
 # can do nothing dangerous; this additionally catches one that would just break the number.
 _SAMPLE_INPUTS = {
-    "unit_cost":          {"basic_cost": 100.0, "units_per_pack": 10},
     "gross_gp":           {"price": 100.0, "cost": 40.0},
     "net_margin":         {"price": 100.0, "cost": 40.0, "fee_pct": 0.18, "delivery": 34.0},
     "woc":                {"total_qty": 50.0, "weekly_demand": 5.0},

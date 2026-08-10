@@ -7,6 +7,8 @@ after Raw persistence by ``services.catalogue_conformance``.
 
 from __future__ import annotations
 
+from typing import Callable
+
 from services.catalogue_evidence_extraction import (
     ExtractionResult,
     ExtractionStatus,
@@ -27,10 +29,19 @@ def extract_source_evidence(source: VerifiedSourceAsset) -> EvidenceOutcome:
     return evidence_outcome_from_result(extract_source_result(source))
 
 
-def extract_source_result(source: VerifiedSourceAsset) -> ExtractionResult:
+def extract_source_result(
+    source: VerifiedSourceAsset,
+    *,
+    on_unit_complete: Callable[[int, int], None] | None = None,
+) -> ExtractionResult:
     """Return the complete provider result so orchestration can audit attempts."""
 
-    return extract_evidence(source.content, source.original_filename, "")
+    return extract_evidence(
+        source.content,
+        source.original_filename,
+        "",
+        on_unit_complete=on_unit_complete,
+    )
 
 
 def evidence_outcome_from_result(result: ExtractionResult) -> EvidenceOutcome:

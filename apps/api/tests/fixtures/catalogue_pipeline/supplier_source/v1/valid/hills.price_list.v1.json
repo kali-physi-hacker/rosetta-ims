@@ -74,6 +74,10 @@
     "row_eligibility_rules": [
       "One product variant per price-table row."
     ],
+    "discontinued_markers": [],
+    "row_identity_fields": [
+      "supplier_sku"
+    ],
     "skip_rules": [],
     "source_location_expectations": [
       "page number",
@@ -118,7 +122,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "description",
@@ -161,7 +173,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "pack_size",
@@ -199,7 +219,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "cost",
@@ -237,7 +265,61 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "regular_retail_price",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "Regular Retail Price / 正價",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Hill's regular list retail price, printed beside the recommended one.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's.pdf",
+          "note": "I supplied a 9-page PDF sample confirming bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's 2026 new price.pdf",
+          "note": "I supplied a 6-page 2026 Prescription Diet (Feline) edition; a live extraction run confirmed it replaces the Life Stage column with Disease Category while keeping every other declared column."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "rrp",
@@ -275,7 +357,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "order_multiple",
@@ -313,7 +403,153 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "net_invoice_price_mov_1",
+      "role": "MBB_TIER_PRICE",
+      "requirement": "OPTIONAL",
+      "source_column": "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Unit price once the order reaches HK$1,200 — the first MOV tier.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's.pdf",
+          "note": "I supplied a 9-page PDF sample confirming bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's 2026 new price.pdf",
+          "note": "I supplied a 6-page 2026 Prescription Diet (Feline) edition; a live extraction run confirmed it replaces the Life Stage column with Disease Category while keeping every other declared column."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
+        }
+      ],
+      "tier_minimum_spend": "1200",
+      "tier_order": 1,
+      "source_column_occurrence": 1,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": "Net Invoice Price*"
+    },
+    {
+      "field_key": "net_invoice_price_mov_2",
+      "role": "MBB_TIER_PRICE",
+      "requirement": "OPTIONAL",
+      "source_column": "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Unit price once the order reaches HK$2,200 — the second MOV tier.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's.pdf",
+          "note": "I supplied a 9-page PDF sample confirming bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's 2026 new price.pdf",
+          "note": "I supplied a 6-page 2026 Prescription Diet (Feline) edition; a live extraction run confirmed it replaces the Life Stage column with Disease Category while keeping every other declared column."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
+        }
+      ],
+      "tier_minimum_spend": "2200",
+      "tier_order": 2,
+      "source_column_occurrence": 2,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": "Net Invoice Price*"
+    },
+    {
+      "field_key": "net_invoice_price_mov_3",
+      "role": "MBB_TIER_PRICE",
+      "requirement": "OPTIONAL",
+      "source_column": "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Unit price once the order reaches HK$4,500 — the third MOV tier.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's.pdf",
+          "note": "I supplied a 9-page PDF sample confirming bilingual headers, Effective dates, Gross Wholesale Price, Product Code, Size, and Order Multiple columns."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Hill's 2026 new price.pdf",
+          "note": "I supplied a 6-page 2026 Prescription Diet (Feline) edition; a live extraction run confirmed it replaces the Life Stage column with Disease Category while keeping every other declared column."
+        },
+        {
+          "evidence_type": "PARSER_BEHAVIOR",
+          "reference": "apps/api/services/supplier_source_contract_runtime.py",
+          "note": "Runtime adapter applies supported Pydantic source-contract semantics for per-unit cost, order multiple, constant brand/category, and weight parsing."
+        },
+        {
+          "evidence_type": "EXISTING_PRODUCTION_TEST_EXTRACTION_FIXTURE",
+          "reference": "apps/api/tests/test_supplier_source_contract_runtime.py::test_hills_runtime_applies_supported_contract_semantics",
+          "note": "Tests representative Hill's rows against the Pydantic-backed runtime adapter."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
+          "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
+        }
+      ],
+      "tier_minimum_spend": "4500",
+      "tier_order": 3,
+      "source_column_occurrence": 3,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": "Net Invoice Price*"
     },
     {
       "field_key": "brand",
@@ -351,7 +587,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "species",
@@ -389,7 +633,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "segment",
@@ -427,7 +679,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     },
     {
       "field_key": "category",
@@ -465,7 +725,15 @@
           "reference": "docs/architecture/catalogue-domain/catalogue-entity-dictionary.md",
           "note": "Domain dictionary uses Hill's as the worked example for source evidence and supplier-price gaps."
         }
-      ]
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
     }
   ],
   "pricing": {
@@ -492,6 +760,8 @@
     "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
     "content_measure_uom": null,
+    "purchase_uom_source_field": null,
+    "price_basis_follows_purchase_unit": false,
     "order_increment_source_field": "order_multiple",
     "minimum_order_source_field": null,
     "break_pack_allowed": null,

@@ -35,6 +35,16 @@ from services import product_domain
 with database.SessionLocal() as _product_domain_session:
     product_domain.backfill_explicit_product_domain(_product_domain_session)
 
+# Retire the legacy cost column: migrate any link that still carries only
+# basic_cost into an offering price, verify nothing is left behind, then drop
+# basic_cost and the Google Sheet's shadow columns. One-shot and idempotent —
+# once every environment reports "already_retired", this and the module go.
+from services import legacy_cost_retirement as _legacy_cost_retirement
+
+_retirement = _legacy_cost_retirement.retire_legacy_cost(database.engine)
+if _retirement["status"] != "already_retired":
+    print(f"[startup] legacy cost retirement: {_retirement}")
+
 # Config-driven transformation engine (Phase A): seed the registry + default config version so
 # the engine reproduces the previously hard-coded formulas. Idempotent; behaviour-neutral.
 from services import transform_engine

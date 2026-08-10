@@ -266,6 +266,7 @@ class SellingItem(Base):
     external_listing_id = Column(String, nullable=True)
     sell_uom = Column(String, nullable=True)
     units_per_listing = Column(Integer, nullable=True)
+    order_multiple = Column(Integer, nullable=True)
     selling_price = Column(Float, nullable=True)
     status = Column(String, nullable=False, default="ACTIVE")
     created_at = Column(String, nullable=False)
@@ -288,18 +289,16 @@ class ProductSupplier(Base):
     product_id      = Column(Integer, ForeignKey("products.id"), nullable=False)
     supplier_id     = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
     supplier_sku    = Column(String)
+    rrp             = Column(Float)   # this supplier's recommended retail price (HKD) — per supplier, not per variant
     barcode         = Column(String)
-    basic_cost      = Column(Float)          # the wholesale cost — the single cost all margin math runs on
     # (catalogue_cost / daysmart_cost / cost_reconciled_at retired — invoice reconciliation is a
     #  procurement concern; the OCR catalogue cost writes straight to basic_cost.)
     units_per_pack       = Column(Integer, nullable=True)  # IMS-live value (locked once uom_verified_at is set)
-    units_per_pack_sheet = Column(Integer, nullable=True)  # shadow: last value seen from Sheet sync
     # Pack-size provenance — mirrors cost_source. 'sheet' is the one-time seed and the only
     # tier the Sheet sync may overwrite; 'catalogue' (OCR flow) and 'manual' edits are protected.
     pack_source     = Column(String, nullable=False, default='sheet')   # sheet|manual|catalogue
     uom_verified_at = Column(String, nullable=True)   # IMS-stamped date UOM/pack size was manually confirmed
     uom_verified_by = Column(String, nullable=True)   # name/initials of person who confirmed the pack size
-    basic_cost_sheet = Column(Float, nullable=True)   # shadow: last basic_cost value seen from Sheet sync
     # Max-Bulk-Buy is now the relational `mbb_terms` table (0..N per supplier) — see MbbTerm.
     # The old flat scalars (bulk_buy_cost / bulk_buy_min_qty / mbb_terms / mbb_tiers / mbb_type /
     # mbb_min_amount / mbb_free_qty / mbb_discount_pct) are dropped in run_migrations.
@@ -393,6 +392,7 @@ class ProductChannel(Base):
     has_dispensing_fee  = Column(Integer, nullable=False, default=0)
     channel_fee_pct     = Column(Float, nullable=True)     # e.g. 0.08 = 8% HKTV platform fee
     units_per_listing   = Column(Integer, nullable=True)   # how many sell-units per HKTV listing (e.g. 12 for a case)
+    order_multiple      = Column(Integer, nullable=True)   # customers buy in multiples of N listings (purchase-qty rule, NOT the listing's content)
     updated_at          = Column(String, nullable=False)
 
     product = relationship("ProductVariant", back_populates="channels")

@@ -5,6 +5,7 @@ export interface ProductChannel {
   has_dispensing_fee: boolean
   channel_fee_pct: number | null
   units_per_listing: number | null
+  order_multiple: number | null   // customers buy in multiples of N listings (purchase rule, not listing content)
   gp_pct: number | null
   recommendation: 'Price is OK ✓' | 'Raise price ⚠' | 'Check pack size ⚠' | null
   gap_pct: number | null
@@ -33,6 +34,31 @@ export interface MbbTerm {
   effective_unit_cost: number | null    // derived per-sell-unit cost of this term
 }
 
+/**
+ * A bulk term the catalogue pipeline published, read off the supplier's
+ * offering. Read-only here — corrections are made in the review desk, against
+ * the document it was read from.
+ */
+export interface CatalogueBulkTerm {
+  id: string
+  source: 'catalogue'
+  scope: string                          // SUPPLIER_ORDER terms gate on the whole order, not this item
+  condition_type: 'minimum_spend' | 'minimum_quantity'
+  min_qty: number | null
+  min_qty_uom: string | null
+  min_spend: number | null
+  benefit_type: string
+  unit_price: number | null
+  unit_price_basis: string | null
+  discount_pct: number | null
+  free_qty: number | null
+  effective_unit_cost: number | null
+  note: string | null
+  run_id: string | null
+  source_file: string | null
+  source_received_at: string | null
+}
+
 export interface MbbTermMargin {
   id: number
   kind: string
@@ -56,7 +82,7 @@ export interface SupplierMarginBlock {
 }
 
 export interface MarginRange {
-  basic_cost: number | null        // landed per-unit cost (supplier unit + per-unit extras)
+  basic_cost: number | null        // landed per-unit cost before bulk terms (supplier unit + per-unit extras)
   extra_unit_cost: number | null
   mbb_cost: number | null
   mbb_kind: string | null
@@ -128,7 +154,7 @@ export interface Product {
   supplier_name: string | null
   supplier_code: string | null
   supplier_sku: string | null
-  all_suppliers: { id: number; supplier_id: number | null; name: string | null; code: string | null; supplier_sku: string | null; barcode: string | null; basic_cost: number | null; cost_source_effective?: string | null; mbb_term_list: MbbTerm[]; units_per_pack: number | null; is_primary: boolean; is_preferred: boolean; stock_status: string; reported_out_at: string | null; expected_restock_at: string | null; stock_confirmed_by: string | null; stock_note: string | null; stock_events: { out_at: string; restock_at: string | null; note: string | null; days: number | null }[] }[]
+  all_suppliers: { id: number; supplier_id: number | null; name: string | null; code: string | null; supplier_sku: string | null; barcode: string | null; rrp?: number | null; basic_cost: number | null; cost_source_effective?: string | null; mbb_term_list: MbbTerm[]; catalogue_term_list?: CatalogueBulkTerm[]; units_per_pack: number | null; is_primary: boolean; is_preferred: boolean; stock_status: string; reported_out_at: string | null; expected_restock_at: string | null; stock_confirmed_by: string | null; stock_note: string | null; stock_events: { out_at: string; restock_at: string | null; note: string | null; days: number | null }[] }[]
   mbb_unit_cost: number | null        // best achievable per-unit MBB cost (from mbb_terms)
   landed_unit_cost: number | null     // = supplier per-sell-unit cost (channel charges applied per channel)
   cost_last_updated: string | null
@@ -137,14 +163,16 @@ export interface Product {
   unit_cost: number | null           // basic_cost ÷ units_per_pack — used for all GP calculations
   uom_verified_at: string | null     // IMS-stamped date pack size was manually confirmed
   uom_verified_by: string | null     // name/initials of person who confirmed
-  hitl_verified?: boolean            // currently HITL-verified (latest onboarding event is a verify)
-  // Sync protection — shadow values + conflict flags
-  basic_cost_sheet: number | null        // last cost value seen from Sheet sync
-  units_per_pack_sheet: number | null    // last pack size seen from Sheet sync
-  cost_sheet_conflict: boolean           // Sheet cost disagrees with IMS-locked cost
-  pack_sheet_conflict: boolean           // Sheet pack size disagrees with IMS-verified value
+  hitl_verified?: boolean            // legacy: retired matching flow's audit trail (kept for the sheet push)
+  catalogue_reviewed?: boolean       // a human approved and published this SKU in the catalogue review desk
+  catalogue_reviewed_by?: string | null
+  catalogue_reviewed_at?: string | null
+  catalogue_review_run_id?: string | null   // audit links only — never rendered on the page
+  // Batch expiry (algo-dashboard sync) — soonest first; days < 0 means lapsed
+  expiry_batches?: ExpiryBatch[]
+  expiry_days?: number | null        // days to the soonest batch, null when none tracked
   // Sales velocity
-  sales_120d: number                 // units sold in last 120 days
+  sales_120d: number | null          // units sold in last 120 days (null when no demand signal)
   data_grade: 'A' | 'C'              // inventory completeness (reconciliation lives in procurement)
   // Cost confidence (Story 1.5)
   cost_source: 'manual' | 'catalogue' | 'po_issued' | 'invoice_matched'
@@ -183,12 +211,21 @@ export interface ProductsResponse {
   items: Product[]
 }
 
+export interface ExpiryBatch {
+  batch_ref: string | null
+  expiry_date: string              // YYYY-MM-DD
+  qty: number | null
+  location: string | null
+  days: number                     // days until expiry; negative once lapsed
+}
+
 export interface SummaryResponse {
   total_active: number
   inactive_count: number
   discontinued_count: number
   low_stock_count: number
-  expiring_soon: number
+  expiring_soon: number            // soonest batch inside 90 days, not yet lapsed
+  expired_stock: number            // soonest batch already lapsed — a write-off
   price_alerts: number
 }
 

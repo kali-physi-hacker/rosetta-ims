@@ -146,10 +146,10 @@ def _vision_envelope(rows: list[dict[str, str]]) -> str:
 
 
 def _run_pipeline(db, monkeypatch) -> UUID:
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr(
         extraction,
-        "_call_gemini_vision",
+        "_call_vision",
         lambda content, *, media_type: extraction._VisionResponse(text=_vision_envelope([HILLS_ROW])),
     )
     service = CatalogueSubmissionService(db, upload_root=os.environ["CATALOGUE_UPLOAD_DIR"], max_upload_bytes=1024 * 1024)
@@ -531,3 +531,169 @@ def test_unknown_run_returns_404(client):
         response = client.get(f"/catalogues/ingestions/{missing}/{layer}")
         assert response.status_code == 404
         assert response.json()["detail"]["code"] == "INGESTION_RUN_NOT_FOUND"
+
+
+def test_the_source_endpoint_serves_the_scanned_file_itself(client, db, monkeypatch):
+    """A reviewer reading "13.10" should be able to open the page it came from.
+
+    Served inline so the PDF opens in a tab rather than landing in Downloads,
+    and named after the upload so the tab is identifiable.
+    """
+    run = _run_pipeline(db, monkeypatch)
+    response = client.get(f"/catalogues/ingestions/{run}/source")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/pdf")
+    assert response.headers["content-disposition"] == 'inline; filename="hills.pdf"'
+    assert response.content.startswith(b"%PDF")
+
+
+def test_a_file_altered_since_the_scan_is_refused_rather_than_served(client, db, monkeypatch):
+    """The point of the link is provenance — showing the wrong bytes is worse than showing none.
+
+    The loader checksums the stored original, so a file swapped underneath us
+    fails the check and the reviewer is told, instead of reading a document
+    that never produced these prices.
+    """
+    from pathlib import Path
+
+    run = _run_pipeline(db, monkeypatch)
+    source = db.query(models.CatalogueSourceDocument).order_by(models.CatalogueSourceDocument.id.desc()).first()
+    Path(os.environ["CATALOGUE_UPLOAD_DIR"], source.source_ref).write_bytes(_pdf_bytes(page_count=3))
+
+    response = client.get(f"/catalogues/ingestions/{run}/source")
+    assert response.status_code == 410
+    assert response.json()["detail"]["code"] == "SOURCE_FILE_UNAVAILABLE"
+    assert "checksum" in response.json()["detail"]["message"].lower()
+
+
+def test_a_reparse_serves_the_document_its_evidence_came_from(client, db, monkeypatch):
+    """A re-parse never opens a file, but it is still about one."""
+    run = _run_pipeline(db, monkeypatch)
+    reparse = client.post(f"/catalogues/ingestions/{run}/reparse", json={}).json()
+
+    response = client.get(f"/catalogues/ingestions/{reparse['ingestion_run_id']}/source")
+    assert response.status_code == 200
+    assert response.headers["content-disposition"] == 'inline; filename="hills.pdf"'
+
+
+def test_the_source_of_an_unknown_run_is_a_404(client):
+    missing = "99999999-9999-4999-8999-999999999999"
+    response = client.get(f"/catalogues/ingestions/{missing}/source")
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "INGESTION_RUN_NOT_FOUND"
+
+
+def _staged_candidate(db, run):
+    """A row sitting in the dock: approved, not yet published.
+
+    Set directly rather than through the approve endpoint, which first requires
+    a matched product or a confirmed create draft. That guard is real and
+    tested elsewhere; what matters here is the transition OUT of staged.
+    """
+    candidate = db.query(models.CatalogueMasteringCandidate).filter_by(
+        ingestion_run_uuid=str(run)
+    ).first()
+    candidate.review_status = "APPROVED"
+    candidate.reviewed_by = "seph"
+    candidate.reviewed_at = "2026-08-03T10:00:00+00:00"
+    db.commit()
+    return candidate.mastering_candidate_uuid
+
+
+def test_a_staged_row_can_be_taken_back_out_of_the_dock(client, db, monkeypatch):
+    """"Staged" is approved-and-unpublished, so a later decision un-stages it.
+
+    Nothing is deleted — the pipeline is append-only. The row stops being
+    staged because the newest decision says it is not wanted, and the reason is
+    recorded against it.
+    """
+    run = _run_pipeline(db, monkeypatch)
+    candidate_id = _staged_candidate(db, run)
+
+    removed = client.post(
+        f"/catalogues/ingestions/{run}/mastering-candidates/{candidate_id}/review",
+        json={"review_status": "REJECTED", "reason": "wrong pack size, not going live"},
+    )
+
+    assert removed.status_code == 200, removed.json()
+    db.expire_all()
+    row = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=candidate_id
+    ).one()
+    assert row.review_status == "REJECTED", "no longer approved, so no longer staged"
+
+
+def test_removing_from_staged_records_who_and_why(client, db, monkeypatch):
+    """The decision outlives the session and answers "why isn't this live?"."""
+    run = _run_pipeline(db, monkeypatch)
+    candidate_id = _staged_candidate(db, run)
+
+    client.post(
+        f"/catalogues/ingestions/{run}/mastering-candidates/{candidate_id}/review",
+        json={"review_status": "REJECTED", "reason": "supplier confirmed this line is withdrawn"},
+    )
+
+    decision = db.query(models.CatalogueReviewDecision).filter_by(
+        mastering_candidate_uuid=candidate_id, review_status="REJECTED"
+    ).one()
+    assert "withdrawn" in (decision.reason or "")
+    assert decision.actor_id, "and who decided it"
+
+
+def test_a_decided_row_cannot_be_returned_to_undecided(client, db, monkeypatch):
+    """Once a person has decided, the record says they decided.
+
+    This is why "remove from staged" records a rejection rather than clearing
+    the decision — there is no way back to PENDING_REVIEW, by design.
+    """
+    run = _run_pipeline(db, monkeypatch)
+    candidate_id = _staged_candidate(db, run)
+
+    response = client.post(
+        f"/catalogues/ingestions/{run}/mastering-candidates/{candidate_id}/review",
+        json={"review_status": "PENDING_REVIEW", "reason": "undo"},
+    )
+
+    assert response.status_code in {409, 422}
+    assert "PENDING_REVIEW" in json.dumps(response.json())
+
+
+def test_removing_from_staged_needs_a_reason(client, db, monkeypatch):
+    """A withdrawal with no reason is the click-OK path this exists to prevent."""
+    run = _run_pipeline(db, monkeypatch)
+    candidate_id = _staged_candidate(db, run)
+
+    response = client.post(
+        f"/catalogues/ingestions/{run}/mastering-candidates/{candidate_id}/review",
+        json={"review_status": "REJECTED", "reason": "   "},
+    )
+
+    assert response.status_code in {409, 422}
+    assert "reason" in json.dumps(response.json()).lower()
+
+
+def test_a_published_row_cannot_be_withdrawn_through_the_decision(client, db, monkeypatch):
+    """It has left staging. Taking it back is an operation on the publication."""
+    run = _run_pipeline(db, monkeypatch)
+    candidate_id = _staged_candidate(db, run)
+    db.add(models.CatalogueServingPublication(
+        contract_version="catalogue.serving_item.v1", publication_key="k-live",
+        publication_version="v1", canonical_sku="10447", product_variant_key="pv",
+        product_variant_name="n", product_id=1, supplier_id=14, supplier_product_id=1,
+        supplier_product_key="supplier:14:offer:10447", supplier_sku="10447",
+        current_approved_cost_amount=1, current_approved_cost_currency="HKD",
+        current_approved_cost_basis_uom_code="UNIT", review_status="APPROVED",
+        published_at="2026-08-03T10:00:00+00:00", mastering_candidate_uuid=candidate_id,
+        catalogue_item_uuid="i", raw_observation_ids_json="[]", lineage_json="{}",
+        snapshot_json="{}", is_current=1, created_at="2026-08-03T10:00:00+00:00",
+    ))
+    db.commit()
+
+    response = client.post(
+        f"/catalogues/ingestions/{run}/mastering-candidates/{candidate_id}/review",
+        json={"review_status": "REJECTED", "reason": "changed my mind"},
+    )
+
+    assert response.status_code == 409
+    assert "already published" in json.dumps(response.json())

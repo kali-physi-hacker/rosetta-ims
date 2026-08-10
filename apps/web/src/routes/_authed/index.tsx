@@ -1,7 +1,7 @@
 import { C } from '@/lib/tokens'
 import { useState, useMemo, useEffect, useCallback, useRef, useSyncExternalStore, Suspense, type CSSProperties } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import type { Product, SummaryResponse, Supplier, SyncStatus } from '@/lib/types'
+import type { Product, SummaryResponse, Supplier } from '@/lib/types'
 import { authHeaders, can } from '@/lib/auth'
 import { skuToPath } from '@/lib/sku'
 import { toast } from '@/lib/toast'
@@ -416,14 +416,10 @@ const EXPORT_COLUMNS: ExportCol[] = [
   // Pack-size verification + edit provenance
   { key: 'uom_verified_at', label: 'UOM Verified At',   group: 'extra', value: r => csvEsc((r.item.uom_verified_at ?? '').slice(0, 10)) },
   { key: 'uom_verified_by', label: 'UOM Verified By',   group: 'extra', value: r => csvEsc(r.item.uom_verified_by ?? '') },
-  { key: 'hitl_verified',   label: 'HITL Verified',     group: 'extra', value: r => csvYN(r.item.hitl_verified) },
+  { key: 'catalogue_reviewed', label: 'Catalogue Reviewed', group: 'extra', value: r => csvYN(r.item.catalogue_reviewed) },
   { key: 'last_manual_edit_at', label: 'Last Manual Edit At', group: 'extra', value: r => csvEsc((r.item.last_manual_edit_at ?? '').slice(0, 10)) },
   { key: 'last_manual_edit_by', label: 'Last Manual Edit By', group: 'extra', value: r => csvEsc(r.item.last_manual_edit_by ?? '') },
   // Sheet-sync shadow values + conflict flags
-  { key: 'basic_cost_sheet',      label: 'Basic Cost (Sheet)',    group: 'extra', value: r => csvHkd(r.item.basic_cost_sheet) },
-  { key: 'units_per_pack_sheet',  label: 'Units/Pack (Sheet)',    group: 'extra', value: r => r.item.units_per_pack_sheet ?? '' },
-  { key: 'cost_sheet_conflict',   label: 'Cost Sheet Conflict',   group: 'extra', value: r => csvYN(r.item.cost_sheet_conflict) },
-  { key: 'pack_sheet_conflict',   label: 'Pack Sheet Conflict',   group: 'extra', value: r => csvYN(r.item.pack_sheet_conflict) },
 ]
 const DEFAULT_EXPORT_KEYS = EXPORT_COLUMNS.filter(c => c.group === 'default').map(c => c.key)
 
@@ -486,8 +482,6 @@ function InventoryView() {
   const [showBatch, setShowBatch] = useState(false)
   const [summary, setSummary]     = useState<SummaryResponse | null>(null)
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
-  const [syncing, setSyncing]     = useState(false)
   const [algoSyncing, setAlgoSyncing] = useState(false)
   const [pushing, setPushing]     = useState(false)
   const [fetchingComp, setFetchingComp] = useState(false)
@@ -584,7 +578,6 @@ function InventoryView() {
 
   useEffect(() => {
     fetch(`${API}/suppliers`, { headers: authHeaders() }).then(r => r.ok ? r.json() : []).then(setSuppliers).catch(() => {})
-    fetch(`${API}/sync/status`, { headers: authHeaders() }).then(r => r.ok ? r.json() : null).then(setSyncStatus).catch(() => {})
   }, [])
 
   // One full load; search + supplier then filter CLIENT-side over the in-memory list.
@@ -720,20 +713,6 @@ function InventoryView() {
     finally { setFetchingComp(false) }
   }
 
-  async function handleSync() {
-    setSyncing(true)
-    try {
-      const res = await fetch(`${API}/sync/sheet`, { method: 'POST', headers: authHeaders() })
-      if (res.ok) {
-        const data: SyncStatus = await res.json()
-        setSyncStatus({ ...data, synced: true })
-        fetchData(true)
-      }
-    } finally {
-      setSyncing(false)
-    }
-  }
-
   // Push IMS → SSOT sheet. Dry-run first to preview, then confirm before writing.
   async function handlePush() {
     if (pushing) return
@@ -854,8 +833,8 @@ function InventoryView() {
       case 'no_pack_size': result = result.filter(i => i.units_per_pack === null); break
       case 'low_margin':   result = result.filter(i => i.channels.some(c => c.recommendation === 'Raise price ⚠')); break
       case 'priority_fix': result = result.filter(i => i.sales_120d > 0 && i.data_grade === 'C'); break
-      case 'unverified':   result = result.filter(i => !i.hitl_verified); break
-      case 'verified':     result = result.filter(i => i.hitl_verified); break
+      case 'unverified':   result = result.filter(i => !i.catalogue_reviewed); break
+      case 'verified':     result = result.filter(i => i.catalogue_reviewed); break
     }
     return result
   }, [items, search, supplier, collectionSkus, channelFilter, selectedCats, quickFilter, locationFilter, stockFilter, qualityFilter])
@@ -1041,7 +1020,7 @@ function InventoryView() {
   }, [marginMode])
   const anyFilter = !!(search.trim() || selectedCats.length || supplier !== 'All' || channelFilter !== 'all' || quickFilter || locationFilter !== 'All' || stockFilter !== 'All' || qualityFilter !== 'All' || collectionSkus)
   const clearAll = () => { setSearch(''); setSearchInput(''); setSelectedCats([]); setSupplier('All'); setChannelFilter('all'); setQuickFilter(null); setLocationFilter('All'); setStockFilter('All'); setQualityFilter('All'); selectCollection(null) }
-  const detailHref = (item: Product) => `/items/${skuToPath(item.sku_code)}`
+  const detailHref = (item: Product) => `/sku/${skuToPath(item.sku_code)}`
   const validSkuCode = (s: string) => /^\d{6,}$/.test(s.trim())
 
   const canBulk = mounted && can('product_sensitive')
@@ -1184,12 +1163,6 @@ function InventoryView() {
           </div>
           <div className="actions">
             {liveAt && <span className="live" title={`Auto-refreshing — last check ${liveAt.toLocaleTimeString()}`}><span className="d" />Live</span>}
-            {syncStatus?.synced_at
-              ? <>
-                  {(syncStatus.missing_cost ?? 0) > 0 && <span className="warnbadge">⚠ {syncStatus.missing_cost} missing costs</span>}
-                  {(syncStatus.cost_discrepancies ?? 0) > 0 && <span className="errbadge">⚠ {syncStatus.cost_discrepancies} cost conflicts</span>}
-                </>
-              : <span className="warnbadge">⚠ Not synced</span>}
             <div style={{ display: 'inline-flex', border: '1px solid #E7EAEF', borderRadius: '8px', overflow: 'hidden', background: '#fff' }} role="tablist" aria-label="Table view">
               {([['Inventory', false], ['Margins', true]] as const).map(([lbl, m]) => (
                 <button key={lbl} role="tab" aria-selected={marginMode === m} onClick={() => setMarginMode(m)}
@@ -1253,7 +1226,6 @@ function InventoryView() {
             {mounted && can('product_edit') && <button className="btn" onClick={handleFetchCompetitors} disabled={fetchingComp} title="Scrape all linked competitor prices">{fetchingComp ? 'Fetching…' : '🏷 Fetch competitor prices'}</button>}
             {mounted && can('sheet') && <button className="btn" onClick={handlePush} disabled={pushing}>{pushing ? 'Pushing…' : '⤴ Push to Sheet'}</button>}
             {mounted && can('sheet') && <button className="btn" onClick={handleAlgoSync} disabled={algoSyncing} title="Pull real sales + inventory expiry from the algo-dashboard">{algoSyncing ? 'Syncing…' : '⟳ Sync live sales data'}</button>}
-            {mounted && can('sheet') && <button className="btn pri" onClick={handleSync} disabled={syncing}>{syncing ? 'Syncing…' : '↻ Sync'}</button>}
             {showBatch && <BatchUpdateModal onClose={() => setShowBatch(false)} onApplied={fetchData} />}
           </div>
         </div>
@@ -1311,7 +1283,7 @@ function InventoryView() {
                   { value: '_g1', label: 'Grade', group: true },
                   { value: 'grade_a', label: 'Grade A — complete' }, { value: 'grade_c', label: 'Grade C — missing data' },
                   { value: '_g2', label: 'Verification', group: true },
-                  { value: 'unverified', label: 'Unverified' }, { value: 'verified', label: 'HITL-verified' },
+                  { value: 'unverified', label: 'Not reviewed' }, { value: 'verified', label: 'Catalogue-reviewed' },
                   { value: '_g3', label: 'Data gaps', group: true },
                   { value: 'no_sku', label: 'No SKU' }, { value: 'no_supplier', label: 'No supplier' }, { value: 'no_cost', label: 'No cost' }, { value: 'no_pack_size', label: 'No pack size' },
                   { value: '_g4', label: 'Priority', group: true },
@@ -1330,7 +1302,9 @@ function InventoryView() {
             <div className={`tile ${quickFilter === 'below_margin' ? 'on' : ''}`} onClick={() => toggleQuickFilter('below_margin')}><div className="lab">Below margin</div><div className="val" style={{ color: clientCounts.below_margin > 0 ? C.amber : undefined }}>{clientCounts.below_margin.toLocaleString()}</div><div className="vsub">below GP floor</div></div>
             <div className={`tile ${quickFilter === 'out_of_stock' ? 'on' : ''}`} onClick={() => toggleQuickFilter('out_of_stock')}><div className="lab">Out of stock</div><div className="val" style={{ color: clientCounts.out_of_stock > 0 ? '#C0362C' : undefined }}>{clientCounts.out_of_stock.toLocaleString()}</div><div className="vsub">zero on hand</div></div>
             <div className={`tile ${quickFilter === 'supplier_oos' ? 'on' : ''}`} onClick={() => toggleQuickFilter('supplier_oos')}><div className="lab">Supplier OOS</div><div className="val" style={{ color: clientCounts.supplier_oos > 0 ? C.amber : undefined }}>{clientCounts.supplier_oos.toLocaleString()}</div><div className="vsub">a supplier is out</div></div>
-            <div className="tile" style={{ cursor: 'default' }}><div className="lab">Expiring &lt;90d</div><div className="val" style={{ color: (summary?.expiring_soon ?? 0) > 0 ? C.amber : undefined }}>{summary?.expiring_soon ?? '—'}</div></div>
+            {/* expiring_soon no longer folds in already-lapsed batches — those are a
+                write-off, not something to sell through, so they get their own line. */}
+            <div className="tile" style={{ cursor: 'default' }}><div className="lab">Expiring &lt;90d</div><div className="val" style={{ color: (summary?.expiring_soon ?? 0) > 0 ? C.amber : undefined }}>{summary?.expiring_soon ?? '—'}</div><div className="vsub">{(summary?.expired_stock ?? 0) > 0 ? `+${summary!.expired_stock} already expired` : 'none lapsed'}</div></div>
           </div>
         )}
 

@@ -107,15 +107,20 @@ def _install_golden_replay(monkeypatch, envelope_paths: list[Path]):
         calls["n"] += 1
         return extraction._VisionResponse(text=payloads[index], request_id=f"golden_{index + 1}")
 
-    monkeypatch.setattr(extraction, "_call_gemini_vision", replay)
+    monkeypatch.setattr(extraction, "_call_vision", replay)
     return calls
 
 
 def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
     """Two REAL Hill's pages, one per header family (Life Stage / Disease
     Category), from a live gemini-3.1-pro-preview run: every recorded row must
-    conform under the single hills.price_list.v1 contract and reach mastering."""
+    conform under the single hills.price_list.v1 contract and reach mastering.
 
+    Pinned to the provider that recorded them, which also runs the whole
+    pipeline once on the non-default provider — the toggle is not just a
+    lookup, it has to carry a real run."""
+
+    monkeypatch.setenv("CATALOGUE_VISION_PROVIDER", "google")
     monkeypatch.setenv("GEMINI_API_KEY", "golden-replay")
     pages = [HILLS_CLASSIC / "page_1.json", HILLS_CLASSIC / "page_4.json"]
     calls = _install_golden_replay(monkeypatch, pages)

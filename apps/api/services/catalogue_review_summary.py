@@ -15,14 +15,20 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
 
+import re
+
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 import models
+from services import variant_similarity
 
 _MATCHED_VARIANT_STATES = {"PROPOSED_MATCH", "CONFIRMED_MATCH"}
 _LEGACY_OFFER_PREFIX = "legacy-product-supplier:"
 _PREFERRED_SELLING_CHANNEL = "shopify"
+
+
+_VALID_SKU = re.compile(r"^\d{6,}$")
 
 
 def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
@@ -61,6 +67,11 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
         ],
     )
 
+    uoms = _uom_by_sku(db, [
+        variant.get("canonical_sku") or variant.get("product_variant_id")
+        for _, _, variant, _ in parsed
+    ])
+
     items = []
     by_status: dict[str, int] = {}
     for candidate, offer, variant, price in parsed:
@@ -85,10 +96,22 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
                 "cost_amount": cost,
                 "cost_currency": (price.get("current_cost") or {}).get("currency"),
                 "cost_basis": ((price.get("current_cost") or {}).get("price_basis") or {}).get("label"),
+                # What the cost is PER. Every price in this pipeline is per
+                # sellable unit (basis code UNIT), and the contract's own basis
+                # label is null on real runs, so the variant's uom is the only
+                # place the word actually lives.
+                "uom": uoms.get(sku),
                 "offering_state": offer.get("state"),
                 "variant_state": variant.get("state"),
                 "canonical_sku": variant.get("canonical_sku"),
                 "variant_name": variant.get("product_variant_name"),
+                # Drafted-to-create rows read very differently from matched
+                # ones — they are about to mint a SKU — so the lane can mark
+                # them without re-deriving intent from the state name.
+                "will_create": variant.get("state") == "CONFIRMED_CREATE" and not variant.get("created_product_sku"),
+                "created_product_sku": variant.get("created_product_sku"),
+                "draft_name": (variant.get("proposed_variant") or {}).get("name"),
+                "draft_category": (variant.get("proposed_variant") or {}).get("category"),
                 "family_key": family,
                 "open_issues": issues[0],
                 "blocking_issues": issues[1],
@@ -110,6 +133,132 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
     }
 
 
+def run_receipt(db: Session, run_uuid: UUID) -> dict[str, Any]:
+    """What a run's commits actually wrote — the publish receipt.
+
+    One entry per offering price row this run created: the SKU it landed on,
+    the predecessor price it superseded (old -> new), and when. Empty until
+    the run's first apply. Costs are per-sell-unit, packaging-aware, matching
+    every other read surface.
+    """
+
+    from services import offering_costs
+
+    run = str(run_uuid)
+    rows = (
+        db.query(models.CatalogueSupplierPrice, models.SupplierOffering, models.ProductVariant, models.Supplier)
+        .join(models.SupplierOffering, models.CatalogueSupplierPrice.supplier_product_id == models.SupplierOffering.id)
+        .outerjoin(models.ProductVariant, models.SupplierOffering.product_variant_id == models.ProductVariant.id)
+        .outerjoin(models.Supplier, models.SupplierOffering.supplier_id == models.Supplier.id)
+        .filter(models.CatalogueSupplierPrice.ingestion_run_uuid == run)
+        .order_by(models.CatalogueSupplierPrice.id)
+        .all()
+    )
+    created = _created_variants(db, run)
+    if not rows:
+        return {"ingestion_run_id": run, "count": 0, "changes": [], "created": created}
+
+    offering_ids = {offering.id for _, offering, _, _ in rows}
+    history: dict[int, list[models.CatalogueSupplierPrice]] = {oid: [] for oid in offering_ids}
+    for price in (
+        db.query(models.CatalogueSupplierPrice)
+        .filter(models.CatalogueSupplierPrice.supplier_product_id.in_(offering_ids))
+        .order_by(models.CatalogueSupplierPrice.id)
+        .all()
+    ):
+        history[price.supplier_product_id].append(price)
+
+    packaging: dict[int, tuple[str | None, str | None, float | None]] = {}
+    for pack in (
+        db.query(models.CataloguePackagingConfiguration)
+        .filter(
+            models.CataloguePackagingConfiguration.supplier_product_id.in_(offering_ids),
+            models.CataloguePackagingConfiguration.superseded_at.is_(None),
+        )
+        .order_by(models.CataloguePackagingConfiguration.id)
+        .all()
+    ):
+        packaging[pack.supplier_product_id] = (
+            pack.purchase_uom_code,
+            pack.sellable_unit_uom_code,
+            float(pack.sellable_units_per_purchase_unit) if pack.sellable_units_per_purchase_unit is not None else None,
+        )
+
+    changes: list[dict[str, Any]] = []
+    for price, offering, variant, supplier in rows:
+        pack = packaging.get(offering.id)
+        new_unit = offering_costs._per_sell_unit(float(price.amount), price.price_basis_uom_code, pack)
+        prev = next(
+            (p for p in reversed(history[offering.id]) if p.id < price.id),
+            None,
+        )
+        old_unit = (
+            offering_costs._per_sell_unit(float(prev.amount), prev.price_basis_uom_code, pack)
+            if prev is not None else None
+        )
+        delta_pct = (
+            round((new_unit - old_unit) / old_unit * 100, 1)
+            if old_unit not in (None, 0) else None
+        )
+        changes.append({
+            "sku_code": variant.sku_code if variant else None,
+            "variant_name": variant.name if variant else None,
+            "uom": _unit_label(variant.uom if variant else None),
+            # Brand and weight are columns in the golden-sample sheet that we
+            # populate and it leaves blank, so they belong on the receipt too —
+            # not only inside the export nobody opens until they diff it.
+            "brand": (variant.brand if variant else None) or None,
+            "weight": _weight_label(variant),
+            "supplier_name": supplier.name if supplier else None,
+            "supplier_sku": offering.supplier_sku,
+            "old_unit_cost": old_unit,
+            "new_unit_cost": new_unit,
+            "delta_pct": delta_pct,
+            "written_at": price.created_at,
+            "is_current": bool(price.is_current),
+        })
+    return {
+        "ingestion_run_id": run,
+        "count": len(changes),
+        "changes": changes,
+        "created": created,
+    }
+
+
+def _created_variants(db: Session, run: str) -> list[dict[str, Any]]:
+    """Products this run brought into existence, with why they were allowed to.
+
+    The whole point of storing `checked_against` and `duplicate_ack` on the
+    draft is that six months from now "why does this SKU exist?" has an answer
+    in the UI rather than in a decision blob nobody opens.
+    """
+    out: list[dict[str, Any]] = []
+    for candidate in (
+        db.query(models.CatalogueMasteringCandidate)
+        .filter(models.CatalogueMasteringCandidate.ingestion_run_uuid == run)
+        .order_by(models.CatalogueMasteringCandidate.id)
+        .all()
+    ):
+        variant = _loads(candidate.product_variant_resolution_json, {}) or {}
+        sku = variant.get("created_product_sku")
+        if not sku:
+            continue
+        draft = variant.get("proposed_variant") or {}
+        product = db.query(models.ProductVariant).filter_by(sku_code=sku).first()
+        out.append({
+            "sku_code": sku,
+            "name": product.name if product else draft.get("name"),
+            "category": product.category if product else draft.get("category"),
+            "uom": _unit_label(product.uom if product else draft.get("uom")),
+            "brand": product.brand if product else draft.get("brand"),
+            "drafted_by": candidate.reviewed_by,
+            "decided_at": candidate.reviewed_at,
+            "duplicate_ack": draft.get("duplicate_ack"),
+            "checked_against": draft.get("checked_against") or [],
+        })
+    return out
+
+
 def search_product_variants(db: Session, run_uuid: UUID, query: str, limit: int) -> dict[str, Any]:
     """Product-variant picker scoped to the run's supplier.
 
@@ -120,25 +269,33 @@ def search_product_variants(db: Session, run_uuid: UUID, query: str, limit: int)
 
     run = db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
     supplier_id = run.supplier_id if run else None
-    needle = f"%{query.lower()}%"
-    prefix = f"{query.lower()}%"
-    variants = (
-        db.query(models.ProductVariant)
-        .filter(
-            or_(
-                func.lower(models.ProductVariant.sku_code).like(needle),
-                func.lower(models.ProductVariant.name).like(needle),
-                func.lower(models.ProductVariant.brand).like(needle),
+
+    # A substring LIKE cannot answer the question the reviewer is actually
+    # asking. "GI Biome Chicken" never appears contiguously inside "Hill's
+    # Prescription Diet - Wet Cat Food - GI Biome Chicken & Vegetable Stew", so
+    # the old search returned nothing and the row looked new. Score by shared
+    # distinguishing words instead, and keep the literal LIKE as a floor so
+    # typing a SKU or an exact fragment still works.
+    scored = variant_similarity.rank_variants(db, query, limit=limit)
+    seen = {variant.sku_code for variant, _ in scored}
+    scores = {variant.sku_code: score for variant, score in scored}
+    variants = [variant for variant, _ in scored]
+    if len(variants) < limit:
+        needle = f"%{query.lower()}%"
+        literal = (
+            db.query(models.ProductVariant)
+            .filter(
+                or_(
+                    func.lower(models.ProductVariant.sku_code).like(needle),
+                    func.lower(models.ProductVariant.name).like(needle),
+                    func.lower(models.ProductVariant.brand).like(needle),
+                )
             )
+            .order_by(models.ProductVariant.status, models.ProductVariant.name)
+            .limit(limit - len(variants))
+            .all()
         )
-        .order_by(
-            func.lower(models.ProductVariant.sku_code).like(prefix).desc(),
-            models.ProductVariant.status,
-            models.ProductVariant.name,
-        )
-        .limit(limit)
-        .all()
-    )
+        variants.extend(v for v in literal if v.sku_code not in seen)
 
     results = []
     for variant in variants:
@@ -152,6 +309,11 @@ def search_product_variants(db: Session, run_uuid: UUID, query: str, limit: int)
                 "category": variant.category,
                 "species": variant.species,
                 "status": variant.status,
+                "score": scores.get(variant.sku_code),
+                # Some historical rows carry a product name in the SKU column.
+                # They are still legitimate match targets, but the reviewer
+                # should see what they are picking.
+                "sku_valid": bool(_VALID_SKU.match(variant.sku_code or "")),
                 "offering_cost": offering_cost,
                 "offering_source": offering_source,
                 "selling_price": sell[0] if sell else None,
@@ -265,10 +427,10 @@ def _published_candidate_uuids(db: Session, candidate_uuids: list[str]) -> set[s
 def _current_offer_prices(db: Session, offer_keys: list[str]) -> dict[str, float]:
     """Current supplier cost per resolution supplier_product_id.
 
-    Matched keys are either a SupplierOffering.supplier_product_key or the
-    resolver's legacy marker for a ProductSupplier row that has no offering
-    yet — the legacy basic_cost is that offering's current cost until apply
-    writes the real one.
+    Matched keys are SupplierOffering.supplier_product_key values. The
+    resolver can also emit a legacy marker for a ProductSupplier row; those
+    now always have an offering price, so they resolve through the link's
+    (supplier, variant) pair rather than a cost column of their own.
     """
 
     prices: dict[str, float] = {}
@@ -294,12 +456,64 @@ def _current_offer_prices(db: Session, offer_keys: list[str]) -> dict[str, float
     }
     if legacy_ids:
         rows = (
-            db.query(models.ProductSupplier.id, models.ProductSupplier.basic_cost)
+            db.query(models.ProductSupplier.id, models.CatalogueSupplierPrice.amount)
+            .join(
+                models.SupplierOffering,
+                (models.SupplierOffering.supplier_id == models.ProductSupplier.supplier_id)
+                & (models.SupplierOffering.product_variant_id == models.ProductSupplier.product_id),
+            )
+            .join(
+                models.CatalogueSupplierPrice,
+                (models.CatalogueSupplierPrice.supplier_product_id == models.SupplierOffering.id)
+                & (models.CatalogueSupplierPrice.is_current == 1),
+            )
             .filter(models.ProductSupplier.id.in_(legacy_ids.keys()))
             .all()
         )
         prices.update({legacy_ids[row_id]: float(cost) for row_id, cost in rows if cost is not None})
     return prices
+
+
+# The catalogue's uom column is dirty: alongside real words (Can(s), Bag(s),
+# PCS) it holds "#N/A" and empty strings from years of sheet imports. A price
+# reads better with no unit at all than with "/ #N/A" after it.
+_JUNK_UOM = {"", "-", "n/a", "#n/a", "na", "null", "none"}
+
+
+def _unit_label(raw: str | None) -> str | None:
+    """"Can(s)" -> "can", "Pouch(es)" -> "pouch". None when it says nothing.
+
+    "unit" is kept: next to a price it still disambiguates (per single item,
+    not per case), which is the whole reason for showing the unit at all.
+    """
+    text = re.sub(r"\((?:e?s)\)$", "", (raw or "").strip()).strip().lower()
+    return None if text in _JUNK_UOM else (text or None)
+
+
+# weight_g is canonical grams; weight_unit is only how the source displayed it.
+_GRAMS_PER = {"g": 1.0, "kg": 1000.0, "lb": 453.59237, "oz": 28.349523}
+
+
+def _weight_label(variant) -> str | None:
+    if variant is None or variant.weight_g is None:
+        return None
+    unit = (variant.weight_unit or "g").strip().lower()
+    per = _GRAMS_PER.get(unit)
+    if per is None:
+        return f"{variant.weight_g:g} g"
+    return f"{round(variant.weight_g / per, 3):g} {unit}"
+
+
+def _uom_by_sku(db: Session, sku_codes: list[str]) -> dict[str, str]:
+    skus = [sku for sku in set(sku_codes) if sku]
+    if not skus:
+        return {}
+    rows = (
+        db.query(models.ProductVariant.sku_code, models.ProductVariant.uom)
+        .filter(models.ProductVariant.sku_code.in_(skus))
+        .all()
+    )
+    return {sku: label for sku, uom in rows if (label := _unit_label(uom))}
 
 
 def _selling_prices_by_sku(db: Session, sku_codes: list[str]) -> dict[str, tuple[float, str]]:
@@ -341,13 +555,6 @@ def _supplier_cost_for_variant(
         )
         if price is not None:
             return float(price[0]), "offering"
-    legacy = (
-        db.query(models.ProductSupplier.basic_cost)
-        .filter_by(supplier_id=supplier_id, product_id=variant_id)
-        .first()
-    )
-    if legacy is not None and legacy[0] is not None:
-        return float(legacy[0]), "legacy"
     return None, None
 
 

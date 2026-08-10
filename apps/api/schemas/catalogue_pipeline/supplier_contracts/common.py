@@ -8,6 +8,7 @@ pipeline payload contracts.
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Literal
 
@@ -85,6 +86,17 @@ class SourceFieldRole(str, Enum):
     RRP = "RRP"
     PACKAGING = "PACKAGING"
     MBB_TEXT = "MBB_TEXT"
+    # A priced tier column: the row's unit price WHEN a stated condition is met.
+    # Distinct from MBB_TEXT, which preserves prose nobody has proven the shape
+    # of. Hill's states the ladder as three "Net Invoice Price* … MOV $1,200 /
+    # $2,200 / $4,500" columns, one price per row per threshold, which is a
+    # fully determined minimum_spend -> discounted_unit_price term.
+    MBB_TIER_PRICE = "MBB_TIER_PRICE"
+    # A tier stated as its own ROW rather than its own column: the line under a
+    # product carrying a quantity and a cheaper price and nothing else.
+    # Alfamedic prints its ladder this way; Hill's prints the same information
+    # as MBB_TIER_PRICE columns.
+    MBB_TIER_ROW = "MBB_TIER_ROW"
     BARCODE = "BARCODE"
     VARIANT = "VARIANT"
     SPECIES = "SPECIES"
@@ -161,6 +173,27 @@ class SourceStructure(SupplierSourceModel):
     required_headers: list[str] = Field(default_factory=list, description="Headers required before interpretation.")
     optional_headers: list[str] = Field(default_factory=list, description="Headers that may be present.")
     row_eligibility_rules: list[str] = Field(default_factory=list, description="Rules for deciding whether a source row is a catalogue item.")
+    discontinued_markers: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Words a supplier writes on a line it no longer sells. Alfamedic writes DISCON, and "
+            "writes it wherever there is room — in the product name, in the packing column, as the "
+            "order code itself, even in the price column. A row carrying one is not a stocking "
+            "candidate: there is no price to find and no decision a reviewer can make, so it is "
+            "skipped and counted rather than queued. Matched whole-word and case-insensitively."
+        ),
+    )
+    row_identity_fields: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Field keys that identify a source row as a catalogue item — usually the order code. "
+            "A row carrying none of them AND no price is furniture (a section divider, a blank "
+            "spacer, a continuation line) and is skipped rather than queued for review: asking a "
+            "human to adjudicate '小食 Treats' teaches them to skim the queue. A row missing its "
+            "code but carrying a PRICE is the opposite case — a real item we failed to read — and "
+            "is still surfaced. Leave empty to keep every row."
+        ),
+    )
     skip_rules: list[str] = Field(default_factory=list, description="Rows or sections intentionally skipped.")
     source_location_expectations: list[str] = Field(
         default_factory=list,
@@ -181,6 +214,114 @@ class SourceFieldContract(SupplierSourceModel):
     aliases: list[str] = Field(default_factory=list, description="Observed header aliases justified by evidence.")
     description: str | None = Field(None, description="Readable explanation of the mapping.")
     evidence: list[EvidenceReference] = Field(default_factory=list, description="Evidence supporting this field mapping.")
+    tier_minimum_spend: Decimal | None = Field(
+        None,
+        gt=Decimal("0"),
+        description=(
+            "For MBB_TIER_PRICE: the order value that unlocks this column's price. Declared here "
+            "rather than parsed from the heading because the heading is not reliable — on the live "
+            "Hill's run the vision model kept 'MOV $1,200' in the column name on 36 of 174 priced "
+            "rows and truncated it to 'Net Invoice Price*' on the rest. The ladder is a property of "
+            "the catalogue, so the contract states it."
+        ),
+    )
+    tier_order: int | None = Field(
+        None,
+        ge=1,
+        description="For MBB_TIER_PRICE: 1-based position of this tier, cheapest threshold first.",
+    )
+    source_column_occurrence: int | None = Field(
+        None,
+        ge=1,
+        description=(
+            "Which column to take when several columns belong to one heading family: 1 is the "
+            "leftmost, in printed order. Needed where a table repeats one heading across several "
+            "columns and what distinguishes them sits in a merged banner above — Hill's prints "
+            "three 'Net Invoice Price*' columns under a spanning MOV header. Ignored when the "
+            "exact declared heading matches a column, so a fully-labelled heading still wins."
+        ),
+    )
+    tier_quantity_field: str | None = Field(
+        None,
+        description=(
+            "For MBB_TIER_ROW: the field key carrying the tier's quantity threshold. Alfamedic "
+            "prints '10 bots' in its Order Units column on a line that has no order code and a "
+            "cheaper price — condition and benefit both stated, so the term is fully determined. "
+            "The row is consumed as a term on the product above it rather than becoming a "
+            "catalogue row of its own; a priced line with no identity is not a product."
+        ),
+    )
+    tier_price_field: str | None = Field(
+        None,
+        description="For MBB_TIER_ROW: the field key carrying the tier's discounted unit price.",
+    )
+    continues_row_above_when_matching: str | None = Field(
+        None,
+        description=(
+            "Regular expression marking a value that CONTINUES the row above rather than standing "
+            "alone. Alfamedic names a collar family once and then lists only sizes: 'Classic Collar "
+            "size 7.5cm', then 'size 10.0cm', 'size 12.5cm'. Those later rows are separate SKUs at "
+            "separate prices, but their name alone does not say what they are. When a value matches "
+            "here AND the row above matches too, the text before the row above's match is prefixed, "
+            "giving 'Classic Collar size 10.0cm'. Nothing is invented: if the row above does not "
+            "match, no prefix can be derived and the value is left exactly as printed."
+        ),
+    )
+    inherits_from_row_above: bool = Field(
+        False,
+        description=(
+            "Take this field from the nearest row above when the source leaves it blank, because "
+            "the printed cell is merged across those rows. Alfamedic lists size variants that way: "
+            "'ALOVEEN Shampoo 250ml/bot' names the product, and the 1L/bot line below carries its "
+            "own order code, packing and price but no name — the name cell spans both. Those are "
+            "separate SKUs and must be stocked as such, so the value is carried down and the "
+            "field's evidence records that it was inherited rather than printed on that line. "
+            "Only rows carrying their own identity inherit: a price-only line beneath a product is "
+            "a quantity tier, not a variant, and must never acquire a name. Carrying stops at a "
+            "page boundary."
+        ),
+    )
+    source_column_prefix: str | None = Field(
+        None,
+        description=(
+            "Heading family this column belongs to, matched as a prefix and paired with "
+            "source_column_occurrence. Exists because heading TEXT from a vision model is not a "
+            "stable key: on one live Hill's document the same three columns came back labelled by "
+            "MOV amount on one page, by discount percentage ('0%/4%/6%') on another, and truncated "
+            "to bare 'Net Invoice Price*' on a third — the same page even varying between runs. "
+            "What is stable is the family and the printed order, so that is what a contract may "
+            "match on. The tier's own condition is still declared, never inferred from position."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _tier_rows_declare_both_halves(self):
+        if self.role == SourceFieldRole.MBB_TIER_ROW and not (
+            self.tier_quantity_field and self.tier_price_field
+        ):
+            raise ValueError(
+                "MBB_TIER_ROW must declare tier_quantity_field and tier_price_field — a tier row "
+                "without both halves is a price with no condition, which is not a term"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _prefix_matching_needs_a_position(self):
+        if self.source_column_prefix and not self.source_column_occurrence:
+            raise ValueError(
+                "source_column_prefix selects one of several columns in a family and is meaningless "
+                "without source_column_occurrence to say which"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _tier_price_declares_its_condition(self):
+        if self.role == SourceFieldRole.MBB_TIER_PRICE and self.tier_minimum_spend is None:
+            raise ValueError(
+                "MBB_TIER_PRICE fields must declare tier_minimum_spend — a tier price without its "
+                "condition is not a term, and inferring the threshold from column order is a guess"
+            )
+        return self
 
     @model_validator(mode="after")
     def _mapping_has_location_or_constant(self):
@@ -231,11 +372,39 @@ class PackagingSourceSemantics(SupplierSourceModel):
     )
     content_measure_source_field: str | None = Field(None, description="Field key proving content amount/UOM.")
     content_measure_uom: UnitOfMeasure | None = Field(None, description="Content-measure UOM when fixed by the format.")
+    purchase_uom_source_field: str | None = Field(
+        None,
+        description=(
+            "Field key whose printed text NAMES the purchase unit after a slash — Alfamedic writes "
+            "'30ml/ bot' and '100 tabs/ box', so the unit varies per row and cannot be a single "
+            "declared value. Only units the vocabulary knows are accepted; anything else is left "
+            "null rather than guessed, because a wrong purchase unit silently rebases every "
+            "per-unit cost derived from it."
+        ),
+    )
+    price_basis_follows_purchase_unit: bool = Field(
+        False,
+        description=(
+            "Price the row in the unit it is SOLD in rather than a fixed basis. Alfamedic prices "
+            "$1,390 per bottle and $1,486 per box; calling both PIECE leaves every per-unit cost "
+            "divided by the wrong denominator. Requires purchase_uom_source_field, and falls back "
+            "to the declared price_basis for a row whose unit could not be read."
+        ),
+    )
     order_increment_source_field: str | None = Field(None, description="Field key proving supplier order multiple.")
     minimum_order_source_field: str | None = Field(None, description="Field key proving minimum order quantity.")
     break_pack_allowed: bool | None = Field(None, description="Whether break-pack purchasing is known from the source.")
     interpretation_rules: list[str] = Field(default_factory=list, description="Supplier-specific packaging interpretation rules.")
     unresolved_semantics: list[str] = Field(default_factory=list, description="Unknown semantics that must remain null.")
+
+    @model_validator(mode="after")
+    def _price_basis_needs_a_unit_to_follow(self):
+        if self.price_basis_follows_purchase_unit and not self.purchase_uom_source_field:
+            raise ValueError(
+                "price_basis_follows_purchase_unit requires purchase_uom_source_field — there is "
+                "nothing for the basis to follow otherwise"
+            )
+        return self
 
     @model_validator(mode="after")
     def _validate_packaging_semantics(self):

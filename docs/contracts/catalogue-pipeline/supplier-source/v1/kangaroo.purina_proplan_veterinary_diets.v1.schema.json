@@ -253,6 +253,12 @@
           "default": null,
           "description": "Price basis repeated for packaging cross-checks."
         },
+        "price_basis_follows_purchase_unit": {
+          "default": false,
+          "description": "Price the row in the unit it is SOLD in rather than a fixed basis. Alfamedic prices $1,390 per bottle and $1,486 per box; calling both PIECE leaves every per-unit cost divided by the wrong denominator. Requires purchase_uom_source_field, and falls back to the declared price_basis for a row whose unit could not be read.",
+          "title": "Price Basis Follows Purchase Unit",
+          "type": "boolean"
+        },
         "purchase_uom": {
           "anyOf": [
             {
@@ -264,6 +270,19 @@
           ],
           "default": null,
           "description": "Purchase unit when explicitly known."
+        },
+        "purchase_uom_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key whose printed text NAMES the purchase unit after a slash — Alfamedic writes '30ml/ bot' and '100 tabs/ box', so the unit varies per row and cannot be a single declared value. Only units the vocabulary knows are accepted; anything else is left null rather than guessed, because a wrong purchase unit silently rebases every per-unit cost derived from it.",
+          "title": "Purchase Uom Source Field"
         },
         "sellable_unit_uom": {
           "anyOf": [
@@ -496,6 +515,19 @@
           "description": "Supplier-format constant value, if not printed per row.",
           "title": "Constant Value"
         },
+        "continues_row_above_when_matching": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Regular expression marking a value that CONTINUES the row above rather than standing alone. Alfamedic names a collar family once and then lists only sizes: 'Classic Collar size 7.5cm', then 'size 10.0cm', 'size 12.5cm'. Those later rows are separate SKUs at separate prices, but their name alone does not say what they are. When a value matches here AND the row above matches too, the text before the row above's match is prefixed, giving 'Classic Collar size 10.0cm'. Nothing is invented: if the row above does not match, no prefix can be derived and the value is left exactly as printed.",
+          "title": "Continues Row Above When Matching"
+        },
         "description": {
           "anyOf": [
             {
@@ -523,6 +555,12 @@
           "title": "Field Key",
           "type": "string"
         },
+        "inherits_from_row_above": {
+          "default": false,
+          "description": "Take this field from the nearest row above when the source leaves it blank, because the printed cell is merged across those rows. Alfamedic lists size variants that way: 'ALOVEEN Shampoo 250ml/bot' names the product, and the 1L/bot line below carries its own order code, packing and price but no name — the name cell spans both. Those are separate SKUs and must be stocked as such, so the value is carried down and the field's evidence records that it was inherited rather than printed on that line. Only rows carrying their own identity inherit: a price-only line beneath a product is a quantity tier, not a variant, and must never acquire a name. Carrying stops at a page boundary.",
+          "title": "Inherits From Row Above",
+          "type": "boolean"
+        },
         "requirement": {
           "$ref": "#/$defs/SourceFieldRequirement",
           "description": "Whether the field is required in the source."
@@ -544,6 +582,33 @@
           "description": "Exact source column/header when tabular.",
           "title": "Source Column"
         },
+        "source_column_occurrence": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Which column to take when several columns belong to one heading family: 1 is the leftmost, in printed order. Needed where a table repeats one heading across several columns and what distinguishes them sits in a merged banner above — Hill's prints three 'Net Invoice Price*' columns under a spanning MOV header. Ignored when the exact declared heading matches a column, so a fully-labelled heading still wins.",
+          "title": "Source Column Occurrence"
+        },
+        "source_column_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Heading family this column belongs to, matched as a prefix and paired with source_column_occurrence. Exists because heading TEXT from a vision model is not a stable key: on one live Hill's document the same three columns came back labelled by MOV amount on one page, by discount percentage ('0%/4%/6%') on another, and truncated to bare 'Net Invoice Price*' on a third — the same page even varying between runs. What is stable is the family and the printed order, so that is what a contract may match on. The tier's own condition is still declared, never inferred from position.",
+          "title": "Source Column Prefix"
+        },
         "source_path": {
           "anyOf": [
             {
@@ -556,6 +621,63 @@
           "default": null,
           "description": "Section, banner, or document path when not a table column.",
           "title": "Source Path"
+        },
+        "tier_minimum_spend": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_PRICE: the order value that unlocks this column's price. Declared here rather than parsed from the heading because the heading is not reliable — on the live Hill's run the vision model kept 'MOV $1,200' in the column name on 36 of 174 priced rows and truncated it to 'Net Invoice Price*' on the rest. The ladder is a property of the catalogue, so the contract states it.",
+          "title": "Tier Minimum Spend"
+        },
+        "tier_order": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_PRICE: 1-based position of this tier, cheapest threshold first.",
+          "title": "Tier Order"
+        },
+        "tier_price_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_ROW: the field key carrying the tier's discounted unit price.",
+          "title": "Tier Price Field"
+        },
+        "tier_quantity_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For MBB_TIER_ROW: the field key carrying the tier's quantity threshold. Alfamedic prints '10 bots' in its Order Units column on a line that has no order code and a cheaper price — condition and benefit both stated, so the term is fully determined. The row is consumed as a term on the product above it rather than becoming a catalogue row of its own; a priced line with no identity is not a product.",
+          "title": "Tier Quantity Field"
         }
       },
       "required": [
@@ -587,6 +709,8 @@
         "RRP",
         "PACKAGING",
         "MBB_TEXT",
+        "MBB_TIER_PRICE",
+        "MBB_TIER_ROW",
         "BARCODE",
         "VARIANT",
         "SPECIES",
@@ -617,6 +741,14 @@
       "additionalProperties": false,
       "description": "Expected physical structure for a supplier catalogue format.",
       "properties": {
+        "discontinued_markers": {
+          "description": "Words a supplier writes on a line it no longer sells. Alfamedic writes DISCON, and writes it wherever there is room — in the product name, in the packing column, as the order code itself, even in the price column. A row carrying one is not a stocking candidate: there is no price to find and no decision a reviewer can make, so it is skipped and counted rather than queued. Matched whole-word and case-insensitively.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Discontinued Markers",
+          "type": "array"
+        },
         "expected_sections": {
           "description": "Expected PDF/document sections, if known.",
           "items": {
@@ -655,6 +787,14 @@
             "type": "string"
           },
           "title": "Row Eligibility Rules",
+          "type": "array"
+        },
+        "row_identity_fields": {
+          "description": "Field keys that identify a source row as a catalogue item — usually the order code. A row carrying none of them AND no price is furniture (a section divider, a blank spacer, a continuation line) and is skipped rather than queued for review: asking a human to adjudicate '小食 Treats' teaches them to skim the queue. A row missing its code but carrying a PRICE is the opposite case — a real item we failed to read — and is still surfaced. Leave empty to keep every row.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Row Identity Fields",
           "type": "array"
         },
         "skip_rules": {

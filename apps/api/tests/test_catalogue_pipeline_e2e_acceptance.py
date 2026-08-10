@@ -34,7 +34,7 @@ from schemas.catalogue_pipeline.enums import ExtractionMethod, ReviewStatus  # n
 from services import catalogue_evidence_extraction as extraction  # noqa: E402
 from services import catalogue_pipeline_persistence as persistence  # noqa: E402
 from services import catalogue_pipeline_stages as stages  # noqa: E402
-from services import extraction_service, tagging_service  # noqa: E402
+from services import tagging_service  # noqa: E402
 
 
 models.Base.metadata.create_all(bind=database.engine)
@@ -63,7 +63,6 @@ def _auth_and_no_inline_work(monkeypatch):
     previous_v2 = main.alias_app.dependency_overrides.get(require_user)
     main.app.dependency_overrides[require_user] = lambda: _CatalogueOnboardingAdmin()
     main.alias_app.dependency_overrides[require_user] = lambda: _CatalogueOnboardingAdmin()
-    monkeypatch.setattr(extraction_service, "extract", lambda *a, **k: pytest.fail("submission must not extract"))
     monkeypatch.setattr(tagging_service, "suggest_tags", lambda *a, **k: pytest.fail("submission must not tag"))
     yield
     if previous_root is None:
@@ -140,10 +139,10 @@ def test_cis104_vertical_slice_submission_orchestration_approval_publication_and
     # Extraction now ALWAYS runs the deterministic vision path: the vision
     # provider is stubbed to emit column-labeled cells, and conformance maps
     # those cells through the supplier contract with no model in the loop.
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr(
         extraction,
-        "_call_gemini_vision",
+        "_call_vision",
         lambda content, *, media_type: extraction._VisionResponse(text=_vision_envelope(_VISION_ROWS)),
     )
     flow_result = catalogue_ingestion_flow(ingestion_run_id=run_id)

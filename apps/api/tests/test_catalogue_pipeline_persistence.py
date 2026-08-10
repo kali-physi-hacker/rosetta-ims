@@ -28,7 +28,6 @@ from schemas.catalogue_pipeline import (  # noqa: E402
 from services import catalogue_pipeline_persistence as persistence  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from audit_catalogue_pipeline_migration import collect_catalogue_migration_audit  # noqa: E402
 
 
 models.Base.metadata.create_all(bind=database.engine)
@@ -252,65 +251,6 @@ def test_sqlite_foreign_key_enforcement_for_pipeline_models(tmp_path):
                     """
                 )
             )
-
-
-def test_migration_audit_reports_legacy_rows_without_mutating(db):
-    supplier = db.get(models.Supplier, 914)
-    if supplier is None:
-        supplier = models.Supplier(id=914, code="AUDIT914", name="Audit Supplier", created_at="2026-07-22T00:00:00+00:00")
-        db.add(supplier)
-        db.flush()
-    product = db.query(models.ProductVariant).filter_by(sku_code="AUDIT-SKU").first()
-    if product is None:
-        product = models.ProductVariant(
-            sku_code="AUDIT-SKU",
-            name="Audit Product",
-            category="Food",
-            storage_rule="any",
-            status="ACTIVE",
-            created_at="2026-07-22T00:00:00+00:00",
-            updated_at="2026-07-22T00:00:00+00:00",
-        )
-        db.add(product)
-        db.flush()
-    product_supplier = (
-        db.query(models.ProductSupplier)
-        .filter_by(product_id=product.id, supplier_id=supplier.id)
-        .first()
-    )
-    if product_supplier is None:
-        product_supplier = models.ProductSupplier(
-            product_id=product.id,
-            supplier_id=supplier.id,
-            supplier_sku="AUD-1",
-            basic_cost=12.34,
-            units_per_pack=24,
-            updated_at="2026-07-22T00:00:00+00:00",
-        )
-        db.add(product_supplier)
-        db.flush()
-    db.add(
-        models.MbbTerm(
-            product_supplier_id=product_supplier.id,
-            kind="tier",
-            min_qty=12,
-            unit_cost=11.00,
-            sort_order=0,
-            created_at="2026-07-22T00:00:00+00:00",
-        )
-    )
-    db.commit()
-
-    before_imports = db.query(models.CatalogueImport).count()
-    report = collect_catalogue_migration_audit(database.engine)
-    after_imports = db.query(models.CatalogueImport).count()
-
-    assert before_imports == after_imports
-    assert report["rejected_unmappable"]["automatic_corrections_attempted"] == 0
-    assert report["review_required"]["cost_rows_without_basis_or_review_lineage"] >= 1
-    assert report["review_required"]["packaging_rows_requiring_semantic_confirmation"] >= 1
-    assert report["review_required"]["legacy_mbb_terms_requiring_condition_benefit_mapping"] >= 1
-    assert "pipeline_persisted" in report
 
 
 def test_pipeline_contracts_round_trip_through_persistence(db):

@@ -1,5 +1,5 @@
 /**
- * Encode a sku_code for use in a URL path (the /items/[...sku] detail route and the
+ * Encode a sku_code for use in a URL path (the /sku/[...sku] detail route and the
  * /products/{sku:path} API). A sku_code can contain '/' — e.g. "ACTH (Cosacthen) Inj 0.25mg/ml" —
  * so slashes are kept as real path segments (the catch-all route / FastAPI :path converter
  * reassemble them) while everything else (spaces, parens, #, …) is percent-encoded per segment.

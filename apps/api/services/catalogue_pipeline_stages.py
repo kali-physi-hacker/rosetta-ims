@@ -9,6 +9,7 @@ FastAPI, Prefect, routers, or request objects.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -60,6 +61,8 @@ from schemas.catalogue_pipeline.serving_item_v1 import PublicationLineage, Suppl
 from schemas.catalogue_pipeline.normalized_row_v1 import NormalizedCatalogueFields, ClaimRawFields
 from services import catalogue_pipeline_persistence as persistence
 from services import offering_costs
+from services import offering_identity
+from services import product_domain
 from services import supplier_source_contract_runtime
 
 
@@ -792,6 +795,12 @@ class MasteringService(_TransactionalService):
             key: (_with_lineage(value) if value is not None else getattr(old, key))
             for key, value in corrections.items()
         }
+        merged["supplier_product_resolution"] = _settle_offer_on_variant_confirm(
+            self.db,
+            supplier_section=merged["supplier_product_resolution"],
+            variant_section=merged["product_variant_resolution"],
+            lineage=old.lineage,
+        )
         revision_metadata = {
             **old.metadata,
             "correction": {
@@ -852,6 +861,16 @@ class MasteringService(_TransactionalService):
         )
 
 
+_APPROVED_STATES = {ReviewStatus.APPROVED.value, ReviewStatus.APPROVED_WITH_OVERRIDE.value}
+
+
+def _is_published(db: Session, candidate) -> bool:
+    """True when a live serving publication came from this candidate."""
+    return db.query(models.CatalogueServingPublication.id).filter_by(
+        mastering_candidate_uuid=candidate.mastering_candidate_uuid, is_current=1
+    ).first() is not None
+
+
 class ReviewDecisionService(_TransactionalService):
     """Record explicit append-only review decisions for mastering candidates."""
 
@@ -905,10 +924,33 @@ class ReviewDecisionService(_TransactionalService):
                     output_ids=(UUID(candidate.review_decision_uuid),) if candidate.review_decision_uuid else (),
                     metrics=StageMetrics(input_count=1, reused_count=1),
                 )
-            raise InvalidStageTransition(
-                f"Mastering Candidate {command.mastering_candidate_id} is {candidate.review_status}; "
-                f"cannot transition to {command.review_status.value}"
-            )
+            # Withdrawing a staged row is the one decision that may follow
+            # another. "Staged" means approved and not yet published, so
+            # nothing has been written to the catalogue and a reviewer who
+            # changes their mind is not rewriting history — the approval stays
+            # in the decision log and this is appended after it.
+            #
+            # Once published the row has left staging, and taking it back is a
+            # different operation on the publication, not on the decision.
+            if (
+                candidate.review_status in _APPROVED_STATES
+                and command.review_status == ReviewStatus.REJECTED
+            ):
+                if _is_published(self.db, candidate):
+                    raise InvalidStageTransition(
+                        f"Mastering Candidate {command.mastering_candidate_id} is already published; "
+                        f"withdraw the publication rather than the decision"
+                    )
+                if not (command.reason or "").strip():
+                    raise InvalidStageTransition(
+                        "Removing a staged row requires a reason — it is the answer to "
+                        "'why isn't this live?' after everyone has forgotten"
+                    )
+            else:
+                raise InvalidStageTransition(
+                    f"Mastering Candidate {command.mastering_candidate_id} is {candidate.review_status}; "
+                    f"cannot transition to {command.review_status.value}"
+                )
 
         snapshot = persistence.mastering_candidate_to_contract(candidate).model_dump(mode="json")
         self.db.add(
@@ -958,9 +1000,9 @@ class ApprovedCommercialStateService(_TransactionalService):
         applied_at = command.applied_at or _now()
 
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        existing_supplier_product = self.db.query(models.SupplierOffering).filter_by(
-            supplier_product_key=supplier_product_key
-        ).first()
+        existing_supplier_product = _find_candidate_offering(
+            self.db, candidate, key=supplier_product_key
+        )
         if existing_supplier_product is not None:
             applied_state = self._candidate_applied_state(existing_supplier_product, candidate)
             if applied_state == "current_complete":
@@ -986,6 +1028,12 @@ class ApprovedCommercialStateService(_TransactionalService):
             # the supersede-then-rewrite persistence below deterministically
             # repairs the full applied state from the approved candidate.
 
+        # Mint the canonical product before the offering that has to point at
+        # it. This sits AFTER the replay short-circuits above on purpose: a
+        # replayed apply must not create a second product. It is inside the
+        # apply transaction, so any later failure rolls the product back too.
+        created_variant = self._create_variant_if_drafted(candidate, candidate_row, existing_supplier_product)
+
         supplier_product = existing_supplier_product or self._create_supplier_product(candidate, supplier_product_key, applied_at)
         if existing_supplier_product is not None:
             self._update_supplier_product(existing_supplier_product, candidate, applied_at)
@@ -996,6 +1044,8 @@ class ApprovedCommercialStateService(_TransactionalService):
         # Cost reads are offering-first with a per-session memo; a session that
         # applies and then serializes must see the price it just wrote.
         offering_costs.invalidate(self.db)
+        if created_variant is not None:
+            self.db.flush()
         return StageResult(
             stage="commercial_application",
             output_ids=(supplier_product_key,),
@@ -1129,6 +1179,84 @@ class ApprovedCommercialStateService(_TransactionalService):
         self.db.flush()
         return row
 
+    def _create_variant_if_drafted(
+        self,
+        candidate: MasteringCandidateV1,
+        candidate_row: models.CatalogueMasteringCandidate,
+        existing_supplier_product: models.SupplierOffering | None,
+    ):
+        """Mint the canonical product a CONFIRMED_CREATE candidate asked for.
+
+        Returns None for every other candidate, which is the overwhelming
+        majority — a matched row has nothing to create.
+
+        Replay safety comes from three places, in order: the caller's
+        `current_complete` / `superseded` short-circuits return before we get
+        here; an offering that already carries a product_variant_id proves an
+        earlier apply of this candidate already minted one; and the minted SKU
+        is written back onto the candidate's resolution, so any later read
+        (including publish's precondition check) resolves it like an ordinary
+        match.
+        """
+        variant = candidate.product_variant_resolution
+        if variant.state is not ResolutionState.CONFIRMED_CREATE:
+            return None
+        if _resolved_product(self.db, variant) is not None:
+            return None                                   # already minted, or a confirmed match
+        if existing_supplier_product is not None and existing_supplier_product.product_variant_id:
+            product = self.db.get(models.ProductVariant, existing_supplier_product.product_variant_id)
+            if product is not None:
+                # Adopted, not created. The offering already named a product —
+                # usually because the row was drafted against a stale candidate
+                # and a match has since appeared. Point the resolution at it,
+                # but do NOT claim the run created it, or the receipt lies.
+                self._stamp_created_variant(candidate, candidate_row, product, created=False)
+                return None
+        draft = variant.proposed_variant
+        if draft is None:
+            raise AmbiguousProductVariant("Candidate is set to create a canonical product but carries no draft")
+
+        decision_uuid = str(candidate.review_decision_id) if candidate.review_decision_id else None
+        try:
+            product = product_domain.create_variant_from_draft(
+                self.db,
+                draft.model_dump(mode="json"),
+                provenance={
+                    "actor": candidate_row.reviewed_by,
+                    "ingestion_run_uuid": candidate_row.ingestion_run_uuid,
+                    "mastering_candidate_uuid": candidate_row.mastering_candidate_uuid,
+                    "review_decision_uuid": decision_uuid,
+                },
+            )
+        except product_domain.VariantCreationError as exc:
+            raise AmbiguousProductVariant(str(exc)) from exc
+        self._stamp_created_variant(candidate, candidate_row, product)
+        return product
+
+    def _stamp_created_variant(
+        self,
+        candidate: MasteringCandidateV1,
+        candidate_row: models.CatalogueMasteringCandidate,
+        product: models.ProductVariant,
+        *,
+        created: bool = True,
+    ) -> None:
+        """Point the candidate's resolution at the SKU that now exists.
+
+        This is materialization provenance, not a second decision — the human
+        already said "create this"; we are recording what that turned into. It
+        also means every downstream read (the offering write, publish, the
+        receipt) treats the row exactly like a matched one.
+        """
+        candidate.product_variant_resolution.canonical_sku = product.sku_code
+        candidate.product_variant_resolution.product_variant_id = product.sku_code
+        payload = json.loads(candidate_row.product_variant_resolution_json)
+        payload["canonical_sku"] = product.sku_code
+        payload["product_variant_id"] = product.sku_code
+        if created:
+            payload["created_product_sku"] = product.sku_code
+        candidate_row.product_variant_resolution_json = json.dumps(payload)
+
     def _update_supplier_product(
         self,
         supplier_product: models.SupplierOffering,
@@ -1252,9 +1380,9 @@ class ServingPublicationService(_TransactionalService):
         candidate = persistence.mastering_candidate_to_contract(candidate_row)
         _assert_publication_review_provenance(self.db, candidate)
         supplier_product_key = _candidate_supplier_product_key(candidate)
-        supplier_product = self.db.query(models.SupplierOffering).filter_by(
-            supplier_product_key=supplier_product_key
-        ).first()
+        supplier_product = _find_candidate_offering(
+            self.db, candidate, key=supplier_product_key
+        )
         if supplier_product is None:
             raise PublicationIneligible("Serving publication requires applied Supplier Offer state")
         decision_id = str(candidate.review_decision_id)
@@ -1577,6 +1705,98 @@ def _review_requirement(
     return ReviewRequirement.NOT_REQUIRED
 
 
+def _settle_offer_on_variant_confirm(
+    db: Session,
+    *,
+    supplier_section,
+    variant_section,
+    lineage,
+):
+    """Confirming which product a row is also settles which offering it is.
+
+    The "needs a pick" lane exists because two products can claim the same
+    supplier SKU — 606861 is both a Perfect Digestion chicken and a salmon;
+    6238 is both a feline and a canine wet food. The pipeline marks the
+    OFFERING ambiguous and refuses to guess.
+
+    The desk only ever let a reviewer correct the product variant, so the
+    offering stayed AMBIGUOUS: the row bounced straight back into the lane and
+    approve failed on "Candidate requires a resolved supplier identity". The
+    reviewer had made the decision; nothing recorded it.
+
+    Choosing the product IS the pick — one supplier SKU under one supplier is a
+    single offering (the unique index says so), and the variant choice is what
+    tells apply which product it belongs to. So a confirmed variant resolves
+    the offer alongside it.
+    """
+    def _state(section):
+        return section.get("state") if isinstance(section, dict) else getattr(section, "state", None)
+
+    supplier_state = _state(supplier_section)
+    if supplier_state not in {ResolutionState.AMBIGUOUS, ResolutionState.AMBIGUOUS.value}:
+        return supplier_section
+    if _state(variant_section) not in {
+        ResolutionState.CONFIRMED_MATCH, ResolutionState.CONFIRMED_MATCH.value,
+        ResolutionState.CONFIRMED_CREATE, ResolutionState.CONFIRMED_CREATE.value,
+    }:
+        return supplier_section
+
+    section = (
+        dict(supplier_section) if isinstance(supplier_section, dict)
+        else supplier_section.model_dump(mode="json")
+    )
+    supplier_id, supplier_sku, barcode = section.get("supplier_id"), section.get("supplier_sku"), section.get("barcode")
+    chosen = _chosen_product(db, variant_section)
+
+    # An offering is the precise answer when one exists — the unique index means
+    # one supplier SKU has at most one, so identity alone settles it.
+    offering = offering_identity.find_offering(
+        db, supplier_id=supplier_id, supplier_sku=supplier_sku, barcode=barcode
+    )
+    resolved = offering.supplier_product_key if offering is not None else None
+    if resolved is None and chosen is not None and supplier_id is not None:
+        # No offering yet (pre-backfill data): the colliding legacy links ARE
+        # the candidates being disambiguated, so take the one that belongs to
+        # the product the reviewer just chose. Anything else would name an
+        # identity the applicability check cannot find.
+        link = (
+            db.query(models.ProductSupplier)
+            .filter_by(supplier_id=supplier_id, product_id=chosen.id)
+            .filter(
+                (models.ProductSupplier.supplier_sku == supplier_sku)
+                if supplier_sku else (models.ProductSupplier.barcode == barcode)
+            )
+            .first()
+        )
+        if link is not None:
+            resolved = f"{offering_identity.LEGACY_LINK_PREFIX}{link.id}"
+
+    section["state"] = ResolutionState.CONFIRMED_MATCH.value
+    section["supplier_product_id"] = resolved or _candidate_offer_key(supplier_id, supplier_sku, barcode)
+    if not section.get("lineage"):
+        section["lineage"] = lineage.model_dump(mode="json")
+    return section
+
+
+def _chosen_product(db: Session, variant_section):
+    """The ProductVariant a confirmed variant section names, if it exists."""
+    def _get(key):
+        return variant_section.get(key) if isinstance(variant_section, dict) else getattr(variant_section, key, None)
+
+    for value in (_get("canonical_sku"), _get("product_variant_id")):
+        if not value:
+            continue
+        found = db.query(models.ProductVariant).filter_by(sku_code=str(value)).first()
+        if found is not None:
+            return found
+    return None
+
+
+def _candidate_offer_key(supplier_id, supplier_sku, barcode) -> str | None:
+    identity = supplier_sku or barcode
+    return f"supplier:{supplier_id}:offer:{identity}" if supplier_id and identity else None
+
+
 def _default_supplier_product_resolution(db: Session, staging: NormalizedRowV1) -> dict[str, Any]:
     supplier_id = _supplier_id_from_source(db, staging.trace.supplier_catalogue_id)
     supplier_sku = _proposal_text(staging.normalized_fields.supplier_sku) or staging.raw_fields.supplier_sku
@@ -1669,15 +1889,24 @@ def _supplier_product_matches(
             matches[row.supplier_product_key] = {
                 "supplier_product_id": row.supplier_product_key,
                 "product_id": row.product_variant_id,
+                "identities": offering_identity.offering_identities(
+                    row, supplier_id=supplier_id, supplier_sku=supplier_sku),
             }
     if matches:
         return list(matches.values())
     legacy_rows = db.query(models.ProductSupplier).filter_by(supplier_id=supplier_id).all()
     for row in legacy_rows:
         if (supplier_sku and row.supplier_sku == supplier_sku) or (barcode and row.barcode == barcode):
-            key = f"legacy-product-supplier:{row.id}"
-            matches[key] = {"supplier_product_id": key, "product_id": row.product_id}
+            key = f"{offering_identity.LEGACY_LINK_PREFIX}{row.id}"
+            matches[key] = {
+                "supplier_product_id": key,
+                "product_id": row.product_id,
+                "identities": {key},
+            }
     return list(matches.values())
+
+
+
 
 
 def _exact_product_match(
@@ -1762,6 +1991,31 @@ def _candidate_supplier_product_key(candidate: MasteringCandidateV1) -> str:
     return f"supplier:{supplier_id}:offer:{identity}"
 
 
+def _assert_draft_creatable(db: Session, draft) -> None:
+    """Fail a create draft here, at approve time, rather than at apply.
+
+    Category is the one field that can fail late: it is non-nullable on
+    ``products`` AND it picks the SKU digit, so an unknown category means apply
+    cannot mint a SKU. Catching it during review puts the error in front of the
+    person who can fix it.
+    """
+    from services import sku_service
+
+    category = (draft.category or "").strip()
+    if not (draft.name or "").strip():
+        raise AmbiguousProductVariant("Create draft requires a product name")
+    known = set(sku_service.ITEM_CATEGORY_DIGIT)
+    known |= {
+        row.category
+        for row in db.query(models.CategoryRule).all()
+        if getattr(row, "sku_digit", None)
+    }
+    if category not in known:
+        raise AmbiguousProductVariant(
+            f"Create draft category '{category}' has no SKU digit; a SKU cannot be allocated for it"
+        )
+
+
 def _assert_candidate_applicable(db: Session, candidate: MasteringCandidateV1) -> None:
     supplier = candidate.supplier_product_resolution
     expected_supplier_id = _supplier_id_from_source(db, candidate.trace.supplier_catalogue_id)
@@ -1778,13 +2032,25 @@ def _assert_candidate_applicable(db: Session, candidate: MasteringCandidateV1) -
             supplier_sku=supplier.supplier_sku,
             barcode=supplier.barcode,
         )
-        if not any(match["supplier_product_id"] == supplier.supplier_product_id for match in matches):
+        if not any(supplier.supplier_product_id in match["identities"] for match in matches):
             raise AmbiguousSupplierOffer("Candidate supplier-product match does not exist or conflicts with its source identity")
 
     variant = candidate.product_variant_resolution
-    if variant.state not in {ResolutionState.PROPOSED_MATCH, ResolutionState.CONFIRMED_MATCH}:
+    # CONFIRMED_CREATE is applicable, PROPOSED_CREATE is not. The difference is
+    # a human: PROPOSED_CREATE is only the matcher reporting that it found
+    # nothing, while CONFIRMED_CREATE carries a draft somebody filled in and
+    # signed. The product itself is minted at apply, so there is no product to
+    # resolve here yet.
+    if variant.state is ResolutionState.CONFIRMED_CREATE and variant.canonical_sku is None:
+        if variant.proposed_variant is None:
+            raise AmbiguousProductVariant(
+                "Candidate is set to create a canonical product but carries no draft"
+            )
+        _assert_draft_creatable(db, variant.proposed_variant)
+        return
+    if variant.state not in {ResolutionState.PROPOSED_MATCH, ResolutionState.CONFIRMED_MATCH, ResolutionState.CONFIRMED_CREATE}:
         raise AmbiguousProductVariant(
-            "Candidate must match an existing canonical product before approval; canonical product creation is not implemented"
+            "Candidate must match an existing canonical product, or carry a confirmed create draft, before approval"
         )
     product = _resolved_product(db, variant)
     if product is None:
@@ -1809,6 +2075,24 @@ def _assert_candidate_applicable(db: Session, candidate: MasteringCandidateV1) -
         and packaging_basis.code != price_basis.code
     ):
         raise InvalidStageTransition("Candidate packaging price basis conflicts with supplier cost price basis")
+
+
+def _find_candidate_offering(db: Session, candidate: MasteringCandidateV1, *, key: str | None = None):
+    """The offering this candidate's supplier identity denotes, by any key.
+
+    Every checkpoint that asks "is there already an offering for this supplier
+    SKU?" must go through here. Asking by key alone is what made apply insert a
+    duplicate and die on the unique constraint, and then made publish report
+    perfectly good applied state as missing.
+    """
+    supplier = candidate.supplier_product_resolution
+    return offering_identity.find_offering(
+        db,
+        supplier_id=supplier.supplier_id,
+        supplier_sku=supplier.supplier_sku,
+        barcode=supplier.barcode,
+        key=key,
+    )
 
 
 def _resolved_product(db: Session, variant: ProductVariantResolution):
