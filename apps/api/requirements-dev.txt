@@ -16,6 +16,10 @@
 
 pytest==8.4.2
 
+# Linter. Pinned so the editor, the terminal and CI all report the same
+# findings — config lives in ruff.toml beside this file.
+ruff==0.13.3
+
 # FastAPI's TestClient is a thin wrapper over httpx and will not import without
 # it. Eight test modules use TestClient; the runtime image needs none of it.
 httpx==0.28.1
