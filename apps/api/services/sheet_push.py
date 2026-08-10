@@ -117,6 +117,9 @@ def _open_ws(gid: int):
 def _rows_for_push(db) -> list[dict]:
     """One dict per product, keyed by sheet field name. Sorted by sku_id."""
     import models
+    # Used below for the per-pack cost. Never imported — so every push whose
+    # products have a primary supplier died on NameError at the first row.
+    from services import pricing_service
     products = db.query(models.ProductVariant).all()
     all_ps = db.query(models.ProductSupplier).all()
     primary, alts = {}, {}

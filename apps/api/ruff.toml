@@ -1,0 +1,49 @@
+# Ruff configuration for apps/api.
+#
+# Committed on purpose: .vscode/ is gitignored, so an editor-only setup would
+# lint differently for every person and differently again in CI. This file is
+# the shared answer; the editor is pointed at it.
+#
+#   .venv/bin/ruff check .        # lint
+#   .venv/bin/ruff format .       # format (opt-in, see below)
+
+target-version = "py313"
+line-length = 120
+extend-exclude = [".venv", "clientssot/__pycache__"]
+
+[lint]
+# Deliberately narrow. The point of turning a linter on for the first time in a
+# mature codebase is that every finding is worth acting on — a wall of style
+# complaints on day one teaches people to ignore it.
+#
+# F  pyflakes      — undefined names, unused imports, redefinitions. Real defects.
+# E9 syntax/IO     — things that stop the file running at all.
+# W  whitespace    — trailing whitespace and blank-line noise; cheap and safe.
+select = ["F", "E9", "W"]
+
+ignore = [
+    # `from x import *` in test helpers, and names resolved through it. The
+    # pattern is used on purpose to share fixtures; flagging it is noise.
+    "F403",
+    "F405",
+]
+
+[lint.per-file-ignores]
+# Tests set DATABASE_URL and the PREFECT_* variables BEFORE importing anything
+# that reads them at import time, so imports cannot sit at the top of the file.
+# That is the reason for ~193 `# noqa: E402` comments across the suite. The
+# rule is off here rather than annotated 193 more times.
+"tests/*" = ["E402"]
+"scripts/*" = ["E402"]
+"clientssot/*" = ["E402"]
+
+[format]
+# Not wired to format-on-save. The codebase's 99th-percentile line is 122
+# characters and long lines are written deliberately — SQL, docstrings, wide
+# asserts. Reformatting on save would rewrite hundreds of lines the first time
+# anyone opens a file, and bury real changes in an unreviewable diff.
+#
+# Format explicitly when you mean to, a file at a time.
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
