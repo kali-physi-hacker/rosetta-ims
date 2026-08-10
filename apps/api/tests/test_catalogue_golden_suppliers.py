@@ -235,11 +235,12 @@ def _review_one(db, candidate, *, sequence: int) -> None:
     # constant — a stubbed "unit" here would surface as a packaging
     # mismatch in the diff and read as a pipeline defect that isn't one.
     packaging = (json.loads(candidate.packaging_resolution_json or "{}") or {}).get("packaging") or {}
-    uom = (
-        (packaging.get("sellable_unit_uom") or {}).get("code")
-        or (packaging.get("purchase_uom") or {}).get("code")
-        or "unit"
-    ).lower()
+    # Only the sellable unit. Falling back to the purchase unit would put "box"
+    # on the product identity, and the export reads sellable_uom off the
+    # identity when packaging has none — so the harness would be the thing
+    # answering "what do you sell one of", wrongly, and it would read as a
+    # pipeline defect.
+    uom = ((packaging.get("sellable_unit_uom") or {}).get("code") or "unit").lower()
 
     revised = stages.MasteringService(db).revise_candidate(
         stages.ReviseMasteringCandidateCommand(
@@ -306,12 +307,16 @@ _KNOWN_GAPS = {
 # and a different capture. Two suppliers agreeing on which three columns are
 # wrong points at the export and the packaging model, not at either contract.
 _ALFAMEDIC_KNOWN_GAPS = {
-    "package_configuration": "the count is right and the unit noun is missing — '100 / BOX' where the sheet says '100 UNITS / BOX'",
+    "package_configuration": (
+        "count and outer unit are right; the inner noun now reads for countables "
+        "('100 TABLET / BOX') but differs from the sheet's spelling, and stays "
+        "absent where the printed unit is a measure ('10 / BOTTLE' for '10ml/ bot')"
+    ),
     "order_multiple": "reports '1 PIECE' regardless of the printed order quantity",
-    "sellable_uom": "falls back to the purchase unit ('box') instead of the sellable one ('UNIT', 'PC')",
-    "brand": "3 of 32 still disagree, mostly casing and punctuation of the printed brand",
-    "catalogue_price_basis_uom": "2 of 32 disagree; the rest resolve correctly",
-    "sellable_units_per_price_basis": "1 of 32 not derived",
+    "sellable_uom": "21 of 33 disagree, down from 31 of 32 — the rest are measure rows and spelling",
+    "brand": "3 of 33 disagree, casing and punctuation of the printed brand",
+    "catalogue_price_basis_uom": "3 of 33 disagree; the rest resolve correctly",
+    "sellable_units_per_price_basis": "1 of 33 not derived",
 }
 
 # Blank in all 38 Alfamedic sheet rows, so there is no human statement to check
@@ -321,9 +326,10 @@ _ALFAMEDIC_UNFILLED = {
     "rrp": "blank in every Alfamedic sheet row",
 }
 
-# Refuses to publish rather than publishing something wrong — a correct outcome,
-# pinned so the population cannot grow unnoticed.
-_ALFAMEDIC_UNPUBLISHABLE = {"E81110E"}
+# Was {"E81110E"} — cost per sellable unit could not be derived because the
+# sellable unit was never resolved. Reading the noun off the packing text fixed
+# it, and the row publishes. Kept as an empty pin so a new refusal is caught.
+_ALFAMEDIC_UNPUBLISHABLE: set[str] = set()
 
 # Columns where the sheet and the export describe genuinely different things.
 # Excluded on purpose, with the reason, rather than left to fail forever.
@@ -593,9 +599,9 @@ def test_alfamedic_published_export_matches_the_hand_filled_sheet(db, monkeypatc
     )
 
     covered = sorted(set(expected) & set(published))
-    assert len(covered) >= 32, (
+    assert len(covered) >= 33, (
         f"only {len(covered)} of the sheet's {len(expected)} Alfamedic SKUs reached the export "
-        f"(was 32) — coverage must not shrink"
+        f"(was 33) — coverage must not shrink"
     )
 
     failures = []

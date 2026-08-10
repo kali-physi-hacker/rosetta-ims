@@ -1169,6 +1169,47 @@ def _purchase_unit_from_text(value: Any) -> str | None:
     return _PURCHASE_UNIT_WORDS.get(word) or _PURCHASE_UNIT_WORDS.get(word.split(" ")[0] if word else "")
 
 
+# Countable things only. A measure — ml, g, oz — printed before the slash is how
+# MUCH is in the container, not what you sell one of: "10ml/ bot" sells a bottle.
+# That reading belongs to content_measure, which has its own source field, so
+# admitting measures here would assert that a supplier sells millilitres.
+_SELLABLE_UNIT_WORDS = {
+    **_PURCHASE_UNIT_WORDS,
+    "tab": "TABLET", "tabs": "TABLET", "tablet": "TABLET", "tablets": "TABLET",
+    "cap": "CAPSULE", "caps": "CAPSULE", "capsule": "CAPSULE", "capsules": "CAPSULE",
+    "test": "TEST", "tests": "TEST",
+    "strip": "STRIP", "strips": "STRIP",
+    "pouch": "POUCH", "pouches": "POUCH",
+}
+
+
+def _sellable_unit_from_text(value: Any) -> str | None:
+    """The unit named BEFORE the slash: '30ml/ bot' -> ML, '100 tabs/ box' -> TABLET.
+
+    The mirror of ``_purchase_unit_from_text``. Conformance already reads the
+    count on this side of the slash — ``sellable_units_per_purchase_unit`` comes
+    from the leading number of exactly this text — and then discards the noun
+    standing next to it, so a row that plainly says "100 tabs/ box" resolves 100
+    and BOX and leaves the sellable unit null. That gap reaches the sheet export
+    as "100 / BOX", missing the word a human wrote.
+
+    Only a unit the vocabulary actually knows is returned. 'set', 'pot' and
+    'reel' stay absent for the same reason they are absent from the purchase
+    vocabulary: the enum has no honest home for them, and guessing OTHER would
+    assert knowledge nobody has.
+    """
+    text = _text(value)
+    if not text:
+        return None
+    head = text.rsplit("/", 1)[0] if "/" in text else text
+    # Drop the leading count — "100 tabs" is the same unit as "tabs".
+    head = re.sub(r"^\s*\d+(?:\.\d+)?\s*", "", head.lower())
+    word = re.sub(r"[^a-z]+", " ", head).strip()
+    if not word:
+        return None
+    return _SELLABLE_UNIT_WORDS.get(word) or _SELLABLE_UNIT_WORDS.get(word.split(" ")[0])
+
+
 def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict[str, Any]) -> dict[str, Any] | None:
     semantics = runtime_contract.declaration.packaging
     source_text = _source_field_value(fields, semantics.packaging_source_field) or _text(
@@ -1207,11 +1248,18 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
             if semantics.content_measure_uom is not None
             else {"code": uom}
         )
-    sellable_count = _leading_decimal(
-        _source_field_value(fields, semantics.sellable_units_per_purchase_unit_source_field)
-    )
+    sellable_source = _source_field_value(fields, semantics.sellable_units_per_purchase_unit_source_field)
+    sellable_count = _leading_decimal(sellable_source)
     if sellable_count is not None:
         proposal["sellable_units_per_purchase_unit"] = str(sellable_count)
+    # The count and its noun are printed together. Read the noun from the same
+    # text rather than leaving it null whenever the contract has not declared
+    # one — a declared value still wins, because the contract is the statement
+    # of intent and this is only a reading of the page.
+    if semantics.sellable_unit_uom is None:
+        read_sellable = _sellable_unit_from_text(sellable_source)
+        if read_sellable:
+            proposal["sellable_unit_uom"] = {"code": read_sellable, "label": None}
     quantity_uom = semantics.sellable_unit_uom or semantics.price_basis
     order_increment = _leading_decimal(_source_field_value(fields, semantics.order_increment_source_field))
     if order_increment is not None and quantity_uom is not None and quantity_uom.code is not None:
