@@ -1,0 +1,9 @@
+{
+ "source": "alfamedic_full.pdf",
+ "recorded_from": "hand-captured from claude (chat, whole document in one envelope) via scripts/import_golden_envelope.py",
+ "provider": "hand-captured",
+ "model": "claude (chat, whole document in one envelope)",
+ "pages": [
+  1
+ ]
+}

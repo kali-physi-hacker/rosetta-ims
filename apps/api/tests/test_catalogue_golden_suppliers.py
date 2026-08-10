@@ -1,11 +1,25 @@
-"""Golden supplier-file coverage: REAL recorded provider envelopes, offline.
+"""Golden supplier-file coverage: real provider output, replayed offline.
 
-The fixtures under ``tests/fixtures/catalogue_pipeline/golden/`` are actual
-Gemini vision envelopes recorded from live extraction runs of real supplier
-files (see each set's ``meta.json`` and ``scripts/record_golden_envelopes.py``).
-Replaying them through the FULL pipeline — submission, raw, extraction parsing,
-conformance, validation, mastering — proves end-to-end behaviour against real
-provider output without network access or provider nondeterminism.
+The fixtures under ``tests/fixtures/catalogue_pipeline/golden/`` hold vision
+envelopes for real supplier files. Replaying them through the FULL pipeline —
+submission, raw, extraction parsing, conformance, validation, mastering, review,
+serving — proves end-to-end behaviour against real model output with no network
+access and no provider nondeterminism.
+
+Each set's ``meta.json`` says how it was obtained, and the two differ:
+
+  hills_classic  recorded live through the provider seam by
+                 ``scripts/record_golden_envelopes.py`` — one envelope per page,
+                 exactly as production calls it.
+  alfamedic      hand-captured from a chat window, whole catalogue in a single
+                 envelope. Everything from conformance onward is real; page
+                 splitting, per-page retry and sparse-page detection are not
+                 exercised. Worth having anyway: it reaches 36 of the sheet's 38
+                 Alfamedic SKUs, against 4 of 13 for Hill's.
+
+Both are compared against ``expected.csv``, which is the golden sample sheet's
+own flat table for that supplier — same 20 columns, in the same order, as
+``catalogue_golden_export`` emits.
 """
 
 from __future__ import annotations
@@ -42,18 +56,22 @@ database.seed_category_rules(database.engine)
 
 GOLDEN_ROOT = Path(__file__).parent / "fixtures" / "catalogue_pipeline" / "golden"
 HILLS_CLASSIC = GOLDEN_ROOT / "hills_classic"
+ALFAMEDIC = GOLDEN_ROOT / "alfamedic"
 
 
 @pytest.fixture()
 def db(tmp_path, monkeypatch):
     monkeypatch.setenv("CATALOGUE_UPLOAD_DIR", str(tmp_path / "uploads"))
-    monkeypatch.setenv("CATALOGUE_ORCHESTRATION_MAX_SOURCE_BYTES", str(4 * 1024 * 1024))
+    monkeypatch.setenv("CATALOGUE_ORCHESTRATION_MAX_SOURCE_BYTES", str(8 * 1024 * 1024))
     session = database.SessionLocal()
     try:
         _reset(session)
-        if session.get(models.Supplier, 14) is None:
-            session.add(models.Supplier(id=14, code="HILLS", name="Hill's", created_at="2026-07-29T00:00:00+00:00"))
-            session.commit()
+        for supplier_id, code, name in ((14, "HILLS", "Hill's"), (1, "ALF", "Alfamedic")):
+            if session.get(models.Supplier, supplier_id) is None:
+                session.add(models.Supplier(
+                    id=supplier_id, code=code, name=name, created_at="2026-07-29T00:00:00+00:00"
+                ))
+        session.commit()
         yield session
         session.rollback()
         _reset(session)
@@ -138,7 +156,18 @@ def _load_expected(fixture_dir: Path) -> dict[str, dict[str, str]]:
         return {row["supplier_product_code"]: row for row in reader if row["supplier_product_code"]}
 
 
-def _take_through_review(db, run_uuid: str) -> int:
+def _candidate_sku(candidate) -> str:
+    resolution = json.loads(candidate.supplier_product_resolution_json or "{}")
+    return (resolution.get("supplier_sku") or "").strip()
+
+
+def _take_through_review(
+    db,
+    run_uuid: str,
+    *,
+    only_skus: set[str] | None = None,
+    refused: dict[str, str] | None = None,
+) -> int:
     """Stand in for the human review desk: confirm the create, approve, apply, publish.
 
     The serving layer is only reachable through a person today, and
@@ -153,63 +182,102 @@ def _take_through_review(db, run_uuid: str) -> int:
     "yes, this is a new product", and it returns a NEW candidate superseding the
     original, because corrections are immutable revisions.
     """
+    refused = {} if refused is None else refused
     candidates = (
         db.query(models.CatalogueMasteringCandidate)
         .filter_by(ingestion_run_uuid=run_uuid, superseded_by_uuid=None)
         .order_by(models.CatalogueMasteringCandidate.id)
         .all()
     )
+    if only_skus is not None:
+        # A whole-catalogue capture produces far more rows than the sheet
+        # covers, and driving every one through four services costs minutes
+        # without strengthening a comparison that only looks at the SKUs a
+        # person actually filled in.
+        candidates = [c for c in candidates if _candidate_sku(c) in only_skus]
+
     published = 0
     for candidate in candidates:
-        variant = json.loads(candidate.product_variant_resolution_json or "{}")
-        brand_res = json.loads(candidate.brand_resolution_json or "{}")
-        name = (variant.get("product_variant_name") or variant.get("proposed_name") or "").strip() or "Unnamed"
-        brand = (brand_res.get("brand_name") or brand_res.get("proposed_name") or "").strip() or "Hill's"
-        # Take the draft's UOM from what the pipeline actually read, not a
-        # constant — a stubbed "unit" here would surface as a packaging
-        # mismatch in the diff and read as a pipeline defect that isn't one.
-        packaging = (json.loads(candidate.packaging_resolution_json or "{}") or {}).get("packaging") or {}
-        uom = (
-            (packaging.get("sellable_unit_uom") or {}).get("code")
-            or (packaging.get("purchase_uom") or {}).get("code")
-            or "unit"
-        ).lower()
-
-        revised = stages.MasteringService(db).revise_candidate(
-            stages.ReviseMasteringCandidateCommand(
-                mastering_candidate_id=UUID(candidate.mastering_candidate_uuid),
-                actor_id="golden-review",
-                reason="Golden sample replay: new to the catalogue, drafting it.",
-                product_variant_resolution={
-                    "state": "CONFIRMED_CREATE",
-                    "proposed_name": name,
-                    "product_variant_name": name,
-                    "proposed_variant": {"name": name, "category": "Food", "brand": brand, "uom": uom},
-                },
+        try:
+            _review_one(db, candidate, sequence=published + 1)
+        except Exception as exc:  # noqa: BLE001 — the reason IS the finding
+            # A row the pipeline refuses to publish is a result, not a crash.
+            # Aborting here would hide every other row behind the first bad one.
+            db.rollback()
+            refused[_candidate_sku(candidate) or candidate.mastering_candidate_uuid] = (
+                f"{type(exc).__name__}: {exc}"
             )
-        )
-        # output_ids is typed UUID | str; the commands below want a UUID.
-        candidate_id = UUID(str(revised.output_ids[0]))
-
-        stages.ReviewDecisionService(db).record_decision(
-            stages.RecordReviewDecisionCommand(
-                mastering_candidate_id=candidate_id,
-                actor_id="golden-review",
-                review_status=ReviewStatus.APPROVED,
-                reason="Golden sample replay.",
-            )
-        )
-        stages.ApprovedCommercialStateService(db).apply_approved_candidate(
-            stages.ApplyApprovedCandidateCommand(mastering_candidate_id=candidate_id)
-        )
-        stages.ServingPublicationService(db).publish(
-            stages.PublishServingItemCommand(
-                mastering_candidate_id=candidate_id,
-                publication_version="golden-1",
-            )
-        )
-        published += 1
+        else:
+            published += 1
     return published
+
+
+def _review_one(db, candidate, *, sequence: int) -> None:
+    """One candidate through the desk: confirm the create, approve, apply, publish."""
+    variant = json.loads(candidate.product_variant_resolution_json or "{}")
+    brand_res = json.loads(candidate.brand_resolution_json or "{}")
+    name = (variant.get("product_variant_name") or variant.get("proposed_name") or "").strip() or "Unnamed"
+    brand = (brand_res.get("brand_name") or brand_res.get("proposed_name") or "").strip()
+    if not brand:
+        # Fall back to the brand conformance read off the row rather than a
+        # placeholder. A made-up value here would surface in the export as a
+        # brand mismatch and read as a pipeline defect the harness invented.
+        row = (
+            db.query(models.CatalogueNormalizedRow)
+            .filter_by(catalogue_item_uuid=candidate.catalogue_item_uuid)
+            .first()
+        )
+        if row is not None:
+            fields = json.loads(row.normalized_fields_json or "{}")
+            brand = ((fields.get("brand") or {}).get("value") or "").strip()
+    brand = brand or "Unbranded"
+    # Take the draft's UOM from what the pipeline actually read, not a
+    # constant — a stubbed "unit" here would surface as a packaging
+    # mismatch in the diff and read as a pipeline defect that isn't one.
+    packaging = (json.loads(candidate.packaging_resolution_json or "{}") or {}).get("packaging") or {}
+    uom = (
+        (packaging.get("sellable_unit_uom") or {}).get("code")
+        or (packaging.get("purchase_uom") or {}).get("code")
+        or "unit"
+    ).lower()
+
+    revised = stages.MasteringService(db).revise_candidate(
+        stages.ReviseMasteringCandidateCommand(
+            mastering_candidate_id=UUID(candidate.mastering_candidate_uuid),
+            actor_id="golden-review",
+            reason="Golden sample replay: new to the catalogue, drafting it.",
+            product_variant_resolution={
+                "state": "CONFIRMED_CREATE",
+                "proposed_name": name,
+                "product_variant_name": name,
+                "proposed_variant": {"name": name, "category": "Food", "brand": brand, "uom": uom},
+            },
+        )
+    )
+    # output_ids is typed UUID | str; the commands below want a UUID.
+    candidate_id = UUID(str(revised.output_ids[0]))
+
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="golden-review",
+            review_status=ReviewStatus.APPROVED,
+            reason="Golden sample replay.",
+        )
+    )
+    stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(mastering_candidate_id=candidate_id)
+    )
+    # One version per candidate. The version doubles as an idempotency key, so
+    # reusing a single string collides the moment two rows resolve to the same
+    # canonical product — which a real catalogue does routinely, listing one
+    # product at several order quantities.
+    stages.ServingPublicationService(db).publish(
+        stages.PublishServingItemCommand(
+            mastering_candidate_id=candidate_id,
+            publication_version=f"golden-{sequence}",
+        )
+    )
 
 
 # Columns where the sheet and the export state the same thing, and must agree.
@@ -234,6 +302,29 @@ _KNOWN_GAPS = {
     "rrp": "the normalized row carries an rrp field but it does not reach the published export",
 }
 
+# Alfamedic fails the SAME packaging columns as Hill's, on a different contract
+# and a different capture. Two suppliers agreeing on which three columns are
+# wrong points at the export and the packaging model, not at either contract.
+_ALFAMEDIC_KNOWN_GAPS = {
+    "package_configuration": "the count is right and the unit noun is missing — '100 / BOX' where the sheet says '100 UNITS / BOX'",
+    "order_multiple": "reports '1 PIECE' regardless of the printed order quantity",
+    "sellable_uom": "falls back to the purchase unit ('box') instead of the sellable one ('UNIT', 'PC')",
+    "brand": "3 of 32 still disagree, mostly casing and punctuation of the printed brand",
+    "catalogue_price_basis_uom": "2 of 32 disagree; the rest resolve correctly",
+    "sellable_units_per_price_basis": "1 of 32 not derived",
+}
+
+# Blank in all 38 Alfamedic sheet rows, so there is no human statement to check
+# against. Not a pipeline gap — nothing was ever asserted about them here.
+_ALFAMEDIC_UNFILLED = {
+    "weight": "blank in every Alfamedic sheet row",
+    "rrp": "blank in every Alfamedic sheet row",
+}
+
+# Refuses to publish rather than publishing something wrong — a correct outcome,
+# pinned so the population cannot grow unnoticed.
+_ALFAMEDIC_UNPUBLISHABLE = {"E81110E"}
+
 # Columns where the sheet and the export describe genuinely different things.
 # Excluded on purpose, with the reason, rather than left to fail forever.
 _NOT_COMPARABLE = {
@@ -246,6 +337,56 @@ _NOT_COMPARABLE = {
     "mbb_tier_4": "as mbb_tier_1",
     "commercial_offer_summary": "free-text summary written by hand",
 }
+
+
+def _replay_to_published(
+    db,
+    monkeypatch,
+    *,
+    fixture_dir: Path,
+    page_names: list[str],
+    supplier_id: int,
+    provider: str,
+    api_key_var: str,
+    only_skus: set[str] | None = None,
+    refused: dict[str, str] | None = None,
+) -> dict[str, dict[str, str]]:
+    """Replay a golden set through the whole pipeline and return its export.
+
+    Submission → extraction (replayed) → conformance → mastering → review →
+    serving, then the sheet's own columns out of `golden_rows`. Nothing here
+    reaches a provider.
+    """
+    monkeypatch.setenv("CATALOGUE_VISION_PROVIDER", provider)
+    monkeypatch.setenv(api_key_var, "golden-replay")
+    pages = [fixture_dir / name for name in page_names]
+    calls = _install_golden_replay(monkeypatch, pages)
+
+    service = CatalogueSubmissionService(
+        db, upload_root=os.environ["CATALOGUE_UPLOAD_DIR"], max_upload_bytes=8 * 1024 * 1024
+    )
+    submitted = service.submit(
+        CatalogueSubmissionCommand(
+            supplier_id=supplier_id,
+            original_filename=f"{fixture_dir.name}-golden.pdf",
+            content_type="application/pdf",
+            stream=BytesIO(_blank_pdf(len(pages))),
+            contract_id=None,
+            contract_version=None,
+            idempotency_key=None,
+            submitted_by="golden",
+        )
+    )
+    catalogue_ingestion_flow(ingestion_run_id=submitted.ingestion_run_id)
+    assert calls["n"] == len(pages), "replayed from recorded envelopes — no provider call"
+
+    run_uuid = str(submitted.ingestion_run_id)
+    assert _take_through_review(db, run_uuid, only_skus=only_skus, refused=refused) > 0, (
+        "nothing reached the serving layer to compare"
+    )
+    published = {row["supplier_product_code"]: row for row in golden_rows(db, UUID(run_uuid))}
+    assert published, "golden_rows returned nothing after publishing"
+    return published
 
 
 def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str]:
@@ -421,4 +562,85 @@ def test_hills_published_export_matches_the_hand_filled_sheet(db, monkeypatch):
     assert not fixed, (
         f"these columns now match the sheet and are no longer defects: {fixed}. "
         f"Move them from _KNOWN_GAPS into _ENFORCED so they stay fixed."
+    )
+
+
+def test_alfamedic_published_export_matches_the_hand_filled_sheet(db, monkeypatch):
+    """The Alfamedic block of the sheet, end to end through the published export.
+
+    The set is one hand-captured envelope covering the whole 56-page catalogue
+    rather than one recording per page, so this does NOT exercise page splitting,
+    per-page retry or sparse-page detection. Everything from conformance onward
+    is real, and the sheet reaches 36 of its 38 Alfamedic SKUs here against 4 of
+    13 for Hill's — which is why it is worth having despite that limitation.
+
+    The two SKUs the sheet names and this catalogue does not contain, 410240 and
+    50517, are absent from the PDF text layer too — a question about the sheet,
+    not about the pipeline.
+    """
+    expected = _load_expected(ALFAMEDIC)
+    refused: dict[str, str] = {}
+    published = _replay_to_published(
+        db,
+        monkeypatch,
+        fixture_dir=ALFAMEDIC,
+        page_names=["page_1.json"],
+        supplier_id=1,
+        provider="anthropic",
+        api_key_var="ANTHROPIC_API_KEY",
+        only_skus=set(expected),
+        refused=refused,
+    )
+
+    covered = sorted(set(expected) & set(published))
+    assert len(covered) >= 32, (
+        f"only {len(covered)} of the sheet's {len(expected)} Alfamedic SKUs reached the export "
+        f"(was 32) — coverage must not shrink"
+    )
+
+    failures = []
+    for sku in covered:
+        for problem in _diff(expected[sku], published[sku], _ENFORCED):
+            failures.append(f"{sku}  {problem}")
+    assert not failures, (
+        "the published export disagrees with the hand-filled sheet on a column that must match:\n  "
+        + "\n  ".join(failures)
+    )
+
+    unclassified = (
+        set(GOLDEN_COLUMNS)
+        - set(_ENFORCED)
+        - set(_ALFAMEDIC_KNOWN_GAPS)
+        - set(_NOT_COMPARABLE)
+        - set(_ALFAMEDIC_UNFILLED)
+    )
+    assert not unclassified, f"columns with no stated expectation: {sorted(unclassified)}"
+
+    # The sheet's blank columns must stay blank-in-the-sheet, not silently
+    # acquire values that then go unchecked because nobody reclassified them.
+    for column in _ALFAMEDIC_UNFILLED:
+        filled = [sku for sku in covered if (expected[sku].get(column) or "").strip()]
+        assert not filled, (
+            f"{column} is now filled in the sheet for {filled} — move it out of "
+            f"_ALFAMEDIC_UNFILLED so it is actually compared"
+        )
+
+    still_broken = {
+        column
+        for sku in covered
+        for column in _ALFAMEDIC_KNOWN_GAPS
+        if _diff(expected[sku], published[sku], (column,))
+    }
+    fixed = sorted(set(_ALFAMEDIC_KNOWN_GAPS) - still_broken)
+    assert not fixed, (
+        f"these columns now match the sheet and are no longer defects: {fixed}. "
+        f"Move them from _ALFAMEDIC_KNOWN_GAPS into _ENFORCED so they stay fixed."
+    )
+
+    # Refusing to publish beats publishing a wrong number, so this is pinned as
+    # expected behaviour rather than asserted away — but it must not spread.
+    assert set(refused) == _ALFAMEDIC_UNPUBLISHABLE, (
+        f"rows the pipeline refused to publish changed.\n"
+        f"  expected: {sorted(_ALFAMEDIC_UNPUBLISHABLE)}\n"
+        f"  actual:   " + "\n            ".join(f"{k}: {v[:90]}" for k, v in sorted(refused.items()))
     )
