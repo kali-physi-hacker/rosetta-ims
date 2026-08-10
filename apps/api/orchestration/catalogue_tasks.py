@@ -45,6 +45,10 @@ from .catalogue_types import (
     EvidenceOutcome,
     RawStageResult,
     RunIdentity,
+    # Re-exported: __all__ has always advertised it beside
+    # terminal_replay_result_task, but it was never imported, so any
+    # `from .catalogue_tasks import *` raised AttributeError on the name.
+    TerminalRunReplay,
     TransientProviderError,
 )
 
