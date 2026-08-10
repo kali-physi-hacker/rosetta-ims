@@ -34,6 +34,11 @@ ignore = [
 # That is the reason for ~193 `# noqa: E402` comments across the suite. The
 # rule is off here rather than annotated 193 more times.
 "tests/*" = ["E402"]
+# Reusing a pytest fixture across modules means importing the name and then
+# taking it as a parameter, which reads as a redefinition and is not one.
+# Scoped to this file rather than all tests, so the genuine F811 in
+# test_catalogue_pipeline_stage_services.py stays visible.
+"tests/test_catalogue_dead_letters.py" = ["E402", "F811"]
 "scripts/*" = ["E402"]
 "clientssot/*" = ["E402"]
 
