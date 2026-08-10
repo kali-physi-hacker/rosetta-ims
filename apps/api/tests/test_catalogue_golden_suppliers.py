@@ -188,7 +188,8 @@ def _take_through_review(db, run_uuid: str) -> int:
                 },
             )
         )
-        candidate_id = revised.output_ids[0]
+        # output_ids is typed UUID | str; the commands below want a UUID.
+        candidate_id = UUID(str(revised.output_ids[0]))
 
         stages.ReviewDecisionService(db).record_decision(
             stages.RecordReviewDecisionCommand(
