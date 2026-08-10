@@ -1,5 +1,5 @@
 {
-  // Pylance / pyright configuration for apps/api.
+  // Pylance / pyright configuration for the repository.
   //
   // Committed rather than left in .vscode/settings.json, which is gitignored —
   // otherwise every person configures import resolution themselves and the
@@ -8,22 +8,27 @@
   // The package layout is flat: apps/api is the import root, so the code says
   // `import models`, `from services import ...`. Nothing resolves from the repo
   // root, which is where the editor analyses from by default.
-  "include": ["."],
+  // Repo root, because Pylance looks for pyrightconfig.json in the WORKSPACE
+  // ROOT only — it does not search subdirectories. A copy under apps/api is
+  // found by the pyright CLI and silently ignored by the editor, which is the
+  // most confusing possible outcome.
+  "include": ["apps/api"],
   "exclude": [
     "**/__pycache__",
     "**/node_modules",
-    ".venv",
-    "data",
-    "clientssot/clientssot_data.db.gz"
+    "**/.venv",
+    "apps/api/data",
+    "apps/web",
+    "apps/api/clientssot/clientssot_data.db.gz"
   ],
 
-  // "." is this directory — apps/api. This is the line that makes `import
+  // This is the line that makes `import
   // models` resolve in the editor.
-  "extraPaths": ["."],
+  "extraPaths": ["apps/api"],
 
   // Where the installed dependencies live, so fastapi/sqlalchemy/prefect
   // resolve as well as the first-party modules.
-  "venvPath": ".",
+  "venvPath": "apps/api",
   "venv": ".venv",
 
   "pythonVersion": "3.13",
