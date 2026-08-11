@@ -42,6 +42,11 @@ class Lane(str, Enum):
     """The resting place of one normalized row at the end of a run."""
 
     PUBLISHED = "published"
+    #: Published once, and a later run has replaced it. Reviewed, approved and
+    #: live at the time — history, not outstanding work. Without this lane a
+    #: re-upload silently turns every previously published row of the older run
+    #: back into "awaiting review", which reads as work nobody has done.
+    SUPERSEDED = "superseded"
     AWAITING_REVIEW = "awaiting_review"
     REJECTED = "rejected"
     DEAD_LETTERED = "dead_lettered"
@@ -209,24 +214,33 @@ def _open_blocking(db: Session, **filters) -> list[models.CatalogueValidationIss
     return query.order_by(models.CatalogueValidationIssue.id).all()
 
 
-def _published_items(db: Session, run_uuid: str) -> set[str]:
+def _publication_items(db: Session, run_uuid: str) -> tuple[set[str], set[str]]:
+    """Rows this run published, split into still-live and since-replaced.
+
+    Both matter. Asking only "is a publication current" answers the wrong
+    question for an older run, whose publications a later run supersedes —
+    those rows were reviewed and put live, and reporting them as unreviewed
+    would invent outstanding work out of ordinary history.
+    """
     candidate_uuids = db.query(models.CatalogueMasteringCandidate.mastering_candidate_uuid).filter(
         models.CatalogueMasteringCandidate.ingestion_run_uuid == run_uuid
     )
     rows = (
-        db.query(models.CatalogueServingPublication.catalogue_item_uuid)
-        .filter(
-            models.CatalogueServingPublication.is_current == 1,
-            models.CatalogueServingPublication.mastering_candidate_uuid.in_(candidate_uuids),
+        db.query(
+            models.CatalogueServingPublication.catalogue_item_uuid,
+            models.CatalogueServingPublication.is_current,
         )
+        .filter(models.CatalogueServingPublication.mastering_candidate_uuid.in_(candidate_uuids))
         .all()
     )
-    return {row[0] for row in rows if row[0]}
+    current = {item for item, is_current in rows if item and is_current}
+    ever = {item for item, _ in rows if item}
+    return current, ever - current
 
 
 def lanes_for_run(db: Session, run_uuid: str) -> LaneReport:
     """Classify every normalized row of a run into exactly one lane."""
-    published = _published_items(db, run_uuid)
+    published, superseded = _publication_items(db, run_uuid)
     candidates = _candidates_by_item(db, run_uuid)
     blocking = {issue.catalogue_item_uuid for issue in _open_blocking(db, ingestion_run_uuid=run_uuid)}
 
@@ -241,6 +255,8 @@ def lanes_for_run(db: Session, run_uuid: str) -> LaneReport:
         candidate = candidates.get(item_uuid)
         if item_uuid in published:
             lane = Lane.PUBLISHED
+        elif item_uuid in superseded:
+            lane = Lane.SUPERSEDED
         elif candidate is not None and candidate.review_status in _REJECTED_STATES:
             lane = Lane.REJECTED
         elif candidate is not None:
@@ -282,6 +298,11 @@ def reconcile(db: Session, run_uuid: str) -> Reconciliation:
         else:
             text_rows += 1
 
+    # The link table carries no run column, so this matches on observation UUID
+    # alone. Safe because observation identities do not repeat across runs —
+    # asserted by the re-upload test, which ingests the same file twice and
+    # finds zero shared UUIDs. If that ever changes, this silently over-counts
+    # links and the reconciliation stops catching drops.
     linked: set[str] = set()
     for batch in _chunked(product_uuids):
         rows = (
@@ -329,8 +350,13 @@ def dead_letters(
     wanted = {issue.catalogue_item_uuid for issue in matched}
 
     # Every open blocking issue on the matched rows, so issue_codes is complete
-    # even when the caller filtered to one code.
-    all_issues = _open_blocking(db, ingestion_run_uuid=run_uuid)
+    # even when the caller filtered to one code. Unfiltered, that is the same
+    # query again — reuse it rather than paying twice, which the tallies would.
+    all_issues = (
+        matched
+        if issue_code is None and stage is None
+        else _open_blocking(db, ingestion_run_uuid=run_uuid)
+    )
     by_item: dict[str, list[models.CatalogueValidationIssue]] = {}
     for issue in all_issues:
         if issue.catalogue_item_uuid in wanted:

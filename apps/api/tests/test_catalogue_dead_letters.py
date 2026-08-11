@@ -249,3 +249,67 @@ def test_the_endpoint_serialises_the_queue_and_what_would_clear_it(db, monkeypat
         UUID(run_uuid), issue_code="NO_SUCH_CODE", stage=None, db=db, _user=None
     )
     assert missing["count"] == 0 and missing["dead_letters"] == []
+
+
+def test_a_re_upload_does_not_turn_published_rows_into_outstanding_work(db, monkeypatch):
+    """The same file ingested twice, and the older run read honestly.
+
+    Publications supersede by product, so a second run of the same catalogue
+    flips the first run's publications to is_current=0. Classifying only on
+    "is a publication current" then reports those rows as awaiting review —
+    inventing work nobody has to do, on a run where it was already done. On
+    this catalogue that was 36 rows, and re-uploading a price list is routine.
+    """
+    first_run = _run_alfamedic(db, monkeypatch)
+    before = dl.lanes_for_run(db, first_run).counts
+    assert before[dl.Lane.PUBLISHED.value] > 0
+
+    second_run = _run_alfamedic(db, monkeypatch)
+    assert second_run != first_run
+
+    after = dl.lanes_for_run(db, first_run).counts
+    assert after[dl.Lane.AWAITING_REVIEW.value] == before[dl.Lane.AWAITING_REVIEW.value], (
+        "the second run moved rows of the FIRST run into awaiting review — "
+        "publications it superseded are being read as unreviewed"
+    )
+    # Everything the first run had live is now history. Its own supersessions
+    # are counted too: a catalogue listing one product at several order
+    # quantities publishes more than once against the same product, so some
+    # rows were already superseded within the first run.
+    assert after[dl.Lane.SUPERSEDED.value] == (
+        before[dl.Lane.PUBLISHED.value] + before[dl.Lane.SUPERSEDED.value]
+    )
+    assert after[dl.Lane.PUBLISHED.value] == 0
+
+    # The lanes still cover the run, and the dead-letter population is untouched
+    # by a later run — those rows never reached a candidate either time.
+    assert dl.reconcile(db, first_run).lanes_cover_normalized_rows
+    assert after[dl.Lane.DEAD_LETTERED.value] == before[dl.Lane.DEAD_LETTERED.value]
+
+
+def test_observation_identities_do_not_repeat_across_runs(db, monkeypatch):
+    """The assumption reconcile() rests on, asserted rather than believed.
+
+    reconcile() matches evidence to normalized rows on observation UUID alone,
+    because the link table carries no run column. That is only safe while those
+    UUIDs are unique per run. The pipeline mints identities with uuid5, which is
+    content-addressed, so this is exactly the kind of thing that could quietly
+    become untrue — and if it did, links from an earlier run would make dropped
+    rows look accounted for.
+    """
+    first_run = _run_alfamedic(db, monkeypatch)
+    second_run = _run_alfamedic(db, monkeypatch)
+
+    def observations(run: str) -> set[str]:
+        return {
+            row[0]
+            for row in db.query(models.CatalogueExtractedEvidence.raw_observation_uuid)
+            .filter_by(ingestion_run_uuid=run)
+            .all()
+        }
+
+    shared = observations(first_run) & observations(second_run)
+    assert not shared, (
+        f"{len(shared)} observation UUIDs are shared between two runs of the same file — "
+        f"reconcile() matches links on UUID alone and would now over-count them"
+    )
