@@ -24,20 +24,18 @@ from schemas.catalogue_pipeline.enums import ReviewStatus  # noqa: E402
 from services import catalogue_dead_letters as dl  # noqa: E402
 from services import catalogue_pipeline_stages as stages  # noqa: E402
 from tests.test_catalogue_golden_suppliers import (  # noqa: E402, F401 — db fixture
-    ALFAMEDIC,
     _load_expected,
-    _replay_to_published,
+    _replay_set,
     db,
+    golden_set,
 )
 
 
 def _run_alfamedic(db, monkeypatch) -> str:
-    expected = _load_expected(ALFAMEDIC)
-    _replay_to_published(
-        db, monkeypatch, fixture_dir=ALFAMEDIC, page_names=["page_1.json"],
-        supplier_id=1, provider="anthropic", api_key_var="ANTHROPIC_API_KEY",
-        only_skus=set(expected), refused={},
-    )
+    """Alfamedic by name, not by hardcoded path — it is the set with real
+    blocked rows, and asking for it by name keeps that dependency explicit."""
+    spec = golden_set("alfamedic")
+    _replay_set(db, monkeypatch, spec, only_skus=set(_load_expected(spec.path)), refused={})
     return db.query(models.IngestionRun).order_by(models.IngestionRun.id.desc()).first().run_uuid
 
 

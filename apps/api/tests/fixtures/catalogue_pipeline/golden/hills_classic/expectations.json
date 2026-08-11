@@ -1,0 +1,42 @@
+{
+  "supplier": {"id": 14, "code": "HILLS", "name": "Hill's"},
+  "pages": ["page_1.json", "page_4.json"],
+  "provider": "google",
+
+  "_comment": "Every column of GOLDEN_COLUMNS must appear in exactly one of enforced, known_gaps, not_comparable or unfilled. The test refuses a column nobody has decided about.",
+
+  "min_covered_skus": 4,
+  "_min_covered_comment": "The sheet's Hill's block was filled from a wider page selection than the two pages recorded here, so only part of it is reachable end to end.",
+
+  "enforced": [
+    "supplier",
+    "supplier_product_code",
+    "catalogue_price_hkd",
+    "catalogue_price_basis_qty",
+    "sellable_qty"
+  ],
+
+  "known_gaps": {
+    "weight": "packaging carries content_amount/content_uom (2.8 OZ) but the export reads weight off the product variant, so it comes out empty",
+    "package_configuration": "purchase_uom and sellable_unit_uom are null on every Hill's row, so the export falls back to the variant UOM",
+    "order_multiple": "order_increment has the right amount (24) but a generic UNIT — the contract does not map the printed pack unit",
+    "catalogue_price_basis_uom": "price_basis resolves to UNIT rather than the CAN/POUCH/BOX the supplier prints",
+    "sellable_uom": "sellable_unit_uom is never resolved",
+    "sellable_units_per_price_basis": "sellable_units_per_purchase_unit is never derived",
+    "rrp": "the normalized row carries an rrp field but it does not reach the published export"
+  },
+
+  "not_comparable": {
+    "product_name": "the sheet holds a human shorthand ('Hills F9 i/d stew 2.9oz'); the export holds the supplier's printed description",
+    "product name [Rosetta]": "a hand-authored retail name, not something the pipeline derives",
+    "brand": "the sheet leaves it blank for Hill's own products",
+    "mbb_tier_1": "the sheet records the supplier's written order-value discount policy; the pipeline captures the printed per-unit price tiers",
+    "mbb_tier_2": "as mbb_tier_1",
+    "mbb_tier_3": "as mbb_tier_1",
+    "mbb_tier_4": "as mbb_tier_1",
+    "commercial_offer_summary": "free-text summary written by hand"
+  },
+
+  "unfilled": {},
+  "unpublishable": []
+}

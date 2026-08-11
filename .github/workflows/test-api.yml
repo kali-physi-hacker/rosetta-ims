@@ -1,0 +1,101 @@
+name: API tests
+
+# The golden suite only catches a regression if something runs it. Until this
+# existed, it ran when a developer remembered — which meant a pull request could
+# break a supplier's ingestion and still merge, and a push to main would deploy
+# it. Contracts and fixtures are in the path filter for the same reason: editing
+# a supplier contract, or dropping in a new golden sample, is exactly the change
+# this suite is here to check.
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/test-api.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/test-api.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: test-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # Matches the interpreter the suite is developed against. The pins in
+          # requirements.txt are what the image builds with, so the tests run
+          # against production's versions rather than whatever resolves today.
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            apps/api/requirements.txt
+            apps/api/requirements-dev.txt
+
+      - name: Install
+        run: pip install -r requirements-dev.txt
+
+      - name: Resolve first-party imports
+        # apps/api is the import root — the code says `import models`, and that
+        # only resolves with this directory on the path. Locally a .pth in the
+        # venv does it; here the venv is built fresh every run.
+        run: echo "PYTHONPATH=$PWD" >> "$GITHUB_ENV"
+
+      - name: Lint
+        # Narrow rule set, so a finding here is worth stopping for.
+        run: ruff check --output-format=github .
+
+      - name: Test
+        env:
+          GOLDEN_REPORT_DIR: ${{ github.workspace }}/golden-reports
+        run: pytest -q -p no:cacheprovider
+
+      - name: Ingestion quality report
+        # The per-set numbers, in the job summary rather than buried in the log —
+        # this is the part meant to be read, not searched for.
+        if: always()
+        env:
+          GOLDEN_REPORT_DIR: ${{ github.workspace }}/golden-reports
+        run: |
+          if [ ! -d "$GOLDEN_REPORT_DIR" ]; then
+            echo "No golden reports produced." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "### Ingestion quality"
+            echo
+            echo "| set | detected | staged | published | dead-lettered | fields matched | mismatched | missing |"
+            echo "| --- | --- | --- | --- | --- | --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, os, pathlib
+          for path in sorted(pathlib.Path(os.environ["GOLDEN_REPORT_DIR"]).glob("*.json")):
+              r = json.loads(path.read_text())
+              lanes, fields = r["lanes"], r["fields"]
+              print(
+                  f"| {r['golden_set']} | {r['rows_detected']} | {r['rows_staged']} "
+                  f"| {lanes.get('published', 0)} | {lanes.get('dead_lettered', 0)} "
+                  f"| {fields['matched']} | {fields['mismatched']} | {fields['missing']} |"
+              )
+          PY
+
+      - name: Upload quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-quality-reports
+          path: golden-reports/
+          if-no-files-found: warn

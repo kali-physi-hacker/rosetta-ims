@@ -28,6 +28,7 @@ import csv
 import json
 import os
 import tempfile
+from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from uuid import UUID
@@ -55,8 +56,90 @@ models.Base.metadata.create_all(bind=database.engine)
 database.seed_category_rules(database.engine)
 
 GOLDEN_ROOT = Path(__file__).parent / "fixtures" / "catalogue_pipeline" / "golden"
-HILLS_CLASSIC = GOLDEN_ROOT / "hills_classic"
-ALFAMEDIC = GOLDEN_ROOT / "alfamedic"
+
+#: Which provider's key a set's recording was made under. The replay never
+#: reaches a provider; the variable only has to exist so configuration checks
+#: pass on the path the run takes.
+_PROVIDER_KEY_VAR = {"anthropic": "ANTHROPIC_API_KEY", "google": "GEMINI_API_KEY"}
+
+
+@dataclass(frozen=True)
+class GoldenSet:
+    """One golden sample: its pages, its expectations, and what it is for.
+
+    Everything a comparison needs lives beside the fixture rather than in this
+    file, so adding a supplier is dropping a directory in — envelopes,
+    expected.csv, expectations.json — and nothing else. The moment a set has to
+    be registered in code, "add a golden sample" stops being a data change and
+    starts being a pull request against the test suite.
+    """
+
+    name: str
+    path: Path
+    supplier_id: int
+    supplier_code: str
+    supplier_name: str
+    page_names: tuple[str, ...]
+    provider: str
+    min_covered_skus: int
+    enforced: tuple[str, ...]
+    known_gaps: dict[str, str]
+    not_comparable: dict[str, str]
+    unfilled: dict[str, str]
+    unpublishable: frozenset[str]
+
+    @property
+    def api_key_var(self) -> str:
+        return _PROVIDER_KEY_VAR[self.provider]
+
+
+def discover_golden_sets() -> list[GoldenSet]:
+    """Every set under the golden directory, found by looking.
+
+    A directory without expectations.json is a failure, not a skip: a golden
+    sample nobody stated an expectation for proves only that the pipeline ran,
+    and a suite that silently ignores it is worse than one that never had it.
+    """
+    sets: list[GoldenSet] = []
+    for path in sorted(p for p in GOLDEN_ROOT.iterdir() if p.is_dir()):
+        manifest = path / "expectations.json"
+        assert manifest.exists(), (
+            f"golden set {path.name!r} has no expectations.json — a set nobody has "
+            f"stated an expectation for cannot be compared against anything"
+        )
+        spec = json.loads(manifest.read_text(encoding="utf-8"))
+        supplier = spec["supplier"]
+        sets.append(
+            GoldenSet(
+                name=path.name,
+                path=path,
+                supplier_id=int(supplier["id"]),
+                supplier_code=supplier["code"],
+                supplier_name=supplier["name"],
+                page_names=tuple(spec["pages"]),
+                provider=spec["provider"],
+                min_covered_skus=int(spec["min_covered_skus"]),
+                enforced=tuple(spec["enforced"]),
+                known_gaps=dict(spec.get("known_gaps") or {}),
+                not_comparable=dict(spec.get("not_comparable") or {}),
+                unfilled=dict(spec.get("unfilled") or {}),
+                unpublishable=frozenset(spec.get("unpublishable") or ()),
+            )
+        )
+    assert sets, f"no golden sets found under {GOLDEN_ROOT}"
+    return sets
+
+
+def golden_set(name: str) -> GoldenSet:
+    """One discovered set by name, for a test that needs a specific supplier."""
+    for candidate in discover_golden_sets():
+        if candidate.name == name:
+            return candidate
+
+    raise AssertionError(f"no golden set named {name!r}")
+
+
+GOLDEN_SETS = discover_golden_sets()
 
 
 @pytest.fixture()
@@ -66,10 +149,15 @@ def db(tmp_path, monkeypatch):
     session = database.SessionLocal()
     try:
         _reset(session)
-        for supplier_id, code, name in ((14, "HILLS", "Hill's"), (1, "ALF", "Alfamedic")):
-            if session.get(models.Supplier, supplier_id) is None:
+        # Seeded from the sets themselves, so a new fixture directory brings its
+        # own supplier rather than needing one added here.
+        for spec in GOLDEN_SETS:
+            if session.get(models.Supplier, spec.supplier_id) is None:
                 session.add(models.Supplier(
-                    id=supplier_id, code=code, name=name, created_at="2026-07-29T00:00:00+00:00"
+                    id=spec.supplier_id,
+                    code=spec.supplier_code,
+                    name=spec.supplier_name,
+                    created_at="2026-07-29T00:00:00+00:00",
                 ))
         session.commit()
         yield session
@@ -281,70 +369,6 @@ def _review_one(db, candidate, *, sequence: int) -> None:
     )
 
 
-# Columns where the sheet and the export state the same thing, and must agree.
-_ENFORCED = (
-    "supplier",
-    "supplier_product_code",
-    "catalogue_price_hkd",
-    "catalogue_price_basis_qty",
-    "sellable_qty",
-)
-
-# Columns the pipeline does not produce correctly yet. Each is a real defect
-# with a real cause, pinned so it cannot quietly get worse and so fixing one
-# fails this test rather than passing unnoticed.
-_KNOWN_GAPS = {
-    "weight": "packaging carries content_amount/content_uom (2.8 OZ) but the export reads weight off the product variant, so it comes out empty",
-    "package_configuration": "purchase_uom and sellable_unit_uom are null on every Hill's row, so the export falls back to the variant UOM",
-    "order_multiple": "order_increment has the right amount (24) but a generic UNIT — the contract does not map the printed pack unit",
-    "catalogue_price_basis_uom": "price_basis resolves to UNIT rather than the CAN/POUCH/BOX the supplier prints",
-    "sellable_uom": "sellable_unit_uom is never resolved",
-    "sellable_units_per_price_basis": "sellable_units_per_purchase_unit is never derived",
-    "rrp": "the normalized row carries an rrp field but it does not reach the published export",
-}
-
-# Alfamedic fails the SAME packaging columns as Hill's, on a different contract
-# and a different capture. Two suppliers agreeing on which three columns are
-# wrong points at the export and the packaging model, not at either contract.
-_ALFAMEDIC_KNOWN_GAPS = {
-    "package_configuration": (
-        "count and outer unit are right; the inner noun now reads for countables "
-        "('100 TABLET / BOX') but differs from the sheet's spelling, and stays "
-        "absent where the printed unit is a measure ('10 / BOTTLE' for '10ml/ bot')"
-    ),
-    "order_multiple": "reports '1 PIECE' regardless of the printed order quantity",
-    "sellable_uom": "21 of 33 disagree, down from 31 of 32 — the rest are measure rows and spelling",
-    "brand": "3 of 33 disagree, casing and punctuation of the printed brand",
-    "catalogue_price_basis_uom": "3 of 33 disagree; the rest resolve correctly",
-    "sellable_units_per_price_basis": "1 of 33 not derived",
-}
-
-# Blank in all 38 Alfamedic sheet rows, so there is no human statement to check
-# against. Not a pipeline gap — nothing was ever asserted about them here.
-_ALFAMEDIC_UNFILLED = {
-    "weight": "blank in every Alfamedic sheet row",
-    "rrp": "blank in every Alfamedic sheet row",
-}
-
-# Was {"E81110E"} — cost per sellable unit could not be derived because the
-# sellable unit was never resolved. Reading the noun off the packing text fixed
-# it, and the row publishes. Kept as an empty pin so a new refusal is caught.
-_ALFAMEDIC_UNPUBLISHABLE: set[str] = set()
-
-# Columns where the sheet and the export describe genuinely different things.
-# Excluded on purpose, with the reason, rather than left to fail forever.
-_NOT_COMPARABLE = {
-    "product_name": "the sheet holds a human shorthand ('Hills F9 i/d stew 2.9oz'); the export holds the supplier's printed description",
-    "product name [Rosetta]": "a hand-authored retail name, not something the pipeline derives",
-    "brand": "the sheet leaves it blank for Hill's own products",
-    "mbb_tier_1": "the sheet records the supplier's written order-value discount policy; the pipeline captures the printed per-unit price tiers",
-    "mbb_tier_2": "as mbb_tier_1",
-    "mbb_tier_3": "as mbb_tier_1",
-    "mbb_tier_4": "as mbb_tier_1",
-    "commercial_offer_summary": "free-text summary written by hand",
-}
-
-
 def _replay_to_published(
     db,
     monkeypatch,
@@ -395,6 +419,78 @@ def _replay_to_published(
     return published
 
 
+#: Where the per-run quality reports land. Written by the comparison test and
+#: uploaded by CI, so a run's numbers survive the job that produced them.
+QUALITY_REPORT_DIR = Path(os.environ.get("GOLDEN_REPORT_DIR") or (Path(__file__).parent.parent / ".golden-reports"))
+
+
+def _write_quality_report(spec: "GoldenSet", db, run_uuid: str, fields: dict[str, int]) -> dict:
+    """Rows in, rows out, and how the comparison went — one file per set.
+
+    The thing that replaces the manual read-through. Counts alone would say a
+    run happened; the point is that it says how much of it agreed with a person.
+    """
+    from services import catalogue_dead_letters as dead_letters
+
+    reconciliation = dead_letters.reconcile(db, run_uuid)
+    issues = (
+        db.query(models.CatalogueValidationIssue.severity, models.CatalogueValidationIssue.issue_code)
+        .filter(models.CatalogueValidationIssue.ingestion_run_uuid == run_uuid)
+        .all()
+    )
+    by_severity: dict[str, int] = {}
+    for severity, _code in issues:
+        by_severity[severity] = by_severity.get(severity, 0) + 1
+
+    report = {
+        "golden_set": spec.name,
+        "supplier": spec.supplier_name,
+        "ingestion_run_id": run_uuid,
+        "rows_detected": reconciliation.raw_product_rows,
+        "rows_staged": reconciliation.normalized_rows,
+        "lanes": reconciliation.lane_counts,
+        "issues_raised": {"total": len(issues), "by_severity": by_severity},
+        "fields": fields,
+        "dead_letters_by_code": [
+            {"issue_code": t.issue_code, "rows_blocked": t.rows_blocked,
+             "rows_cleared_if_fixed": t.rows_cleared_if_fixed}
+            for t in dead_letters.tallies_by_issue_code(db, run_uuid=run_uuid)
+        ],
+    }
+    QUALITY_REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    (QUALITY_REPORT_DIR / f"{spec.name}.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(
+        f"\n[golden] {spec.name}: detected={report['rows_detected']} staged={report['rows_staged']} "
+        f"published={report['lanes'].get('published', 0)} dead_lettered={report['lanes'].get('dead_lettered', 0)} "
+        f"| fields matched={fields['matched']} mismatched={fields['mismatched']} missing={fields['missing']}"
+    )
+    return report
+
+
+def _replay_set(
+    db,
+    monkeypatch,
+    spec: GoldenSet,
+    *,
+    only_skus: set[str] | None = None,
+    refused: dict[str, str] | None = None,
+) -> dict[str, dict[str, str]]:
+    """Replay a discovered set, taking its pages and provider from the manifest."""
+    return _replay_to_published(
+        db,
+        monkeypatch,
+        fixture_dir=spec.path,
+        page_names=list(spec.page_names),
+        supplier_id=spec.supplier_id,
+        provider=spec.provider,
+        api_key_var=spec.api_key_var,
+        only_skus=only_skus,
+        refused=refused,
+    )
+
+
 def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str]:
     """Per-field comparison, reported as mismatched (expected X, got Y).
 
@@ -422,9 +518,10 @@ def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
     pipeline once on the non-default provider — the toggle is not just a
     lookup, it has to carry a real run."""
 
-    monkeypatch.setenv("CATALOGUE_VISION_PROVIDER", "google")
-    monkeypatch.setenv("GEMINI_API_KEY", "golden-replay")
-    pages = [HILLS_CLASSIC / "page_1.json", HILLS_CLASSIC / "page_4.json"]
+    spec = golden_set("hills_classic")
+    monkeypatch.setenv("CATALOGUE_VISION_PROVIDER", spec.provider)
+    monkeypatch.setenv(spec.api_key_var, "golden-replay")
+    pages = [spec.path / name for name in spec.page_names]
     calls = _install_golden_replay(monkeypatch, pages)
     expected_rows = sum(len(json.loads(p.read_text())["rows"]) for p in pages)
 
@@ -433,7 +530,7 @@ def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
     )
     submitted = service.submit(
         CatalogueSubmissionCommand(
-            supplier_id=14,
+            supplier_id=spec.supplier_id,
             original_filename="hills-golden.pdf",
             content_type="application/pdf",
             stream=BytesIO(_blank_pdf(len(pages))),
@@ -488,165 +585,96 @@ def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
     assert "Cancer" in prescription["product_name"]["value"]
 
 
-def test_hills_published_export_matches_the_hand_filled_sheet(db, monkeypatch):
-    """The published export, compared field by field against the golden sheet.
 
-    The test above proves the pipeline reaches mastering. This one goes the rest
-    of the way — through review to the SERVING layer — and checks the numbers a
-    person wrote down by hand.
+@pytest.mark.parametrize("spec", GOLDEN_SETS, ids=lambda spec: spec.name)
+def test_the_published_export_matches_the_hand_filled_sheet(spec: GoldenSet, db, monkeypatch):
+    """Every discovered golden set, compared field by field against the sheet.
 
-    `catalogue_golden_export.golden_rows` reads published rows only, and the
-    sheet's own flat table has exactly those columns, so the two are compared in
-    the same shape. That comparison is what DEV-209 later reconciles the
-    operations database against; if the sheet and the export ever stop agreeing
-    here, everything built on top of the export is measuring the wrong thing.
+    Parametrised over `discover_golden_sets()`, so dropping a directory in adds
+    a case and touching this file is not part of adding a supplier. What each
+    set asserts — which columns must match, which are known defects, which mean
+    different things on the two sides — travels with the fixture in
+    `expectations.json`, because those judgements are about that supplier's
+    catalogue and belong beside it.
     """
-    monkeypatch.setenv("CATALOGUE_VISION_PROVIDER", "google")
-    monkeypatch.setenv("GEMINI_API_KEY", "golden-replay")
-    pages = [HILLS_CLASSIC / "page_1.json", HILLS_CLASSIC / "page_4.json"]
-    calls = _install_golden_replay(monkeypatch, pages)
-
-    service = CatalogueSubmissionService(
-        db, upload_root=os.environ["CATALOGUE_UPLOAD_DIR"], max_upload_bytes=4 * 1024 * 1024
-    )
-    submitted = service.submit(
-        CatalogueSubmissionCommand(
-            supplier_id=14,
-            original_filename="hills-golden.pdf",
-            content_type="application/pdf",
-            stream=BytesIO(_blank_pdf(len(pages))),
-            contract_id=None,
-            contract_version=None,
-            idempotency_key=None,
-            submitted_by="golden",
-        )
-    )
-    catalogue_ingestion_flow(ingestion_run_id=submitted.ingestion_run_id)
-    assert calls["n"] == len(pages), "replayed from recorded envelopes — no provider call"
-
-    run_uuid = str(submitted.ingestion_run_id)
-    assert _take_through_review(db, run_uuid) > 0, "nothing reached the serving layer to compare"
-
-    published = {row["supplier_product_code"]: row for row in golden_rows(db, UUID(run_uuid))}
-    assert published, "golden_rows returned nothing after publishing"
-
-    expected = _load_expected(HILLS_CLASSIC)
-    covered = sorted(set(expected) & set(published))
-    # The sheet's Hill's block was filled from a wider page selection than the two
-    # pages recorded here, so only part of it is reachable end-to-end today. Pin
-    # the overlap: it must never silently shrink.
-    assert covered == ["3392", "604202", "605916", "608450"], (
-        f"the sheet SKUs reachable from the recorded pages changed: {covered}. "
-        f"Growing this list is good news — update it. Shrinking it means the "
-        f"fixture and the sheet have drifted and the test is checking less than it claims."
-    )
-
-    failures = []
-    for sku in covered:
-        for problem in _diff(expected[sku], published[sku], _ENFORCED):
-            failures.append(f"{sku}  {problem}")
-    assert not failures, (
-        "the published export disagrees with the hand-filled sheet on a column that must match:\n  "
-        + "\n  ".join(failures)
-    )
-
-    # Every column is accounted for: enforced above, a known defect, or
-    # documented as not comparable. A column that is none of these is a column
-    # nobody decided about.
-    unclassified = set(GOLDEN_COLUMNS) - set(_ENFORCED) - set(_KNOWN_GAPS) - set(_NOT_COMPARABLE)
-    assert not unclassified, f"columns with no stated expectation: {sorted(unclassified)}"
-
-    # The known defects, pinned. Fixing one makes this fail with the column
-    # named, which is the point — a silent improvement is still a surprise.
-    still_broken = {
-        column
-        for sku in covered
-        for column in _KNOWN_GAPS
-        if _diff(expected[sku], published[sku], (column,))
-    }
-    fixed = sorted(set(_KNOWN_GAPS) - still_broken)
-    assert not fixed, (
-        f"these columns now match the sheet and are no longer defects: {fixed}. "
-        f"Move them from _KNOWN_GAPS into _ENFORCED so they stay fixed."
-    )
-
-
-def test_alfamedic_published_export_matches_the_hand_filled_sheet(db, monkeypatch):
-    """The Alfamedic block of the sheet, end to end through the published export.
-
-    The set is one hand-captured envelope covering the whole 56-page catalogue
-    rather than one recording per page, so this does NOT exercise page splitting,
-    per-page retry or sparse-page detection. Everything from conformance onward
-    is real, and the sheet reaches 36 of its 38 Alfamedic SKUs here against 4 of
-    13 for Hill's — which is why it is worth having despite that limitation.
-
-    The two SKUs the sheet names and this catalogue does not contain, 410240 and
-    50517, are absent from the PDF text layer too — a question about the sheet,
-    not about the pipeline.
-    """
-    expected = _load_expected(ALFAMEDIC)
+    expected = _load_expected(spec.path)
     refused: dict[str, str] = {}
-    published = _replay_to_published(
-        db,
-        monkeypatch,
-        fixture_dir=ALFAMEDIC,
-        page_names=["page_1.json"],
-        supplier_id=1,
-        provider="anthropic",
-        api_key_var="ANTHROPIC_API_KEY",
-        only_skus=set(expected),
-        refused=refused,
-    )
+    published = _replay_set(db, monkeypatch, spec, only_skus=set(expected), refused=refused)
 
     covered = sorted(set(expected) & set(published))
-    assert len(covered) >= 33, (
-        f"only {len(covered)} of the sheet's {len(expected)} Alfamedic SKUs reached the export "
-        f"(was 33) — coverage must not shrink"
+    assert len(covered) >= spec.min_covered_skus, (
+        f"{spec.name}: only {len(covered)} of the sheet's {len(expected)} SKUs reached the "
+        f"export, expected at least {spec.min_covered_skus} — coverage must not shrink"
     )
 
-    failures = []
+    fields = {"matched": 0, "mismatched": 0, "missing": 0}
     for sku in covered:
-        for problem in _diff(expected[sku], published[sku], _ENFORCED):
-            failures.append(f"{sku}  {problem}")
-    assert not failures, (
-        "the published export disagrees with the hand-filled sheet on a column that must match:\n  "
-        + "\n  ".join(failures)
+        for column in spec.enforced:
+            want = (expected[sku].get(column) or "").strip()
+            if not want:
+                continue
+            got = (published[sku].get(column) or "").strip()
+            if not got:
+                fields["missing"] += 1
+            elif want == got:
+                fields["matched"] += 1
+            else:
+                fields["mismatched"] += 1
+    _write_quality_report(
+        spec, db, db.query(models.IngestionRun).order_by(models.IngestionRun.id.desc()).first().run_uuid, fields
     )
 
+    failures = [
+        f"{sku}  {problem}"
+        for sku in covered
+        for problem in _diff(expected[sku], published[sku], spec.enforced)
+    ]
+    assert not failures, (
+        f"{spec.name}: the published export disagrees with the hand-filled sheet on a "
+        f"column that must match:\n  " + "\n  ".join(failures)
+    )
+
+    # Every column decided about, one way or another. A column in none of the
+    # four buckets is one nobody has looked at, and silence is not agreement.
     unclassified = (
         set(GOLDEN_COLUMNS)
-        - set(_ENFORCED)
-        - set(_ALFAMEDIC_KNOWN_GAPS)
-        - set(_NOT_COMPARABLE)
-        - set(_ALFAMEDIC_UNFILLED)
+        - set(spec.enforced)
+        - set(spec.known_gaps)
+        - set(spec.not_comparable)
+        - set(spec.unfilled)
     )
-    assert not unclassified, f"columns with no stated expectation: {sorted(unclassified)}"
+    assert not unclassified, (
+        f"{spec.name}: columns with no stated expectation in expectations.json: "
+        f"{sorted(unclassified)}"
+    )
 
-    # The sheet's blank columns must stay blank-in-the-sheet, not silently
-    # acquire values that then go unchecked because nobody reclassified them.
-    for column in _ALFAMEDIC_UNFILLED:
+    # A column called unfilled must actually be unfilled. Otherwise the sheet
+    # gains a value and nothing compares it, because it was excused years ago.
+    for column in spec.unfilled:
         filled = [sku for sku in covered if (expected[sku].get(column) or "").strip()]
         assert not filled, (
-            f"{column} is now filled in the sheet for {filled} — move it out of "
-            f"_ALFAMEDIC_UNFILLED so it is actually compared"
+            f"{spec.name}: {column} is now filled in the sheet for {filled} — move it out "
+            f"of unfilled in expectations.json so it is actually compared"
         )
 
+    # The known defects, pinned. Fixing one fails here with the column named,
+    # which is the point: an improvement nobody noticed is still a surprise.
     still_broken = {
         column
         for sku in covered
-        for column in _ALFAMEDIC_KNOWN_GAPS
+        for column in spec.known_gaps
         if _diff(expected[sku], published[sku], (column,))
     }
-    fixed = sorted(set(_ALFAMEDIC_KNOWN_GAPS) - still_broken)
+    fixed = sorted(set(spec.known_gaps) - still_broken)
     assert not fixed, (
-        f"these columns now match the sheet and are no longer defects: {fixed}. "
-        f"Move them from _ALFAMEDIC_KNOWN_GAPS into _ENFORCED so they stay fixed."
+        f"{spec.name}: these columns now match the sheet and are no longer defects: {fixed}. "
+        f"Move them from known_gaps into enforced in expectations.json so they stay fixed."
     )
 
-    # Refusing to publish beats publishing a wrong number, so this is pinned as
-    # expected behaviour rather than asserted away — but it must not spread.
-    assert set(refused) == _ALFAMEDIC_UNPUBLISHABLE, (
-        f"rows the pipeline refused to publish changed.\n"
-        f"  expected: {sorted(_ALFAMEDIC_UNPUBLISHABLE)}\n"
+    # Refusing to publish beats publishing a wrong number, so a refusal is
+    # pinned as expected behaviour — but the population must not grow.
+    assert set(refused) == set(spec.unpublishable), (
+        f"{spec.name}: rows the pipeline refused to publish changed.\n"
+        f"  expected: {sorted(spec.unpublishable)}\n"
         f"  actual:   " + "\n            ".join(f"{k}: {v[:90]}" for k, v in sorted(refused.items()))
     )
