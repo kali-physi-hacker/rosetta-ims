@@ -7,13 +7,13 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime, date
+from datetime import datetime
 
 import models
 import database
 from services.pricing_service import product_to_dict, effective_pack_cost, expiry_batches
 from services import offering_costs, tag_service, audit, audit_log
-from dependencies import get_current_user, require_user
+from dependencies import require_user
 from permissions import require_capability, has_capability, SENSITIVE_PRODUCT_FIELDS
 from schemas.catalogue_pipeline import ServingItemV1
 from services.catalogue_serving_reads import CatalogueServingReadService

@@ -25,7 +25,6 @@ This module is a one-shot migration: once every environment reports
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from uuid import uuid4
 
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session

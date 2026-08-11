@@ -3,7 +3,6 @@
 Additive: reads only the clientssot_* tables. Mounted at /clients."""
 import sqlite3, csv, io, re
 from typing import List
-from pathlib import Path
 from fastapi import APIRouter, Depends, Query, Response
 from dependencies import require_user
 from clientssot.taxonomy import TAXONOMY, EVENTS

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-from uuid import UUID
 
 import pytest
 

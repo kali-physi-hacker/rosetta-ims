@@ -6,11 +6,8 @@ import os
 import tempfile
 from io import BytesIO
 from pathlib import Path
-from uuid import UUID
 
 import pytest
-import sqlalchemy as sa
-from sqlalchemy import create_engine, text
 
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 

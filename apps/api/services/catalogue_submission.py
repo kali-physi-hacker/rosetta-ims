@@ -263,7 +263,7 @@ class CatalogueSubmissionService:
             if stored:
                 self._cleanup_new_file(stored)
             raise SubmissionPersistenceError("Submission could not be persisted") from exc
-        
+
     def _get_status(self, run: models.IngestionRun) -> CatalogueIngestionStatus:
         source = run.pipeline_source_document
         if source is None and run.catalogue_source_document_id:
@@ -307,12 +307,12 @@ class CatalogueSubmissionService:
             units_done=run.units_done,
             units_total=run.units_total,
         )
-        
-    def list(self) -> list[CatalogueIngestionStatus]: 
+
+    def list(self) -> list[CatalogueIngestionStatus]:
         """Returns a list of safe typed status payload for all current ingestion runs and their statuses"""
         runs = self.db.query(models.IngestionRun).all()
         run_statuses = [self._get_status(run) for run in runs]
-        return run_statuses 
+        return run_statuses
 
     def retry(self, run_uuid: UUID, *, submitted_by: str | None = None) -> CatalogueSubmissionResult:
         """Re-submit a failed run's stored source file as a NEW run.
@@ -380,7 +380,6 @@ class CatalogueSubmissionService:
         and published decisions, and those are append-only.
         """
         from orchestration.catalogue_reparse import (
-            ReparseNotAllowed,
             ReparseStage,
             SUPPORTED_STAGES,
             evidence_source_run,

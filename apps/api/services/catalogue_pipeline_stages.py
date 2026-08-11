@@ -9,7 +9,6 @@ FastAPI, Prefect, routers, or request objects.
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -30,7 +29,6 @@ from schemas.catalogue_pipeline import (
 from schemas.catalogue_pipeline.common import (
     Cost,
     ExtractionProfileReference,
-    FieldEvidence,
     LineageReference,
     MbbTerm,
     Money,
@@ -57,7 +55,7 @@ from schemas.catalogue_pipeline.mastering_candidate_v1 import (
     SupplierProductResolution,
 )
 from schemas.catalogue_pipeline.extracted_evidence_v1 import RawCell, SourceLocation
-from schemas.catalogue_pipeline.serving_item_v1 import PublicationLineage, SupplierOffering
+from schemas.catalogue_pipeline.serving_item_v1 import PublicationLineage
 from schemas.catalogue_pipeline.normalized_row_v1 import NormalizedCatalogueFields, ClaimRawFields
 from services import catalogue_pipeline_persistence as persistence
 from services import offering_costs
@@ -1038,7 +1036,7 @@ class ApprovedCommercialStateService(_TransactionalService):
         if existing_supplier_product is not None:
             self._update_supplier_product(existing_supplier_product, candidate, applied_at)
         self._persist_packaging(candidate, supplier_product, applied_at)
-        price = self._persist_price(candidate, supplier_product, applied_at)
+        self._persist_price(candidate, supplier_product, applied_at)
         mbb_count = self._persist_mbb(candidate, supplier_product, applied_at)
         self._finish()
         # Cost reads are offering-first with a per-session memo; a session that

@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timezone
-from uuid import uuid4
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from sqlalchemy.schema import CreateColumn

@@ -1058,8 +1058,8 @@ def _tier_price_terms(
         and field.tier_minimum_spend is not None
     ]
     terms: list[dict[str, Any]] = []
-    for field in sorted(tiers, key=lambda f: (f.tier_order or 0, str(f.tier_minimum_spend))):
-        amount = _decimal_or_none(fields.get(f"source:{field.field_key}"))
+    for tier in sorted(tiers, key=lambda f: (f.tier_order or 0, str(f.tier_minimum_spend))):
+        amount = _decimal_or_none(fields.get(f"source:{tier.field_key}"))
         if amount is None or amount <= 0:
             continue
         # A tier that is not cheaper than the gross price is not a discount. It
@@ -1069,7 +1069,7 @@ def _tier_price_terms(
         if gross is not None and amount >= gross:
             continue
         terms.append({
-            "mbb_term_id": str(_stable_term_uuid(evidence, field.field_key)),
+            "mbb_term_id": str(_stable_term_uuid(evidence, tier.field_key)),
             # SUPPLIER_ORDER, not SUPPLIER_SKU: the condition is a minimum
             # value across the whole order, even though the discounted price it
             # unlocks belongs to this row. The scope vocabulary already had the
@@ -1077,7 +1077,7 @@ def _tier_price_terms(
             "scope": "SUPPLIER_ORDER",
             "condition": {
                 "condition_type": "minimum_spend",
-                "spend": {"amount": str(field.tier_minimum_spend), "currency": pricing.currency},
+                "spend": {"amount": str(tier.tier_minimum_spend), "currency": pricing.currency},
             },
             "benefit": {
                 "benefit_type": "discounted_unit_price",
@@ -1087,7 +1087,7 @@ def _tier_price_terms(
                     "price_basis": basis.model_dump(mode="json"),
                 },
             },
-            "description": field.description,
+            "description": tier.description,
             "evidence": evidence,
         })
     return terms
