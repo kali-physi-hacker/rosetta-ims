@@ -16,6 +16,7 @@ os.environ.setdefault("PREFECT_LOGGING_LEVEL", "ERROR")
 os.environ.setdefault("PREFECT_LOGGING_TO_API_ENABLED", "false")
 os.environ.setdefault("PREFECT_SERVER_ANALYTICS_ENABLED", "false")
 
+import json  # noqa: E402
 from uuid import UUID  # noqa: E402
 
 import models  # noqa: E402
@@ -110,15 +111,23 @@ def test_dead_letters_are_enumerable_and_identifiable(db, monkeypatch):
 
     # Grouped by code, because the operational question is which single rule
     # change clears the most rows.
-    tally = dl.counts_by_issue_code(db, run_uuid=run_uuid)
-    assert tally and sum(tally.values()) == len(entries)
-    assert list(tally.values()) == sorted(tally.values(), reverse=True), "most-blocking code first"
+    tallies = dl.tallies_by_issue_code(db, run_uuid=run_uuid)
+    assert tallies
+    # rows_blocked double-counts a row held by two codes; rows_cleared_if_fixed
+    # never can, which is why it is the number the ordering uses.
+    assert sum(t.rows_cleared_if_fixed for t in tallies) <= len(entries)
+    assert sum(t.rows_blocked for t in tallies) >= len(entries)
+    assert [t.rows_cleared_if_fixed for t in tallies] == sorted(
+        (t.rows_cleared_if_fixed for t in tallies), reverse=True
+    ), "the code that frees the most rows comes first"
 
-    # Filtering by code returns only that code, and nothing wider.
-    worst = next(iter(tally))
+    # Filtering by code narrows the ROWS; each row still reports every code
+    # holding it, so a row needing a second fix says so.
+    worst = tallies[0].issue_code
     filtered = dl.dead_letters(db, run_uuid=run_uuid, issue_code=worst)
-    assert {entry.issue_code for entry in filtered} == {worst}
-    assert len(filtered) == tally[worst]
+    assert filtered
+    assert all(worst in entry.issue_codes for entry in filtered)
+    assert len(filtered) == tallies[0].rows_blocked
 
 
 def test_a_row_a_person_rejected_is_not_dead_lettered(db, monkeypatch):
@@ -151,3 +160,92 @@ def test_a_row_a_person_rejected_is_not_dead_lettered(db, monkeypatch):
     assert item_uuid in report.lanes[dl.Lane.REJECTED.value]
     assert item_uuid not in report.lanes[dl.Lane.DEAD_LETTERED.value]
     assert item_uuid not in {e.catalogue_item_uuid for e in dl.dead_letters(db, run_uuid=run_uuid)}
+
+
+def test_the_raw_layer_reconciles_against_the_lanes(db, monkeypatch):
+    """Rows in versus rows accounted for, so dedup cannot pass for loss.
+
+    Counting RAW against normalized gives a difference and no explanation. On
+    this catalogue the difference is entirely the same product listed at several
+    order quantities, collapsed into one row — but that has to be shown, not
+    assumed, because "186 rows fewer" reads identically whether they were merged
+    or dropped. Establishing it by hand once is analysis; asserting it is a test.
+    """
+    run_uuid = _run_alfamedic(db, monkeypatch)
+    report = dl.reconcile(db, run_uuid)
+
+    assert report.raw_observations == report.raw_product_rows + report.raw_text_observations
+    assert report.lanes_cover_normalized_rows, (
+        f"lanes hold {sum(report.lane_counts.values())} rows, staging holds "
+        f"{report.normalized_rows} — the classification is not covering the run"
+    )
+
+    # Every product row that carried no link to a normalized row must be a
+    # repeat of one that did. A code appearing ONLY among the unlinked is a row
+    # the pipeline dropped and nothing recorded.
+    linked_evidence = {
+        row[0]
+        for row in db.query(models.CatalogueNormalizedRowEvidence.raw_observation_uuid).all()
+    }
+    kept_codes: set[str] = set()
+    orphan_codes: set[str] = set()
+    for observation_uuid, cells_json in db.query(
+        models.CatalogueExtractedEvidence.raw_observation_uuid,
+        models.CatalogueExtractedEvidence.raw_cells_json,
+    ).filter(models.CatalogueExtractedEvidence.ingestion_run_uuid == run_uuid).all():
+        cells = json.loads(cells_json or "[]")
+        if not cells:
+            continue
+        first = cells[0]
+        code = str((first.get("raw_value") if isinstance(first, dict) else first) or "").strip()
+        if not code:
+            continue
+        (kept_codes if observation_uuid in linked_evidence else orphan_codes).add(code)
+
+    lost = sorted(orphan_codes - kept_codes)
+    assert not lost, (
+        f"{len(lost)} supplier codes appear only among rows that reached no normalized "
+        f"row — dropped between extraction and staging with nothing recorded: {lost[:8]}"
+    )
+    assert report.unlinked_product_rows > 0, (
+        "this catalogue lists products at several order quantities, so some product "
+        "rows must collapse — none did, and the check above proves nothing"
+    )
+
+
+def test_the_endpoint_serialises_the_queue_and_what_would_clear_it(db, monkeypatch):
+    """Thin wrapper, but the wiring and the shape are what break.
+
+    Called directly rather than over HTTP: the service beneath is covered
+    above, so what is worth proving here is that the response carries the
+    lanes, the reconciliation and the per-code answer, and that filtering
+    reaches the query.
+    """
+    from routers.catalogue_ingestions import get_dead_letters
+
+    run_uuid = _run_alfamedic(db, monkeypatch)
+    body = get_dead_letters(UUID(run_uuid), issue_code=None, stage=None, db=db, _user=None)
+
+    assert body["ingestion_run_id"] == run_uuid
+    assert body["count"] == len(body["dead_letters"]) > 0
+    assert body["lanes"][dl.Lane.DEAD_LETTERED.value] == body["count"]
+    assert body["reconciliation"]["lanes_cover_normalized_rows"] is True
+    assert body["reconciliation"]["raw_product_rows"] >= body["reconciliation"]["normalized_rows"]
+
+    top = body["by_issue_code"][0]
+    assert top["rows_cleared_if_fixed"] <= top["rows_blocked"]
+
+    entry = body["dead_letters"][0]
+    assert entry["catalogue_item_id"] and entry["issue_codes"] and entry["age_days"] is not None
+
+    # Filtering narrows the rows and is not silently ignored.
+    filtered = get_dead_letters(
+        UUID(run_uuid), issue_code=top["issue_code"], stage=None, db=db, _user=None
+    )
+    assert 0 < filtered["count"] <= body["count"]
+    assert all(top["issue_code"] in e["issue_codes"] for e in filtered["dead_letters"])
+
+    missing = get_dead_letters(
+        UUID(run_uuid), issue_code="NO_SUCH_CODE", stage=None, db=db, _user=None
+    )
+    assert missing["count"] == 0 and missing["dead_letters"] == []

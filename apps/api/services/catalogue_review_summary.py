@@ -123,11 +123,34 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
             }
         )
 
+    # A run summary that counts only what reached review describes the rows
+    # that got through and says nothing about the ones that did not. The lane
+    # counts put both on the same page, and the codes say WHY — a summary
+    # reporting a number without a reason is the silent-zero problem again.
+    from services import catalogue_dead_letters as dead_letters
+
+    lanes = dead_letters.lanes_for_run(db, run)
+    tallies = dead_letters.tallies_by_issue_code(db, run_uuid=run)
+
     return {
         "ingestion_run_id": run,
         "layer": "intermediate",
         "view": "summary",
         "counts": {"total": len(items), "by_review_status": by_status},
+        "lanes": lanes.counts,
+        "dead_lettered": {
+            "count": len(lanes.lanes[dead_letters.Lane.DEAD_LETTERED.value]),
+            # Ordered by what a single fix would actually free, not by how
+            # often the code appears.
+            "by_issue_code": [
+                {
+                    "issue_code": tally.issue_code,
+                    "rows_blocked": tally.rows_blocked,
+                    "rows_cleared_if_fixed": tally.rows_cleared_if_fixed,
+                }
+                for tally in tallies
+            ],
+        },
         "run_issues": run_issues,
         "items": items,
     }

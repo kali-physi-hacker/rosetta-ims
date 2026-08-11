@@ -15,6 +15,7 @@ import database
 import models
 from permissions import has_capability, require_capability
 from services import audit_log
+from services import catalogue_dead_letters as dead_letters
 from services import catalogue_pipeline_persistence as persistence
 from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
@@ -584,6 +585,68 @@ def get_raw_layer(
         "layer": "raw",
         "source": _source_summary(source) if source else None,
         "attempts": [_attempt_summary(a) for a in attempts],
+    }
+
+
+@router.get("/ingestions/{run_uuid}/dead-letters")
+def get_dead_letters(
+    run_uuid: UUID,
+    issue_code: str | None = Query(None, description="Only rows this code is holding."),
+    stage: str | None = Query(None, description="Only rows blocked at this stage."),
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Rows the machine could not interpret, and what one fix would clear.
+
+    `lanes` accounts for every normalized row of the run, so a row is here
+    because nothing else claimed it — not published, not awaiting review, not
+    rejected by a person. `reconciliation` carries the RAW counts beside the
+    lanes so a shortfall cannot be mistaken for a silent drop.
+
+    `rows_cleared_if_fixed` is the number worth acting on: rows a code holds
+    ALONE. A row held by two codes is freed by neither on its own, so the
+    larger `rows_blocked` overstates what a single fix buys.
+    """
+    _load_run_or_404(db, run_uuid)
+    run = str(run_uuid)
+    entries = dead_letters.dead_letters(db, run_uuid=run, issue_code=issue_code, stage=stage)
+    reconciliation = dead_letters.reconcile(db, run)
+    return {
+        "ingestion_run_id": run,
+        "lanes": reconciliation.lane_counts,
+        "reconciliation": {
+            "raw_observations": reconciliation.raw_observations,
+            "raw_text_observations": reconciliation.raw_text_observations,
+            "raw_product_rows": reconciliation.raw_product_rows,
+            "normalized_rows": reconciliation.normalized_rows,
+            # Product rows carrying no link to a normalized row. Usually the
+            # same product listed at several order quantities and collapsed.
+            "unlinked_product_rows": reconciliation.unlinked_product_rows,
+            "lanes_cover_normalized_rows": reconciliation.lanes_cover_normalized_rows,
+        },
+        "by_issue_code": [
+            {
+                "issue_code": tally.issue_code,
+                "rows_blocked": tally.rows_blocked,
+                "rows_cleared_if_fixed": tally.rows_cleared_if_fixed,
+            }
+            for tally in dead_letters.tallies_by_issue_code(db, run_uuid=run)
+        ],
+        "count": len(entries),
+        "dead_letters": [
+            {
+                "catalogue_item_id": entry.catalogue_item_uuid,
+                "supplier_id": entry.supplier_id,
+                "supplier_sku": entry.supplier_sku,
+                "stage": entry.stage,
+                "issue_codes": list(entry.issue_codes),
+                "field_path": entry.field_path,
+                "review_guidance": entry.review_guidance,
+                "first_seen_at": entry.first_seen_at,
+                "age_days": entry.age_days,
+            }
+            for entry in entries
+        ],
     }
 
 
