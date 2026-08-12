@@ -265,7 +265,18 @@ def _run(db: Session, ingestion_run_id: UUID) -> models.IngestionRun:
 
 # Provenance written before the flow ran — how this run came to exist, not what
 # it did. Completing a run replaces its metrics wholesale, which would erase it.
-_PRESERVED_METRIC_KEYS = ("reparse_of", "reparse_from_stage")
+# Provenance stamped at queue time that completion must carry forward — the
+# terminal metrics write replaces the JSON wholesale, so anything not named
+# here is silently erased when the run finishes. The retrigger keys are how the
+# dead-letter queue matches a re-drive back to the rows it targeted; losing
+# them makes every retrigger invisible the moment it completes.
+_PRESERVED_METRIC_KEYS = (
+    "reparse_of",
+    "reparse_from_stage",
+    "retrigger_of",
+    "retrigger_observations",
+    "retrigger_attempt",
+)
 
 
 def _metrics_json(result: CatalogueFlowResult, *, existing: str | None = None) -> str:

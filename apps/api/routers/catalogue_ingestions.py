@@ -824,6 +824,77 @@ def reparse_catalogue_ingestion(
     return _submission_response(result)
 
 
+class RetriggerRequest(BaseModel):
+    """What to re-drive: one issue code, explicit rows, or the whole queue."""
+
+    issue_code: str | None = None
+    catalogue_item_ids: list[UUID] | None = None
+    from_stage: str = "conformance"
+
+
+@router.post("/ingestions/{run_uuid}/retrigger", status_code=202)
+def retrigger_catalogue_ingestion(
+    run_uuid: UUID,
+    request: Request,
+    body: RetriggerRequest | None = None,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Re-drive exactly the rows this run's dead-letter queue is holding.
+
+    A re-parse limited to the observations behind the selected rows — stored
+    evidence only, no vision call, no spend. Selection comes from the followed
+    queue, so rows an earlier retrigger cleared and rows a person decided on
+    are not selectable; an explicit id that is not in the queue is refused by
+    name with the reason.
+    """
+    payload = body or RetriggerRequest()
+    service = CatalogueSubmissionService(db)
+    try:
+        result = service.retrigger(
+            run_uuid,
+            issue_code=payload.issue_code,
+            catalogue_item_ids=payload.catalogue_item_ids,
+            from_stage=payload.from_stage,
+            submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+        )
+    except Exception as exc:
+        raise _http_error(exc) from exc
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.ingestion_retrigger",
+            actor=user,
+            entity_type="ingestion_run",
+            entity_id=str(result.submission.ingestion_run_id),
+            entity_label=result.submission.contract_id,
+            details={
+                "retrigger_of": str(run_uuid),
+                "issue_code": payload.issue_code,
+                "rows_selected": result.rows_selected,
+                "attempt": result.attempt,
+            },
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception(
+            "catalogue retrigger %s was queued but audit logging failed",
+            result.submission.ingestion_run_id,
+        )
+    return {
+        "ingestion_run_id": str(result.submission.ingestion_run_id),
+        "retrigger_of": str(run_uuid),
+        "rows_selected": result.rows_selected,
+        "observations": result.observation_count,
+        "attempt": result.attempt,
+        "issue_codes": list(result.issue_codes),
+        "status": result.submission.status,
+        "status_url": result.submission.status_url,
+    }
+
+
 # What the browser should do with each source format. A price list is read, not
 # downloaded, so anything a browser renders opens inline; the rest downloads.
 _INLINE_MEDIA = {

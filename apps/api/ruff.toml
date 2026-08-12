@@ -39,6 +39,7 @@ ignore = [
 # Scoped to this file rather than all tests, so the genuine F811 in
 # test_catalogue_pipeline_stage_services.py stays visible.
 "tests/test_catalogue_dead_letters.py" = ["E402", "F811"]
+"tests/test_catalogue_retrigger.py" = ["E402", "F811"]
 "scripts/*" = ["E402"]
 "clientssot/*" = ["E402"]
 
