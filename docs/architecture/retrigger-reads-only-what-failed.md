@@ -103,3 +103,25 @@ only named keys — the retrigger keys are on that list
 invisible the moment it completes. That was found the hard way: the first
 implementation's chain detection returned nothing because completion had
 erased the selection.
+
+## Two refusals the final audit added
+
+**A retrigger is not a retrigger target.** The endpoint used to accept one,
+and the mechanics even worked — selection translated back to the origin's
+evidence, the child read stored rows, nothing touched the provider. What broke
+was the ledger: the grandchild hung off the retrigger child, one level below
+where the followed queue ever looks, so the origin kept reporting rows as
+stuck after they had cleared (probed live: the origin's queue held 390 while
+the child's view had correctly dropped to 3). The service now refuses the
+child by name and points at the run it re-drove. Nothing is lost: selection
+reads the followed queue, so retriggering the origin re-drives exactly the
+rows still failing. This is also what keeps `retrigger_children` honest —
+every retrigger of a run is a direct sibling, and a chain cannot form.
+
+**One outstanding retrigger at a time.** The queue rightly ignores a child
+that has not finished, so a second request made during that window selects
+the very same rows — and when both children complete, every cleared row puts
+TWO identical pending candidates in front of a person (probed live: all five
+cleared SKUs doubled). A retrigger is refused while an earlier one is queued
+or running; a FAILED child reopens the road, and the request ordinal counts
+the attempt that died.

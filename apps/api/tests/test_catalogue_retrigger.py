@@ -197,6 +197,39 @@ def test_rows_a_person_decided_on_are_refused_by_name(db, monkeypatch):
         )
 
 
+def test_a_retrigger_child_is_not_a_retrigger_target(db, monkeypatch):
+    """The queue lives on the run that was re-driven, so that is where you aim.
+
+    A retrigger of a retrigger would hang one level below where the followed
+    queue ever looks: the origin would keep reporting rows as stuck long after
+    a grandchild cleared them. Refusing the child and pointing at the origin
+    costs nothing — selection reads the followed queue, so retriggering the
+    origin re-drives exactly the rows still failing and nothing else.
+    """
+    parent = _run_with_bug(db, monkeypatch)
+    service = CatalogueSubmissionService(db)
+    _arm_vision_bomb(monkeypatch)
+
+    with pytest.MonkeyPatch.context() as bug:
+        bug.setattr(conformance, "_decimal_value", _pre_fix_decimal_value)
+        first = service.retrigger(UUID(parent), issue_code=ANNOTATED_CODE)
+        catalogue_ingestion_flow(ingestion_run_id=first.submission.ingestion_run_id)
+    child = str(first.submission.ingestion_run_id)
+
+    runs_before = db.query(models.IngestionRun).count()
+    with pytest.raises(RetryNotAllowedError) as refusal:
+        service.retrigger(UUID(child), issue_code=ANNOTATED_CODE)
+    assert parent in str(refusal.value), "the refusal must name the run to aim at instead"
+    assert db.query(models.IngestionRun).count() == runs_before, (
+        "a refused retrigger must leave no run behind"
+    )
+
+    # The recommended door is open and selects the same nine rows.
+    replay = service.retrigger(UUID(parent), issue_code=ANNOTATED_CODE)
+    assert replay.rows_selected == 9
+    assert replay.attempt == 2
+
+
 def test_a_retrigger_that_has_not_run_changes_nothing(db, monkeypatch):
     """The 202 window, and the failed child: silence is not success.
 
@@ -226,8 +259,22 @@ def test_a_retrigger_that_has_not_run_changes_nothing(db, monkeypatch):
     assert len(during) == len(before), "a queued retrigger must not move the queue"
     assert {entry.attempts for entry in during} == {1}, "nothing has been attempted yet"
 
+    # While the child is outstanding, a second retrigger is refused by name:
+    # it would select the very same rows and mint a duplicate review candidate
+    # for every row both copies clear.
+    with pytest.raises(RetryNotAllowedError) as second:
+        service.retrigger(UUID(parent), issue_code=ANNOTATED_CODE)
+    assert child.run_uuid in str(second.value)
+    assert "duplicate review candidate" in str(second.value)
+
     fail_run(db, ingestion_run_id=UUID(child.run_uuid), error_code="TEST", message="worker died")
     after_failure = dl.dead_letters(db, run_uuid=parent)
     assert len(after_failure) == len(before), (
         "a FAILED retrigger processed nothing — its rows are still stuck and must still say so"
     )
+
+    # A failed child is no longer outstanding: the road reopens, the same rows
+    # are selectable, and the request ordinal remembers the attempt that died.
+    reopened = service.retrigger(UUID(parent), issue_code=ANNOTATED_CODE)
+    assert reopened.rows_selected == 9
+    assert reopened.attempt == 2

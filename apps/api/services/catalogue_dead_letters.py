@@ -519,6 +519,10 @@ def retrigger_children(db: Session, run_uuid: str) -> list[models.IngestionRun]:
     Identified by lineage plus the selection metric rather than a status: a
     plain re-parse child is NOT a retrigger and must not affect the queue —
     it re-reads everything, so its failures are its own run's story.
+
+    One level of lineage is the whole story: the service refuses to retrigger
+    a retrigger child, so every retrigger of this run is a direct sibling here
+    and a chain cannot form.
     """
     parent = db.query(models.IngestionRun).filter_by(run_uuid=run_uuid).first()
     if parent is None:

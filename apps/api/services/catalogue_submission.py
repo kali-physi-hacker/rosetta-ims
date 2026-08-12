@@ -500,9 +500,15 @@ class CatalogueSubmissionService:
         targets only what is still failing — never rows an earlier retrigger
         already cleared, and never rows a person decided on, because rejected
         and resolved rows are not in the queue to begin with.
+
+        Two shapes are refused outright: a retrigger child as the target (its
+        outcome already belongs to the queue of the run it re-drove — see
+        below), and a new retrigger while an earlier one is still queued or
+        running (the same rows would be re-driven twice, minting a duplicate
+        review candidate for every row both copies clear).
         """
         from services import catalogue_dead_letters as dead_letter_queue
-        from orchestration.catalogue_reparse import evidence_source_run
+        from orchestration.catalogue_reparse import evidence_source_run, retrigger_selection
 
         if issue_code and catalogue_item_ids:
             raise RetryNotAllowedError(
@@ -511,6 +517,44 @@ class CatalogueSubmissionService:
             )
 
         parent = str(run_uuid)
+        parent_row = self.db.query(models.IngestionRun).filter_by(run_uuid=parent).first()
+        if parent_row is None:
+            raise SubmissionNotFoundError(f"Ingestion run {run_uuid} was not found")
+
+        # A retrigger child is not a retrigger target. Its outcome is already
+        # folded into the queue of the run it re-drove, and a grandchild would
+        # hang off THIS run, one level below where that queue's walk ever
+        # looks — the origin would keep reporting rows as stuck long after
+        # they cleared. Retriggering the origin is exactly equivalent, because
+        # selection reads the followed queue: only rows still failing move.
+        if retrigger_selection(parent_row) is not None:
+            own_metrics = json.loads(parent_row.metrics or "{}") or {}
+            target = own_metrics.get("retrigger_of") or own_metrics.get("reparse_of")
+            raise RetryNotAllowedError(
+                f"This run is itself a retrigger (attempt "
+                f"{own_metrics.get('retrigger_attempt')}) of {target}. Its outcome is "
+                f"already part of that run's queue — retrigger {target} instead; only "
+                "rows still failing will be selected."
+            )
+
+        # One outstanding retrigger at a time. The queue rightly ignores a
+        # child that has not finished — nothing has been tried yet — so a
+        # second selection made now would re-drive the same rows.
+        children = dead_letter_queue.retrigger_children(self.db, parent)
+        outstanding = [
+            child
+            for child in children
+            if child.status
+            in (models.IngestionRunStatus.QUEUED.value, models.IngestionRunStatus.RUNNING.value)
+        ]
+        if outstanding:
+            raise RetryNotAllowedError(
+                f"Retrigger {outstanding[-1].run_uuid} of this run is still "
+                f"{outstanding[-1].status} — wait for it to finish. Re-driving the same "
+                "rows twice would put a duplicate review candidate in front of a person "
+                "for every row both copies clear."
+            )
+
         queue = dead_letter_queue.dead_letters(self.db, run_uuid=parent)
 
         if issue_code is not None:
@@ -551,7 +595,6 @@ class CatalogueSubmissionService:
         # minted per run — when this run is itself a re-parse, its rows link to
         # its own re-minted copies, not the originals. Translate through
         # source_object_key, the one name a row keeps across runs.
-        parent_row = self.db.query(models.IngestionRun).filter_by(run_uuid=parent).one()
         origin = evidence_source_run(self.db, parent_row).run_uuid
         keys = dead_letter_queue.observation_keys(self.db, parent, entry_observations)
         source_by_key = dead_letter_queue.observation_uuids_for_keys(self.db, origin, keys.values())
@@ -563,7 +606,7 @@ class CatalogueSubmissionService:
                 f"matching evidence on source run {origin} — first missing keys: {missing}"
             )
 
-        attempt = 1 + len(dead_letter_queue.retrigger_children(self.db, parent))
+        attempt = 1 + len(children)
         submission = self.reparse(
             run_uuid,
             from_stage=from_stage,
