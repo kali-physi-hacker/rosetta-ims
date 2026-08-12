@@ -1350,6 +1350,14 @@ def _decimal_value(value: Any) -> Decimal | None:
     try:
         decimal = Decimal(str(value).replace(",", "").replace("$", "").replace("HKD", "").replace("HK$", "").strip())
     except (InvalidOperation, ValueError):
+        # "130.0 (Price Reduced)" is a price with a printed remark, and Alfamedic
+        # prints that shape on nine rows of one catalogue. Accept ONLY an amount
+        # followed by a single parenthesised note — the note is dropped, never
+        # read. "10% discount" and "1 box (12 pcs)" still refuse: the head must
+        # itself be a parseable amount and nothing else.
+        match = re.fullmatch(r"\s*([^()]+?)\s*\(([^()]+)\)\s*", str(value))
+        if match:
+            return _decimal_value(match.group(1))
         return None
     return decimal
 

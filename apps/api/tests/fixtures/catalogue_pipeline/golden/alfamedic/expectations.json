@@ -9,7 +9,7 @@
   ],
   "provider": "anthropic",
   "_comment": "Every column of GOLDEN_COLUMNS must appear in exactly one of enforced, known_gaps, not_comparable or unfilled. The test refuses a column nobody has decided about.",
-  "min_covered_skus": 33,
+  "min_covered_skus": 34,
   "_covered_comment": "The exact SKUs that reach the export today, pinned so a swap cannot hide behind a stable count. Growth is good news - update the pin.",
   "covered_skus": [
     "141114",
@@ -37,6 +37,7 @@
     "MALA1000",
     "MALA250",
     "ME1895",
+    "ME5701",
     "ME5702",
     "OM4020",
     "SE7320",
