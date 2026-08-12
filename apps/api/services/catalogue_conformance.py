@@ -1184,7 +1184,12 @@ _SELLABLE_UNIT_WORDS = {
 
 
 def _sellable_unit_from_text(value: Any) -> str | None:
-    """The unit named BEFORE the slash: '30ml/ bot' -> ML, '100 tabs/ box' -> TABLET.
+    """The countable unit named BEFORE the slash: '100 tabs/ box' -> TABLET.
+
+    Countables only, on purpose. A measure names the CONTENT of the unit, not
+    the unit — '30ml/ bot' says how much is in the bottle — and the same sheet
+    prints '100ml/ bot' on rows sold by the bottle, so reading measures here
+    would assert a sellable unit the row never named. A measure returns None.
 
     The mirror of ``_purchase_unit_from_text``. Conformance already reads the
     count on this side of the slash — ``sellable_units_per_purchase_unit`` comes
@@ -1348,7 +1353,9 @@ def _decimal_value(value: Any) -> Decimal | None:
     if isinstance(value, str) and value.strip().lower() in {"by quote", "quote", "n/a", "na"}:
         return None
     try:
-        decimal = Decimal(str(value).replace(",", "").replace("$", "").replace("HKD", "").replace("HK$", "").strip())
+        # Longest currency token first: stripping "$" ahead of "HK$" leaves
+        # "HK" glued to the digits, and "HK$130" reads as no price at all.
+        decimal = Decimal(str(value).replace(",", "").replace("HK$", "").replace("HKD", "").replace("$", "").strip())
     except (InvalidOperation, ValueError):
         # "130.0 (Price Reduced)" is a price with a printed remark, and Alfamedic
         # prints that shape on nine rows of one catalogue. Accept ONLY an amount
