@@ -195,3 +195,39 @@ def test_rows_a_person_decided_on_are_refused_by_name(db, monkeypatch):
             issue_code=ANNOTATED_CODE,
             catalogue_item_ids=[UUID(candidate.catalogue_item_uuid)],
         )
+
+
+def test_a_retrigger_that_has_not_run_changes_nothing(db, monkeypatch):
+    """The 202 window, and the failed child: silence is not success.
+
+    In production the child sits queued until the worker claims it. During
+    that window — and forever, if the child then fails — the queue must keep
+    saying the rows are stuck, because they are. The first implementation
+    read "selection with no rows yet" as "absorbed" and emptied the queue the
+    moment the request was accepted.
+    """
+    from orchestration.catalogue_run_lifecycle import fail_run
+
+    parent = _run_with_bug(db, monkeypatch)
+    service = CatalogueSubmissionService(db)
+    before = dl.dead_letters(db, run_uuid=parent)
+
+    queued = service.retrigger(UUID(parent), issue_code=ANNOTATED_CODE)
+    child = db.query(models.IngestionRun).filter_by(
+        run_uuid=str(queued.submission.ingestion_run_id)
+    ).one()
+    assert child.status == "queued"
+    # Selection and lineage were stamped in the SAME commit that queued the
+    # run — a crash here leaves a selective retrigger or nothing, never a
+    # full re-parse wearing a retrigger's name.
+    assert catalogue_reparse.retrigger_selection(child) is not None
+
+    during = dl.dead_letters(db, run_uuid=parent)
+    assert len(during) == len(before), "a queued retrigger must not move the queue"
+    assert {entry.attempts for entry in during} == {1}, "nothing has been attempted yet"
+
+    fail_run(db, ingestion_run_id=UUID(child.run_uuid), error_code="TEST", message="worker died")
+    after_failure = dl.dead_letters(db, run_uuid=parent)
+    assert len(after_failure) == len(before), (
+        "a FAILED retrigger processed nothing — its rows are still stuck and must still say so"
+    )

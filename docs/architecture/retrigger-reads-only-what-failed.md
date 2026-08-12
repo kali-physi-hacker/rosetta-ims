@@ -64,6 +64,16 @@ that.
 
 `dead_letters(run, follow_retriggers=False)` keeps the historical per-run view.
 
+Only a retrigger that **ran** counts: children still queued, running, failed or
+cancelled contribute nothing, because reading "selection with no rows yet" as
+"absorbed" would empty the queue the moment the 202 came back — hours before
+the worker touches a row, and forever if it then fails. Silence is not success.
+
+A plain FULL re-parse child is also ignored by the followed queue on purpose:
+it re-reads everything, so its failures are its own run's story, and its
+successes are reviewed on its own desk. Only selective retriggers speak for
+the parent's queue.
+
 ## What a retrigger may never select
 
 Selection is drawn from the followed queue, so these are unselectable by

@@ -603,6 +603,12 @@ def get_dead_letters(
     rejected by a person. `reconciliation` carries the RAW counts beside the
     lanes so a shortfall cannot be mistaken for a silent drop.
 
+    After a retrigger the two views deliberately differ: `lanes` is this run's
+    HISTORY and never follows the chain, while `count`, `dead_letters` and
+    `by_issue_code` follow retriggers — rows a later run cleared are gone, and
+    survivors carry `attempts`. lanes.dead_lettered > count is a run that has
+    been partially rescued, not an inconsistency.
+
     `rows_cleared_if_fixed` is the number worth acting on: rows a code holds
     ALONE. A row held by two codes is freed by neither on its own, so the
     larger `rows_blocked` overstates what a single fix buys.

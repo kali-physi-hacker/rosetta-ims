@@ -136,6 +136,12 @@ class RetriggerResult:
     The submission half is an ordinary re-parse run; the rest says what was
     selected, because "202 Accepted" without a row count invites re-driving a
     queue that was already empty.
+
+    ``attempt`` is the ordinal of this REQUEST against the run (first
+    retrigger = 1), counting every prior retrigger including failed ones. A
+    queue entry's ``attempts`` counts runs that actually TRIED the row —
+    base run plus completed retriggers — so an entry can read attempts=2
+    while the third request is being made. Different questions, both answered.
     """
 
     submission: "CatalogueSubmissionResult"
@@ -383,6 +389,9 @@ class CatalogueSubmissionService:
         *,
         from_stage: str = "conformance",
         submitted_by: str | None = None,
+        _retrigger_of: str | None = None,
+        _retrigger_observations: list[str] | None = None,
+        _retrigger_attempt: int | None = None,
     ) -> CatalogueSubmissionResult:
         """Re-run the interpretation over evidence this run already holds.
 
@@ -400,6 +409,7 @@ class CatalogueSubmissionService:
             SUPPORTED_STAGES,
             evidence_source_run,
             mark_reparse,
+            mark_retrigger,
         )
 
         try:
@@ -444,6 +454,19 @@ class CatalogueSubmissionService:
 
         new_run = self._queue_reparse_run(run, source, submitted_by=submitted_by)
         mark_reparse(new_run, source_run_uuid=origin.run_uuid, from_stage=stage)
+        if _retrigger_observations:
+            # Stamped INSIDE the queueing transaction. A retrigger that commits
+            # as a plain re-parse first and gains its selection in a second
+            # commit has a window where dying means the worker runs a FULL
+            # re-parse — fresh pending candidates for every row a person
+            # already reviewed, which is the exact harm selectivity exists to
+            # prevent. One commit, or nothing.
+            mark_retrigger(
+                new_run,
+                retrigger_of=_retrigger_of or str(run_uuid),
+                observation_uuids=_retrigger_observations,
+                attempt=_retrigger_attempt or 1,
+            )
         new_run.parent_run_id = run.id
         self.db.commit()
         return CatalogueSubmissionResult(
@@ -479,7 +502,7 @@ class CatalogueSubmissionService:
         and resolved rows are not in the queue to begin with.
         """
         from services import catalogue_dead_letters as dead_letter_queue
-        from orchestration.catalogue_reparse import evidence_source_run, mark_retrigger
+        from orchestration.catalogue_reparse import evidence_source_run
 
         if issue_code and catalogue_item_ids:
             raise RetryNotAllowedError(
@@ -541,17 +564,14 @@ class CatalogueSubmissionService:
             )
 
         attempt = 1 + len(dead_letter_queue.retrigger_children(self.db, parent))
-        submission = self.reparse(run_uuid, from_stage=from_stage, submitted_by=submitted_by)
-        new_run = self.db.query(models.IngestionRun).filter_by(
-            run_uuid=str(submission.ingestion_run_id)
-        ).one()
-        mark_retrigger(
-            new_run,
-            retrigger_of=parent,
-            observation_uuids=observation_uuids,
-            attempt=attempt,
+        submission = self.reparse(
+            run_uuid,
+            from_stage=from_stage,
+            submitted_by=submitted_by,
+            _retrigger_of=parent,
+            _retrigger_observations=observation_uuids,
+            _retrigger_attempt=attempt,
         )
-        self.db.commit()
         return RetriggerResult(
             submission=submission,
             rows_selected=len(selection),

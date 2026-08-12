@@ -568,6 +568,16 @@ def _follow_retriggers(db: Session, run_uuid: str, entries: list[DeadLetter]) ->
     latest_codes_by_key: dict[str, tuple[str, ...]] = {}
 
     for child in children:
+        # Only a retrigger that RAN counts. A queued or running child has
+        # selection and no rows yet — reading that as "absorbed" empties the
+        # queue the instant the 202 comes back, hours before the worker touches
+        # a row. A failed child processed nothing either, and treating its
+        # silence as success would vanish the very rows it failed to fix.
+        if child.status not in (
+            models.IngestionRunStatus.COMPLETED.value,
+            models.IngestionRunStatus.COMPLETED_WITH_WARNINGS.value,
+        ):
+            continue
         metrics = json.loads(child.metrics or "{}") or {}
         selection_uuids = metrics.get("retrigger_observations") or ()
         if not selection_uuids:
