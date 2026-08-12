@@ -646,6 +646,9 @@ def get_dead_letters(
                 "supplier_sku": entry.supplier_sku,
                 "stage": entry.stage,
                 "issue_codes": list(entry.issue_codes),
+                # Runs that have tried this row: 1 + one per completed
+                # retrigger that selected it and still could not read it.
+                "attempts": entry.attempts,
                 "field_path": entry.field_path,
                 "review_guidance": entry.review_guidance,
                 "first_seen_at": entry.first_seen_at,

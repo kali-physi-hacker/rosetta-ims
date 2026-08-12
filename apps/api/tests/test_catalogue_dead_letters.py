@@ -235,6 +235,10 @@ def test_the_endpoint_serialises_the_queue_and_what_would_clear_it(db, monkeypat
 
     entry = body["dead_letters"][0]
     assert entry["catalogue_item_id"] and entry["issue_codes"] and entry["age_days"] is not None
+    assert entry["attempts"] == 1, (
+        "the attempt count must cross HTTP — a survivor carrying attempts=3 in the "
+        "service but nothing in the payload tells the desk nothing"
+    )
 
     # Filtering narrows the rows and is not silently ignored.
     filtered = get_dead_letters(
