@@ -82,6 +82,9 @@ class GoldenSet:
     page_names: tuple[str, ...]
     provider: str
     min_covered_skus: int
+    #: The exact SKUs expected to reach the export, when pinned. A bare floor
+    #: lets a swap hide — lose one covered SKU, gain another, count unchanged.
+    covered_skus: tuple[str, ...]
     enforced: tuple[str, ...]
     known_gaps: dict[str, str]
     not_comparable: dict[str, str]
@@ -107,25 +110,53 @@ def discover_golden_sets() -> list[GoldenSet]:
             f"golden set {path.name!r} has no expectations.json — a set nobody has "
             f"stated an expectation for cannot be compared against anything"
         )
-        spec = json.loads(manifest.read_text(encoding="utf-8"))
-        supplier = spec["supplier"]
-        sets.append(
-            GoldenSet(
-                name=path.name,
-                path=path,
-                supplier_id=int(supplier["id"]),
-                supplier_code=supplier["code"],
-                supplier_name=supplier["name"],
-                page_names=tuple(spec["pages"]),
-                provider=spec["provider"],
-                min_covered_skus=int(spec["min_covered_skus"]),
-                enforced=tuple(spec["enforced"]),
-                known_gaps=dict(spec.get("known_gaps") or {}),
-                not_comparable=dict(spec.get("not_comparable") or {}),
-                unfilled=dict(spec.get("unfilled") or {}),
-                unpublishable=frozenset(spec.get("unpublishable") or ()),
+        # This runs at import, so a bad manifest stops the WHOLE suite — that
+        # blast radius is deliberate (nothing green while a golden set is
+        # unreadable), but the error must name the set, not just quote json's
+        # column number with no file.
+        try:
+            spec = json.loads(manifest.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            raise AssertionError(
+                f"golden set {path.name!r}: expectations.json is not valid JSON — {exc}"
+            ) from exc
+
+        # A column in two buckets is a contradiction, not a preference: the
+        # test would both enforce it and excuse it. Refuse the manifest.
+        claimed: dict[str, str] = {}
+        for bucket in ("enforced", "known_gaps", "not_comparable", "unfilled"):
+            for column in spec.get(bucket) or ():
+                if column in claimed:
+                    raise AssertionError(
+                        f"golden set {path.name!r}: column {column!r} appears in both "
+                        f"{claimed[column]!r} and {bucket!r} — it cannot be two things"
+                    )
+                claimed[column] = bucket
+
+        try:
+            supplier = spec["supplier"]
+            sets.append(
+                GoldenSet(
+                    name=path.name,
+                    path=path,
+                    supplier_id=int(supplier["id"]),
+                    supplier_code=supplier["code"],
+                    supplier_name=supplier["name"],
+                    page_names=tuple(spec["pages"]),
+                    provider=spec["provider"],
+                    min_covered_skus=int(spec["min_covered_skus"]),
+                    covered_skus=tuple(spec.get("covered_skus") or ()),
+                    enforced=tuple(spec["enforced"]),
+                    known_gaps=dict(spec.get("known_gaps") or {}),
+                    not_comparable=dict(spec.get("not_comparable") or {}),
+                    unfilled=dict(spec.get("unfilled") or {}),
+                    unpublishable=frozenset(spec.get("unpublishable") or ()),
+                )
             )
-        )
+        except KeyError as exc:
+            raise AssertionError(
+                f"golden set {path.name!r}: expectations.json is missing {exc}"
+            ) from exc
     assert sets, f"no golden sets found under {GOLDEN_ROOT}"
     return sets
 
@@ -424,11 +455,20 @@ def _replay_to_published(
 QUALITY_REPORT_DIR = Path(os.environ.get("GOLDEN_REPORT_DIR") or (Path(__file__).parent.parent / ".golden-reports"))
 
 
-def _write_quality_report(spec: "GoldenSet", db, run_uuid: str, fields: dict[str, int]) -> dict:
+def _write_quality_report(
+    spec: "GoldenSet",
+    db,
+    run_uuid: str,
+    enforced_fields: dict[str, int],
+    gaps_still_failing: list[str],
+) -> dict:
     """Rows in, rows out, and how the comparison went — one file per set.
 
-    The thing that replaces the manual read-through. Counts alone would say a
-    run happened; the point is that it says how much of it agreed with a person.
+    The thing that replaces the manual read-through. The field tallies name
+    their denominator: they cover the ENFORCED columns only, and the known-gap
+    columns that still disagree are listed beside them — otherwise
+    "mismatched=0" reads as the whole sheet agreeing when five columns of
+    twenty were compared.
     """
     from services import catalogue_dead_letters as dead_letters
 
@@ -450,7 +490,11 @@ def _write_quality_report(spec: "GoldenSet", db, run_uuid: str, fields: dict[str
         "rows_staged": reconciliation.normalized_rows,
         "lanes": reconciliation.lane_counts,
         "issues_raised": {"total": len(issues), "by_severity": by_severity},
-        "fields": fields,
+        "enforced_fields": {"columns": sorted(spec.enforced), **enforced_fields},
+        "known_gaps": {
+            "columns": sorted(spec.known_gaps),
+            "still_failing": gaps_still_failing,
+        },
         "dead_letters_by_code": [
             {"issue_code": t.issue_code, "rows_blocked": t.rows_blocked,
              "rows_cleared_if_fixed": t.rows_cleared_if_fixed}
@@ -464,7 +508,9 @@ def _write_quality_report(spec: "GoldenSet", db, run_uuid: str, fields: dict[str
     print(
         f"\n[golden] {spec.name}: detected={report['rows_detected']} staged={report['rows_staged']} "
         f"published={report['lanes'].get('published', 0)} dead_lettered={report['lanes'].get('dead_lettered', 0)} "
-        f"| fields matched={fields['matched']} mismatched={fields['mismatched']} missing={fields['missing']}"
+        f"| enforced matched={enforced_fields['matched']} mismatched={enforced_fields['mismatched']} "
+        f"missing={enforced_fields['missing']} | known gaps still failing "
+        f"{len(gaps_still_failing)}/{len(spec.known_gaps)}"
     )
     return report
 
@@ -602,12 +648,27 @@ def test_the_published_export_matches_the_hand_filled_sheet(spec: GoldenSet, db,
     published = _replay_set(db, monkeypatch, spec, only_skus=set(expected), refused=refused)
 
     covered = sorted(set(expected) & set(published))
-    assert len(covered) >= spec.min_covered_skus, (
-        f"{spec.name}: only {len(covered)} of the sheet's {len(expected)} SKUs reached the "
-        f"export, expected at least {spec.min_covered_skus} — coverage must not shrink"
-    )
+    if spec.covered_skus:
+        # Pinned exactly, because a floor lets a swap hide: lose one covered
+        # SKU, gain another, and the count never moves. Growth is good news —
+        # update the pin; the message says which direction it went.
+        pinned = sorted(spec.covered_skus)
+        gained = sorted(set(covered) - set(pinned))
+        lost = sorted(set(pinned) - set(covered))
+        assert covered == pinned, (
+            f"{spec.name}: the covered SKU set changed.\n"
+            f"  lost:   {lost or '—'}\n"
+            f"  gained: {gained or '—'}\n"
+            f"Losing one is a regression even when the count holds. Update covered_skus "
+            f"in expectations.json only for genuine growth."
+        )
+    else:
+        assert len(covered) >= spec.min_covered_skus, (
+            f"{spec.name}: only {len(covered)} of the sheet's {len(expected)} SKUs reached the "
+            f"export, expected at least {spec.min_covered_skus} — coverage must not shrink"
+        )
 
-    fields = {"matched": 0, "mismatched": 0, "missing": 0}
+    enforced_fields = {"matched": 0, "mismatched": 0, "missing": 0}
     for sku in covered:
         for column in spec.enforced:
             want = (expected[sku].get(column) or "").strip()
@@ -615,13 +676,27 @@ def test_the_published_export_matches_the_hand_filled_sheet(spec: GoldenSet, db,
                 continue
             got = (published[sku].get(column) or "").strip()
             if not got:
-                fields["missing"] += 1
+                enforced_fields["missing"] += 1
             elif want == got:
-                fields["matched"] += 1
+                enforced_fields["matched"] += 1
             else:
-                fields["mismatched"] += 1
+                enforced_fields["mismatched"] += 1
+
+    # Computed before the report so the report can carry it: which known-gap
+    # columns still disagree. Without this the report's "mismatched=0" reads as
+    # the whole sheet agreeing, when it is only the enforced columns.
+    gaps_still_failing = sorted({
+        column
+        for sku in covered
+        for column in spec.known_gaps
+        if _diff(expected[sku], published[sku], (column,))
+    })
     _write_quality_report(
-        spec, db, db.query(models.IngestionRun).order_by(models.IngestionRun.id.desc()).first().run_uuid, fields
+        spec,
+        db,
+        db.query(models.IngestionRun).order_by(models.IngestionRun.id.desc()).first().run_uuid,
+        enforced_fields,
+        gaps_still_failing,
     )
 
     failures = [
@@ -659,13 +734,7 @@ def test_the_published_export_matches_the_hand_filled_sheet(spec: GoldenSet, db,
 
     # The known defects, pinned. Fixing one fails here with the column named,
     # which is the point: an improvement nobody noticed is still a surprise.
-    still_broken = {
-        column
-        for sku in covered
-        for column in spec.known_gaps
-        if _diff(expected[sku], published[sku], (column,))
-    }
-    fixed = sorted(set(spec.known_gaps) - still_broken)
+    fixed = sorted(set(spec.known_gaps) - set(gaps_still_failing))
     assert not fixed, (
         f"{spec.name}: these columns now match the sheet and are no longer defects: {fixed}. "
         f"Move them from known_gaps into enforced in expectations.json so they stay fixed."

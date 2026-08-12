@@ -1,13 +1,24 @@
 {
-  "supplier": {"id": 14, "code": "HILLS", "name": "Hill's"},
-  "pages": ["page_1.json", "page_4.json"],
+  "supplier": {
+    "id": 14,
+    "code": "HILLS",
+    "name": "Hill's"
+  },
+  "pages": [
+    "page_1.json",
+    "page_4.json"
+  ],
   "provider": "google",
-
   "_comment": "Every column of GOLDEN_COLUMNS must appear in exactly one of enforced, known_gaps, not_comparable or unfilled. The test refuses a column nobody has decided about.",
-
   "min_covered_skus": 4,
+  "_covered_comment": "The exact SKUs that reach the export today, pinned so a swap cannot hide behind a stable count. Growth is good news - update the pin.",
+  "covered_skus": [
+    "3392",
+    "604202",
+    "605916",
+    "608450"
+  ],
   "_min_covered_comment": "The sheet's Hill's block was filled from a wider page selection than the two pages recorded here, so only part of it is reachable end to end.",
-
   "enforced": [
     "supplier",
     "supplier_product_code",
@@ -15,7 +26,6 @@
     "catalogue_price_basis_qty",
     "sellable_qty"
   ],
-
   "known_gaps": {
     "weight": "packaging carries content_amount/content_uom (2.8 OZ) but the export reads weight off the product variant, so it comes out empty",
     "package_configuration": "purchase_uom and sellable_unit_uom are null on every Hill's row, so the export falls back to the variant UOM",
@@ -25,7 +35,6 @@
     "sellable_units_per_price_basis": "sellable_units_per_purchase_unit is never derived",
     "rrp": "the normalized row carries an rrp field but it does not reach the published export"
   },
-
   "not_comparable": {
     "product_name": "the sheet holds a human shorthand ('Hills F9 i/d stew 2.9oz'); the export holds the supplier's printed description",
     "product name [Rosetta]": "a hand-authored retail name, not something the pipeline derives",
@@ -36,7 +45,6 @@
     "mbb_tier_4": "as mbb_tier_1",
     "commercial_offer_summary": "free-text summary written by hand"
   },
-
   "unfilled": {},
   "unpublishable": []
 }

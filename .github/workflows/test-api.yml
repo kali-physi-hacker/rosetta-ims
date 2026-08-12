@@ -77,18 +77,21 @@ jobs:
           {
             echo "### Ingestion quality"
             echo
-            echo "| set | detected | staged | published | dead-lettered | fields matched | mismatched | missing |"
-            echo "| --- | --- | --- | --- | --- | --- | --- | --- |"
+            echo "The field tallies cover the ENFORCED columns only; the last column says how many known-gap columns still disagree with the sheet."
+            echo
+            echo "| set | detected | staged | published | dead-lettered | enforced matched | mismatched | missing | gaps still failing |"
+            echo "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
           } >> "$GITHUB_STEP_SUMMARY"
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json, os, pathlib
           for path in sorted(pathlib.Path(os.environ["GOLDEN_REPORT_DIR"]).glob("*.json")):
               r = json.loads(path.read_text())
-              lanes, fields = r["lanes"], r["fields"]
+              lanes, enforced, gaps = r["lanes"], r["enforced_fields"], r["known_gaps"]
               print(
                   f"| {r['golden_set']} | {r['rows_detected']} | {r['rows_staged']} "
                   f"| {lanes.get('published', 0)} | {lanes.get('dead_lettered', 0)} "
-                  f"| {fields['matched']} | {fields['mismatched']} | {fields['missing']} |"
+                  f"| {enforced['matched']} | {enforced['mismatched']} | {enforced['missing']} "
+                  f"| {len(gaps['still_failing'])}/{len(gaps['columns'])} |"
               )
           PY
 
