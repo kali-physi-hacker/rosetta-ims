@@ -1,0 +1,107 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Price List (Vet Clinics only)",
+   "columns": [
+    "產品圖片 Product Image",
+    "產品編號 Product Code",
+    "產品內容 Product Description",
+    "包裝 Packing",
+    "批發價 W/S Price (HKD)",
+    "診所優惠 Clinic Offer"
+   ],
+   "rows": [
+    {
+     "cells": [
+      null,
+      "BI-NXS",
+      "NexGard SPECTRA NexGard Spectra Chewables For Dogs XS (2-3.5kg)",
+      "1x3's",
+      "260",
+      "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      null,
+      "BI-NS",
+      "NexGard SPECTRA NexGard Spectra Chewables For Dogs S (>3.5kg-7.5kg)",
+      "1x3's",
+      "280",
+      "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      null,
+      "BI-NM",
+      "NexGard SPECTRA NexGard Spectra Chewables For Dogs M (>7.5kg-15kg)",
+      "1x3's",
+      "300",
+      "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      null,
+      "BI-NL",
+      "NexGard SPECTRA NexGard Spectra Chewables For Dogs L (>15kg-30kg)",
+      "1x3's",
+      "330",
+      "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      null,
+      "BI-NXL",
+      "NexGard SPECTRA NexGard Spectra Chewables For Dogs XL (>30kg-60kg)",
+      "1x3's",
+      "375",
+      "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      null,
+      "BI-HGS",
+      "Heartgard PLUS (ivermectin/pyrantel) Heartgard Plus Chewables for Dogs S (up to 25lbs - Blue)",
+      "1x6's",
+      "175",
+      "10+1 OR 20+3"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      null,
+      "BI-HGM",
+      "Heartgard PLUS (ivermectin/pyrantel) Heartgard Plus Chewables for Dogs M (26lbs-50lbs - Green)",
+      "1x6's",
+      "185",
+      "10+1 OR 20+3"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      null,
+      "BI-HGL",
+      "Heartgard PLUS (ivermectin/pyrantel) Heartgard Plus Chewables for Dogs L (51lbs-100lbs - Brown)",
+      "1x6's",
+      "200",
+      "10+1 OR 20+3"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": []
+}

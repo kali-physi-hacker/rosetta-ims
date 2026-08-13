@@ -3,7 +3,7 @@
   "contract_id": "kangaroo.mixed_price_catalogue.v1",
   "contract_version": "v1",
   "supplier": {
-    "supplier_id": null,
+    "supplier_id": 81,
     "supplier_name": "Kangaroo Pet Nutrition Ltd",
     "supplier_code": "KPN"
   },

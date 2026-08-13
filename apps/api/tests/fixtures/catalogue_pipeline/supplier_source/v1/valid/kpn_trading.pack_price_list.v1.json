@@ -10,7 +10,7 @@
   "document_type": "CATALOGUE",
   "format_name": "K.P.N. Trading pack-basis price list",
   "source_format": "PDF_TABLE",
-  "support_status": "PARTIALLY_VERIFIED",
+  "support_status": "SUPPORTED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
@@ -567,8 +567,8 @@
     {
       "issue_code": "KPN_TRADING_PACK_SUPPLIER_IDENTITY_REQUIRED",
       "condition": "A source may contain multiple suppliers or only a subset of previously observed brands.",
-      "review_guidance": "Select this declaration only from ingestion supplier ID 15 or an explicit K.P.N. Trading / KPNTRADI source marker; never from page position or brand. CONTRACT_SUPPLIER_IDENTITY_MISMATCH also verifies this automatically from captured evidence — but only once the source has been re-extracted with the prompt that captures supplier_identity_text (see catalogue_evidence_extraction.py's VISION_EVIDENCE_PROMPT); older or not-yet-re-extracted evidence still relies on this manual guidance alone.",
-      "blocks_supported_status": true
+      "review_guidance": "Select this declaration only from ingestion supplier ID 15 or an explicit K.P.N. Trading / KPNTRADI source marker; never from page position or brand. CONTRACT_SUPPLIER_IDENTITY_MISMATCH also verifies this automatically from captured evidence — but only once the source has been re-extracted with the prompt that captures supplier_identity_text (see catalogue_evidence_extraction.py's VISION_EVIDENCE_PROMPT); older or not-yet-re-extracted evidence still relies on this manual guidance alone. Downgraded from blocking at promotion (2026-08-13): the automatic check is live-verified on re-extracted KPN evidence (it split the combined document's 84 Kangaroo rows from the 356 KPN rows exactly), and the current extraction prompt captures identity text on every new source.",
+      "blocks_supported_status": false
     },
     {
       "issue_code": "KPN_TRADING_PACK_BARCODE_COLUMN_INCONSISTENT",

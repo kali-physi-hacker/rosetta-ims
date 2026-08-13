@@ -381,7 +381,7 @@ KPN_TRADING_PACK_PRICE_LIST_V1 = register_supplier_source_contract(
         document_type=SupplierDocumentType.CATALOGUE,
         format_name="K.P.N. Trading pack-basis price list",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_KPN_TRADING_PACK_EVIDENCE,
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
@@ -590,9 +590,13 @@ KPN_TRADING_PACK_PRICE_LIST_V1 = register_supplier_source_contract(
                     "automatically from captured evidence — but only once the source has been "
                     "re-extracted with the prompt that captures supplier_identity_text (see "
                     "catalogue_evidence_extraction.py's VISION_EVIDENCE_PROMPT); older or "
-                    "not-yet-re-extracted evidence still relies on this manual guidance alone."
+                    "not-yet-re-extracted evidence still relies on this manual guidance alone. "
+                    "Downgraded from blocking at promotion (2026-08-13): the automatic check is "
+                    "live-verified on re-extracted KPN evidence (it split the combined document's "
+                    "84 Kangaroo rows from the 356 KPN rows exactly), and the current extraction "
+                    "prompt captures identity text on every new source."
                 ),
-                blocks_supported_status=True,
+                blocks_supported_status=False,
             ),
             AmbiguityRule(
                 issue_code="KPN_TRADING_PACK_BARCODE_COLUMN_INCONSISTENT",

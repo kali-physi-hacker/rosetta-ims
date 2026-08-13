@@ -1,0 +1,53 @@
+{
+  "supplier": {
+    "id": 81,
+    "code": "KANGAR",
+    "name": "Kangaroo Pet Nutrition"
+  },
+  "pages": [
+    "page_1.json"
+  ],
+  "provider": "anthropic",
+  "_set_comment": "THE golden set for the 'Kangaroo' sheet: its 6 rows are the vet-clinic products (NexGard/Heartgard/Virbac) printed in the Kangaroo half of KPN_Kangaroo-updated.pdf ('Price List (Vet Clinics only)'), which the vet-clinic layout contract reads. The ZIWI set (kangaroo_pn_unit) keeps its PDF-derived sheet as calibration only.",
+  "min_covered_skus": 5,
+  "covered_skus": [
+    "BI-HGS",
+    "BI-NL",
+    "BI-NM",
+    "BI-NS",
+    "BI-NXS"
+  ],
+  "_covered_comment": "V42 (Virbac Allerderm) is named on the sheet but absent from the updated catalogue (searched the full capture) — a question about the sheet, kept in expected.csv verbatim (alfamedic precedent).",
+  "enforced": [
+    "supplier_product_code",
+    "catalogue_price_hkd",
+    "catalogue_price_basis_qty",
+    "catalogue_price_basis_uom",
+    "sellable_qty"
+  ],
+  "known_gaps": {
+    "supplier": "the sheet writes 'Kangaroo'; the export carries the contract supplier 'Kangaroo Pet Nutrition'",
+    "brand": "no brand column exists — the brand prefix (NexGard SPECTRA, Heartgard PLUS) is embedded in the description text; the contract deliberately leaves brand unmapped, so the export says 'Unbranded'",
+    "package_configuration": "sheet holds '3 TABS/PACK' etc.; the export falls back to the variant UOM 'unit' (same shape as the kpn/hills gap) — the \"1x3's\" packing notation is not parsed into a configuration today",
+    "sellable_uom": "sheet says PACK; the review-desk draft falls back to 'unit' when packaging resolves no sellable UOM",
+    "sellable_units_per_price_basis": "sheet derives 3 (tablets per pack) from the packing notation; the pipeline does not parse \"1x3's\" into a unit count today",
+    "weight": "sheet filled (40g/45g) but the value never reaches the published export (same as the other sets)",
+    "mbb_tier_1": "the sheet records the free-goods terms ('10+2', '10+1'); the export publishes no term — clinic-offer text routes to review verbatim (KANGAROO_PN_VET_CLINIC_FREE_GOODS_NOT_STRUCTURED)",
+    "mbb_tier_2": "second free-goods tier ('10+3 (50 or more per order)', '20+3') — same gap as mbb_tier_1"
+  },
+  "not_comparable": {
+    "product_name": "the sheet holds human shorthand ('Nexgard Spectra M 7.5-15kg'); the export holds the supplier's printed description with the brand line prefix",
+    "product name [Rosetta]": "a hand-authored retail name, not something the pipeline derives",
+    "order_multiple": "the sheet derives it from pack contents ('3 TABLETS'); not printed as such on this layout and not published",
+    "rrp": "this layout prints no retail column; the sheet writes the literal 'N/A'",
+    "mbb_tier_3": "sheet holds 'N/A' for all covered rows",
+    "mbb_tier_4": "sheet holds 'N/A' for all covered rows",
+    "commercial_offer_summary": "hand-authored summary column"
+  },
+  "unfilled": {},
+  "unpublishable": [],
+  "contract_id": "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
+  "_contract_comment": "The legacy kangaroo.mixed_price_catalogue.v1 cannot read this layout (its required headers 產品名稱/建議零售價 are not printed here — verified by a zero-row conformance run), so the layout-split doctrine applied: this set exercises the purpose-authored vet-clinic contract. Supplier 81 has many contracts, so explicit contract_id is mandatory.",
+  "_pages_comment": "Vet-clinic price list carved from the whole-catalogue capture of KPN_Kangaroo-updated.pdf (2026-08-13 chat-agent capture). Identity OMITTED: the merged capture recorded only KPN's supplier_identity_text; the Kangaroo section prints its own ('港澳總代理 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition Ltd.') which a per-page recapture would restore.",
+  "_graduated_comment": "Graduated from golden_staging/ on 2026-08-13 after the contract's promotion to SUPPORTED. The golden framework resolves supplier-only, which works because this supplier has exactly ONE SUPPORTED contract; contract_id is kept for the day a second layout is promoted (the runtime will then demand explicit selection)."
+}

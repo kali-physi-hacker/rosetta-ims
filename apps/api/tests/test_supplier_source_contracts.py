@@ -36,6 +36,7 @@ EXPECTED_CONTRACT_IDS = [
     "kangaroo_pet_nutrition.case_only_price_list.v1",
     "kangaroo_pet_nutrition.catalogue_bundle.v1",
     "kangaroo_pet_nutrition.unit_price_list.v1",
+    "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
     "kpn_trading.case_only_price_list.v1",
     "kpn_trading.catalogue_bundle.v1",
     "kpn_trading.pack_and_case_bulk_list.v1",
@@ -153,6 +154,10 @@ def test_supplier_source_contract_rejects_blank_identity_and_invalid_supported_s
     payload["support_status"] = "SUPPORTED"
     payload["pricing"]["price_basis_status"] = "VERIFIED"
     payload["known_ambiguities"] = []
+    # The precondition this case exercises, made explicit: the legacy kangaroo
+    # fixture used to carry supplier_id=None, but the contracts are now bound
+    # to supplier 81, so the null id is set here rather than inherited.
+    payload["supplier"]["supplier_id"] = None
 
     with pytest.raises(ValidationError, match="numeric supplier_id"):
         SupplierSourceContractV1.model_validate(payload)
@@ -179,7 +184,15 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         get_supported_supplier_source_contract("vetapet.vet_price_list.v1", "v1").contract_id
         == "vetapet.vet_price_list.v1"
     )
-    supported_ids = {"hills.price_list.v1", "alfamedic.price_list.v1", "vetapet.vet_price_list.v1"}
+    supported_ids = {
+        "hills.price_list.v1",
+        "alfamedic.price_list.v1",
+        "vetapet.vet_price_list.v1",
+        # Promoted 2026-08-13 on the strength of their golden e2e runs
+        # (kpn_trading / kangaroo_vet_clinic staged sets, sheets reproduced).
+        "kpn_trading.pack_price_list.v1",
+        "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
+    }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):
             get_supported_supplier_source_contract(contract_id, "v1")
@@ -208,7 +221,12 @@ def test_kangaroo_contracts_use_supplier_code_without_fabricated_numeric_id():
     proplan = get_supplier_source_contract("kangaroo.purina_proplan_veterinary_diets.v1", "v1").declaration
     earthz = get_supplier_source_contract("kangaroo.earthz_pet_price_sheet.v1", "v1").declaration
 
-    assert mixed.supplier.supplier_id is None
+    # 81 is not a fabricated id — it is the same supplier the
+    # kangaroo_pet_nutrition contracts bind (asserted below): the legacy
+    # layouts sit inside the Kangaroo half of the combined document. The
+    # legacy supplier_code "KPN" is unchanged (its collision with K.P.N.
+    # Trading's marker vocabulary is a recorded, separate decision).
+    assert mixed.supplier.supplier_id == 81
     assert mixed.supplier.supplier_code == "KPN"
     assert proplan.pricing.price_basis.code == "PACK"
     assert earthz.pricing.price_basis is None

@@ -1,0 +1,54 @@
+{
+  "contract_id": "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "CONFIRMED",
+  "supplier_id": 81,
+  "supplier_name": "Kangaroo Pet Nutrition",
+  "notes": "Confirmed against the golden/kangaroo_vet_clinic set (carved from the 2026-08-13 whole-catalogue capture of KPN_Kangaroo-updated.pdf): the full-pipeline golden e2e reproduces the BizOps sheet (golden_samples_by_supplier/kangaroo.csv) exactly on code, per-PACK price, basis qty/uom and sellable qty for all 5 covered SKUs. Authored for the BizOps golden sheet's 'Kangaroo' rows (NexGard/Heartgard vet-clinic products). The legacy kangaroo.mixed_price_catalogue.v1 cannot read this layout — its required headers (產品名稱, 建議零售價) are not printed on the vet-clinic tables — so the layout-split doctrine applies.",
+  "examples": [
+    {
+      "example_id": "kangaroo-pn-vet-clinic-bi-nxs",
+      "source": {
+        "sample_reference": "external-sample:KPN_Kangaroo-updated.pdf",
+        "page_number": 1,
+        "supplier_identity_marker": "Kangaroo half of the combined document (pages print 港澳總代理 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition Ltd.); the 2026-08-13 whole-catalogue capture recorded only the KPN identity, so the staged set omits identity",
+        "table_layout": "VET_CLINIC_OFFER (captured copy: tests/fixtures/catalogue_pipeline/golden/kangaroo_vet_clinic/page_1.json)",
+        "extraction_method": "whole-catalogue chat-agent capture, vet-clinic table carve (golden/kangaroo_vet_clinic/page_1.json)",
+        "text_excerpt": "BI-NXS NexGard SPECTRA NexGard Spectra Chewables For Dogs XS (2-3.5kg) 1x3's 260 10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+      },
+      "printed_columns": [
+        "產品圖片 Product Image",
+        "產品編號 Product Code",
+        "產品內容 Product Description",
+        "包裝 Packing",
+        "批發價 W/S Price (HKD)",
+        "診所優惠 Clinic Offer"
+      ],
+      "runtime_input": {
+        "supplier_sku": "BI-NXS",
+        "description": "NexGard SPECTRA NexGard Spectra Chewables For Dogs XS (2-3.5kg)",
+        "pack_size": "1x3's",
+        "wholesale_price": "260",
+        "clinic_offer": "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+      },
+      "expected_semantics": {
+        "price_basis": "PACK",
+        "currency": "HKD",
+        "reason": "\"1x3's\" packing with one bare amount per row is per-pack pricing; 260 matches the golden sheet's $260.00 per-PACK cost for BI-NXS."
+      },
+      "raw_row": {
+        "產品圖片 Product Image": null,
+        "產品編號 Product Code": "BI-NXS",
+        "產品內容 Product Description": "NexGard SPECTRA NexGard Spectra Chewables For Dogs XS (2-3.5kg)",
+        "包裝 Packing": "1x3's",
+        "批發價 W/S Price (HKD)": "260",
+        "診所優惠 Clinic Offer": "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+      },
+      "expected_runtime_item": {
+        "cost_price": "260",
+        "clinic_offer": "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+      }
+    }
+  ],
+  "technical_debt": []
+}

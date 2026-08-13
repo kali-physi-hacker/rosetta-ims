@@ -743,3 +743,231 @@ KANGAROO_PET_NUTRITION_CASE_ONLY_PRICE_LIST_V1 = register_supplier_source_contra
         },
     )
 )
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Vet-clinic price list — the layout behind the BizOps golden sheet's
+# "Kangaroo" rows (NexGard Spectra sizes, Heartgard Plus). Printed inside
+# the Kangaroo half of the combined KPN_Kangaroo document under the banner
+# 'Price List (Vet Clinics only)': bare HKD amounts (no currency symbol),
+# no retail column, and a per-row 診所優惠 Clinic Offer column carrying
+# free-goods terms ('10+2 OR 10+3 (單次購買50或以上) (50 or more per order)').
+# The legacy kangaroo.mixed_price_catalogue.v1 cannot read this layout —
+# its required headers (產品名稱, 建議零售價) are not printed here — so per
+# the layout-split doctrine this layout gets its own contract.
+# ─────────────────────────────────────────────────────────────────────────
+
+_KANGAROO_PN_VET_CLINIC_EVIDENCE = [
+    *_KANGAROO_PET_NUTRITION_EVIDENCE,
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+        (
+            "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product "
+            "Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic "
+            "Offer. Amounts are bare numerals; no retail column exists; offers are "
+            "free-goods terms per row."
+        ),
+    ),
+]
+
+KANGAROO_PET_NUTRITION_VET_CLINIC_PRICE_LIST_V1 = register_supplier_source_contract(
+    SupplierSourceContractV1(
+        schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
+        contract_id="kangaroo_pet_nutrition.vet_clinic_price_list.v1",
+        contract_version="v1",
+        supplier=_KANGAROO_PET_NUTRITION_SUPPLIER,
+        document_type=SupplierDocumentType.CATALOGUE,
+        format_name="Kangaroo Pet Nutrition vet-clinic price list",
+        source_format=SourceFormat.PDF_TABLE,
+        support_status=SupplierContractSupportStatus.SUPPORTED,
+        evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+        source_structure=SourceStructure(
+            source_format=SourceFormat.PDF_TABLE,
+            expected_sections=["Price List (Vet Clinics only)"],
+            table_regions=[
+                SourceTableRegion(
+                    name="kangaroo_pn_vet_clinic_tables",
+                    selector=(
+                        "'Price List (Vet Clinics only)' tables with a 診所優惠 Clinic "
+                        "Offer column and no retail price column."
+                    ),
+                    notes="Observed for NexGard Spectra and Heartgard Plus rows.",
+                )
+            ],
+            required_headers=[],
+            optional_headers=[
+                "產品圖片", "產品編號", "產品內容", "包裝",
+                "批發價 W/S Price (HKD)", "診所優惠",
+            ],
+            row_eligibility_rules=[
+                (
+                    "The ingestion supplier must be ID 81, or the enclosing source section "
+                    "must explicitly identify Kangaroo Pet Nutrition / KANGAR."
+                ),
+                "Select this contract only for 'Price List (Vet Clinics only)' tables carrying a Clinic Offer column.",
+                "Rows require a product code, description, and printed wholesale amount.",
+            ],
+            source_location_expectations=[
+                "source document and page",
+                "supplier identity marker or ingestion supplier identity",
+                "table row",
+                "source column",
+            ],
+        ),
+        fields=[
+            SourceFieldContract(
+                field_key="supplier_sku",
+                role=SourceFieldRole.SUPPLIER_SKU,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="產品編號",
+                aliases=["Product Code"],
+                description="Product code printed on the eligible row (e.g. BI-NXS).",
+                evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="description",
+                role=SourceFieldRole.PRODUCT_NAME,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="產品內容",
+                aliases=["Product Description"],
+                description="Printed product description; the brand line (NexGard SPECTRA, Heartgard PLUS) is embedded in this text, not a separate column.",
+                evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="brand",
+                role=SourceFieldRole.BRAND,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="brand text embedded in the description column",
+                description=(
+                    "No brand column exists; the brand prefix lives inside 產品內容. "
+                    "Deliberately unmapped rather than derived by splitting text."
+                ),
+                evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="pack_size",
+                role=SourceFieldRole.PACKAGING,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="包裝",
+                aliases=["Packing"],
+                description="Printed packing notation (e.g. \"1x3's\" — one pack of three chewables; '100ml').",
+                evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="wholesale_price",
+                role=SourceFieldRole.SOURCE_PRICE,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="批發價 W/S Price (HKD)",
+                aliases=["批發價", "W/S Price"],
+                description="Bare HKD numeral (e.g. '260') — the per-pack wholesale amount.",
+                evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="clinic_offer",
+                role=SourceFieldRole.MBB_TEXT,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="診所優惠",
+                aliases=["Clinic Offer"],
+                description=(
+                    "Per-row free-goods terms, e.g. '10+2 OR 10+3 (單次購買50或以上) "
+                    "(50 or more per order)' — buy 10 get 2 free, or 10 get 3 free at "
+                    "50+ per order."
+                ),
+                evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="effective_date",
+                role=SourceFieldRole.EFFECTIVE_DATE,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="document or section effective-date label",
+                description="'With effect from ...' / '生效日期' page labels.",
+                evidence=_KANGAROO_PN_VET_CLINIC_EVIDENCE,
+            ),
+        ],
+        pricing=PricingSourceSemantics(
+            cost_source_field="wholesale_price",
+            rrp_source_field=None,
+            price_basis=UnitOfMeasure(code=UnitCode.PACK),
+            price_basis_status=SemanticResolutionStatus.VERIFIED,
+            notes=(
+                "VERIFIED against the BizOps golden sheet itself "
+                "(golden_samples_by_supplier/kangaroo.csv): the sheet's hand-filled "
+                "rows declare basis PACK/qty 1 for every covered SKU, and every "
+                "printed amount matches its per-PACK cost exactly (175/260/280/300/"
+                "330). The hand-filled sheet is the human statement of the basis; "
+                "the golden e2e run proved the contract reproduces it. Promotion "
+                "decision: user sign-off, 2026-08-13."
+            ),
+        ),
+        packaging=PackagingSourceSemantics(
+            packaging_source_field="pack_size",
+            content_measure_source_field="pack_size",
+            break_pack_allowed=None,
+            interpretation_rules=[
+                "\"1x3's\" means one sellable pack containing three tablets/chewables.",
+            ],
+            unresolved_semantics=[
+                "Order increment and break-pack rules are not stated by the source.",
+            ],
+        ),
+        mbb=MbbSourceSemantics(
+            source_fields=["clinic_offer"],
+            condition_patterns=["buy quantity", "order-size threshold"],
+            benefit_patterns=["free goods (N+M)"],
+            requires_validation_issue_when=[
+                "The qualifying products, threshold basis, or stacking rules are not explicit."
+            ],
+            notes=(
+                "Offers are free-goods tiers ('10+2', '10+3 at 50+ per order', "
+                "'10+1 OR 20+3'), not price tiers — no structured recognizer parses "
+                "N+M free goods today, so the text routes to review verbatim."
+            ),
+        ),
+        known_ambiguities=[
+            AmbiguityRule(
+                issue_code="KANGAROO_PN_VET_CLINIC_SUPPLIER_IDENTITY_REQUIRED",
+                condition="A source may contain multiple suppliers or only a subset of previously observed brands.",
+                review_guidance=(
+                    "Select this declaration only from ingestion supplier ID 81 or an explicit "
+                    "Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand. "
+                    "Downgraded from blocking at promotion (2026-08-13): supplier 81 has many "
+                    "contracts so the runtime demands an explicit contract_id whenever more than "
+                    "one is SUPPORTED, the belongs-to-supplier check refuses mismatched "
+                    "submissions, and CONTRACT_SUPPLIER_IDENTITY_MISMATCH verifies captured "
+                    "identity text automatically where the source provides it."
+                ),
+                blocks_supported_status=False,
+            ),
+            AmbiguityRule(
+                issue_code="KANGAROO_PN_VET_CLINIC_FREE_GOODS_NOT_STRUCTURED",
+                condition=(
+                    "診所優惠 offers are N+M free-goods terms; no structured MBB recognizer "
+                    "handles free goods, so they surface as text-only terms."
+                ),
+                review_guidance=(
+                    "Reviewers must read the clinic-offer text and apply the free-goods "
+                    "terms manually until a free-goods recognizer exists."
+                ),
+                blocks_supported_status=False,
+            ),
+        ],
+        pipeline_mapping=pipeline_mapping(
+            "supplier_sku",
+            "description",
+            "brand",
+            "pack_size",
+            "wholesale_price",
+            "clinic_offer",
+            "effective_date",
+        ),
+        created_at=_DECLARATION_CREATED_AT,
+        created_by=_DECLARATION_CREATED_BY,
+        metadata={
+            "routing_strategy": "supplier_identity_and_layout_markers",
+            "sample_reference": "KPN_Kangaroo-updated.pdf",
+            "price_basis_group": "PACK",
+            "golden_sheet": "golden_samples_by_supplier/kangaroo.csv",
+        },
+    )
+)
