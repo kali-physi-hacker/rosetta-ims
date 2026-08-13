@@ -1,0 +1,14 @@
+{
+  "test_metadata": {
+    "sample_id": "SAMPLE-CAT-005",
+    "supplier": "Messy Supplier",
+    "description": "Messy/ambiguous structure requiring vision",
+    "created": "2024-01-01",
+    "status": "PLACEHOLDER - Waiting for BizOps input"
+  },
+  "golden_records": [],
+  "expected_metrics": {
+    "minimum_rows_extracted": 5,
+    "vision_extraction_required": true
+  }
+}

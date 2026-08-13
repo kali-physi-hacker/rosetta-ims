@@ -122,11 +122,11 @@
       "role": "BRAND",
       "requirement": "OPTIONAL",
       "source_column": null,
-      "source_path": "product_name or section_header",
+      "source_path": "section_header",
       "composed_from": [],
       "constant_value": null,
       "aliases": [],
-      "description": "Product brand extracted from product name (e.g., Zoetis, Antinol, Dermoscent) or section header.",
+      "description": "Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
