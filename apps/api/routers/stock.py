@@ -182,7 +182,6 @@ async def import_stock(
     now   = datetime.utcnow().isoformat()
 
     updated   = 0
-    skipped   = 0  # qty <= 0 and no existing record — nothing to write
     unmatched: list[dict] = []
 
     for row in rows:

@@ -7,13 +7,13 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime, date
+from datetime import datetime
 
 import models
 import database
 from services.pricing_service import product_to_dict, effective_pack_cost, expiry_batches
 from services import offering_costs, tag_service, audit, audit_log
-from dependencies import get_current_user, require_user
+from dependencies import require_user
 from permissions import require_capability, has_capability, SENSITIVE_PRODUCT_FIELDS
 from schemas.catalogue_pipeline import ServingItemV1
 from services.catalogue_serving_reads import CatalogueServingReadService
@@ -1065,7 +1065,10 @@ def change_sku_code(sku: str, body: SkuChange, request: Request,
 
 # ── Shared field-apply, used by the CSV batch import below ───────────────────────
 # Mirrors update_product()'s field semantics — keep the two in sync if fields change.
-def _apply_product_update(product, ps, data: dict, now: str, editor_name: str):
+def _apply_product_update(db, product, ps, data: dict, now: str, editor_name: str):
+    # `db` is a parameter because the cost write below needs a session. It was
+    # referenced without ever being passed, so any bulk update carrying a pack
+    # cost raised NameError on the cost-write path.
     snap = lambda: {
         "name": product.name, "brand": product.brand, "category": product.category,
         "status": product.status, "hero_sku": bool(product.hero_sku), "notes": product.notes,
@@ -1256,7 +1259,7 @@ async def import_products_csv(
             ps = models.ProductSupplier(product_id=product.id, is_primary=1,
                                         cost_source="manual", pack_source="manual", updated_at=now)
             db.add(ps)
-        before, after = _apply_product_update(product, ps, data, now, current_user.display_name)
+        before, after = _apply_product_update(db, product, ps, data, now, current_user.display_name)
         changes = audit_log.diff(before, after)
         if changes:
             product.updated_at = now

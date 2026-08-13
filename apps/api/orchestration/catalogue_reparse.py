@@ -109,6 +109,19 @@ def load_stored_evidence(db: Session, *, ingestion_run_id: UUID) -> StoredEviden
         raise ReparseNotAllowed(
             f"Run {source_uuid} has no stored evidence to re-parse — upload the file again"
         )
+
+    # A retrigger reads only the observations that produced the rows it is
+    # clearing. Re-driving the whole run would mint fresh PENDING candidates
+    # for every row a person already reviewed — inventing the very work
+    # selectivity exists to protect.
+    selection = retrigger_selection(run)
+    if selection is not None:
+        rows = [row for row in rows if row.raw_observation_uuid in selection]
+        if not rows:
+            raise ReparseNotAllowed(
+                f"Run {ingestion_run_id} selects {len(selection)} observations but none "
+                f"exist on source run {source_uuid} — the selection is stale or wrong"
+            )
     # Two hops on purpose: the row rehydrates into the CONTRACT, and
     # evidence_from_persisted_observation turns that into the extraction-stage
     # shape the flow hands to capture. Conformance already consumes durable
@@ -139,6 +152,34 @@ def mark_reparse(run: models.IngestionRun, *, source_run_uuid: str, from_stage: 
     metrics["reparse_of"] = source_run_uuid
     metrics["reparse_from_stage"] = from_stage.value
     run.metrics = json.dumps(metrics)
+
+
+def mark_retrigger(
+    run: models.IngestionRun,
+    *,
+    retrigger_of: str,
+    observation_uuids: list[str],
+    attempt: int,
+) -> None:
+    """A retrigger is a re-parse that reads only the observations named here.
+
+    ``retrigger_of`` is the run whose dead letters were targeted — usually also
+    the evidence source, but not when re-triggering a run that was itself a
+    re-parse, so both facts are kept. The selection is stored on the run rather
+    than passed in memory because the flow that consumes it runs in another
+    process, later, and must see exactly what was chosen at request time.
+    """
+    metrics = _metrics(run)
+    metrics["retrigger_of"] = retrigger_of
+    metrics["retrigger_observations"] = sorted(observation_uuids)
+    metrics["retrigger_attempt"] = attempt
+    run.metrics = json.dumps(metrics)
+
+
+def retrigger_selection(run: models.IngestionRun) -> set[str] | None:
+    """The observation UUIDs this run is limited to, or None for a full re-parse."""
+    raw = _metrics(run).get("retrigger_observations")
+    return set(raw) if raw else None
 
 
 def reparse_raw_stage(db: Session, *, ingestion_run_id: UUID) -> RawStageResult:

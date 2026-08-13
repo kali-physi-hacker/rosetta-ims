@@ -32,3 +32,7 @@ Thumbs.db
 .vscode/
 .idea/
 .gstack/
+apps/api/.golden-reports/
+
+# 2.5MB debug dump from a catalogue run — an artefact, not source.
+sample.json

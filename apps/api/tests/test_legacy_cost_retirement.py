@@ -8,7 +8,6 @@ import tempfile
 
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{tempfile.mkdtemp()}/t.db")
 
-import pytest
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session
 

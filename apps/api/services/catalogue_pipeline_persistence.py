@@ -24,7 +24,7 @@ from schemas.catalogue_pipeline import (
     NormalizedRowV1,
     ValidationIssueV1,
 )
-from schemas.catalogue_pipeline.common import MbbTerm, PackagingConfiguration, Quantity, UnitOfMeasure
+from schemas.catalogue_pipeline.common import MbbTerm, Quantity, UnitOfMeasure
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, IssueSeverity, ReviewStatus
 
 

@@ -130,6 +130,28 @@ class CatalogueSubmissionResult:
 
 
 @dataclass(frozen=True)
+class RetriggerResult:
+    """A selective re-parse, durably queued: what it targets and why.
+
+    The submission half is an ordinary re-parse run; the rest says what was
+    selected, because "202 Accepted" without a row count invites re-driving a
+    queue that was already empty.
+
+    ``attempt`` is the ordinal of this REQUEST against the run (first
+    retrigger = 1), counting every prior retrigger including failed ones. A
+    queue entry's ``attempts`` counts runs that actually TRIED the row —
+    base run plus completed retriggers — so an entry can read attempts=2
+    while the third request is being made. Different questions, both answered.
+    """
+
+    submission: "CatalogueSubmissionResult"
+    rows_selected: int
+    observation_count: int
+    attempt: int
+    issue_codes: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class CatalogueIngestionStatus:
     """Safe run-status representation for polling clients."""
 
@@ -263,7 +285,7 @@ class CatalogueSubmissionService:
             if stored:
                 self._cleanup_new_file(stored)
             raise SubmissionPersistenceError("Submission could not be persisted") from exc
-        
+
     def _get_status(self, run: models.IngestionRun) -> CatalogueIngestionStatus:
         source = run.pipeline_source_document
         if source is None and run.catalogue_source_document_id:
@@ -307,12 +329,12 @@ class CatalogueSubmissionService:
             units_done=run.units_done,
             units_total=run.units_total,
         )
-        
-    def list(self) -> list[CatalogueIngestionStatus]: 
+
+    def list(self) -> list[CatalogueIngestionStatus]:
         """Returns a list of safe typed status payload for all current ingestion runs and their statuses"""
         runs = self.db.query(models.IngestionRun).all()
         run_statuses = [self._get_status(run) for run in runs]
-        return run_statuses 
+        return run_statuses
 
     def retry(self, run_uuid: UUID, *, submitted_by: str | None = None) -> CatalogueSubmissionResult:
         """Re-submit a failed run's stored source file as a NEW run.
@@ -367,6 +389,9 @@ class CatalogueSubmissionService:
         *,
         from_stage: str = "conformance",
         submitted_by: str | None = None,
+        _retrigger_of: str | None = None,
+        _retrigger_observations: list[str] | None = None,
+        _retrigger_attempt: int | None = None,
     ) -> CatalogueSubmissionResult:
         """Re-run the interpretation over evidence this run already holds.
 
@@ -380,11 +405,11 @@ class CatalogueSubmissionService:
         and published decisions, and those are append-only.
         """
         from orchestration.catalogue_reparse import (
-            ReparseNotAllowed,
             ReparseStage,
             SUPPORTED_STAGES,
             evidence_source_run,
             mark_reparse,
+            mark_retrigger,
         )
 
         try:
@@ -429,6 +454,19 @@ class CatalogueSubmissionService:
 
         new_run = self._queue_reparse_run(run, source, submitted_by=submitted_by)
         mark_reparse(new_run, source_run_uuid=origin.run_uuid, from_stage=stage)
+        if _retrigger_observations:
+            # Stamped INSIDE the queueing transaction. A retrigger that commits
+            # as a plain re-parse first and gains its selection in a second
+            # commit has a window where dying means the worker runs a FULL
+            # re-parse — fresh pending candidates for every row a person
+            # already reviewed, which is the exact harm selectivity exists to
+            # prevent. One commit, or nothing.
+            mark_retrigger(
+                new_run,
+                retrigger_of=_retrigger_of or str(run_uuid),
+                observation_uuids=_retrigger_observations,
+                attempt=_retrigger_attempt or 1,
+            )
         new_run.parent_run_id = run.id
         self.db.commit()
         return CatalogueSubmissionResult(
@@ -445,6 +483,162 @@ class CatalogueSubmissionService:
             submitted_at=new_run.created_at,
             status_url=f"/catalogues/ingestions/{new_run.run_uuid}",
         )
+
+    def retrigger(
+        self,
+        run_uuid: UUID,
+        *,
+        issue_code: str | None = None,
+        catalogue_item_ids: list[UUID] | None = None,
+        from_stage: str = "conformance",
+        submitted_by: str | None = None,
+    ) -> RetriggerResult:
+        """Re-drive exactly the rows this run's queue is still holding.
+
+        A re-parse limited to the observations behind the selected dead
+        letters. Selection comes from the FOLLOWED queue, so retriggering twice
+        targets only what is still failing — never rows an earlier retrigger
+        already cleared, and never rows a person decided on, because rejected
+        and resolved rows are not in the queue to begin with.
+
+        Two shapes are refused outright: a retrigger child as the target (its
+        outcome already belongs to the queue of the run it re-drove — see
+        below), and a new retrigger while an earlier one is still queued or
+        running (the same rows would be re-driven twice, minting a duplicate
+        review candidate for every row both copies clear).
+        """
+        from services import catalogue_dead_letters as dead_letter_queue
+        from orchestration.catalogue_reparse import evidence_source_run, retrigger_selection
+
+        if issue_code and catalogue_item_ids:
+            raise RetryNotAllowedError(
+                "Select by issue_code OR by explicit rows, not both — mixing them makes "
+                "the refusal reasons ambiguous"
+            )
+
+        parent = str(run_uuid)
+        parent_row = self.db.query(models.IngestionRun).filter_by(run_uuid=parent).first()
+        if parent_row is None:
+            raise SubmissionNotFoundError(f"Ingestion run {run_uuid} was not found")
+
+        # A retrigger child is not a retrigger target. Its outcome is already
+        # folded into the queue of the run it re-drove, and a grandchild would
+        # hang off THIS run, one level below where that queue's walk ever
+        # looks — the origin would keep reporting rows as stuck long after
+        # they cleared. Retriggering the origin is exactly equivalent, because
+        # selection reads the followed queue: only rows still failing move.
+        if retrigger_selection(parent_row) is not None:
+            own_metrics = json.loads(parent_row.metrics or "{}") or {}
+            target = own_metrics.get("retrigger_of") or own_metrics.get("reparse_of")
+            raise RetryNotAllowedError(
+                f"This run is itself a retrigger (attempt "
+                f"{own_metrics.get('retrigger_attempt')}) of {target}. Its outcome is "
+                f"already part of that run's queue — retrigger {target} instead; only "
+                "rows still failing will be selected."
+            )
+
+        # One outstanding retrigger at a time. The queue rightly ignores a
+        # child that has not finished — nothing has been tried yet — so a
+        # second selection made now would re-drive the same rows.
+        children = dead_letter_queue.retrigger_children(self.db, parent)
+        outstanding = [
+            child
+            for child in children
+            if child.status
+            in (models.IngestionRunStatus.QUEUED.value, models.IngestionRunStatus.RUNNING.value)
+        ]
+        if outstanding:
+            raise RetryNotAllowedError(
+                f"Retrigger {outstanding[-1].run_uuid} of this run is still "
+                f"{outstanding[-1].status} — wait for it to finish. Re-driving the same "
+                "rows twice would put a duplicate review candidate in front of a person "
+                "for every row both copies clear."
+            )
+
+        queue = dead_letter_queue.dead_letters(self.db, run_uuid=parent)
+
+        if issue_code is not None:
+            selection = [entry for entry in queue if issue_code in entry.issue_codes]
+            if not selection:
+                held = sorted({code for entry in queue for code in entry.issue_codes})
+                raise RetryNotAllowedError(
+                    f"Nothing is currently dead-lettered under {issue_code!r} on this run. "
+                    f"Codes actually holding rows: {held or 'none — the queue is empty'}"
+                )
+        elif catalogue_item_ids:
+            by_item = {entry.catalogue_item_uuid: entry for entry in queue}
+            selection, refused = [], []
+            for item in catalogue_item_ids:
+                entry = by_item.get(str(item))
+                if entry is not None:
+                    selection.append(entry)
+                else:
+                    refused.append(f"{item}: {self._why_not_retriggerable(parent, str(item))}")
+            if refused:
+                raise RetryNotAllowedError(
+                    "These rows cannot be re-driven:\n  " + "\n  ".join(refused)
+                )
+        else:
+            selection = list(queue)
+            if not selection:
+                raise RetryNotAllowedError(
+                    "Nothing is dead-lettered on this run — there is nothing to re-drive"
+                )
+
+        entry_observations = sorted({obs for entry in selection for obs in entry.observation_uuids})
+        if not entry_observations:
+            raise RetryNotAllowedError(
+                "The selected rows carry no evidence links, so there is nothing stored to re-read"
+            )
+
+        # The flow filters the SOURCE run's evidence, and observation UUIDs are
+        # minted per run — when this run is itself a re-parse, its rows link to
+        # its own re-minted copies, not the originals. Translate through
+        # source_object_key, the one name a row keeps across runs.
+        origin = evidence_source_run(self.db, parent_row).run_uuid
+        keys = dead_letter_queue.observation_keys(self.db, parent, entry_observations)
+        source_by_key = dead_letter_queue.observation_uuids_for_keys(self.db, origin, keys.values())
+        observation_uuids = sorted(set(source_by_key.values()))
+        if len(observation_uuids) < len(set(keys.values())):
+            missing = sorted(set(keys.values()) - set(source_by_key))[:5]
+            raise RetryNotAllowedError(
+                f"{len(set(keys.values())) - len(observation_uuids)} selected rows have no "
+                f"matching evidence on source run {origin} — first missing keys: {missing}"
+            )
+
+        attempt = 1 + len(children)
+        submission = self.reparse(
+            run_uuid,
+            from_stage=from_stage,
+            submitted_by=submitted_by,
+            _retrigger_of=parent,
+            _retrigger_observations=observation_uuids,
+            _retrigger_attempt=attempt,
+        )
+        return RetriggerResult(
+            submission=submission,
+            rows_selected=len(selection),
+            observation_count=len(observation_uuids),
+            attempt=attempt,
+            issue_codes=tuple(sorted({code for entry in selection for code in entry.issue_codes})),
+        )
+
+    def _why_not_retriggerable(self, run_uuid: str, item_uuid: str) -> str:
+        """Name the reason, because "not found" teaches nobody anything."""
+        from services import catalogue_dead_letters as dead_letter_queue
+
+        lanes = dead_letter_queue.lanes_for_run(self.db, run_uuid).lanes
+        if item_uuid in lanes[dead_letter_queue.Lane.REJECTED.value]:
+            return "a person rejected this row — a retrigger must not resurrect a human decision"
+        if item_uuid in lanes[dead_letter_queue.Lane.PUBLISHED.value]:
+            return "already published"
+        if item_uuid in lanes[dead_letter_queue.Lane.SUPERSEDED.value]:
+            return "was published and has since been superseded — not stuck"
+        if item_uuid in lanes[dead_letter_queue.Lane.AWAITING_REVIEW.value]:
+            return "already in review — nothing to re-drive"
+        if item_uuid in lanes[dead_letter_queue.Lane.DEAD_LETTERED.value]:
+            return "was dead-lettered here but an earlier retrigger already cleared it"
+        return "not a row of this run"
 
     def _queue_reparse_run(self, run, source, *, submitted_by: str | None):
         """A queued run pointing at the parent's source document.

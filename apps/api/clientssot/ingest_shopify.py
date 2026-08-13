@@ -3,7 +3,7 @@
 Aggregates orders -> customers; tags purchased products to care-types (customer-level, source=Shopify);
 records LTV, order_count, tags, last order date; matches to existing SSOT customers by email/phone
 (Shopify is the email<->phone bridge), else creates online-only customers."""
-import sqlite3, io, sys, re, collections
+import sqlite3, io, sys, re
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from clientssot.shopify_client import orders_last_12mo

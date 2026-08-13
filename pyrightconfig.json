@@ -1,0 +1,62 @@
+{
+  // Pylance / pyright configuration for the repository.
+  //
+  // Committed rather than left in .vscode/settings.json, which is gitignored —
+  // otherwise every person configures import resolution themselves and the
+  // first symptom is the whole file underlined in red.
+  //
+  // The package layout is flat: apps/api is the import root, so the code says
+  // `import models`, `from services import ...`. Nothing resolves from the repo
+  // root, which is where the editor analyses from by default.
+  // Repo root, because Pylance looks for pyrightconfig.json in the WORKSPACE
+  // ROOT only — it does not search subdirectories. A copy under apps/api is
+  // found by the pyright CLI and silently ignored by the editor, which is the
+  // most confusing possible outcome.
+  "include": ["apps/api"],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.venv",
+    "apps/api/data",
+    "apps/web",
+    "apps/api/clientssot/clientssot_data.db.gz"
+  ],
+
+  // This is the line that makes `import
+  // models` resolve in the editor.
+  "extraPaths": ["apps/api"],
+
+  // Where the installed dependencies live, so fastapi/sqlalchemy/prefect
+  // resolve as well as the first-party modules.
+  "venvPath": "apps/api",
+  "venv": ".venv",
+
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Darwin",
+  "typeCheckingMode": "basic",
+
+  // SQLAlchemy 2.x defeats the type checker across this codebase. Measured on
+  // 194 files: 750 errors, of which 711 are these two rules — `Column[str]`
+  // passed where `str` is expected, and "No overloads for join/get match" on
+  // the query builder. They are artefacts of how the models are declared, not
+  // defects, and a checker that cries wolf 711 times is a checker nobody reads.
+  //
+  // What that leaves is worth having: 3 unresolved imports (all real — Django
+  // modules from the algo-dashboard project), 2 undefined variables and 1 bad
+  // __all__ export, which are genuine bugs ruff flags too.
+  "reportArgumentType": "none",
+  "reportCallIssue": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportOptionalSubscript": "none",
+  "reportOptionalOperand": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOperatorIssue": "none",
+
+  // Unused imports are ruff's job (F401) — no need for two tools to say it.
+  "reportUnusedImport": "none",
+  "reportUnusedVariable": "none",
+
+  "reportMissingImports": "error",
+  "reportUndefinedVariable": "error"
+}

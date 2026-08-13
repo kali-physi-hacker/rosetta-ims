@@ -650,7 +650,6 @@ def test_dispatcher_uses_bounded_batches_and_duplicate_dispatch_is_harmless(db, 
 # ── Fix 5: a claimed run must never remain `running` ───────────────────────
 
 from orchestration import catalogue_flows  # noqa: E402
-from orchestration import catalogue_tasks  # noqa: E402
 from services import catalogue_pipeline_stages as stages  # noqa: E402
 
 

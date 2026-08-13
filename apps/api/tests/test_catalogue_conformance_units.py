@@ -74,6 +74,7 @@ def _conform_one(contract_id: str, observation: ExtractedEvidence):
         ("批發價$392", Decimal("392")),          # column heading leaked into the cell
         ("$340\n(@28.3)", Decimal("340")),     # printed derived per-can average
         ("590\n(@24.6)", Decimal("590")),      # same, without a currency mark
+        ("130.0 (Price Reduced)", Decimal("130.0")),  # Alfamedic remark note (from main) — digit-free notes drop
     ],
 )
 def test_printed_price_forms_parse(printed, expected):

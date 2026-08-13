@@ -1,0 +1,33 @@
+# Test environment for apps/api.
+#
+# Runtime pins come from requirements.txt so the suite runs against the same
+# versions the image builds with. Anything below is needed to RUN the tests and
+# is deliberately absent from the runtime image.
+#
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+#   echo '../../../..' > .venv/lib/python3.13/site-packages/_rosetta_apps_api.pth
+#   .venv/bin/python -m pytest -q
+#
+# That .pth line puts apps/api on the interpreter's own path. The package layout
+# is flat — `import models`, `from services import ...` — so without it those
+# names only resolve when the current directory happens to be apps/api. With it
+# they resolve from anywhere, which is what makes the editor, ad-hoc scripts and
+# `python -c` all behave the same. (pyrightconfig.json covers the editor
+# separately, and is committed; the venv is not.)
+#
+# Do not run the suite against a bare interpreter. Ambient packages drift from
+# the pins — a machine carrying bcrypt 5.x instead of the pinned 4.3.0 fails
+# test_catalogue_pipeline_e2e_acceptance.py at collection with "password cannot
+# be longer than 72 bytes", which looks like a code defect and is not one.
+
+-r requirements.txt
+
+pytest==8.4.2
+
+# Linter. Pinned so the editor, the terminal and CI all report the same
+# findings — config lives in ruff.toml beside this file.
+ruff==0.13.3
+
+# FastAPI's TestClient is a thin wrapper over httpx and will not import without
+# it. Eight test modules use TestClient; the runtime image needs none of it.
+httpx==0.28.1

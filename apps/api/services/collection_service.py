@@ -4,7 +4,6 @@ A rule is JSON: {"match": "all"|"any", "conditions": [{field, op, value}, ...]}.
 Membership is evaluated in-memory over the product list (small dataset) so a
 collection is always live — no stored membership to drift.
 """
-import json
 import os
 
 from services.json_salvage import loads_json_array

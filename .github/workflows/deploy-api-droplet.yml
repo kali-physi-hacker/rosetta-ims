@@ -38,11 +38,19 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Run API smoke tests
+      - name: Gate on the full API suite
+        # The FULL suite, not a smoke subset. This step and the rsync below are
+        # one job, so a red suite cannot ship — there is no cross-workflow race
+        # to lose. test-api.yml still runs on the same push for the lint gate,
+        # the quality-report summary and the artifact; this is the barrier.
+        # (Duplicate suite execution per push is the price of in-job gating,
+        # and it is a few minutes.)
         working-directory: apps/api
+        env:
+          PYTHONPATH: ${{ github.workspace }}/apps/api
         run: |
-          uv run --with-requirements requirements.txt --with pytest \
-            python -m pytest tests/test_api_versioning.py tests/test_config_api.py
+          uv run --with-requirements requirements-dev.txt \
+            python -m pytest -q -p no:cacheprovider
 
       - name: Install SSH key
         run: |

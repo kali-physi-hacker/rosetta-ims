@@ -11,7 +11,6 @@ from typing import Optional
 import models
 import database
 from services import collection_service, audit_log
-from dependencies import require_user
 from permissions import require_capability
 
 router = APIRouter(prefix="/collections", tags=["collections"])

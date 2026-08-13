@@ -1,15 +1,21 @@
-"""Record REAL Gemini vision envelopes for golden supplier fixtures.
+"""Record REAL vision envelopes for golden supplier fixtures.
 
-Runs the production extraction call (same model/prompt/config as the pipeline)
+Runs the production extraction call (same provider/model/prompt as the pipeline)
 page-by-page against a real supplier PDF and writes each page's raw provider
 envelope to a fixture directory:
 
     python scripts/record_golden_envelopes.py <pdf> <outdir> [--pages 1,4,5]
 
 Each page is recorded SEQUENTIALLY (deterministic, resumable — pages already
-present in <outdir> are skipped). The recorded files are exactly what
-``_call_gemini_vision`` returned, so tests replaying them exercise the same
-parse/validate path as production. Requires GEMINI_API_KEY.
+present in <outdir> are skipped).
+
+Whichever provider CATALOGUE_VISION_PROVIDER names does the reading, exactly as
+production would, and the provider and model are stamped into meta.json so a
+recorded set always says what read it. That matters: replaying a Gemini
+recording proves nothing about how the pipeline behaves on Anthropic, which is
+the default.
+
+This costs real vision calls. Record the pages you need, not the whole file.
 """
 
 from __future__ import annotations
@@ -22,11 +28,11 @@ from pathlib import Path
 import pypdf
 
 from services.catalogue_evidence_extraction import (
-    GEMINI_MODEL,
-    _call_gemini_vision,
+    VISION_EVIDENCE_PROMPT,
     _single_page_pdf_bytes,
     _strict_json_object,
 )
+from services.catalogue_vision_provider import active_provider
 
 
 def main() -> int:
@@ -46,6 +52,11 @@ def main() -> int:
     )
     args.outdir.mkdir(parents=True, exist_ok=True)
 
+    # Resolved once and reported before the first call, so a misconfigured
+    # provider fails now rather than after paying for half a catalogue.
+    provider = active_provider()
+    print(f"recording with provider={provider.name} model={provider.model}", file=sys.stderr)
+
     recorded = skipped = 0
     for page_number in wanted:
         out = args.outdir / f"page_{page_number}.json"
@@ -53,7 +64,7 @@ def main() -> int:
             skipped += 1
             continue
         page_bytes = _single_page_pdf_bytes(reader.pages[page_number - 1])
-        response = _call_gemini_vision(page_bytes, media_type="application/pdf")
+        response = provider.call(page_bytes, media_type="application/pdf", prompt=VISION_EVIDENCE_PROMPT)
         envelope = _strict_json_object(response.text)  # fail fast on malformed output
         out.write_text(json.dumps(envelope, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         observations = len(envelope.get("observations", []))
@@ -66,7 +77,12 @@ def main() -> int:
             json.dumps(
                 {
                     "source": args.pdf.name,
-                    "recorded_from": f"live {GEMINI_MODEL} extraction via scripts/record_golden_envelopes.py",
+                    "recorded_from": (
+                        f"live {provider.name} {provider.model} extraction "
+                        f"via scripts/record_golden_envelopes.py"
+                    ),
+                    "provider": provider.name,
+                    "model": provider.model,
                     "pages": wanted,
                 },
                 indent=1,

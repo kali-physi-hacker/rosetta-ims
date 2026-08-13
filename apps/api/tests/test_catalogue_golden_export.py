@@ -198,7 +198,7 @@ def test_the_order_multiple_sets_the_pack_size_when_none_is_recorded(db):
     units_per_pack 1, and the human wrote 24. 1 would make a per-unit cost 24x
     too high, so the multiple is the number to divide by.
     """
-    variant = _publish_one(db, with_terms=False)
+    _publish_one(db, with_terms=False)
     link = db.query(models.ProductSupplier).filter_by(supplier_sku="EN7502").one()
     link.units_per_pack = 1
     link.order_increment_qty = 24

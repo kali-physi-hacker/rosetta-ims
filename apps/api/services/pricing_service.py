@@ -3,7 +3,7 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from models import ProductVariant, ProductChannel, ProductSupplier, StockLevel, SalesVelocity, CategoryRule
+from models import ProductVariant, ProductChannel, ProductSupplier, CategoryRule
 from services import offering_costs
 from services import transform_engine as engine
 

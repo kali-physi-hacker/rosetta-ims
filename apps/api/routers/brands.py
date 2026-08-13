@@ -13,7 +13,6 @@ from typing import Optional
 
 import models
 import database
-from dependencies import require_user
 from permissions import require_capability
 from services import audit_log
 

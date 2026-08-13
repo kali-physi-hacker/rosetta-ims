@@ -15,6 +15,7 @@ import database
 import models
 from permissions import has_capability, require_capability
 from services import audit_log
+from services import catalogue_dead_letters as dead_letters
 from services import catalogue_pipeline_persistence as persistence
 from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
@@ -587,6 +588,77 @@ def get_raw_layer(
     }
 
 
+@router.get("/ingestions/{run_uuid}/dead-letters")
+def get_dead_letters(
+    run_uuid: UUID,
+    issue_code: str | None = Query(None, description="Only rows this code is holding."),
+    stage: str | None = Query(None, description="Only rows blocked at this stage."),
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Rows the machine could not interpret, and what one fix would clear.
+
+    `lanes` accounts for every normalized row of the run, so a row is here
+    because nothing else claimed it — not published, not awaiting review, not
+    rejected by a person. `reconciliation` carries the RAW counts beside the
+    lanes so a shortfall cannot be mistaken for a silent drop.
+
+    After a retrigger the two views deliberately differ: `lanes` is this run's
+    HISTORY and never follows the chain, while `count`, `dead_letters` and
+    `by_issue_code` follow retriggers — rows a later run cleared are gone, and
+    survivors carry `attempts`. lanes.dead_lettered > count is a run that has
+    been partially rescued, not an inconsistency.
+
+    `rows_cleared_if_fixed` is the number worth acting on: rows a code holds
+    ALONE. A row held by two codes is freed by neither on its own, so the
+    larger `rows_blocked` overstates what a single fix buys.
+    """
+    _load_run_or_404(db, run_uuid)
+    run = str(run_uuid)
+    entries = dead_letters.dead_letters(db, run_uuid=run, issue_code=issue_code, stage=stage)
+    reconciliation = dead_letters.reconcile(db, run)
+    return {
+        "ingestion_run_id": run,
+        "lanes": reconciliation.lane_counts,
+        "reconciliation": {
+            "raw_observations": reconciliation.raw_observations,
+            "raw_text_observations": reconciliation.raw_text_observations,
+            "raw_product_rows": reconciliation.raw_product_rows,
+            "normalized_rows": reconciliation.normalized_rows,
+            # Product rows carrying no link to a normalized row. Usually the
+            # same product listed at several order quantities and collapsed.
+            "unlinked_product_rows": reconciliation.unlinked_product_rows,
+            "lanes_cover_normalized_rows": reconciliation.lanes_cover_normalized_rows,
+        },
+        "by_issue_code": [
+            {
+                "issue_code": tally.issue_code,
+                "rows_blocked": tally.rows_blocked,
+                "rows_cleared_if_fixed": tally.rows_cleared_if_fixed,
+            }
+            for tally in dead_letters.tallies_by_issue_code(db, run_uuid=run)
+        ],
+        "count": len(entries),
+        "dead_letters": [
+            {
+                "catalogue_item_id": entry.catalogue_item_uuid,
+                "supplier_id": entry.supplier_id,
+                "supplier_sku": entry.supplier_sku,
+                "stage": entry.stage,
+                "issue_codes": list(entry.issue_codes),
+                # Runs that have tried this row: 1 + one per completed
+                # retrigger that selected it and still could not read it.
+                "attempts": entry.attempts,
+                "field_path": entry.field_path,
+                "review_guidance": entry.review_guidance,
+                "first_seen_at": entry.first_seen_at,
+                "age_days": entry.age_days,
+            }
+            for entry in entries
+        ],
+    }
+
+
 @router.get("/ingestions/{run_uuid}/staging")
 def get_staging_layer(
     run_uuid: UUID,
@@ -759,6 +831,77 @@ def reparse_catalogue_ingestion(
         db.rollback()
         logger.exception("catalogue re-parse %s was queued but audit logging failed", result.ingestion_run_id)
     return _submission_response(result)
+
+
+class RetriggerRequest(BaseModel):
+    """What to re-drive: one issue code, explicit rows, or the whole queue."""
+
+    issue_code: str | None = None
+    catalogue_item_ids: list[UUID] | None = None
+    from_stage: str = "conformance"
+
+
+@router.post("/ingestions/{run_uuid}/retrigger", status_code=202)
+def retrigger_catalogue_ingestion(
+    run_uuid: UUID,
+    request: Request,
+    body: RetriggerRequest | None = None,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Re-drive exactly the rows this run's dead-letter queue is holding.
+
+    A re-parse limited to the observations behind the selected rows — stored
+    evidence only, no vision call, no spend. Selection comes from the followed
+    queue, so rows an earlier retrigger cleared and rows a person decided on
+    are not selectable; an explicit id that is not in the queue is refused by
+    name with the reason.
+    """
+    payload = body or RetriggerRequest()
+    service = CatalogueSubmissionService(db)
+    try:
+        result = service.retrigger(
+            run_uuid,
+            issue_code=payload.issue_code,
+            catalogue_item_ids=payload.catalogue_item_ids,
+            from_stage=payload.from_stage,
+            submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+        )
+    except Exception as exc:
+        raise _http_error(exc) from exc
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.ingestion_retrigger",
+            actor=user,
+            entity_type="ingestion_run",
+            entity_id=str(result.submission.ingestion_run_id),
+            entity_label=result.submission.contract_id,
+            details={
+                "retrigger_of": str(run_uuid),
+                "issue_code": payload.issue_code,
+                "rows_selected": result.rows_selected,
+                "attempt": result.attempt,
+            },
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception(
+            "catalogue retrigger %s was queued but audit logging failed",
+            result.submission.ingestion_run_id,
+        )
+    return {
+        "ingestion_run_id": str(result.submission.ingestion_run_id),
+        "retrigger_of": str(run_uuid),
+        "rows_selected": result.rows_selected,
+        "observations": result.observation_count,
+        "attempt": result.attempt,
+        "issue_codes": list(result.issue_codes),
+        "status": result.submission.status,
+        "status_url": result.submission.status_url,
+    }
 
 
 # What the browser should do with each source format. A price list is read, not

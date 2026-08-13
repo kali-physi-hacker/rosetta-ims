@@ -1136,7 +1136,6 @@ def test_review_rejects_stale_candidate_revision_and_staging_key_conflicts(db):
 
 # ── Stage 4: extracted-evidence persistence boundary ───────────────────────
 
-from services import catalogue_pipeline_persistence as persistence  # noqa: E402
 
 
 def _cell_input(key, *, column_name, raw_value, row_number, page=1):
@@ -1413,7 +1412,7 @@ from services.catalogue_conformance import ConformanceOutcome, ConformedRow  # n
 
 def test_interpretation_input_reconstructs_faithfully_from_persisted_evidence(db):
     _seed_context(db)
-    raw_id = _capture_raw(db, key="page:1:line:7")
+    _capture_raw(db, key="page:1:line:7")
 
     row = db.query(models.CatalogueExtractedEvidence).one()
     contract = persistence.extracted_evidence_to_contract(row)
