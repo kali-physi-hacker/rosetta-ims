@@ -1,0 +1,28 @@
+{
+  "test_metadata": {
+    "sample_id": "SAMPLE-CAT-001",
+    "supplier": "Hills",
+    "description": "Clean table structure PDF",
+    "created": "2024-01-01",
+    "status": "PLACEHOLDER - Waiting for BizOps input"
+  },
+  "golden_records": [
+    {
+      "row_identifier": "line_3",
+      "supplier_sku": "10447",
+      "brand": "Hill's",
+      "description": "Healthy Cuisine Chicken 82g",
+      "cost": "13.10",
+      "currency": "HKD",
+      "cost_basis": "per unit",
+      "pack_size": "82g",
+      "units_per_pack": null,
+      "mbb_threshold": null,
+      "mbb_discount": null
+    }
+  ],
+  "expected_metrics": {
+    "minimum_rows_extracted": 10,
+    "expected_validation_issues": 0
+  }
+}

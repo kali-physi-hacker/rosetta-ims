@@ -33,6 +33,13 @@ EXPECTED_CONTRACT_IDS = [
     "kangaroo.earthz_pet_price_sheet.v1",
     "kangaroo.mixed_price_catalogue.v1",
     "kangaroo.purina_proplan_veterinary_diets.v1",
+    "kangaroo_pet_nutrition.case_only_price_list.v1",
+    "kangaroo_pet_nutrition.catalogue_bundle.v1",
+    "kangaroo_pet_nutrition.unit_price_list.v1",
+    "kpn_trading.case_only_price_list.v1",
+    "kpn_trading.catalogue_bundle.v1",
+    "kpn_trading.pack_and_case_bulk_list.v1",
+    "kpn_trading.pack_price_list.v1",
     "vetapet.non_vet_price_list.v1",
     "vetapet.vet_price_list.v1",
 ]
@@ -161,6 +168,8 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
     assert statuses["kangaroo.mixed_price_catalogue.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
     assert statuses["kangaroo.purina_proplan_veterinary_diets.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
     assert statuses["kangaroo.earthz_pet_price_sheet.v1"] == SupplierContractSupportStatus.UNVERIFIED
+    assert statuses["kpn_trading.catalogue_bundle.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    assert statuses["kangaroo_pet_nutrition.catalogue_bundle.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
 
     assert get_supported_supplier_source_contract("hills.price_list.v1", "v1").contract_id == "hills.price_list.v1"
     assert get_supported_supplier_source_contract("alfamedic.price_list.v1", "v1").contract_id == "alfamedic.price_list.v1"
@@ -197,6 +206,30 @@ def test_kangaroo_contracts_use_supplier_code_without_fabricated_numeric_id():
     assert proplan.pricing.price_basis.code == "PACK"
     assert earthz.pricing.price_basis is None
     assert earthz.source_format == "PDF"
+
+
+def test_kpn_trading_and_kangaroo_pet_nutrition_bundles_use_distinct_supplier_identities():
+    kpn = get_supplier_source_contract("kpn_trading.catalogue_bundle.v1", "v1").declaration
+    kangaroo = get_supplier_source_contract("kangaroo_pet_nutrition.catalogue_bundle.v1", "v1").declaration
+
+    assert (kpn.supplier.supplier_id, kpn.supplier.supplier_code) == (15, "KPNTRADI")
+    assert (kangaroo.supplier.supplier_id, kangaroo.supplier.supplier_code) == (81, "KANGAR")
+    assert kpn.metadata["routing_strategy"] == "supplier_identity_and_content_markers"
+    assert kangaroo.metadata["routing_strategy"] == "supplier_identity_and_content_markers"
+    assert "source_page_groups" not in kpn.metadata
+    assert "source_page_groups" not in kangaroo.metadata
+    assert kpn.source_structure.expected_sections == []
+    assert kangaroo.source_structure.expected_sections == []
+    assert any(
+        "Never select this contract from page number" in rule
+        for rule in kpn.source_structure.row_eligibility_rules
+    )
+    assert any(
+        "Never select this contract from page number" in rule
+        for rule in kangaroo.source_structure.row_eligibility_rules
+    )
+    assert kpn.pricing.price_basis_status == SemanticResolutionStatus.UNRESOLVED
+    assert kangaroo.pricing.price_basis_status == SemanticResolutionStatus.UNRESOLVED
 
 
 def test_supported_status_requires_real_evidence():

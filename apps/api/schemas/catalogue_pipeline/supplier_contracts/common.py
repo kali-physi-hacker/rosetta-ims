@@ -244,11 +244,15 @@ class SourceFieldContract(SupplierSourceModel):
     tier_quantity_field: str | None = Field(
         None,
         description=(
-            "For MBB_TIER_ROW: the field key carrying the tier's quantity threshold. Alfamedic "
+            "The field key carrying a tier's quantity threshold. For MBB_TIER_ROW: Alfamedic "
             "prints '10 bots' in its Order Units column on a line that has no order code and a "
             "cheaper price — condition and benefit both stated, so the term is fully determined. "
             "The row is consumed as a term on the product above it rather than becoming a "
-            "catalogue row of its own; a priced line with no identity is not a product."
+            "catalogue row of its own; a priced line with no identity is not a product. "
+            "For MBB_TIER_PRICE: the quantity-conditioned alternative to tier_minimum_spend — "
+            "K.P.N. Trading prints a case price in an extra column ON the product's own row "
+            "('批發價 每箱'), conditioned on buying the case quantity its units-per-case column "
+            "states; naming that field here makes the condition declared, not inferred."
         ),
     )
     tier_price_field: str | None = Field(
@@ -316,11 +320,23 @@ class SourceFieldContract(SupplierSourceModel):
 
     @model_validator(mode="after")
     def _tier_price_declares_its_condition(self):
-        if self.role == SourceFieldRole.MBB_TIER_PRICE and self.tier_minimum_spend is None:
-            raise ValueError(
-                "MBB_TIER_PRICE fields must declare tier_minimum_spend — a tier price without its "
-                "condition is not a term, and inferring the threshold from column order is a guess"
-            )
+        if self.role == SourceFieldRole.MBB_TIER_PRICE:
+            has_spend = self.tier_minimum_spend is not None
+            has_quantity = bool(self.tier_quantity_field)
+            if not has_spend and not has_quantity:
+                raise ValueError(
+                    "MBB_TIER_PRICE fields must declare their condition — tier_minimum_spend for a "
+                    "spend-threshold ladder (Hill's MOV columns) or tier_quantity_field for a "
+                    "quantity-conditioned same-row price (K.P.N. Trading's case column). A tier "
+                    "price without its condition is not a term, and inferring the threshold from "
+                    "column order is a guess"
+                )
+            if has_spend and has_quantity:
+                raise ValueError(
+                    "MBB_TIER_PRICE fields must declare exactly one condition — tier_minimum_spend "
+                    "or tier_quantity_field, not both; a term with two competing conditions is "
+                    "ambiguous"
+                )
         return self
 
     @model_validator(mode="after")

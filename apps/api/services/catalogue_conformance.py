@@ -167,6 +167,7 @@ def conform_observations(
             row_issues = (
                 document_issues
                 + _row_eligibility_issues(fields, runtime_contract)
+                + _supplier_identity_issues(observation, runtime_contract)
                 + _required_field_issues(fields, runtime_contract)
                 + _validation_rule_issues(fields, runtime_contract)
                 + _normalization_issues(fields, runtime_contract)
@@ -290,13 +291,23 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
     cells_by_key: dict[str, list[str]] = {}
     ordered_cells: list[tuple[list[str], str]] = []
     row_values: list[str] = []
+    # Values printed under a column with NO heading at all. Some layouts leave
+    # one column unlabeled (K.P.N. Trading prints pack sizes and NOW FRESH
+    # product names that way) — heading text cannot address them, so a contract
+    # may claim them via source_path="unlabeled_column" instead. Collected
+    # separately: they never enter heading-keyed matching.
+    unlabeled_values: list[str] = []
     for cell in observation.raw_cells:
-        if cell.column_name and cell.raw_value is not None and str(cell.raw_value).strip():
+        if cell.raw_value is None or not str(cell.raw_value).strip():
+            continue
+        if cell.column_name:
             row_values.append(str(cell.raw_value))
             ordered_cells.append((_column_keys(cell.column_name), str(cell.raw_value)))
             for key in _column_keys(cell.column_name):
                 cell_by_key.setdefault(key, str(cell.raw_value))
                 cells_by_key.setdefault(key, []).append(str(cell.raw_value))
+        else:
+            unlabeled_values.append(str(cell.raw_value))
     if not cell_by_key:
         return {}
 
@@ -336,7 +347,11 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
         return None
 
     def _lookup_field(contract_field) -> str | None:
-        exact = tuple(filter(None, (contract_field.source_column, contract_field.source_path)))
+        exact = tuple(
+            name
+            for name in (contract_field.source_column, contract_field.source_path)
+            if name and name != _UNLABELED_COLUMN_SOURCE
+        )
         occurrence = getattr(contract_field, "source_column_occurrence", None)
         if occurrence:
             # Where the source printed the distinguishing heading, it is
@@ -348,8 +363,17 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
             prefix = getattr(contract_field, "source_column_prefix", None)
             if found is None and prefix:
                 found = _lookup_nth_in_family(occurrence, prefix)
-            return found
-        return _lookup(*exact, *contract_field.aliases)
+        else:
+            found = _lookup(*exact, *contract_field.aliases)
+        if found is None and contract_field.source_path == _UNLABELED_COLUMN_SOURCE:
+            # Claim the row's unlabeled column — but ONLY when exactly one
+            # non-empty unlabeled value exists. Two unlabeled values cannot be
+            # told apart by anything a contract can declare, and guessing
+            # between them would be inventing, so ambiguity resolves to
+            # nothing rather than to a coin flip.
+            if len(unlabeled_values) == 1:
+                return unlabeled_values[0]
+        return found
 
     def _lookup_composed(column_name: str) -> str | None:
         # A composed name may join printed COLUMNS with values that are not
@@ -685,6 +709,67 @@ def _row_eligibility_issues(
             message=f"Row mapped no contract source fields; declared eligibility: {rules[0]}",
         ),
     )
+
+
+def _supplier_identity_issues(
+    observation: ExtractedEvidence,
+    runtime_contract,
+) -> tuple[ContractExecutionIssue, ...]:
+    """Deterministic check against the page's captured supplier identity text.
+
+    Extraction stamps ``supplier_identity_text`` (verbatim letterhead/footer
+    text) onto every observation from a page where it was visible — see
+    catalogue_evidence_extraction.py's VISION_EVIDENCE_PROMPT. This is
+    intentionally a POSITIVE-evidence-only check: if the page carries no
+    identity text at all (older evidence, or a page where none was printed),
+    nothing is asserted either way — the row is neither confirmed nor
+    rejected. It only fires when the page's captured text explicitly names
+    something other than this contract's own declared supplier, which is a
+    real, checkable mismatch, not a guess.
+    """
+
+    identity_text = (observation.source_metadata or {}).get("supplier_identity_text")
+    if not identity_text:
+        return ()
+    supplier = runtime_contract.declaration.supplier
+    own_names = [name for name in (supplier.supplier_name, supplier.supplier_code) if name]
+    if not own_names:
+        return ()
+    if any(_identity_names_overlap(identity_text, name) for name in own_names):
+        return ()
+    return (
+        ContractExecutionIssue(
+            issue_code="CONTRACT_SUPPLIER_IDENTITY_MISMATCH",
+            severity="BLOCKING",
+            message=(
+                f"Page identity text {identity_text!r} does not name this contract's "
+                f"declared supplier ({supplier.supplier_name!r}) — this row is likely from "
+                "a different supplier's pages in a multi-supplier source."
+            ),
+        ),
+    )
+
+
+def _identity_names_overlap(left: str, right: str) -> bool:
+    """Match printed supplier-identity text against a contract's declared name/code.
+
+    Deliberately its OWN normalization, not _names_overlap()/_fold() (used for
+    column-heading matching everywhere else) — abbreviated company names vary
+    in punctuation across extraction passes in ways column headings don't
+    (e.g. "K.P.N. Trading" declared vs. "K.P.N Trading Ltd." as printed/OCR'd,
+    same company, one missing period). Stripping periods here would be too
+    aggressive for column-heading matching (headers occasionally rely on
+    exact punctuation) but is exactly right for a company name.
+    """
+
+    def _identity_fold(value: str) -> str:
+        return re.sub(r"[.\s/|]+", " ", value).strip().lower()
+
+    for left_key in (_identity_fold(left), _english_fold(left)):
+        for right_key in (_identity_fold(right), _english_fold(right)):
+            if left_key and right_key and (left_key in right_key or right_key in left_key):
+                return True
+    return False
 
 
 def _carry_merged_cells(
@@ -1055,29 +1140,77 @@ def _tier_price_terms(
         field
         for field in runtime_contract.declaration.fields
         if getattr(field.role, "value", field.role) == "MBB_TIER_PRICE"
-        and field.tier_minimum_spend is not None
+        and (field.tier_minimum_spend is not None or field.tier_quantity_field)
     ]
     terms: list[dict[str, Any]] = []
     for tier in sorted(tiers, key=lambda f: (f.tier_order or 0, str(f.tier_minimum_spend))):
-        amount = _decimal_or_none(fields.get(f"source:{tier.field_key}"))
-        if amount is None or amount <= 0:
+        if tier.tier_minimum_spend is not None:
+            amount = _decimal_or_none(fields.get(f"source:{tier.field_key}"))
+            if amount is None or amount <= 0:
+                continue
+            # A tier that is not cheaper than the gross price is not a discount. It
+            # happens on rows the supplier prints the same number across, and a term
+            # asserting "spend 4,500 to pay the same" would be noise in every
+            # downstream cost calculation.
+            if gross is not None and amount >= gross:
+                continue
+            terms.append({
+                "mbb_term_id": str(_stable_term_uuid(evidence, tier.field_key)),
+                # SUPPLIER_ORDER, not SUPPLIER_SKU: the condition is a minimum
+                # value across the whole order, even though the discounted price it
+                # unlocks belongs to this row. The scope vocabulary already had the
+                # word for this.
+                "scope": "SUPPLIER_ORDER",
+                "condition": {
+                    "condition_type": "minimum_spend",
+                    "spend": {"amount": str(tier.tier_minimum_spend), "currency": pricing.currency},
+                },
+                "benefit": {
+                    "benefit_type": "discounted_unit_price",
+                    "discounted_price": {
+                        "amount": str(amount),
+                        "currency": pricing.currency,
+                        "price_basis": basis.model_dump(mode="json"),
+                    },
+                },
+                "description": tier.description,
+                "evidence": evidence,
+            })
             continue
-        # A tier that is not cheaper than the gross price is not a discount. It
-        # happens on rows the supplier prints the same number across, and a term
-        # asserting "spend 4,500 to pay the same" would be noise in every
-        # downstream cost calculation.
+
+        # Quantity-conditioned same-row tier: a case/bulk price printed as an
+        # extra column ON the product's own row (K.P.N. Trading's '批發價 每箱
+        # (平均每包價)'), unlocked by buying the quantity another declared field
+        # states (units per case). Both halves are printed on the row, so the
+        # term is as fully determined as Hill's spend ladder.
+        quantity = _leading_decimal(fields.get(f"source:{tier.tier_quantity_field}"))
+        if quantity is None or quantity <= 1:
+            continue
+        amounts = _money_amounts(fields.get(f"source:{tier.field_key}"))
+        if not amounts:
+            continue
+        # A compound cell prints the case TOTAL and its printed per-unit average
+        # in one string ('$1094/箱 ($182/包)'). The per-unit rate is necessarily
+        # the smaller amount when a bundle costs more than one unit — taking
+        # min() selects the printed per-unit figure without computing anything.
+        # A cell carrying ONLY a bundle total (no printed per-unit rate) yields
+        # an "amount" at or above the gross unit price and is refused below —
+        # deriving the rate by division would invent a value the source never
+        # printed, which this module does not do.
+        amount = min(amounts)
+        if amount <= 0:
+            continue
         if gross is not None and amount >= gross:
             continue
         terms.append({
             "mbb_term_id": str(_stable_term_uuid(evidence, tier.field_key)),
-            # SUPPLIER_ORDER, not SUPPLIER_SKU: the condition is a minimum
-            # value across the whole order, even though the discounted price it
-            # unlocks belongs to this row. The scope vocabulary already had the
-            # word for this.
-            "scope": "SUPPLIER_ORDER",
+            # The quantity is of THIS product — same scope and shapes as the
+            # tier-ROW path, because it is the same kind of term printed in a
+            # different place on the page.
+            "scope": "SUPPLIER_SKU",
             "condition": {
-                "condition_type": "minimum_spend",
-                "spend": {"amount": str(tier.tier_minimum_spend), "currency": pricing.currency},
+                "condition_type": "minimum_quantity",
+                "quantity": {"amount": str(quantity), "uom": basis.model_dump(mode="json")},
             },
             "benefit": {
                 "benefit_type": "discounted_unit_price",
@@ -1155,17 +1288,22 @@ _PURCHASE_UNIT_WORDS = {
 
 
 def _purchase_unit_from_text(value: Any) -> str | None:
-    """The purchase unit named after the slash: '30ml/ bot' -> BOTTLE.
+    """The purchase unit named after the slash, or as bare unit text.
 
-    Alfamedic's units vary row by row — box, bot, tube, pot, reel — so this
-    cannot be a single declared value. 'pot', 'reel', 'roll' and 'set' are
-    deliberately absent from the vocabulary: the enum has no honest home for
-    them, and OTHER would assert knowledge nobody has.
+    Alfamedic writes '30ml/ bot' (the unit after the slash); Vetapet's vet
+    section prints a dedicated ORDER UNIT column with bare '1 box' / '1 pc'.
+    Both forms name the unit explicitly, so both are read. Units vary row by
+    row — box, bot, tube, pot, reel — so this cannot be a single declared
+    value. 'pot', 'reel', 'roll' and 'set' are deliberately absent from the
+    vocabulary: the enum has no honest home for them, and OTHER would assert
+    knowledge nobody has — an unknown word resolves to None for a human, and
+    unit-less text ('30ml', '250 g') never names a purchase unit at all.
     """
     text = _text(value)
-    if not text or "/" not in text:
+    if not text:
         return None
-    word = re.sub(r"[^a-z]+", " ", text.rsplit("/", 1)[1].lower()).strip()
+    candidate = text.rsplit("/", 1)[1] if "/" in text else text
+    word = re.sub(r"[^a-z]+", " ", candidate.lower()).strip()
     return _PURCHASE_UNIT_WORDS.get(word) or _PURCHASE_UNIT_WORDS.get(word.split(" ")[0] if word else "")
 
 
@@ -1347,23 +1485,50 @@ def _decimal_or_none(value: Any) -> Decimal | None:
     return decimal if decimal is not None and decimal >= 0 else None
 
 
+# A price cell sometimes carries its unit or its own heading alongside the
+# number — both printed verbatim by the source, neither part of the amount:
+#   'HK$219.0/pcs'  -> 219.0 per piece (the suffix names the basis)
+#   '批發價$392'     -> the column heading leaked into the cell text
+# The suffix must be non-numeric so a genuine fraction ('3/8') never
+# half-parses, and a cell carrying TWO amounts ('$739 HK$1056.0', a struck
+# price beside an offer price) still refuses to parse — picking one would be
+# a guess about which was crossed out.
+_PRICE_UNIT_SUFFIX = re.compile(r"^(\d[\d.]*)\s*/\s*[^\d\s]+$")
+_PRICE_HEADING_PREFIXES = ("批發價", "零售價", "建議零售價")
+# A case price sometimes prints its own derived per-unit average beside it —
+# Kangaroo Pet Nutrition writes '$340 (@28.3)' where 28.3 is exactly 340/12.
+# The '@' marker makes it unambiguous annotation, not a second price, so it is
+# dropped; a cell with two UNMARKED amounts still refuses to parse.
+_PRICE_AVERAGE_ANNOTATION = re.compile(r"\s*\(\s*@\s*[\d.,]+\s*\)\s*$")
+
+
 def _decimal_value(value: Any) -> Decimal | None:
     if value is None or value == "":
         return None
     if isinstance(value, str) and value.strip().lower() in {"by quote", "quote", "n/a", "na"}:
         return None
+    text = _PRICE_AVERAGE_ANNOTATION.sub("", str(value).strip())
+    for heading in _PRICE_HEADING_PREFIXES:
+        if text.startswith(heading):
+            text = text[len(heading):].strip()
+            break
+    text = text.replace(",", "").replace("HK$", "").replace("HKD", "").replace("$", "").strip()
+    suffixed = _PRICE_UNIT_SUFFIX.match(text)
+    if suffixed:
+        text = suffixed.group(1)
     try:
-        # Longest currency token first: stripping "$" ahead of "HK$" leaves
-        # "HK" glued to the digits, and "HK$130" reads as no price at all.
-        decimal = Decimal(str(value).replace(",", "").replace("HK$", "").replace("HKD", "").replace("$", "").strip())
+        decimal = Decimal(text)
     except (InvalidOperation, ValueError):
         # "130.0 (Price Reduced)" is a price with a printed remark, and Alfamedic
         # prints that shape on nine rows of one catalogue. Accept ONLY an amount
         # followed by a single parenthesised note — the note is dropped, never
         # read. "10% discount" and "1 box (12 pcs)" still refuse: the head must
-        # itself be a parseable amount and nothing else.
+        # itself be a parseable amount and nothing else. The note must carry NO
+        # digits: a numeric note is a second amount ('$1094/箱 ($182/包)' prints
+        # a case total beside its per-can average), and choosing between two
+        # printed amounts is a guess this parser refuses to make.
         match = re.fullmatch(r"\s*([^()]+?)\s*\(([^()]+)\)\s*", str(value))
-        if match:
+        if match and not re.search(r"\d", match.group(2)):
             return _decimal_value(match.group(1))
         return None
     return decimal
@@ -1373,6 +1538,26 @@ def _raw_money_text(value: Any) -> str | None:
     if value is None or value == "":
         return None
     return str(value)
+
+
+def _money_amounts(value: Any) -> list[Decimal]:
+    """Every monetary amount printed in one (possibly compound) cell, in order.
+
+    K.P.N. Trading prints a case price and its per-unit average in one cell —
+    '$1094/箱\\n($182/包)' — which no single-value parse can read. Each numeric
+    token IS printed verbatim, so extracting them is reading, not computing.
+    Commas are thousands separators ('1,094'); currency markers and CJK unit
+    suffixes are not part of the number.
+    """
+    if value is None or value == "":
+        return []
+    amounts: list[Decimal] = []
+    for token in re.findall(r"\d[\d,]*(?:\.\d+)?", str(value)):
+        try:
+            amounts.append(Decimal(token.replace(",", "")))
+        except InvalidOperation:
+            continue
+    return amounts
 
 
 def _text(value: Any) -> str | None:
@@ -1402,12 +1587,34 @@ def _english_fold(value: str) -> str:
 # printed across the table rather than any column in it.
 _SECTION_HEADER_SOURCE = "section_header"
 
+# A contract declares this as source_path when a field's value sits in a column
+# the source prints with NO heading at all — heading text cannot address it.
+# Resolves only when the row carries exactly one non-empty unlabeled value;
+# more than one is unresolvable ambiguity, not a guess to make.
+_UNLABELED_COLUMN_SOURCE = "unlabeled_column"
+
+
+# Spaces between CJK characters carry no meaning — Vetapet's retail section
+# letter-spaces its headings in print ('批 發 價' for 批發價), so the verbatim
+# transcription and a contract's compact declaration must fold to one key.
+_CJK_INTERNAL_SPACE = re.compile(r"(?<=[⺀-鿿豈-﫿])\s+(?=[⺀-鿿豈-﫿])")
+
+
+# An English fold whose only Latin content is a currency tag (plus digits and
+# punctuation) is not a distinguishing name. Kangaroo Pet Nutrition prints
+# '批發價 (HKD)' AND '建議零售價 (HKD) 每罐' on one page — both English-fold to
+# bare 'hkd', which silently matched a contract's COST to the RRP column.
+_CURRENCY_ONLY_ENGLISH = re.compile(r"(?:\b(?:hkd|hk|usd|rmb|cny)\b|[\d\s.,()*/-])*", re.IGNORECASE)
+
 
 def _column_keys(value: str) -> list[str]:
     keys = [_fold(value)]
     english = _english_fold(value)
-    if english and english not in keys:
+    if english and english not in keys and not _CURRENCY_ONLY_ENGLISH.fullmatch(english):
         keys.append(english)
+    squashed = _CJK_INTERNAL_SPACE.sub("", keys[0])
+    if squashed not in keys:
+        keys.append(squashed)
     return keys
 
 
@@ -1415,12 +1622,19 @@ def _english_text(value: Any) -> str | None:
     """The Latin/ASCII portion of a (possibly bilingual) value.
 
     Bilingual source cells render as "中文 English"; keep only the English and
-    tidy whitespace. Returns None when there is no Latin text.
+    tidy whitespace. Returns None when there is no Latin text — including when
+    only punctuation survives the strip: a pure-Chinese name like
+    '無穀幼犬糧 (新包裝)' leaves '( )', which is residue, not a name, and
+    returning it would hand downstream a product with no usable name where the
+    caller's verbatim fallback was standing by.
     """
     if value is None:
         return None
     ascii_only = re.sub(r"[^\x00-\x7f]+", " ", str(value))
-    return re.sub(r"\s+", " ", ascii_only).strip(" -|/*·,") or None
+    stripped = re.sub(r"\s+", " ", ascii_only).strip(" -|/*·,")
+    if not re.search(r"[A-Za-z0-9]", stripped):
+        return None
+    return stripped
 
 
 def _has_cells(observation: ExtractedEvidence) -> bool:

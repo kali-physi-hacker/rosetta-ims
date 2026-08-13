@@ -1,0 +1,22 @@
+{
+  "contract_id": "kpn_trading.catalogue_bundle.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "TECHNICAL_DEBT",
+  "supplier_id": 15,
+  "supplier_name": "K.P.N. Trading",
+  "notes": "Supplier ID 15 and explicit K.P.N. Trading source markers determine applicability. Page positions and observed brands are not routing criteria. Runtime row examples remain blocked because the bundle contains multiple price bases.",
+  "examples": [],
+  "technical_debt": [
+    {
+      "debt_id": "KPN-TRADING-LAYOUT-SEGMENTATION",
+      "status": "OPEN",
+      "summary": "Detect K.P.N. Trading supplier identity and table layout from source content before runtime interpretation.",
+      "needed_confirmation": [
+        "Representative source-located rows for every unit, pack, and case layout.",
+        "Price basis for every wholesale and RRP column.",
+        "Whether units per case is only case configuration or also an order constraint.",
+        "Promotion scope and stacking rules for each detected layout."
+      ]
+    }
+  ]
+}

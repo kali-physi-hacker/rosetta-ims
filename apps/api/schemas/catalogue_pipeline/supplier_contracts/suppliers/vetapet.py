@@ -7,6 +7,7 @@ from schemas.catalogue_pipeline.enums import IssueSeverity, SourceFormat, UnitCo
 from schemas.catalogue_pipeline.supplier_contracts.common import (
     SUPPLIER_SOURCE_SCHEMA_VERSION,
     AmbiguityRule,
+    MbbSourceSemantics,
     PackagingSourceSemantics,
     PricingSourceSemantics,
     SemanticResolutionStatus,
@@ -45,13 +46,20 @@ _NON_VET_EVIDENCE = [
 
 
 def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldContract]:
-    return [
+    fields = [
         SourceFieldContract(
             field_key="supplier_sku",
             role=SourceFieldRole.SUPPLIER_SKU,
             requirement=SourceFieldRequirement.REQUIRED,
             source_column="CODE NO / 編號",
-            description="Vetapet code number.",
+            aliases=["CODE NO", "編號", "CODE"],
+            description=(
+                "Vetapet code number. Bare aliases cover the retail sections that print "
+                "編號 alone (letter-spaced 編 號 matches via CJK-space-insensitive folding) "
+                "and the variant tables that print CODE. 'Code No.' (with the period) is "
+                "deliberately NOT an alias: that heading belongs to the code→category "
+                "legend sidebars, which are reference boxes, not product rows."
+            ),
             evidence=evidence_items,
         ),
         SourceFieldContract(
@@ -59,15 +67,44 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             role=SourceFieldRole.PRODUCT_NAME,
             requirement=SourceFieldRequirement.REQUIRED,
             source_column="PRODUCT NAME / 產品名稱",
-            description="Printed product name.",
+            aliases=["PRODUCT NAME", "產品名稱", "產品"],
+            description=(
+                "Printed product name. Retail sections print 產品 alone (letter-spaced "
+                "產 品 in the source; matched via CJK-space-insensitive folding). Variant "
+                "tables (e.g. Ferplast beds) name the product only in the banner above the "
+                "table and are expected to flag this field for review."
+            ),
+            evidence=evidence_items,
+        ),
+        SourceFieldContract(
+            field_key="brand",
+            role=SourceFieldRole.BRAND,
+            requirement=SourceFieldRequirement.OPTIONAL,
+            # `section_header` exactly — it is the only source_path the
+            # conformance engine resolves (the banner spanning the table).
+            # "product_name or section_header" reads as a column name, matches
+            # no column, and captured nothing. Pulling a brand back out of the
+            # product name is not something the engine does, so that half of
+            # the intent is dropped rather than left as a claim we do not meet.
+            source_path="section_header",
+            description="Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
             evidence=evidence_items,
         ),
         SourceFieldContract(
             field_key="pack_size",
             role=SourceFieldRole.PACKAGING,
             requirement=SourceFieldRequirement.OPTIONAL,
-            source_column="SIZE / PACK / 重量" if segment == "vet" else "重量 / SIZE",
-            description="Raw size/packaging text; may express content measure, pack description, or both.",
+            source_column="PACKING PER UNIT" if segment == "vet" else "重量 / SIZE",
+            aliases=(
+                ["PACKING PER UNIT", "SIZE", "PACK", "重量", "包裝"]
+                if segment == "vet"
+                else ["重量", "SIZE", "包裝"]
+            ),
+            description=(
+                "Raw size/packaging text; may express content measure, pack description, or "
+                "both. The vet sections print it as PACKING PER UNIT (verified on the "
+                "sample's diagnostics pages); retail sections use 重量/SIZE."
+            ),
             evidence=evidence_items,
         ),
         SourceFieldContract(
@@ -75,7 +112,22 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             role=SourceFieldRole.SOURCE_PRICE,
             requirement=SourceFieldRequirement.REQUIRED,
             source_column="WHOLESALE PRICE / 批發價" if segment == "vet" else "批發價 / WHOLESALE PRICE",
-            description="Wholesale price field.",
+            aliases=(
+                # Deliberately NO bare 批發價 alias for the vet segment: only the
+                # retail sections print it alone, and matching it here would let
+                # this contract claim retail rows under a UNIT basis nobody has
+                # verified — the non_vet contract owns those rows.
+                ["WHOLESALE PRICE", "UNIT PRICE", "PRICE", "UNIT PRICE PER TEST"]
+                if segment == "vet"
+                else ["批發價", "WHOLESALE PRICE"]
+            ),
+            description=(
+                "Supplier cost. The vet sections price by UNIT PRICE / PRICE — verified on "
+                "the sample that UNIT PRICE is the price of one ORDER UNIT (a box/set/pc "
+                "named per row), not one test; see packaging.purchase_uom_source_field. "
+                "Retail sections print 批發價 (letter-spaced in print; matched via "
+                "CJK-space-insensitive folding)."
+            ),
             evidence=evidence_items,
         ),
         SourceFieldContract(
@@ -83,7 +135,23 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             role=SourceFieldRole.RRP,
             requirement=SourceFieldRequirement.OPTIONAL,
             source_column="SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價" if segment == "vet" else "零售價 / RETAIL PRICE",
-            description="Suggested retail or retail price field.",
+            aliases=["SUGGESTED RETAIL PRICE", "RETAIL PRICE", "零售價", "建議零售價"],
+            description="Suggested retail or retail price field; retail sections print 建議零售價.",
+            evidence=evidence_items,
+        ),
+        SourceFieldContract(
+            field_key="promotion_text",
+            role=SourceFieldRole.MBB_TEXT,
+            requirement=SourceFieldRequirement.OPTIONAL,
+            source_column="TERMS / REMARKS",
+            aliases=["TERMS", "REMARKS"],
+            description=(
+                "Bulk buy terms, promotional offers, or discount conditions printed as row "
+                "columns (e.g., 'Buy 20+ at special price', 'Buy 3 get 1 free'). PAGE-level "
+                "promotions (banner text like 'Mix over $1000, 10% off' or brand-scoped "
+                "'混合12件 9折') land in text_observations, which no contract field can "
+                "reach today — see known_ambiguities."
+            ),
             evidence=evidence_items,
         ),
         SourceFieldContract(
@@ -111,6 +179,39 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             evidence=evidence_items,
         ),
     ]
+    if segment == "vet":
+        fields.append(
+            SourceFieldContract(
+                field_key="order_unit",
+                role=SourceFieldRole.OTHER,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="ORDER UNIT",
+                description=(
+                    "The unit one UNIT PRICE buys — '1 box', '1 set', '1 pc', printed per "
+                    "row. Verified on the sample: '10 tests / box · 1 box · HK$1958' prices "
+                    "the BOX, not the test. Declared as packaging.purchase_uom_source_field "
+                    "so the cost's price basis follows this value where it is readable."
+                ),
+                evidence=evidence_items,
+            )
+        )
+    else:
+        fields.append(
+            SourceFieldContract(
+                field_key="variant",
+                role=SourceFieldRole.VARIANT,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="unlabeled_column",
+                description=(
+                    "Colour/variant label printed in an unlabeled first column on variant "
+                    "tables (e.g. Ferplast beds: 黑色/灰色/杏色 each with its own CODE). "
+                    "Claimed via the unlabeled_column sentinel — resolves only when the row "
+                    "carries exactly one non-empty unlabeled value."
+                ),
+                evidence=evidence_items,
+            )
+        )
+    return fields
 
 
 _VET_VALIDATION_RULES = [
@@ -181,31 +282,94 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
             price_basis=UnitOfMeasure(code=UnitCode.UNIT),
             price_basis_status=SemanticResolutionStatus.PARTIALLY_VERIFIED,
             autoswap_cost_rrp_allowed=True,
-            notes="The source PDF confirms multiple price layouts. Wholesale/Retail sections align with parser tests; Unit Price sections need a dedicated parser rule before production use.",
+            null_cost_markers=["By Quote"],
+            notes=(
+                "Verified on the sample: UNIT PRICE sections price one ORDER UNIT (a "
+                "box/set/pc named per row), so the basis follows the order_unit field where "
+                "readable (packaging.price_basis_follows_purchase_unit) and falls back to "
+                "UNIT for the PRICE/Wholesale layouts that print no order-unit column. "
+                "Analyzers and instruments print 'By Quote' instead of a price."
+            ),
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
             price_basis=UnitOfMeasure(code=UnitCode.UNIT),
+            purchase_uom_source_field="order_unit",
+            price_basis_follows_purchase_unit=True,
             content_measure_source_field="pack_size",
             break_pack_allowed=None,
             interpretation_rules=[
                 "Treat kg/g/ml size text as content measure, not sellable-unit count.",
                 "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms.",
+                "ORDER UNIT names what one UNIT PRICE buys; PACKING PER UNIT describes what is inside it.",
             ],
             unresolved_semantics=[
-                "Purchase UOM, order increment, and break-pack rules are not proven by checked-in source evidence.",
+                "Order increment and break-pack rules are not proven by checked-in source evidence.",
+                "PRICE-column layouts print no order-unit column; their UNIT fallback basis is not per-row verified.",
             ],
+        ),
+        mbb=MbbSourceSemantics(
+            source_fields=["promotion_text"],
+            condition_patterns=["buy quantity threshold", "spend threshold"],
+            benefit_patterns=["free units", "percentage discount", "fixed price per unit"],
+            requires_validation_issue_when=[
+                "The qualifying products or exact threshold basis are not explicit.",
+                "Stacking rules or exclusions are not defined."
+            ],
+            notes="Vetapet uses various MBB formats including 'Buy X get Y free', 'Buy X+ at special price', and percentage discounts.",
         ),
         validation_rules=_VET_VALIDATION_RULES,
         known_ambiguities=[
             AmbiguityRule(
                 issue_code="VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
-                condition="The supplied Vetapet PDF contains both Unit Price tables and Wholesale/Retail/Terms tables.",
-                review_guidance="Decide whether to split Vetapet into multiple supplier-format contracts or add typed per-section interpretation rules before production selection.",
+                condition=(
+                    "The supplied Vetapet PDF contains Unit Price tables (with ORDER UNIT "
+                    "columns), bare PRICE tables (without), and Wholesale/Retail/Terms "
+                    "tables. All are now declared via cost aliases with a per-row order-unit "
+                    "basis where printed; the PRICE layouts fall back to an unverified UNIT "
+                    "basis."
+                ),
+                review_guidance=(
+                    "Confirm with BizOps that PRICE-column layouts price one order unit "
+                    "(box/pc) like the UNIT PRICE layouts, or per sellable unit — the "
+                    "fallback basis is a declaration, not source-proven."
+                ),
                 blocks_supported_status=True,
-            )
+            ),
+            AmbiguityRule(
+                issue_code="VETAPET_VET_SPECIAL_OFFER_STRUCK_PRICES",
+                condition=(
+                    "Some vet pages print 'Special Offer: N% off' bands with the original "
+                    "price struck through and a badge price beside it (sample page 20: "
+                    "HK$1056 struck, $739 badge). Which amount lands in the UNIT PRICE "
+                    "column of the extracted evidence depends on the render; the offer is "
+                    "time-limited and neither amount is flagged as promotional in the row."
+                ),
+                review_guidance=(
+                    "Rows from special-offer bands need review before the cost is trusted: "
+                    "decide whether standard cost is the struck price with the offer as an "
+                    "MBB-style term, or the offer price outright."
+                ),
+                blocks_supported_status=True,
+            ),
+            AmbiguityRule(
+                issue_code="VETAPET_PAGE_BANNER_PROMOTIONS_UNREACHABLE",
+                condition=(
+                    "Order- and brand-scoped promotions print as page banners ('Promotion: "
+                    "Mix over $1000, 10% off'; '混合12件 9折 24件 8折'), which extraction "
+                    "stores as page-level text_observations — no contract field mechanism "
+                    "reaches those today, so they are preserved as evidence but never "
+                    "attached to rows."
+                ),
+                review_guidance=(
+                    "Needs a shared mechanism (like supplier_identity_text) threading page "
+                    "text into row metadata, or reviewer awareness that banner promos live "
+                    "in the run's unmapped text evidence."
+                ),
+                blocks_supported_status=False,
+            ),
         ],
-        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "pack_size", "cost", "rrp", "species", "segment", "category"),
+        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category", "order_unit"),
         created_at=DECLARATION_CREATED_AT,
         created_by=DECLARATION_CREATED_BY,
     )
@@ -258,6 +422,16 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 "Price basis, purchase UOM, sellable unit, order increment, and break-pack rules are unresolved.",
             ],
         ),
+        mbb=MbbSourceSemantics(
+            source_fields=["promotion_text"],
+            condition_patterns=["buy quantity threshold", "spend threshold"],
+            benefit_patterns=["free units", "percentage discount", "fixed price per unit"],
+            requires_validation_issue_when=[
+                "The qualifying products or exact threshold basis are not explicit.",
+                "Stacking rules or exclusions are not defined."
+            ],
+            notes="Vetapet uses various MBB formats including 'Buy X get Y free', 'Buy X+ at special price', and percentage discounts.",
+        ),
         validation_rules=[
             SupplierValidationRule(
                 rule_id="vetapet_non_vet.cost_below_rrp_unverified",
@@ -282,7 +456,7 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 review_guidance="Confirm whether the wholesale price is per sellable unit, pack, case, or another basis.",
             ),
         ],
-        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "pack_size", "cost", "rrp", "species", "segment", "category"),
+        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category", "variant"),
         created_at=DECLARATION_CREATED_AT,
         created_by=DECLARATION_CREATED_BY,
     )

@@ -1,0 +1,535 @@
+{
+  "schema_version": "catalogue.supplier_source_contract.v1",
+  "contract_id": "kpn_trading.case_only_price_list.v1",
+  "contract_version": "v1",
+  "supplier": {
+    "supplier_id": 15,
+    "supplier_name": "K.P.N. Trading",
+    "supplier_code": "KPNTRADI"
+  },
+  "document_type": "CATALOGUE",
+  "format_name": "K.P.N. Trading case-only price list",
+  "source_format": "PDF_TABLE",
+  "support_status": "PARTIALLY_VERIFIED",
+  "effective_from": null,
+  "effective_to": null,
+  "evidence": [
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "reference": "external-sample:KPN_Kangaroo.pdf",
+      "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+    },
+    {
+      "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+      "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+      "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+    },
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+      "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+    }
+  ],
+  "source_structure": {
+    "source_format": "PDF_TABLE",
+    "expected_sheet_names": [],
+    "expected_sections": [],
+    "table_regions": [
+      {
+        "name": "kpn_trading_case_only_sections",
+        "selector": "K.P.N. Trading sections whose ONLY printed wholesale amount is at case/box level, with a separately printed pack-level RRP but no pack-level wholesale figure.",
+        "header_row": null,
+        "notes": "Observed on wet-food case pages and a 24-pack box layout."
+      }
+    ],
+    "required_headers": [],
+    "optional_headers": [
+      "產品編號 SKU#",
+      "sku#",
+      "產品內容 Product Description",
+      "包裝",
+      "Size",
+      "每箱盒數 Unit Per Case",
+      "每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)",
+      "批發價 1盒24包",
+      "每箱 (12盒) 建議零售價 Recommended Retail Price Per Case (12 boxes)",
+      "零售價 1盒24包",
+      "零售價 1箱24包",
+      "每盒 建議零售價 Recommended Retail Price Per box",
+      "零售價 每包"
+    ],
+    "row_eligibility_rules": [
+      "The ingestion supplier must be ID 15, or the enclosing source section must explicitly identify K.P.N. Trading / KPNTRADI.",
+      "Select this contract only when the row's table prints wholesale at case/box level with no pack-level wholesale figure present.",
+      "Rows require a product code, product description, and printed wholesale price."
+    ],
+    "discontinued_markers": [],
+    "row_identity_fields": [],
+    "skip_rules": [],
+    "source_location_expectations": [
+      "source document and page",
+      "supplier identity marker or ingestion supplier identity",
+      "brand/section heading",
+      "table row",
+      "source column"
+    ]
+  },
+  "fields": [
+    {
+      "field_key": "supplier_sku",
+      "role": "SUPPLIER_SKU",
+      "requirement": "REQUIRED",
+      "source_column": "產品編號 SKU# / sku#",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "產品編號 SKU#",
+        "sku#",
+        "SKU#"
+      ],
+      "description": "Current product code printed on the eligible row.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "brand",
+      "role": "BRAND",
+      "requirement": "REQUIRED",
+      "source_column": null,
+      "source_path": "section_header",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Printed row or section brand; observed brands are examples, not routing criteria.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "description",
+      "role": "PRODUCT_NAME",
+      "requirement": "REQUIRED",
+      "source_column": "產品內容 Product Description",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "產品內容",
+        "產品內容 Product Description",
+        "Product Description"
+      ],
+      "description": "Printed English/Chinese product description.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "pack_size",
+      "role": "PACKAGING",
+      "requirement": "OPTIONAL",
+      "source_column": "包裝",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "包裝",
+        "Size"
+      ],
+      "description": "Printed content size or packaging text.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "units_per_case",
+      "role": "OTHER",
+      "requirement": "REQUIRED",
+      "source_column": "每箱盒數 Unit Per Case",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "每箱盒數",
+        "Unit Per Case"
+      ],
+      "description": "Case configuration — required here since the wholesale price is stated only at this level.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "wholesale_price",
+      "role": "SOURCE_PRICE",
+      "requirement": "REQUIRED",
+      "source_column": "每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "批發價 1盒24包",
+        "每箱(12盒) 批發價 Wholesale Price Per Case (12 boxes)",
+        "每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)"
+      ],
+      "description": "The only printed wholesale amount for this group — always at case/box level. No per-unit figure exists in the source.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "rrp",
+      "role": "RRP",
+      "requirement": "OPTIONAL",
+      "source_column": "每盒 建議零售價 Recommended Retail Price Per box",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "零售價 每包",
+        "每盒 建議零售價 Recommended Retail Price Per box"
+      ],
+      "description": "Preferred RRP is the pack-level figure ('零售價 每包' / '每盒 建議零售價'), which the source prints separately and more granularly than the case RRP.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "effective_date",
+      "role": "EFFECTIVE_DATE",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "document or section effective-date / last-update label",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Document- or section-level effective or last-update date.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "promotion_text",
+      "role": "MBB_TEXT",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "document, section, or row promotion notes",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Printed spend, order-discount, or promotional terms.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=28,31,48-49",
+          "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    }
+  ],
+  "pricing": {
+    "cost_source_field": "wholesale_price",
+    "rrp_source_field": "rrp",
+    "currency": "HKD",
+    "price_basis": {
+      "code": "CASE",
+      "label": null
+    },
+    "price_basis_status": "VERIFIED",
+    "autoswap_cost_rrp_allowed": false,
+    "null_cost_markers": [],
+    "notes": "Verified directly against every page in this group: the only printed wholesale amount is at case/box level. There is no per-pack wholesale figure to derive — computing one by dividing the case price would invent a value the source never stated, which this contract does not do."
+  },
+  "packaging": {
+    "packaging_source_field": "pack_size",
+    "purchase_uom": null,
+    "price_basis": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
+    "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "purchase_uom_source_field": null,
+    "price_basis_follows_purchase_unit": false,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": false,
+    "interpretation_rules": [
+      "Treat content size as a measure, not a sellable-unit count.",
+      "units_per_case is required here — it is the denominator the source itself uses for its own printed per-box RRP."
+    ],
+    "unresolved_semantics": [
+      "Whether break-pack purchase (buying below a full case, at case-derived pricing) is commercially permitted is not stated by the source."
+    ]
+  },
+  "mbb": {
+    "source_fields": [
+      "promotion_text"
+    ],
+    "supported_scopes": [],
+    "condition_patterns": [
+      "spend threshold"
+    ],
+    "benefit_patterns": [
+      "percentage discount"
+    ],
+    "requires_validation_issue_when": [
+      "The qualifying products, threshold basis, or stacking rules are not explicit."
+    ],
+    "notes": "Promotion text remains evidence until its scope is confirmed."
+  },
+  "validation_rules": [],
+  "known_ambiguities": [
+    {
+      "issue_code": "KPN_TRADING_CASE_ONLY_SUPPLIER_IDENTITY_REQUIRED",
+      "condition": "A source may contain multiple suppliers or only a subset of previously observed brands.",
+      "review_guidance": "Select this declaration only from ingestion supplier ID 15 or an explicit K.P.N. Trading / KPNTRADI source marker; never from page position or brand. CONTRACT_SUPPLIER_IDENTITY_MISMATCH also verifies this automatically from captured evidence — but only once the source has been re-extracted with the prompt that captures supplier_identity_text (see catalogue_evidence_extraction.py's VISION_EVIDENCE_PROMPT); older or not-yet-re-extracted evidence still relies on this manual guidance alone.",
+      "blocks_supported_status": true
+    },
+    {
+      "issue_code": "KPN_TRADING_CASE_ONLY_BREAK_PACK_UNCONFIRMED",
+      "condition": "No printed evidence confirms whether below-case-quantity purchase is offered for this layout.",
+      "review_guidance": "Confirm with the supplier or BizOps whether break-pack ordering is available before enabling it downstream.",
+      "blocks_supported_status": false
+    }
+  ],
+  "pipeline_mapping": {
+    "raw_observation_contract_id": "catalogue.extracted_evidence.v1",
+    "staging_item_contract_id": "catalogue.normalized_row.v1",
+    "raw_observation_fields": [
+      "supplier_sku",
+      "brand",
+      "description",
+      "pack_size",
+      "units_per_case",
+      "wholesale_price",
+      "rrp",
+      "effective_date",
+      "promotion_text"
+    ],
+    "staging_raw_field_keys": [
+      "supplier_sku",
+      "brand",
+      "description",
+      "pack_size",
+      "units_per_case",
+      "wholesale_price",
+      "rrp",
+      "effective_date",
+      "promotion_text"
+    ],
+    "staging_proposed_field_keys": [
+      "supplier_sku",
+      "brand",
+      "description",
+      "pack_size",
+      "units_per_case",
+      "wholesale_price",
+      "rrp",
+      "effective_date",
+      "promotion_text"
+    ]
+  },
+  "created_at": "2026-07-30T00:00:00Z",
+  "created_by": "catalogue-contract-integration",
+  "updated_at": null,
+  "updated_by": null,
+  "metadata": {
+    "routing_strategy": "supplier_identity_and_layout_markers",
+    "sample_reference": "KPN_Kangaroo.pdf",
+    "price_basis_group": "CASE"
+  }
+}
