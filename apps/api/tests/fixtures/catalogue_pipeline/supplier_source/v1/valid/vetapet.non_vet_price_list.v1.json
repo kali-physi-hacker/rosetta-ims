@@ -162,10 +162,11 @@
       "aliases": [
         "SUGGESTED RETAIL PRICE",
         "RETAIL PRICE",
+        "SUGGESTED PRICE",
         "零售價",
         "建議零售價"
       ],
-      "description": "Suggested retail or retail price field; retail sections print 建議零售價.",
+      "description": "Suggested retail or retail price field; retail sections print 建議零售價, and the vet catalogue's retail-style brand tables print 'Suggested Price'.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -183,7 +184,8 @@
       "composed_from": [],
       "aliases": [
         "TERMS",
-        "REMARKS"
+        "REMARKS",
+        "REMARK"
       ],
       "description": "Bulk buy terms, promotional offers, or discount conditions printed as row columns (e.g., 'Buy 20+ at special price', 'Buy 3 get 1 free'). PAGE-level promotions (banner text like 'Mix over $1000, 10% off' or brand-scoped '混合12件 9折') land in text_observations, which no contract field can reach today — see known_ambiguities.",
       "evidence": [

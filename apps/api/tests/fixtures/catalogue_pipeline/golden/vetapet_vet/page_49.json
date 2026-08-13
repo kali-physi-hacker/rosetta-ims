@@ -1,0 +1,62 @@
+{
+ "page_outcome": "evidence",
+ "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+ "page_brand_text": "Antinol® Rapid",
+ "tables": [
+  {
+   "columns": [
+    "CODE NO",
+    "PRODUCT NAME",
+    "WHOLESALE PRICE",
+    "SUGGESTED RETAIL PRICE"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "EAB01",
+      "Antinol® Rapid for dogs - 30 Capsule",
+      "HK$160.0",
+      "HK$276.0"
+     ]
+    },
+    {
+     "cells": [
+      "EAB02",
+      "Antinol® Rapid for dogs - 60 Capsule",
+      "HK$256.0",
+      "HK$458.0"
+     ]
+    },
+    {
+     "cells": [
+      "EAB03",
+      "Antinol® Rapid for cats - 30 Capsule",
+      "HK$160.0",
+      "HK$276.0"
+     ]
+    },
+    {
+     "cells": [
+      "EAB04",
+      "Antinol® Rapid for cats - 60 Capsule",
+      "HK$256.0",
+      "HK$458.0"
+     ]
+    },
+    {
+     "cells": [
+      "EAB05",
+      "Antinol® Rapid for dogs - 90 Capsule",
+      "HK$370.0",
+      "HK$655.0"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Made in New Zealand"
+  }
+ ]
+}

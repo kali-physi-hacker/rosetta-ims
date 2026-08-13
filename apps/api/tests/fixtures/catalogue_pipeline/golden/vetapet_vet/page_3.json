@@ -1,0 +1,73 @@
+{
+ "page_outcome": "evidence",
+ "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+ "page_brand_text": "zoetis",
+ "tables": [
+  {
+   "columns": [
+    "Code No",
+    "Product Name",
+    "Packing Per Unit",
+    "Unit Price",
+    "Remarks"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "401",
+      "Revolution 15mg for Puppies & Kittens (Mauve 5 lbs or less)",
+      "3 tubes / pack",
+      "HK$128.0",
+      null
+     ]
+    },
+    {
+     "cells": [
+      "402",
+      "Revolution 45mg for Cats (Blue 5.1-15 lbs)",
+      "3 tubes / pack",
+      "HK$155.0",
+      null
+     ]
+    },
+    {
+     "cells": [
+      "501",
+      "Revolution 30mg for Toy Dogs (Purple 5.1-10 lbs)",
+      "3 tubes / pack",
+      "HK$150.0",
+      null
+     ]
+    },
+    {
+     "cells": [
+      "502",
+      "Revolution 60mg for Small Dogs (Brown 10.1-20 lbs)",
+      "3 tubes / pack",
+      "HK$162.0",
+      null
+     ]
+    },
+    {
+     "cells": [
+      "503",
+      "Revolution 120mg for Medium Dogs (Red 20.1-40 lbs)",
+      "3 tubes / pack",
+      "HK$191.0",
+      null
+     ]
+    },
+    {
+     "cells": [
+      "504",
+      "Revolution 240mg for Large Dogs (Teal 40.1-80 lbs)",
+      "3 tubes / pack",
+      "HK$220.0",
+      null
+     ]
+    }
+   ],
+   "section": "PARASITE CONTROL"
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+{
+ "page_outcome": "evidence",
+ "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+ "page_brand_text": "zoetis",
+ "tables": [
+  {
+   "columns": [
+    "Code No",
+    "Product Name",
+    "Packing Per Unit",
+    "Unit Price",
+    "Remarks"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "SR-12",
+      "ProHeart SR-12 Injection",
+      "10 mL\n(8 mL when constituted)",
+      "HK$2030.0",
+      null
+     ]
+    }
+   ],
+   "section": "PARASITE CONTROL"
+  }
+ ]
+}

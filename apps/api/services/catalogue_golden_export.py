@@ -134,15 +134,20 @@ def _basis_uom(pub, variant) -> str:
 
 
 def _identity_order_multiple(variant, link) -> str:
-    """The supplier link's ordering terms, which are kept separate from pack size."""
+    """The supplier link's ordering terms, which are kept separate from pack size.
+
+    An increment of one is not an ordering constraint — printing '1 PIECE'
+    asserts a rule the source never stated, so quantities below two render
+    as blank.
+    """
     # The order multiple IS the minimum: 24s means the smallest order is 24.
-    if link is not None and link.order_increment_qty:
+    if link is not None and link.order_increment_qty and link.order_increment_qty > 1:
         unit = _clean(link.order_increment_uom) or _clean(variant.uom if variant else None)
         return " ".join(part for part in (_num(link.order_increment_qty), unit) if part)
-    if link is not None and link.minimum_order_qty:
+    if link is not None and link.minimum_order_qty and link.minimum_order_qty > 1:
         unit = _clean(link.minimum_order_uom) or _clean(variant.uom if variant else None)
         return " ".join(part for part in (_num(link.minimum_order_qty), unit) if part)
-    if variant is not None and variant.min_purchase_qty:
+    if variant is not None and variant.min_purchase_qty and variant.min_purchase_qty > 1:
         return " ".join(part for part in (_num(variant.min_purchase_qty), _clean(variant.pack_unit)) if part)
     return ""
 
@@ -237,6 +242,34 @@ def _clean(raw: str | None) -> str:
     return "" if text.upper() in {"#N/A", "N/A", "NA", "-", ""} else text
 
 
+def _normalized_rrps(db: Session, run: str) -> dict[str, tuple[str, str | None]]:
+    """The RRP the run READ, per catalogue item.
+
+    RRP currently ends its journey at the normalized row — the approved
+    snapshot does not carry it, and the pipeline deliberately writes no legacy
+    supplier-link rows yet. This export is a report of what the run read, so
+    the printed RRP proposal is the honest source; the legacy link stays as a
+    fallback for rows that predate the pipeline.
+    """
+    import json as _json
+
+    out: dict[str, tuple[str, str | None]] = {}
+    for row in (
+        db.query(models.CatalogueNormalizedRow)
+        .filter(models.CatalogueNormalizedRow.ingestion_run_uuid == run)
+        .all()
+    ):
+        try:
+            fields = _json.loads(row.normalized_fields_json or "{}")
+        except ValueError:
+            continue
+        proposal = fields.get("rrp") or {}
+        amount = proposal.get("amount") if isinstance(proposal, dict) else None
+        if amount:
+            out[row.catalogue_item_uuid] = (str(amount), proposal.get("currency"))
+    return out
+
+
 def _raw_supplier_names(db: Session, run: str) -> dict[str, str]:
     """The supplier's OWN description per catalogue item.
 
@@ -320,6 +353,7 @@ def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
         for link in db.query(models.ProductSupplier).all()
     }
     raw_names = _raw_supplier_names(db, run)
+    raw_rrps = _normalized_rrps(db, run)
     candidate_items = {
         c.mastering_candidate_uuid: c.catalogue_item_uuid
         for c in db.query(models.CatalogueMasteringCandidate)
@@ -365,11 +399,15 @@ def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
                 (_num(pack.sellable_units_per_purchase_unit) if pack else "")
                 or _units_per_pack(variant, link)
             ),
-            # products.rrp is the one that is actually populated; the per-supplier
-            # column exists but is null on every published row of this run.
-            "rrp": _money(
-                (link.rrp if link and link.rrp is not None else None)
-                if (link and link.rrp is not None) else (variant.rrp if variant else None)
+            # The RRP the run read, off the normalized row — the snapshot does
+            # not carry RRP and the pipeline writes no legacy link rows, so
+            # the printed proposal is the native source. Legacy link/variant
+            # values remain as fallbacks for pre-pipeline rows.
+            "rrp": (
+                _money(*raw_rrps[item_uuid]) if item_uuid in raw_rrps else _money(
+                    (link.rrp if link and link.rrp is not None else None)
+                    if (link and link.rrp is not None) else (variant.rrp if variant else None)
+                )
             ),
             "commercial_offer_summary": "; ".join(mbb),
         }

@@ -1,0 +1,32 @@
+{
+ "page_outcome": "evidence",
+ "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+ "tables": [
+  {
+   "columns": [
+    "CODE NO",
+    "PRODUCT NAME",
+    "PACKING PER UNIT",
+    "PRICE",
+    "REMARK"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "ROT",
+      "Rotibac Probiotic Capsule",
+      "90 capsules / bottle",
+      "HK$295.0",
+      "3+1"
+     ]
+    }
+   ],
+   "section": "SUPPLEMENTS"
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Alternative to Azodyl"
+  }
+ ]
+}

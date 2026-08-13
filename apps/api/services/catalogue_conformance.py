@@ -1276,9 +1276,23 @@ def _stable_term_uuid(evidence: dict[str, Any], field_key: str) -> uuid.UUID:
 
 
 def _read_purchase_unit(fields: dict[str, Any], semantics) -> str | None:
+    """The per-row purchase unit, from the declared field or the packing text.
+
+    Only for contracts that opted into per-row units (purchase_uom_source_field
+    declared). When that field is absent or unreadable on a row, the packing
+    text is the same fact written elsewhere — Vetapet's PARASITE CONTROL table
+    has no ORDER UNIT column, but '3 tubes / pack' names the unit after the
+    slash exactly the way Alfamedic's rows do. A packing text whose slash-unit
+    the vocabulary does not know ('35 cm/length') still resolves to nothing.
+    """
     if not semantics.purchase_uom_source_field:
         return None
-    return _purchase_unit_from_text(_source_field_value(fields, semantics.purchase_uom_source_field))
+    read = _purchase_unit_from_text(_source_field_value(fields, semantics.purchase_uom_source_field))
+    if read:
+        return read
+    if semantics.packaging_source_field and semantics.packaging_source_field != semantics.purchase_uom_source_field:
+        return _purchase_unit_from_text(_source_field_value(fields, semantics.packaging_source_field))
+    return None
 
 
 def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any], fields: dict[str, Any] | None = None) -> dict[str, Any] | None:
@@ -1436,7 +1450,12 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
         )
     sellable_source = _source_field_value(fields, semantics.sellable_units_per_purchase_unit_source_field)
     sellable_count = _leading_decimal(sellable_source)
-    if sellable_count is not None:
+    # A count is a count of units per PURCHASE — without a resolved purchase
+    # unit the claim dangles ("10 per what?") and, worse, a bare measure like
+    # '10 mL (8 mL when constituted)' reads its content volume as a sellable
+    # count and makes the publication guard refuse the row. Alfamedic's
+    # '30ml/ bot' keeps its 30: that row resolves BOTTLE.
+    if sellable_count is not None and (read_unit or semantics.purchase_uom is not None):
         proposal["sellable_units_per_purchase_unit"] = str(sellable_count)
     # The count and its noun are printed together. Read the noun from the same
     # text rather than leaving it null whenever the contract has not declared

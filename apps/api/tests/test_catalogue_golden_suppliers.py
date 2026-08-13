@@ -172,6 +172,33 @@ def golden_set(name: str) -> GoldenSet:
 
 GOLDEN_SETS = discover_golden_sets()
 
+#: Policy (2026-08-13): a golden mismatch FAILS. The only columns allowed to
+#: escape enforcement are these four — names are human shorthand, weight is
+#: hand-measured, and the sellable unit is BizOps' own call. Everything else
+#: is enforced in every set; known_gaps is retired as a parking lot.
+ALLOWED_NON_ENFORCED = frozenset({
+    "product_name",
+    "product name [Rosetta]",
+    "weight",
+    "sellable_uom",
+})
+
+
+def test_every_column_is_enforced_except_the_allowed_four():
+    for spec in GOLDEN_SETS:
+        assert not spec.known_gaps, (
+            f"{spec.name}: known_gaps is retired — a disagreement fails the test instead of "
+            f"parking. Offending columns: {sorted(spec.known_gaps)}"
+        )
+        assert not spec.unfilled, (
+            f"{spec.name}: the unfilled bucket is retired — a blank sheet cell already "
+            f"asserts nothing. Offending columns: {sorted(spec.unfilled)}"
+        )
+        escaping = set(GOLDEN_COLUMNS) - set(spec.enforced) - ALLOWED_NON_ENFORCED
+        assert not escaping, (
+            f"{spec.name}: columns escaping enforcement beyond the allowed four: {sorted(escaping)}"
+        )
+
 
 @pytest.fixture()
 def db(tmp_path, monkeypatch):
@@ -349,7 +376,11 @@ def _review_one(db, candidate, *, sequence: int) -> None:
         if row is not None:
             fields = json.loads(row.normalized_fields_json or "{}")
             brand = ((fields.get("brand") or {}).get("value") or "").strip()
-    brand = brand or "Unbranded"
+    # No placeholder: a row whose brand the pipeline could not read publishes
+    # brandless, and the export shows the blank rather than a word the harness
+    # invented — the tightened golden sets enforce brand, so a placeholder
+    # here would be the harness lying to its own comparison.
+    brand = brand or ""
     # Take the draft's UOM from what the pipeline actually read, not a
     # constant — a stubbed "unit" here would surface as a packaging
     # mismatch in the diff and read as a pipeline defect that isn't one.
