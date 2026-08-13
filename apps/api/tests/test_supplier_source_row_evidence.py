@@ -107,10 +107,20 @@ def test_new_kpn_and_kangaroo_bundle_row_evidence_tracks_layout_segmentation_deb
         assert fixture["technical_debt"][0]["status"] == "OPEN"
 
 
-def test_vetapet_row_evidence_requires_confirmation_before_runtime_support():
+def test_vetapet_vet_row_evidence_is_confirmed_by_the_golden_set():
+    """Vet flipped to SUPPORTED on golden evidence; the fixture must say so
+    and carry no open debt — the generic status test enforces the rest."""
+    fixture = _fixtures_by_contract_id()["vetapet.vet_price_list.v1"]
+    assert fixture["row_evidence_status"] == "CONFIRMED"
+    assert fixture["examples"]
+    assert fixture["technical_debt"] == []
+    assert "golden" in fixture["notes"]
+
+
+def test_vetapet_non_vet_row_evidence_requires_confirmation_before_runtime_support():
     fixtures = _fixtures_by_contract_id()
 
-    for contract_id in {"vetapet.vet_price_list.v1", "vetapet.non_vet_price_list.v1"}:
+    for contract_id in {"vetapet.non_vet_price_list.v1"}:
         fixture = fixtures[contract_id]
         assert fixture["row_evidence_status"] == "NEEDS_CONFIRMATION"
         assert fixture["examples"] == []

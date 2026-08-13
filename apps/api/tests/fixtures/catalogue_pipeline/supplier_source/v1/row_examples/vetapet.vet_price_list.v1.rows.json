@@ -1,22 +1,46 @@
 {
-  "contract_id": "vetapet.vet_price_list.v1",
-  "contract_version": "v1",
-  "row_evidence_status": "NEEDS_CONFIRMATION",
-  "supplier_id": 91,
-  "supplier_name": "Vetapet Vet",
-  "notes": "The supplier ID is known, but the source PDF contains multiple Vetapet table layouts. Confirmed per-layout row examples are required before promotion to SUPPORTED.",
-  "examples": [],
-  "technical_debt": [
-    {
-      "debt_id": "VETAPET-VET-ROW-EVIDENCE",
-      "status": "OPEN",
-      "summary": "Capture representative rows for Unit Price sections and Wholesale/Retail/Terms sections.",
-      "needed_confirmation": [
-        "Which Vetapet table layouts belong to Vetapet Vet supplier_id 91 versus C. Vetapet supplier_id 4.",
-        "Whether UNIT PRICE and WHOLESALE PRICE have the same price basis.",
-        "Whether TERMS text implies MOQ, order increment, discount, or free-goods behavior.",
-        "How packing text maps to purchase UOM, content measure, and sellable unit without conflation."
-      ]
-    }
-  ]
+ "contract_id": "vetapet.vet_price_list.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 91,
+ "supplier_name": "Vetapet Vet",
+ "notes": "Confirmed against the hand-captured whole-catalogue envelope at tests/fixtures/catalogue_pipeline/golden/vetapet_vet — the golden replay is the evidence behind SUPPORTED. Supplier-master caveat, deliberately NOT resolved here: the operations database also carries supplier 4 'C. Vetapet' (vet) and supplier 61 'C. Vetapet & Company / Alfamedic', and the golden sample sheet labels these products 'C.Vetapet & Company'. Which supplier id BizOps uploads a Vetapet catalogue under is an upload-time routing decision; this contract binds supplier 91 and the golden set pins pipeline behaviour, not the supplier-master naming.",
+ "examples": [
+  {
+   "example_id": "vetapet-vet-401-revolution-pack-row",
+   "source": {
+    "sample_reference": "external-sample:Vetapet catalogue (PDF; original filename not recorded)",
+    "page_number": 1,
+    "extraction_method": "hand-captured vision envelope (golden/vetapet_vet/page_1.json, PARASITE CONTROL table)",
+    "text_excerpt": "401 Revolution 15mg for Puppies & Kittens (Mauve 5 lbs or less) 3 tubes / pack HK$128.0"
+   },
+   "raw_row": {
+    "Code No": "401",
+    "Product Name": "Revolution 15mg for Puppies & Kittens (Mauve 5 lbs or less)",
+    "Packing Per Unit": "3 tubes / pack",
+    "Unit Price": "HK$128.0",
+    "Remarks": null
+   },
+   "runtime_input": {
+    "supplier_sku": "401",
+    "description": "Revolution 15mg for Puppies & Kittens (Mauve 5 lbs or less)",
+    "pack_size": "3 tubes / pack",
+    "cost": "HK$128.0",
+    "rrp": ""
+   },
+   "expected_runtime_item": {
+    "cost_price": "HK$128.0",
+    "segment": "vet",
+    "units_per_pack": 1
+   },
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "break_pack_allowed": null,
+    "reason": "UNIT PRICE prices one order unit. This table has no ORDER UNIT column, and the packing text '3 tubes / pack' names the unit after the slash — one pack of three tubes. Matches the golden sheet's '1 PACK' basis for SKU 401."
+   }
+  }
+ ],
+ "technical_debt": []
 }

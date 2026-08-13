@@ -65,6 +65,7 @@ def db():
         _seed_supplier(session, 1, "ALF", "Alfamedic")
         _seed_supplier(session, 14, "HILLS", "Hill's")
         _seed_supplier(session, 91, "VETAPETV", "Vetapet Vet")
+        _seed_supplier(session, 90, "VETAPETN", "Vetapet (Non-Vet)")
         yield session
         session.rollback()
         _reset(session)
@@ -297,9 +298,11 @@ def test_v2_submission_endpoint_contract_and_file_errors(client):
     assert mismatch.status_code == 409
     assert mismatch.json()["detail"]["code"] == "SUPPLIER_CONTRACT_MISMATCH"
 
+    # Non-vet is the PARTIALLY_VERIFIED example now — vet earned SUPPORTED
+    # with the vetapet_vet golden set and accepts uploads.
     unsupported = client.post(
         "/catalogues/ingestions",
-        data={"supplier_id": "91", "contract_id": "vetapet.vet_price_list.v1", "contract_version": "v1"},
+        data={"supplier_id": "90", "contract_id": "vetapet.non_vet_price_list.v1", "contract_version": "v1"},
         files=_pdf("vetapet.pdf"),
     )
     assert unsupported.status_code == 422

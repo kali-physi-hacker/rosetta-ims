@@ -325,9 +325,11 @@ def test_recorded_contract_resolution_rejects_unsupported_unknown_mismatch_and_d
     run = db.query(models.IngestionRun).one()
     source = db.query(models.CatalogueSourceDocument).one()
 
-    run.supplier_id = 91
-    source.supplier_id = 91
-    run.supplier_source_contract_id = source.supplier_source_contract_id = "vetapet.vet_price_list.v1"
+    # Non-vet is the PARTIALLY_VERIFIED example now — vet earned SUPPORTED
+    # with the vetapet_vet golden set.
+    run.supplier_id = 90
+    source.supplier_id = 90
+    run.supplier_source_contract_id = source.supplier_source_contract_id = "vetapet.non_vet_price_list.v1"
     run.supplier_source_contract_version = source.supplier_source_contract_version = "v1"
     db.commit()
     with pytest.raises(RecordedContractError, match="not SUPPORTED"):

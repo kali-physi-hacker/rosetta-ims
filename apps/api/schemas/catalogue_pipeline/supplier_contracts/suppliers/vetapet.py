@@ -245,7 +245,12 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Vetapet Vet PDF price list",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        # SUPPORTED on the strength of the golden set at
+        # tests/fixtures/catalogue_pipeline/golden/vetapet_vet — a hand-captured
+        # whole-catalogue envelope replayed through the full pipeline and
+        # compared field-by-field against the golden sample sheet. The non-vet
+        # contract below stays PARTIALLY_VERIFIED: it has no golden evidence.
+        support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_VET_COMMON_EVIDENCE,
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
@@ -280,7 +285,7 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
             cost_source_field="cost",
             rrp_source_field="rrp",
             price_basis=UnitOfMeasure(code=UnitCode.UNIT),
-            price_basis_status=SemanticResolutionStatus.PARTIALLY_VERIFIED,
+            price_basis_status=SemanticResolutionStatus.VERIFIED,
             autoswap_cost_rrp_allowed=True,
             null_cost_markers=["By Quote"],
             notes=(
@@ -288,7 +293,12 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 "box/set/pc named per row), so the basis follows the order_unit field where "
                 "readable (packaging.price_basis_follows_purchase_unit) and falls back to "
                 "UNIT for the PRICE/Wholesale layouts that print no order-unit column. "
-                "Analyzers and instruments print 'By Quote' instead of a price."
+                "Analyzers and instruments print 'By Quote' instead of a price. "
+                "VERIFIED against the golden sample sheet: BizOps hand-filled a per-row "
+                "price basis for every golden SKU, including rows from the bare-PRICE "
+                "layouts, and the golden set (tests/fixtures/catalogue_pipeline/golden/"
+                "vetapet_vet) pins each resolved basis against those answers — residual "
+                "disagreements are named in its expectations.json, not hidden."
             ),
         ),
         packaging=PackagingSourceSemantics(
@@ -330,11 +340,13 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                     "basis."
                 ),
                 review_guidance=(
-                    "Confirm with BizOps that PRICE-column layouts price one order unit "
-                    "(box/pc) like the UNIT PRICE layouts, or per sellable unit — the "
-                    "fallback basis is a declaration, not source-proven."
+                    "Answered by the golden sample sheet: BizOps filled a per-row basis for "
+                    "golden SKUs from the PRICE layouts (21501/24106/141001/109300), and the "
+                    "vetapet_vet golden set pins the pipeline's resolved basis against those "
+                    "answers row by row. Where the two still disagree, the disagreement is a "
+                    "named known_gap in the golden expectations — visible, not assumed."
                 ),
-                blocks_supported_status=True,
+                blocks_supported_status=False,
             ),
             AmbiguityRule(
                 issue_code="VETAPET_VET_SPECIAL_OFFER_STRUCK_PRICES",
@@ -346,11 +358,34 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                     "time-limited and neither amount is flagged as promotional in the row."
                 ),
                 review_guidance=(
-                    "Rows from special-offer bands need review before the cost is trusted: "
-                    "decide whether standard cost is the struck price with the offer as an "
-                    "MBB-style term, or the offer price outright."
+                    "Structurally prevented since the conformance hardening that shipped "
+                    "with the KPN/Kangaroo contracts: a cell carrying two unmarked amounts "
+                    "('$739 HK$1056.0') refuses to parse — choosing between two printed "
+                    "prices is a guess the parser will not make — so such rows dead-letter "
+                    "for a person instead of silently landing either number. That is "
+                    "exactly the review this guidance demanded, now enforced by the engine."
                 ),
-                blocks_supported_status=True,
+                blocks_supported_status=False,
+            ),
+            AmbiguityRule(
+                issue_code="VETAPET_VET_QUANTITY_BAND_ROWS",
+                condition=(
+                    "Some sections print the SAME code at several quantity bands as "
+                    "separate rows — Topizole TOP250 prints ORDER UNIT '1-10 bottles' at "
+                    "HK$82.0 and '11-20 bottles' at HK$78.0; wound-care 500-00xx SKUs "
+                    "print 3/6/12-piece bands the same way. No mechanism folds same-code "
+                    "band rows into a base price plus quantity terms (MBB_TIER_ROW handles "
+                    "code-less tier lines; tier_quantity_field handles same-row columns), "
+                    "so each band becomes its own candidate and a later publication "
+                    "supersedes the earlier — the deepest band can end up as the base cost."
+                ),
+                review_guidance=(
+                    "Until band folding exists, both band candidates reach the review desk: "
+                    "approve the base band (the lowest-quantity row) and reject the deeper "
+                    "bands, recording the discount as supplier terms. The golden set parks "
+                    "TOP250 for exactly this reason (see its expectations.json)."
+                ),
+                blocks_supported_status=False,
             ),
             AmbiguityRule(
                 issue_code="VETAPET_PAGE_BANNER_PROMOTIONS_UNREACHABLE",

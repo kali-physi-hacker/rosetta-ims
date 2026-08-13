@@ -301,10 +301,12 @@ def test_raw_capture_uses_supported_contract_and_is_idempotent(db):
 
 
 def test_raw_capture_rejects_unverified_supplier_contract(db):
+    # Non-vet is the PARTIALLY_VERIFIED example now — vet earned SUPPORTED
+    # with the vetapet_vet golden set.
     _seed_context(
         db,
-        supplier_id=91,
-        contract_id="vetapet.vet_price_list.v1",
+        supplier_id=90,
+        contract_id="vetapet.non_vet_price_list.v1",
         contract_version="v1",
     )
 
@@ -314,7 +316,7 @@ def test_raw_capture_rejects_unverified_supplier_contract(db):
                 ingestion_run_id=RUN_ID,
                 supplier_catalogue_id=SOURCE_ID,
                 source_file_id=FILE_ID,
-                supplier_id=91,
+                supplier_id=90,
                 observations=(_raw_input(),),
             )
         )

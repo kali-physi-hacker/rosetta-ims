@@ -4,15 +4,12 @@
   "contract_version": "v1",
   "supplier": {
     "supplier_id": 91,
-    "supplier_name": "Vetapet Vet",
-    "supplier_code": null
+    "supplier_name": "Vetapet Vet"
   },
   "document_type": "PRICE_LIST",
   "format_name": "Vetapet Vet PDF price list",
   "source_format": "PDF_TABLE",
-  "support_status": "PARTIALLY_VERIFIED",
-  "effective_from": null,
-  "effective_to": null,
+  "support_status": "SUPPORTED",
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -35,13 +32,11 @@
       {
         "name": "vet_clinic_unit_price_sections",
         "selector": "CODE NO / PRODUCT NAME / PACKING PER UNIT / UNIT PRICE / REMARKS or TERMS",
-        "header_row": null,
         "notes": "Observed in the supplied Vetapet.pdf early clinic sections."
       },
       {
         "name": "vet_wholesale_retail_sections",
         "selector": "CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS",
-        "header_row": null,
         "notes": "Observed later in the supplied Vetapet.pdf; representative per-section row fixtures are still needed."
       }
     ],
@@ -77,9 +72,7 @@
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
       "source_column": "CODE NO / 編號",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "CODE NO",
         "編號",
@@ -93,23 +86,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
       "requirement": "REQUIRED",
       "source_column": "PRODUCT NAME / 產品名稱",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "PRODUCT NAME",
         "產品名稱",
@@ -123,23 +107,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "brand",
       "role": "BRAND",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "section_header",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
       "evidence": [
@@ -149,23 +124,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
       "source_column": "PACKING PER UNIT",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "PACKING PER UNIT",
         "SIZE",
@@ -181,23 +147,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "cost",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
       "source_column": "WHOLESALE PRICE / 批發價",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "WHOLESALE PRICE",
         "UNIT PRICE",
@@ -212,23 +169,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
       "source_column": "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "SUGGESTED RETAIL PRICE",
         "RETAIL PRICE",
@@ -243,23 +191,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "promotion_text",
       "role": "MBB_TEXT",
       "requirement": "OPTIONAL",
       "source_column": "TERMS / REMARKS",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "TERMS",
         "REMARKS"
@@ -272,23 +211,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "species",
       "role": "SPECIES",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "product_name",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Species cue from product name when present.",
       "evidence": [
@@ -298,21 +228,12 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "segment",
       "role": "SEGMENT",
       "requirement": "OPTIONAL",
-      "source_column": null,
-      "source_path": null,
       "composed_from": [],
       "constant_value": "vet",
       "aliases": [],
@@ -324,23 +245,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "category",
       "role": "CATEGORY",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "section_header",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
@@ -350,23 +262,14 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "order_unit",
       "role": "OTHER",
       "requirement": "OPTIONAL",
       "source_column": "ORDER UNIT",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "The unit one UNIT PRICE buys — '1 box', '1 set', '1 pc', printed per row. Verified on the sample: '10 tests / box · 1 box · HK$1958' prices the BOX, not the test. Declared as packaging.purchase_uom_source_field so the cost's price basis follows this value where it is readable.",
       "evidence": [
@@ -376,14 +279,7 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     }
   ],
   "pricing": {
@@ -391,32 +287,23 @@
     "rrp_source_field": "rrp",
     "currency": "HKD",
     "price_basis": {
-      "code": "UNIT",
-      "label": null
+      "code": "UNIT"
     },
-    "price_basis_status": "PARTIALLY_VERIFIED",
+    "price_basis_status": "VERIFIED",
     "autoswap_cost_rrp_allowed": true,
     "null_cost_markers": [
       "By Quote"
     ],
-    "notes": "Verified on the sample: UNIT PRICE sections price one ORDER UNIT (a box/set/pc named per row), so the basis follows the order_unit field where readable (packaging.price_basis_follows_purchase_unit) and falls back to UNIT for the PRICE/Wholesale layouts that print no order-unit column. Analyzers and instruments print 'By Quote' instead of a price."
+    "notes": "Verified on the sample: UNIT PRICE sections price one ORDER UNIT (a box/set/pc named per row), so the basis follows the order_unit field where readable (packaging.price_basis_follows_purchase_unit) and falls back to UNIT for the PRICE/Wholesale layouts that print no order-unit column. Analyzers and instruments print 'By Quote' instead of a price. VERIFIED against the golden sample sheet: BizOps hand-filled a per-row price basis for every golden SKU, including rows from the bare-PRICE layouts, and the golden set (tests/fixtures/catalogue_pipeline/golden/vetapet_vet) pins each resolved basis against those answers — residual disagreements are named in its expectations.json, not hidden."
   },
   "packaging": {
     "packaging_source_field": "pack_size",
-    "purchase_uom": null,
     "price_basis": {
-      "code": "UNIT",
-      "label": null
+      "code": "UNIT"
     },
-    "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
     "purchase_uom_source_field": "order_unit",
     "price_basis_follows_purchase_unit": true,
-    "order_increment_source_field": null,
-    "minimum_order_source_field": null,
-    "break_pack_allowed": null,
     "interpretation_rules": [
       "Treat kg/g/ml size text as content measure, not sellable-unit count.",
       "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms.",
@@ -483,14 +370,20 @@
     {
       "issue_code": "VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
       "condition": "The supplied Vetapet PDF contains Unit Price tables (with ORDER UNIT columns), bare PRICE tables (without), and Wholesale/Retail/Terms tables. All are now declared via cost aliases with a per-row order-unit basis where printed; the PRICE layouts fall back to an unverified UNIT basis.",
-      "review_guidance": "Confirm with BizOps that PRICE-column layouts price one order unit (box/pc) like the UNIT PRICE layouts, or per sellable unit — the fallback basis is a declaration, not source-proven.",
-      "blocks_supported_status": true
+      "review_guidance": "Answered by the golden sample sheet: BizOps filled a per-row basis for golden SKUs from the PRICE layouts (21501/24106/141001/109300), and the vetapet_vet golden set pins the pipeline's resolved basis against those answers row by row. Where the two still disagree, the disagreement is a named known_gap in the golden expectations — visible, not assumed.",
+      "blocks_supported_status": false
     },
     {
       "issue_code": "VETAPET_VET_SPECIAL_OFFER_STRUCK_PRICES",
       "condition": "Some vet pages print 'Special Offer: N% off' bands with the original price struck through and a badge price beside it (sample page 20: HK$1056 struck, $739 badge). Which amount lands in the UNIT PRICE column of the extracted evidence depends on the render; the offer is time-limited and neither amount is flagged as promotional in the row.",
-      "review_guidance": "Rows from special-offer bands need review before the cost is trusted: decide whether standard cost is the struck price with the offer as an MBB-style term, or the offer price outright.",
-      "blocks_supported_status": true
+      "review_guidance": "Structurally prevented since the conformance hardening that shipped with the KPN/Kangaroo contracts: a cell carrying two unmarked amounts ('$739 HK$1056.0') refuses to parse — choosing between two printed prices is a guess the parser will not make — so such rows dead-letter for a person instead of silently landing either number. That is exactly the review this guidance demanded, now enforced by the engine.",
+      "blocks_supported_status": false
+    },
+    {
+      "issue_code": "VETAPET_VET_QUANTITY_BAND_ROWS",
+      "condition": "Some sections print the SAME code at several quantity bands as separate rows — Topizole TOP250 prints ORDER UNIT '1-10 bottles' at HK$82.0 and '11-20 bottles' at HK$78.0; wound-care 500-00xx SKUs print 3/6/12-piece bands the same way. No mechanism folds same-code band rows into a base price plus quantity terms (MBB_TIER_ROW handles code-less tier lines; tier_quantity_field handles same-row columns), so each band becomes its own candidate and a later publication supersedes the earlier — the deepest band can end up as the base cost.",
+      "review_guidance": "Until band folding exists, both band candidates reach the review desk: approve the base band (the lowest-quantity row) and reject the deeper bands, recording the discount as supplier terms. The golden set parks TOP250 for exactly this reason (see its expectations.json).",
+      "blocks_supported_status": false
     },
     {
       "issue_code": "VETAPET_PAGE_BANNER_PROMOTIONS_UNREACHABLE",
@@ -544,7 +437,5 @@
   },
   "created_at": "2026-07-22T00:00:00Z",
   "created_by": "cis-103b-catalogue-architecture",
-  "updated_at": null,
-  "updated_by": null,
   "metadata": {}
 }

@@ -163,7 +163,9 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
 
     assert statuses["hills.price_list.v1"] == SupplierContractSupportStatus.SUPPORTED
     assert statuses["alfamedic.price_list.v1"] == SupplierContractSupportStatus.SUPPORTED
-    assert statuses["vetapet.vet_price_list.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    # Vet is SUPPORTED on the strength of the vetapet_vet golden set; non-vet
+    # has no golden evidence and stays out of production's reach.
+    assert statuses["vetapet.vet_price_list.v1"] == SupplierContractSupportStatus.SUPPORTED
     assert statuses["vetapet.non_vet_price_list.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
     assert statuses["kangaroo.mixed_price_catalogue.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
     assert statuses["kangaroo.purina_proplan_veterinary_diets.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
@@ -173,7 +175,12 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
 
     assert get_supported_supplier_source_contract("hills.price_list.v1", "v1").contract_id == "hills.price_list.v1"
     assert get_supported_supplier_source_contract("alfamedic.price_list.v1", "v1").contract_id == "alfamedic.price_list.v1"
-    for contract_id in set(EXPECTED_CONTRACT_IDS) - {"hills.price_list.v1", "alfamedic.price_list.v1"}:
+    assert (
+        get_supported_supplier_source_contract("vetapet.vet_price_list.v1", "v1").contract_id
+        == "vetapet.vet_price_list.v1"
+    )
+    supported_ids = {"hills.price_list.v1", "alfamedic.price_list.v1", "vetapet.vet_price_list.v1"}
+    for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):
             get_supported_supplier_source_contract(contract_id, "v1")
 

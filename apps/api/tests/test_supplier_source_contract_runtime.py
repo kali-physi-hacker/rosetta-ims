@@ -46,7 +46,9 @@ def test_selects_only_supported_supplier_source_contracts():
     assert alfamedic.slug == "alfamedic.price_list.v1"
     assert runtime.load_contract(15) is None
     assert runtime.load_contract(81) is None
-    assert runtime.load_contract(91) is None
+    vetapet_vet = runtime.load_contract(91)
+    assert vetapet_vet is not None
+    assert vetapet_vet.slug == "vetapet.vet_price_list.v1"
     assert runtime.load_contract(90) is None
     assert runtime.load_contract(999) is None
     assert runtime.load_contract(None) is None
@@ -91,10 +93,17 @@ def test_exact_resolution_rejects_unverified_or_partial_contracts_without_fallba
                 contract_version="v1",
             )
 
+    vetapet_vet = runtime.resolve_supplier_contract(
+        supplier_id=91,
+        contract_id="vetapet.vet_price_list.v1",
+        contract_version="v1",
+    )
+    assert vetapet_vet.slug == "vetapet.vet_price_list.v1"
+
     with pytest.raises(runtime.SupplierContractUnsupportedError, match="not SUPPORTED"):
         runtime.resolve_supplier_contract(
-            supplier_id=91,
-            contract_id="vetapet.vet_price_list.v1",
+            supplier_id=90,
+            contract_id="vetapet.non_vet_price_list.v1",
             contract_version="v1",
         )
 
@@ -107,18 +116,18 @@ def test_exact_resolution_rejects_unverified_or_partial_contracts_without_fallba
 
 
 def test_supplier_only_resolution_errors_are_specific(monkeypatch):
-    partial = _registration(get_supplier_source_contract("vetapet.vet_price_list.v1", "v1").declaration)
+    partial = _registration(get_supplier_source_contract("vetapet.non_vet_price_list.v1", "v1").declaration)
     monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: (partial,))
 
     with pytest.raises(runtime.SupplierContractUnsupportedError, match="no SUPPORTED"):
-        runtime.resolve_supplier_contract(supplier_id=91)
+        runtime.resolve_supplier_contract(supplier_id=90)
 
-    assert runtime.load_contract(91) is None
+    assert runtime.load_contract(90) is None
 
     monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: ())
 
     with pytest.raises(runtime.SupplierContractUnsupportedError, match="no registered"):
-        runtime.resolve_supplier_contract(supplier_id=91)
+        runtime.resolve_supplier_contract(supplier_id=90)
 
 
 def test_supplier_only_resolution_rejects_multiple_supported_formats_without_ordering_fallback(monkeypatch):
@@ -158,7 +167,7 @@ def test_supplier_only_resolution_is_independent_of_registry_order(monkeypatch):
             document_type=SupplierDocumentType.PRICE_LIST,
         )
     )
-    partial = _registration(get_supplier_source_contract("vetapet.vet_price_list.v1", "v1").declaration)
+    partial = _registration(get_supplier_source_contract("vetapet.non_vet_price_list.v1", "v1").declaration)
     monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: (other_supplier, partial, supported))
 
     resolved = runtime.resolve_supplier_contract(supplier_id=778)
