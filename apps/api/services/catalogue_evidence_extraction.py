@@ -287,6 +287,14 @@ class _VisionEnvelope(BaseModel):
     page_outcome: Literal["evidence", "no_catalogue_evidence"]
     tables: tuple[_VisionTable, ...] = ()
     text_observations: tuple[_VisionRow, ...] = ()
+    # Verbatim printed supplier/distributor identity (letterhead, footer,
+    # "Distributed by ..." line), when visible on this page. Deliberately its
+    # own typed field, not folded into text_observations — a free-text array
+    # has no type tag, so downstream code could not reliably tell "this text
+    # IS an identity claim" apart from a date or promo note without fragile
+    # pattern-matching. A dedicated field means the conformance-side check
+    # never has to guess.
+    supplier_identity_text: str | None = Field(None, min_length=1)
     # Backward-compatible reader for recorded compact-v1 envelopes. New provider
     # requests use tables/text_observations so one page can carry multiple
     # independent header families.
@@ -333,6 +341,7 @@ duplicates. Preserve repeated rows at their separate source locations.
 Return one JSON object with exactly this shape:
 {
   "page_outcome": "evidence",
+  "supplier_identity_text": "printed supplier/distributor name (letterhead, footer, or \"Distributed by ...\" line), verbatim; omit entirely when no such text is visible on this page",
   "tables": [
     {
       "section": "banner printed across the table, verbatim; omit when absent",
@@ -370,7 +379,12 @@ Rules:
 - Product/offer rows belong in tables. Preserve commercially relevant
   document-level text — effective dates, price-basis policies, promotion
   periods, minimum-order rules and similar terms — in text_observations.
-- Decorative titles, page numbers and contact lines may be omitted.
+- The printed supplier/distributor identity is NOT a text_observation — it
+  goes in the separate top-level supplier_identity_text field, verbatim.
+  Multi-supplier sources rely on it to tell one supplier's pages apart from
+  another's; never fold it into text_observations or omit it as decoration.
+- Decorative titles, page numbers and non-identifying contact details
+  (phone/address/email) may still be omitted.
 - Each tabular row's cells align by position to its table's columns; use null
   for an empty cell. A row never has more cells than its table's columns.
 - Copy every value exactly as printed, including bilingual text, symbols and
@@ -1144,7 +1158,14 @@ def _vision_observations(
                     model=provider.model,
                     model_version=provider.model,
                     confidence=row.confidence,
-                    source_metadata={"section": section} if section else {},
+                    source_metadata={
+                        **({"section": section} if section else {}),
+                        **(
+                            {"supplier_identity_text": envelope.supplier_identity_text}
+                            if envelope.supplier_identity_text
+                            else {}
+                        ),
+                    },
                 )
             )
     except ValueError as exc:

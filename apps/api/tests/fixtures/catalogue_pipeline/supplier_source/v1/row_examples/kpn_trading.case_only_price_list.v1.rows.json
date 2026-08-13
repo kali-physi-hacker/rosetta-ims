@@ -1,0 +1,50 @@
+{
+  "contract_id": "kpn_trading.case_only_price_list.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "NEEDS_CONFIRMATION",
+  "supplier_id": 15,
+  "supplier_name": "K.P.N. Trading",
+  "notes": "Split out of kpn_trading.catalogue_bundle.v1. Covers layouts where the ONLY printed wholesale amount is at case/box level; verified directly against the source that no per-pack/per-box wholesale figure exists to fall back on, even though RRP is separately printed at both case and pack level on the same rows.",
+  "examples": [
+    {
+      "example_id": "kpn-trading-case-only-12-box",
+      "source": {
+        "sample_reference": "external-sample:KPN_Kangaroo.pdf",
+        "page_number": 28,
+        "supplier_identity_marker": "K.P.N. Trading Ltd. printed on the page",
+        "table_layout": "SC_CASE_BOX"
+      },
+      "printed_columns": [
+        "產品圖片 Product image", "產品編號 SKU#", "產品內容 Product Description",
+        "包裝 Size", "每箱盒數 Unit Per Case",
+        "每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)",
+        "每箱 (12盒) 建議零售價 Recommended Retail Price Per Case (12 boxes)",
+        "每盒 建議零售價 Recommended Retail Price Per box"
+      ],
+      "runtime_input": {
+        "supplier_sku": "MM-CHSM-5.5",
+        "description": "雞肉三文魚\nChicken & Salmon Recipe",
+        "pack_size": "5.5 oz.",
+        "units_per_case": "12",
+        "wholesale_price": "HK$286",
+        "rrp": "HK$38"
+      },
+      "expected_semantics": {
+        "price_basis": "CASE",
+        "currency": "HKD",
+        "reason": "Only a case-level wholesale figure (HK$286 / 12 boxes) is printed; no per-box wholesale amount exists anywhere in the source. RRP, by contrast, is printed at BOTH levels (HK$389/case AND HK$38/box) — the pack-level RRP (HK$38) is preferred as the more granular figure."
+      }
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_id": "KPN-TRADING-CASE-ONLY-PRICE-LIST-NEEDS-BIZOPS-CONFIRMATION",
+      "status": "OPEN",
+      "summary": "Price basis and break-pack policy were verified by direct structural inspection of the source, not by BizOps sign-off.",
+      "needed_confirmation": [
+        "BizOps confirmation that CASE is the correct transacting price basis for this layout.",
+        "Whether below-case-quantity (break-pack) purchase is commercially available for these SKUs; not stated by the source."
+      ]
+    }
+  ]
+}

@@ -676,7 +676,7 @@
             }
           ],
           "default": null,
-          "description": "For MBB_TIER_ROW: the field key carrying the tier's quantity threshold. Alfamedic prints '10 bots' in its Order Units column on a line that has no order code and a cheaper price — condition and benefit both stated, so the term is fully determined. The row is consumed as a term on the product above it rather than becoming a catalogue row of its own; a priced line with no identity is not a product.",
+          "description": "The field key carrying a tier's quantity threshold. For MBB_TIER_ROW: Alfamedic prints '10 bots' in its Order Units column on a line that has no order code and a cheaper price — condition and benefit both stated, so the term is fully determined. The row is consumed as a term on the product above it rather than becoming a catalogue row of its own; a priced line with no identity is not a product. For MBB_TIER_PRICE: the quantity-conditioned alternative to tier_minimum_spend — K.P.N. Trading prints a case price in an extra column ON the product's own row ('批發價 每箱'), conditioned on buying the case quantity its units-per-case column states; naming that field here makes the condition declared, not inferred.",
           "title": "Tier Quantity Field"
         }
       },

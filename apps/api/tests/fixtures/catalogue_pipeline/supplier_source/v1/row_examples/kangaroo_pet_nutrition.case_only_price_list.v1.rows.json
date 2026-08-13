@@ -1,0 +1,50 @@
+{
+  "contract_id": "kangaroo_pet_nutrition.case_only_price_list.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "TECHNICAL_DEBT",
+  "supplier_id": 81,
+  "supplier_name": "Kangaroo Pet Nutrition",
+  "notes": "Split out of kangaroo_pet_nutrition.catalogue_bundle.v1. Covers the ZIWI wet-can layouts whose ONLY wholesale amount is case-level ('批發價 (HKD) 每箱 (12罐)' / '每箱*'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. Marked TECHNICAL_DEBT because cans-per-case is never a row cell — it lives in the column heading or a page footnote that varies by can weight.",
+  "examples": [
+    {
+      "example_id": "kangaroo-pn-case-cdl170",
+      "source": {
+        "sample_reference": "external-sample:KPN_Kangaroo.pdf",
+        "page_number": 6,
+        "supplier_identity_marker": "港澳總代理 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition Ltd. printed on the page",
+        "table_layout": "ZIWI_WET_CASE_12"
+      },
+      "printed_columns": ["包裝", "產品內容", "產品編號", "重量", "批發價 (HKD) 每箱 (12罐)", "建議零售價 (HKD) 每箱 (12罐)", "建議零售價 (HKD) 每罐"],
+      "runtime_input": {
+        "supplier_sku": "CDL170",
+        "description": "Wet Lamb Recipe for Dogs\n羊肉配方",
+        "pack_size": "170g",
+        "wholesale_price": "$340\n(@28.3)",
+        "rrp": "$44"
+      },
+      "expected_semantics": {
+        "price_basis": "CASE",
+        "currency": "HKD",
+        "reason": "Only a case-level wholesale figure ($340 for a case of 12 cans) is printed; the '(@28.3)' beside it is the derived per-can average (340/12) stripped as annotation, and the preferred RRP is the more granular per-can figure ($44)."
+      }
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_id": "KANGAROO-PN-CASE-COUNT-NOT-A-COLUMN",
+      "status": "OPEN",
+      "summary": "Cans-per-case lives in the column HEADING ('每箱 (12罐)') on the dog-can page and in a page FOOTNOTE varying by can weight on the cat-can page ('85g貓罐 每箱24罐 / 185g貓罐 每箱12罐') — never in a row cell, so no contract field can map it and per-can cost cannot be derived deterministically.",
+      "needed_confirmation": [
+        "BizOps confirmation of cans-per-case per SKU (heading/footnote values are the evidence) before per-can costs are computed downstream."
+      ]
+    },
+    {
+      "debt_id": "KANGAROO-PN-CASE-NEEDS-BIZOPS-CONFIRMATION",
+      "status": "OPEN",
+      "summary": "Price basis was verified by direct structural inspection of the source, not by BizOps sign-off.",
+      "needed_confirmation": [
+        "BizOps confirmation that CASE is the correct transacting price basis and whether break-pack purchase is available."
+      ]
+    }
+  ]
+}

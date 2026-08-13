@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from schemas.catalogue_pipeline.enums import SourceFormat
+from schemas.catalogue_pipeline.common import UnitOfMeasure
+from schemas.catalogue_pipeline.enums import SourceFormat, UnitCode
 from schemas.catalogue_pipeline.supplier_contracts.common import (
     SUPPLIER_SOURCE_SCHEMA_VERSION,
     AmbiguityRule,
@@ -121,9 +122,15 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,
                 source_path="brand, portfolio, or product-line heading",
-                description="ZIWI Peak or the row-level Ecuphar portfolio brand/product line.",
+                description=(
+                    "ZIWI Peak or the Ecuphar portfolio brand. OPTIONAL and currently "
+                    "unmappable: verified against the sample that brands appear only as "
+                    "page-logo IMAGES, and the table section banners read '價錢表 Pricelist' — "
+                    "mapping section_header here would emit 'Pricelist' as a brand, which is "
+                    "worse than nothing. REQUIRED previously guaranteed 100% of rows failed."
+                ),
                 evidence=_KANGAROO_PET_NUTRITION_EVIDENCE,
             ),
             SourceFieldContract(
@@ -146,7 +153,10 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             ),
             SourceFieldContract(
                 field_key="units_per_case",
-                role=SourceFieldRole.PACKAGING,
+                # role OTHER, not PACKAGING: two fields sharing pack_size's role
+                # let this value silently fill the pack_size slot when pack_size
+                # failed to resolve (proven on kpn_trading's frozen-raw rows).
+                role=SourceFieldRole.OTHER,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="每箱包數 / 每箱罐數",
                 aliases=["每箱", "每箱包數", "每箱罐數", "Units Per Case"],
@@ -158,8 +168,19 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.SOURCE_PRICE,
                 requirement=SourceFieldRequirement.REQUIRED,
                 source_column="批發價",
-                aliases=["每包批發價", "每箱批發價", "Wholesale Price"],
-                description="Wholesale amount preserved with its exact printed source heading.",
+                aliases=[
+                    "批發價 (HKD)",
+                    "批發價 (HKD) 每箱 (12罐)",
+                    "批發價 (HKD) 每箱*",
+                    "每包批發價",
+                    "每箱批發價",
+                    "Wholesale Price",
+                ],
+                description=(
+                    "Wholesale amount preserved with its exact printed source heading. The "
+                    "sample prints '批發價 (HKD)' with a currency suffix on the ZIWI pages "
+                    "and case-scoped variants on the wet-food pages."
+                ),
                 evidence=_KANGAROO_PET_NUTRITION_EVIDENCE,
             ),
             SourceFieldContract(
@@ -167,7 +188,14 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.RRP,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="建議零售價",
-                aliases=["每包建議零售價", "每箱建議零售價", "每罐建議零售價"],
+                aliases=[
+                    "建議零售價 (HKD)",
+                    "建議零售價 (HKD) 每罐",
+                    "零售價",
+                    "每包建議零售價",
+                    "每箱建議零售價",
+                    "每罐建議零售價",
+                ],
                 description="Recommended retail amount preserved with its printed price basis.",
                 evidence=_KANGAROO_PET_NUTRITION_EVIDENCE,
             ),
@@ -257,6 +285,461 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             "routing_strategy": "supplier_identity_and_content_markers",
             "sample_reference": "KPN_Kangaroo.pdf",
             "observed_brands": "ZIWI Peak, Ecuphar",
+            "superseded_by_layout_specific_contracts": (
+                "kangaroo_pet_nutrition.unit_price_list.v1, "
+                "kangaroo_pet_nutrition.case_only_price_list.v1"
+            ),
+            "layout_specific_contracts_note": (
+                "This bundle remains the fallback for un-sorted layouts. Once a page's "
+                "layout is identified, prefer the layout-specific contract above, which "
+                "has a resolved price_basis."
+            ),
+        },
+    )
+)
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Layout-specific contracts.
+#
+# Full read of the 9 Kangaroo Pet Nutrition pages in KPN_Kangaroo.pdf (5-10,
+# 36-38; every page footed 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition Ltd.)
+# found exactly four printed layouts in two resolvable groups:
+#
+#   UNIT       — ZIWI dry/treat pages ('批發價 (HKD)') and Ecuphar pages
+#                (bare '批發價'): exactly one wholesale amount per row, no
+#                case-level column anywhere. The price buys one sellable
+#                unit (a bag, a strip pack).
+#   CASE-ONLY  — ZIWI wet-can pages: wholesale printed ONLY at case level
+#                ('批發價 (HKD) 每箱 (12罐)' / '每箱*'), with a printed
+#                derived per-can average beside it ('$340 (@28.3)' — 28.3 is
+#                exactly 340/12) and RRP at both case and per-can level. No
+#                per-can wholesale exists to fall back on.
+# ─────────────────────────────────────────────────────────────────────────
+
+_KANGAROO_PN_UNIT_EVIDENCE = [
+    *_KANGAROO_PET_NUTRITION_EVIDENCE,
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
+        (
+            "Every layout in this group prints exactly one wholesale amount per row "
+            "('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) "
+            "with no case-level price column anywhere."
+        ),
+    ),
+]
+
+KANGAROO_PET_NUTRITION_UNIT_PRICE_LIST_V1 = register_supplier_source_contract(
+    SupplierSourceContractV1(
+        schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
+        contract_id="kangaroo_pet_nutrition.unit_price_list.v1",
+        contract_version="v1",
+        supplier=_KANGAROO_PET_NUTRITION_SUPPLIER,
+        document_type=SupplierDocumentType.CATALOGUE,
+        format_name="Kangaroo Pet Nutrition unit-basis price list",
+        source_format=SourceFormat.PDF_TABLE,
+        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+        source_structure=SourceStructure(
+            source_format=SourceFormat.PDF_TABLE,
+            table_regions=[
+                SourceTableRegion(
+                    name="kangaroo_pn_unit_price_sections",
+                    selector=(
+                        "Kangaroo Pet Nutrition sections whose price columns print exactly "
+                        "one wholesale amount, with no case-level price column."
+                    ),
+                    notes="Observed on ZIWI dry/treat pages and Ecuphar pages.",
+                )
+            ],
+            required_headers=[],
+            optional_headers=[
+                "產品編號", "產品內容", "包裝", "重量",
+                "批發價 (HKD)", "建議零售價 (HKD)",
+                "產品圖示", "批發價", "零售價",
+            ],
+            row_eligibility_rules=[
+                (
+                    "The ingestion supplier must be ID 81, or the enclosing source section "
+                    "must explicitly identify Kangaroo Pet Nutrition / KANGAR."
+                ),
+                "Select this contract only when the row's table prints one wholesale amount and no case-level price column.",
+                "Rows require a product code, description, and printed wholesale price.",
+            ],
+            source_location_expectations=[
+                "source document and page",
+                "supplier identity marker or ingestion supplier identity",
+                "table row",
+                "source column",
+            ],
+        ),
+        fields=[
+            SourceFieldContract(
+                field_key="supplier_sku",
+                role=SourceFieldRole.SUPPLIER_SKU,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="產品編號",
+                aliases=["Product Code"],
+                description="Product code printed on the eligible row.",
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="description",
+                role=SourceFieldRole.PRODUCT_NAME,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="產品內容",
+                aliases=["產品名稱", "Product Description"],
+                description="Printed English/Chinese product description.",
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="brand",
+                role=SourceFieldRole.BRAND,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="brand page logo (image only; not extractable text)",
+                description=(
+                    "ZIWI Peak / Ecuphar appear only as page-logo images; section banners "
+                    "read '價錢表 Pricelist'. Deliberately unmapped rather than wrong."
+                ),
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="pack_size",
+                role=SourceFieldRole.PACKAGING,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="重量",
+                aliases=["包裝", "Size"],
+                description="Printed content weight/size (e.g. '454g', '1kg').",
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="wholesale_price",
+                role=SourceFieldRole.SOURCE_PRICE,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="批發價 (HKD)",
+                aliases=["批發價", "Wholesale Price"],
+                description="The single printed wholesale amount — one sellable unit.",
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="rrp",
+                role=SourceFieldRole.RRP,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="建議零售價 (HKD)",
+                aliases=["零售價", "建議零售價"],
+                description="Recommended retail amount, same basis as wholesale_price.",
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="effective_date",
+                role=SourceFieldRole.EFFECTIVE_DATE,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="document or section effective-date label",
+                description="'With effect from ...' / '生效日期' page labels.",
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="promotion_text",
+                role=SourceFieldRole.MBB_TEXT,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="document, section, or row promotion notes",
+                description="Printed promotion or spend-discount terms.",
+                evidence=_KANGAROO_PN_UNIT_EVIDENCE,
+            ),
+        ],
+        pricing=PricingSourceSemantics(
+            cost_source_field="wholesale_price",
+            rrp_source_field="rrp",
+            price_basis=UnitOfMeasure(code=UnitCode.UNIT),
+            price_basis_status=SemanticResolutionStatus.VERIFIED,
+            notes=(
+                "Verified directly against every page in this group: exactly one wholesale "
+                "amount is printed per row and no case-level column exists to compete with "
+                "it. Safe to treat as the sellable-unit price."
+            ),
+        ),
+        packaging=PackagingSourceSemantics(
+            packaging_source_field="pack_size",
+            content_measure_source_field="pack_size",
+            break_pack_allowed=None,
+            interpretation_rules=[
+                "Treat content weight/size as a measure, not a sellable-unit count.",
+            ],
+            unresolved_semantics=[
+                "Order increment and break-pack rules are not stated by the source.",
+            ],
+        ),
+        mbb=MbbSourceSemantics(
+            source_fields=["promotion_text"],
+            condition_patterns=["buy quantity", "spend threshold"],
+            benefit_patterns=["percentage discount"],
+            requires_validation_issue_when=[
+                "The qualifying products, threshold basis, or stacking rules are not explicit."
+            ],
+            notes=(
+                "The ZIWI pages print standing offers as page banners (4% off the "
+                "air-dried/steam-dried ranges; 8% over $4,000 spend) — banner text lands in "
+                "text_observations, which no contract field reaches today."
+            ),
+        ),
+        known_ambiguities=[
+            AmbiguityRule(
+                issue_code="KANGAROO_PN_UNIT_SUPPLIER_IDENTITY_REQUIRED",
+                condition="A source may contain multiple suppliers or only a subset of previously observed brands.",
+                review_guidance=(
+                    "Select this declaration only from ingestion supplier ID 81 or an explicit "
+                    "Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand."
+                ),
+                blocks_supported_status=True,
+            ),
+            AmbiguityRule(
+                issue_code="KANGAROO_PN_PAGE_BANNER_PROMOTIONS_UNREACHABLE",
+                condition=(
+                    "Standing mix/spend promotions print as page banners captured in "
+                    "text_observations; no contract field mechanism reaches those today."
+                ),
+                review_guidance=(
+                    "Reviewers must read the run's unmapped text evidence for banner promos "
+                    "until a threading mechanism exists."
+                ),
+                blocks_supported_status=False,
+            ),
+        ],
+        pipeline_mapping=pipeline_mapping(
+            "supplier_sku",
+            "description",
+            "brand",
+            "pack_size",
+            "wholesale_price",
+            "rrp",
+            "effective_date",
+            "promotion_text",
+        ),
+        created_at=_DECLARATION_CREATED_AT,
+        created_by=_DECLARATION_CREATED_BY,
+        metadata={
+            "routing_strategy": "supplier_identity_and_layout_markers",
+            "sample_reference": "KPN_Kangaroo.pdf",
+            "price_basis_group": "UNIT",
+        },
+    )
+)
+
+
+_KANGAROO_PN_CASE_EVIDENCE = [
+    *_KANGAROO_PET_NUTRITION_EVIDENCE,
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+        (
+            "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' "
+            "and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), "
+            "with a printed derived per-can average beside the amount ('$340 (@28.3)'; "
+            "28.3 = 340/12) and RRP printed at both case and per-can level. No per-can "
+            "wholesale figure exists anywhere."
+        ),
+    ),
+]
+
+KANGAROO_PET_NUTRITION_CASE_ONLY_PRICE_LIST_V1 = register_supplier_source_contract(
+    SupplierSourceContractV1(
+        schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
+        contract_id="kangaroo_pet_nutrition.case_only_price_list.v1",
+        contract_version="v1",
+        supplier=_KANGAROO_PET_NUTRITION_SUPPLIER,
+        document_type=SupplierDocumentType.CATALOGUE,
+        format_name="Kangaroo Pet Nutrition case-only price list",
+        source_format=SourceFormat.PDF_TABLE,
+        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        evidence=_KANGAROO_PN_CASE_EVIDENCE,
+        source_structure=SourceStructure(
+            source_format=SourceFormat.PDF_TABLE,
+            table_regions=[
+                SourceTableRegion(
+                    name="kangaroo_pn_case_only_sections",
+                    selector=(
+                        "Kangaroo Pet Nutrition wet-food sections whose ONLY wholesale amount "
+                        "is case-level, with per-can RRP printed separately."
+                    ),
+                    notes="Observed on the ZIWI wet dog-can and cat-can pages.",
+                )
+            ],
+            required_headers=[],
+            optional_headers=[
+                "產品編號", "產品內容", "包裝", "重量",
+                "批發價 (HKD) 每箱 (12罐)", "批發價 (HKD) 每箱*",
+                "建議零售價 (HKD) 每箱 (12罐)", "建議零售價 (HKD) 每箱",
+                "建議零售價 (HKD) 每罐",
+            ],
+            row_eligibility_rules=[
+                (
+                    "The ingestion supplier must be ID 81, or the enclosing source section "
+                    "must explicitly identify Kangaroo Pet Nutrition / KANGAR."
+                ),
+                "Select this contract only when wholesale is printed at case level with no per-can wholesale figure present.",
+                "Rows require a product code, description, and printed wholesale price.",
+            ],
+            source_location_expectations=[
+                "source document and page",
+                "supplier identity marker or ingestion supplier identity",
+                "table row",
+                "source column",
+            ],
+        ),
+        fields=[
+            SourceFieldContract(
+                field_key="supplier_sku",
+                role=SourceFieldRole.SUPPLIER_SKU,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="產品編號",
+                aliases=["Product Code"],
+                description="Product code printed on the eligible row.",
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="description",
+                role=SourceFieldRole.PRODUCT_NAME,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="產品內容",
+                aliases=["產品名稱", "Product Description"],
+                description="Printed English/Chinese product description.",
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="brand",
+                role=SourceFieldRole.BRAND,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="brand page logo (image only; not extractable text)",
+                description="ZIWI Peak appears only as a page-logo image; deliberately unmapped rather than wrong.",
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="pack_size",
+                role=SourceFieldRole.PACKAGING,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="重量",
+                aliases=["包裝", "Size"],
+                description="Printed per-can content weight (e.g. '170g', '85g / 3oz').",
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="wholesale_price",
+                role=SourceFieldRole.SOURCE_PRICE,
+                requirement=SourceFieldRequirement.REQUIRED,
+                source_column="批發價 (HKD) 每箱 (12罐)",
+                aliases=["批發價 (HKD) 每箱*", "批發價 每箱"],
+                description=(
+                    "The only printed wholesale amount — always case-level. The printed "
+                    "'(@N)' beside it is the derived per-can average (case total divided by "
+                    "can count) and is stripped as annotation, never treated as a price."
+                ),
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="rrp",
+                role=SourceFieldRole.RRP,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="建議零售價 (HKD) 每罐",
+                aliases=["每罐建議零售價"],
+                description=(
+                    "Preferred RRP is the per-can figure, which the source prints separately "
+                    "and more granularly than the case RRP."
+                ),
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="effective_date",
+                role=SourceFieldRole.EFFECTIVE_DATE,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="document or section effective-date label",
+                description="'With effect from ...' page labels.",
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+            SourceFieldContract(
+                field_key="promotion_text",
+                role=SourceFieldRole.MBB_TEXT,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_path="document, section, or row promotion notes",
+                description="Printed promotion or spend-discount terms.",
+                evidence=_KANGAROO_PN_CASE_EVIDENCE,
+            ),
+        ],
+        pricing=PricingSourceSemantics(
+            cost_source_field="wholesale_price",
+            rrp_source_field="rrp",
+            price_basis=UnitOfMeasure(code=UnitCode.CASE),
+            price_basis_status=SemanticResolutionStatus.VERIFIED,
+            notes=(
+                "Verified directly: the only printed wholesale amount is case-level. The "
+                "printed per-can '(@N)' average is derived (case total / can count) and is "
+                "never promoted to a price — computing or trusting it would assert a per-can "
+                "wholesale the source does not state."
+            ),
+        ),
+        packaging=PackagingSourceSemantics(
+            packaging_source_field="pack_size",
+            content_measure_source_field="pack_size",
+            break_pack_allowed=None,
+            interpretation_rules=[
+                "Treat per-can weight as a measure, not a sellable-unit count.",
+                "Can-per-case count lives in the column HEADING ('每箱 (12罐)') or the page footnote, never in a row cell.",
+            ],
+            unresolved_semantics=[
+                "Break-pack permission is not stated by the source.",
+            ],
+        ),
+        mbb=MbbSourceSemantics(
+            source_fields=["promotion_text"],
+            condition_patterns=["buy quantity", "spend threshold"],
+            benefit_patterns=["percentage discount"],
+            requires_validation_issue_when=[
+                "The qualifying products, threshold basis, or stacking rules are not explicit."
+            ],
+            notes="Banner promotions land in text_observations; see known_ambiguities.",
+        ),
+        known_ambiguities=[
+            AmbiguityRule(
+                issue_code="KANGAROO_PN_CASE_SUPPLIER_IDENTITY_REQUIRED",
+                condition="A source may contain multiple suppliers or only a subset of previously observed brands.",
+                review_guidance=(
+                    "Select this declaration only from ingestion supplier ID 81 or an explicit "
+                    "Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand."
+                ),
+                blocks_supported_status=True,
+            ),
+            AmbiguityRule(
+                issue_code="KANGAROO_PN_CASE_COUNT_NOT_A_COLUMN",
+                condition=(
+                    "Cans-per-case is printed in the column HEADING ('每箱 (12罐)') on the "
+                    "dog-can page and in a FOOTNOTE on the cat-can page ('85g貓罐 每箱24罐 / "
+                    "185g貓罐 每箱12罐', varying BY ROW weight) — never as a row cell, so no "
+                    "contract field can map it and per-unit cost cannot be derived "
+                    "deterministically."
+                ),
+                review_guidance=(
+                    "BizOps must confirm can counts per SKU (heading/footnote values are the "
+                    "evidence) before per-can costs are computed downstream."
+                ),
+                blocks_supported_status=True,
+            ),
+        ],
+        pipeline_mapping=pipeline_mapping(
+            "supplier_sku",
+            "description",
+            "brand",
+            "pack_size",
+            "wholesale_price",
+            "rrp",
+            "effective_date",
+            "promotion_text",
+        ),
+        created_at=_DECLARATION_CREATED_AT,
+        created_by=_DECLARATION_CREATED_BY,
+        metadata={
+            "routing_strategy": "supplier_identity_and_layout_markers",
+            "sample_reference": "KPN_Kangaroo.pdf",
+            "price_basis_group": "CASE",
         },
     )
 )

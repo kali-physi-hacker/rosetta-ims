@@ -1,6 +1,6 @@
 {
   "schema_version": "catalogue.supplier_source_contract.v1",
-  "contract_id": "kangaroo_pet_nutrition.catalogue_bundle.v1",
+  "contract_id": "kangaroo_pet_nutrition.case_only_price_list.v1",
   "contract_version": "v1",
   "supplier": {
     "supplier_id": 81,
@@ -8,7 +8,7 @@
     "supplier_code": "KANGAR"
   },
   "document_type": "CATALOGUE",
-  "format_name": "Kangaroo Pet Nutrition catalogue bundle",
+  "format_name": "Kangaroo Pet Nutrition case-only price list",
   "source_format": "PDF_TABLE",
   "support_status": "PARTIALLY_VERIFIED",
   "effective_from": null,
@@ -23,6 +23,11 @@
       "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
       "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
       "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+    },
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+      "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
     }
   ],
   "source_structure": {
@@ -31,27 +36,27 @@
     "expected_sections": [],
     "table_regions": [
       {
-        "name": "kangaroo_pet_nutrition_identified_sections",
-        "selector": "Catalogue sections attributed to supplier ID 81 or explicitly marked Kangaroo Pet Nutrition / KANGAR",
+        "name": "kangaroo_pn_case_only_sections",
+        "selector": "Kangaroo Pet Nutrition wet-food sections whose ONLY wholesale amount is case-level, with per-can RRP printed separately.",
         "header_row": null,
-        "notes": "ZIWI Peak and Ecuphar are observed examples. A valid catalogue may contain either, both, or other explicitly attributed brands."
+        "notes": "Observed on the ZIWI wet dog-can and cat-can pages."
       }
     ],
     "required_headers": [],
     "optional_headers": [
       "產品編號",
       "產品內容",
-      "批發價",
       "包裝",
       "重量",
-      "每箱",
-      "每罐",
-      "建議零售價",
-      "With effect from"
+      "批發價 (HKD) 每箱 (12罐)",
+      "批發價 (HKD) 每箱*",
+      "建議零售價 (HKD) 每箱 (12罐)",
+      "建議零售價 (HKD) 每箱",
+      "建議零售價 (HKD) 每罐"
     ],
     "row_eligibility_rules": [
       "The ingestion supplier must be ID 81, or the enclosing source section must explicitly identify Kangaroo Pet Nutrition / KANGAR.",
-      "Never select this contract from page number or brand presence alone.",
+      "Select this contract only when wholesale is printed at case level with no per-can wholesale figure present.",
       "Rows require a product code, description, and printed wholesale price."
     ],
     "discontinued_markers": [],
@@ -60,7 +65,6 @@
     "source_location_expectations": [
       "source document and page",
       "supplier identity marker or ingestion supplier identity",
-      "brand/section heading",
       "table row",
       "source column"
     ]
@@ -75,10 +79,9 @@
       "composed_from": [],
       "constant_value": null,
       "aliases": [
-        "SKU#",
         "Product Code"
       ],
-      "description": "Product code printed on the eligible Kangaroo Pet Nutrition row.",
+      "description": "Product code printed on the eligible row.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -89,37 +92,11 @@
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
           "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
           "note": "The production supplier identity is supplier ID 81 with code KANGAR."
-        }
-      ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
-    },
-    {
-      "field_key": "brand",
-      "role": "BRAND",
-      "requirement": "OPTIONAL",
-      "source_column": null,
-      "source_path": "brand, portfolio, or product-line heading",
-      "composed_from": [],
-      "constant_value": null,
-      "aliases": [],
-      "description": "ZIWI Peak or the Ecuphar portfolio brand. OPTIONAL and currently unmappable: verified against the sample that brands appear only as page-logo IMAGES, and the table section banners read '價錢表 Pricelist' — mapping section_header here would emit 'Pricelist' as a brand, which is worse than nothing. REQUIRED previously guaranteed 100% of rows failed.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:KPN_Kangaroo.pdf",
-          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
         },
         {
-          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
-          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
         }
       ],
       "tier_minimum_spend": null,
@@ -154,6 +131,47 @@
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
           "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
           "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null
+    },
+    {
+      "field_key": "brand",
+      "role": "BRAND",
+      "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": "brand page logo (image only; not extractable text)",
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "ZIWI Peak appears only as a page-logo image; deliberately unmapped rather than wrong.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
         }
       ],
       "tier_minimum_spend": null,
@@ -169,16 +187,15 @@
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
-      "source_column": "包裝 / 重量",
+      "source_column": "重量",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
       "aliases": [
         "包裝",
-        "重量",
         "Size"
       ],
-      "description": "Printed content size or packaging text.",
+      "description": "Printed per-can content weight (e.g. '170g', '85g / 3oz').",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -189,42 +206,11 @@
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
           "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
           "note": "The production supplier identity is supplier ID 81 with code KANGAR."
-        }
-      ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
-    },
-    {
-      "field_key": "units_per_case",
-      "role": "OTHER",
-      "requirement": "OPTIONAL",
-      "source_column": "每箱包數 / 每箱罐數",
-      "source_path": null,
-      "composed_from": [],
-      "constant_value": null,
-      "aliases": [
-        "每箱",
-        "每箱包數",
-        "每箱罐數",
-        "Units Per Case"
-      ],
-      "description": "Printed case configuration for layouts that expose it.",
-      "evidence": [
-        {
-          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
-          "reference": "external-sample:KPN_Kangaroo.pdf",
-          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
         },
         {
-          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
-          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
-          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
         }
       ],
       "tier_minimum_spend": null,
@@ -240,19 +226,15 @@
       "field_key": "wholesale_price",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
-      "source_column": "批發價",
+      "source_column": "批發價 (HKD) 每箱 (12罐)",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
       "aliases": [
-        "批發價 (HKD)",
-        "批發價 (HKD) 每箱 (12罐)",
         "批發價 (HKD) 每箱*",
-        "每包批發價",
-        "每箱批發價",
-        "Wholesale Price"
+        "批發價 每箱"
       ],
-      "description": "Wholesale amount preserved with its exact printed source heading. The sample prints '批發價 (HKD)' with a currency suffix on the ZIWI pages and case-scoped variants on the wet-food pages.",
+      "description": "The only printed wholesale amount — always case-level. The printed '(@N)' beside it is the derived per-can average (case total divided by can count) and is stripped as annotation, never treated as a price.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -263,6 +245,11 @@
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
           "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
           "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
         }
       ],
       "tier_minimum_spend": null,
@@ -278,19 +265,14 @@
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
-      "source_column": "建議零售價",
+      "source_column": "建議零售價 (HKD) 每罐",
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
       "aliases": [
-        "建議零售價 (HKD)",
-        "建議零售價 (HKD) 每罐",
-        "零售價",
-        "每包建議零售價",
-        "每箱建議零售價",
         "每罐建議零售價"
       ],
-      "description": "Recommended retail amount preserved with its printed price basis.",
+      "description": "Preferred RRP is the per-can figure, which the source prints separately and more granularly than the case RRP.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -301,6 +283,11 @@
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
           "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
           "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
         }
       ],
       "tier_minimum_spend": null,
@@ -321,7 +308,7 @@
       "composed_from": [],
       "constant_value": null,
       "aliases": [],
-      "description": "Document- or section-level effective date.",
+      "description": "'With effect from ...' page labels.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -332,6 +319,11 @@
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
           "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
           "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
         }
       ],
       "tier_minimum_spend": null,
@@ -363,6 +355,11 @@
           "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
           "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
           "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere."
         }
       ],
       "tier_minimum_spend": null,
@@ -379,11 +376,14 @@
     "cost_source_field": "wholesale_price",
     "rrp_source_field": "rrp",
     "currency": "HKD",
-    "price_basis": null,
-    "price_basis_status": "UNRESOLVED",
+    "price_basis": {
+      "code": "CASE",
+      "label": null
+    },
+    "price_basis_status": "VERIFIED",
     "autoswap_cost_rrp_allowed": false,
     "null_cost_markers": [],
-    "notes": "Observed ZIWI dry layouts price packages, ZIWI wet layouts expose case and per-can amounts, and Ecuphar uses another layout. Preserve the source heading and leave price basis unresolved at bundle level."
+    "notes": "Verified directly: the only printed wholesale amount is case-level. The printed per-can '(@N)' average is derived (case total / can count) and is never promoted to a price — computing or trusting it would assert a per-can wholesale the source does not state."
   },
   "packaging": {
     "packaging_source_field": "pack_size",
@@ -399,14 +399,11 @@
     "minimum_order_source_field": null,
     "break_pack_allowed": null,
     "interpretation_rules": [
-      "Treat content size as a measure, not a sellable-unit count.",
-      "Treat units per case as case configuration only.",
-      "Do not infer purchase UOM, order increment, or break-pack permission from case configuration."
+      "Treat per-can weight as a measure, not a sellable-unit count.",
+      "Can-per-case count lives in the column HEADING ('每箱 (12罐)') or the page footnote, never in a row cell."
     ],
     "unresolved_semantics": [
-      "Purchase UOM varies between ZIWI dry, ZIWI wet, and Ecuphar layouts.",
-      "Sellable units per purchase unit are not established at bundle level.",
-      "Break-pack permission is not established by the source."
+      "Break-pack permission is not stated by the source."
     ]
   },
   "mbb": {
@@ -415,6 +412,7 @@
     ],
     "supported_scopes": [],
     "condition_patterns": [
+      "buy quantity",
       "spend threshold"
     ],
     "benefit_patterns": [
@@ -423,20 +421,20 @@
     "requires_validation_issue_when": [
       "The qualifying products, threshold basis, or stacking rules are not explicit."
     ],
-    "notes": "Promotion text remains evidence until its scope is confirmed."
+    "notes": "Banner promotions land in text_observations; see known_ambiguities."
   },
   "validation_rules": [],
   "known_ambiguities": [
     {
-      "issue_code": "KANGAROO_PET_NUTRITION_BUNDLE_PRICE_BASIS_VARIES",
-      "condition": "Observed supplier layouts mix package, case, per-can, and simple price bases.",
-      "review_guidance": "Detect the row/table layout before interpreting price amounts.",
+      "issue_code": "KANGAROO_PN_CASE_SUPPLIER_IDENTITY_REQUIRED",
+      "condition": "A source may contain multiple suppliers or only a subset of previously observed brands.",
+      "review_guidance": "Select this declaration only from ingestion supplier ID 81 or an explicit Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand.",
       "blocks_supported_status": true
     },
     {
-      "issue_code": "KANGAROO_PET_NUTRITION_SUPPLIER_IDENTITY_REQUIRED",
-      "condition": "A source may contain multiple suppliers or only a subset of previously observed brands.",
-      "review_guidance": "Select this declaration only from ingestion supplier ID 81 or an explicit Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand.",
+      "issue_code": "KANGAROO_PN_CASE_COUNT_NOT_A_COLUMN",
+      "condition": "Cans-per-case is printed in the column HEADING ('每箱 (12罐)') on the dog-can page and in a FOOTNOTE on the cat-can page ('85g貓罐 每箱24罐 / 185g貓罐 每箱12罐', varying BY ROW weight) — never as a row cell, so no contract field can map it and per-unit cost cannot be derived deterministically.",
+      "review_guidance": "BizOps must confirm can counts per SKU (heading/footnote values are the evidence) before per-can costs are computed downstream.",
       "blocks_supported_status": true
     }
   ],
@@ -445,10 +443,9 @@
     "staging_item_contract_id": "catalogue.normalized_row.v1",
     "raw_observation_fields": [
       "supplier_sku",
-      "brand",
       "description",
+      "brand",
       "pack_size",
-      "units_per_case",
       "wholesale_price",
       "rrp",
       "effective_date",
@@ -456,10 +453,9 @@
     ],
     "staging_raw_field_keys": [
       "supplier_sku",
-      "brand",
       "description",
+      "brand",
       "pack_size",
-      "units_per_case",
       "wholesale_price",
       "rrp",
       "effective_date",
@@ -467,10 +463,9 @@
     ],
     "staging_proposed_field_keys": [
       "supplier_sku",
-      "brand",
       "description",
+      "brand",
       "pack_size",
-      "units_per_case",
       "wholesale_price",
       "rrp",
       "effective_date",
@@ -482,10 +477,8 @@
   "updated_at": null,
   "updated_by": null,
   "metadata": {
-    "routing_strategy": "supplier_identity_and_content_markers",
+    "routing_strategy": "supplier_identity_and_layout_markers",
     "sample_reference": "KPN_Kangaroo.pdf",
-    "observed_brands": "ZIWI Peak, Ecuphar",
-    "superseded_by_layout_specific_contracts": "kangaroo_pet_nutrition.unit_price_list.v1, kangaroo_pet_nutrition.case_only_price_list.v1",
-    "layout_specific_contracts_note": "This bundle remains the fallback for un-sorted layouts. Once a page's layout is identified, prefer the layout-specific contract above, which has a resolved price_basis."
+    "price_basis_group": "CASE"
   }
 }

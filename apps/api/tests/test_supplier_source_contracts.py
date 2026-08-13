@@ -33,8 +33,13 @@ EXPECTED_CONTRACT_IDS = [
     "kangaroo.earthz_pet_price_sheet.v1",
     "kangaroo.mixed_price_catalogue.v1",
     "kangaroo.purina_proplan_veterinary_diets.v1",
+    "kangaroo_pet_nutrition.case_only_price_list.v1",
     "kangaroo_pet_nutrition.catalogue_bundle.v1",
+    "kangaroo_pet_nutrition.unit_price_list.v1",
+    "kpn_trading.case_only_price_list.v1",
     "kpn_trading.catalogue_bundle.v1",
+    "kpn_trading.pack_and_case_bulk_list.v1",
+    "kpn_trading.pack_price_list.v1",
     "vetapet.non_vet_price_list.v1",
     "vetapet.vet_price_list.v1",
 ]
