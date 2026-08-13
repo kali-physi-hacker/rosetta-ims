@@ -4,15 +4,12 @@
   "contract_version": "v1",
   "supplier": {
     "supplier_id": 90,
-    "supplier_name": "Vetapet (Non-Vet)",
-    "supplier_code": null
+    "supplier_name": "Vetapet (Non-Vet)"
   },
   "document_type": "PRICE_LIST",
   "format_name": "Vetapet Non-Vet PDF price list",
   "source_format": "PDF_TABLE",
   "support_status": "PARTIALLY_VERIFIED",
-  "effective_from": null,
-  "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -30,7 +27,6 @@
       {
         "name": "non_vet_brand_sections",
         "selector": "Chinese-primary price rows",
-        "header_row": null,
         "notes": "The supplied Vetapet.pdf contains matching Chinese wholesale/retail labels, but non-vet row semantics still need representative extraction fixtures."
       }
     ],
@@ -62,9 +58,7 @@
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
       "source_column": "CODE NO / 編號",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "CODE NO",
         "編號",
@@ -78,23 +72,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
       "requirement": "REQUIRED",
       "source_column": "PRODUCT NAME / 產品名稱",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "PRODUCT NAME",
         "產品名稱",
@@ -108,25 +93,16 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "brand",
       "role": "BRAND",
       "requirement": "OPTIONAL",
-      "source_column": null,
-      "source_path": "section_header",
+      "source_path": "page_brand",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
-      "description": "Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
+      "description": "Product brand, read from the brand mark heading the page (e.g. the zoetis or Dermoscent wordmark) — never from the table banner, which names a category.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -134,23 +110,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
       "source_column": "重量 / SIZE",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "重量",
         "SIZE",
@@ -164,23 +131,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "cost",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
       "source_column": "批發價 / WHOLESALE PRICE",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "批發價",
         "WHOLESALE PRICE"
@@ -193,23 +151,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
       "source_column": "零售價 / RETAIL PRICE",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "SUGGESTED RETAIL PRICE",
         "RETAIL PRICE",
@@ -224,23 +173,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "promotion_text",
       "role": "MBB_TEXT",
       "requirement": "OPTIONAL",
       "source_column": "TERMS / REMARKS",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "TERMS",
         "REMARKS"
@@ -253,23 +193,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "species",
       "role": "SPECIES",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "product_name",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Species cue from product name when present.",
       "evidence": [
@@ -279,21 +210,12 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "segment",
       "role": "SEGMENT",
       "requirement": "OPTIONAL",
-      "source_column": null,
-      "source_path": null,
       "composed_from": [],
       "constant_value": "non_vet",
       "aliases": [],
@@ -305,23 +227,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "category",
       "role": "CATEGORY",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "section_header",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
@@ -331,23 +244,14 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "variant",
       "role": "VARIANT",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "unlabeled_column",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Colour/variant label printed in an unlabeled first column on variant tables (e.g. Ferplast beds: 黑色/灰色/杏色 each with its own CODE). Claimed via the unlabeled_column sentinel — resolves only when the row carries exactly one non-empty unlabeled value.",
       "evidence": [
@@ -357,21 +261,13 @@
           "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     }
   ],
   "pricing": {
     "cost_source_field": "cost",
     "rrp_source_field": "rrp",
     "currency": "HKD",
-    "price_basis": null,
     "price_basis_status": "UNRESOLVED",
     "autoswap_cost_rrp_allowed": true,
     "null_cost_markers": [],
@@ -379,17 +275,8 @@
   },
   "packaging": {
     "packaging_source_field": "pack_size",
-    "purchase_uom": null,
-    "price_basis": null,
-    "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
-    "purchase_uom_source_field": null,
     "price_basis_follows_purchase_unit": false,
-    "order_increment_source_field": null,
-    "minimum_order_source_field": null,
-    "break_pack_allowed": null,
     "interpretation_rules": [
       "Treat weight/size text as content measure only after a real sample confirms row semantics."
     ],
@@ -493,7 +380,5 @@
   },
   "created_at": "2026-07-22T00:00:00Z",
   "created_by": "cis-103b-catalogue-architecture",
-  "updated_at": null,
-  "updated_by": null,
   "metadata": {}
 }

@@ -295,6 +295,13 @@ class _VisionEnvelope(BaseModel):
     # pattern-matching. A dedicated field means the conformance-side check
     # never has to guess.
     supplier_identity_text: str | None = Field(None, min_length=1)
+    # The product brand whose logo or name heads this page, verbatim — Vetapet
+    # prints the maker's wordmark ('zoetis') opposite its own letterhead, and
+    # a wordmark is text a vision read CAN transcribe. Typed for the same
+    # reason as supplier_identity_text, and page-scoped: set ONLY when the
+    # whole page is one brand's products. A page shared by several brands
+    # omits it — attributing rows to brands is not extraction's call.
+    page_brand_text: str | None = Field(None, min_length=1)
     # Backward-compatible reader for recorded compact-v1 envelopes. New provider
     # requests use tables/text_observations so one page can carry multiple
     # independent header families.
@@ -342,6 +349,7 @@ Return one JSON object with exactly this shape:
 {
   "page_outcome": "evidence",
   "supplier_identity_text": "printed supplier/distributor name (letterhead, footer, or \"Distributed by ...\" line), verbatim; omit entirely when no such text is visible on this page",
+  "page_brand_text": "the product brand whose logo or name heads this page (a brand wordmark counts — transcribe it as text), verbatim; omit entirely when absent or when several brands share the page",
   "tables": [
     {
       "section": "banner printed across the table, verbatim; omit when absent",
@@ -383,6 +391,11 @@ Rules:
   goes in the separate top-level supplier_identity_text field, verbatim.
   Multi-supplier sources rely on it to tell one supplier's pages apart from
   another's; never fold it into text_observations or omit it as decoration.
+- A brand logo or brand name heading the page is NOT decoration either — it
+  goes in page_brand_text, verbatim (read the wordmark as text). It is
+  distinct from the supplier identity: the supplier sells the products, the
+  brand made them. If more than one brand shares the page, omit the field
+  rather than guess which rows belong to which brand.
 - Decorative titles, page numbers and non-identifying contact details
   (phone/address/email) may still be omitted.
 - Each tabular row's cells align by position to its table's columns; use null
@@ -1163,6 +1176,11 @@ def _vision_observations(
                         **(
                             {"supplier_identity_text": envelope.supplier_identity_text}
                             if envelope.supplier_identity_text
+                            else {}
+                        ),
+                        **(
+                            {"page_brand_text": envelope.page_brand_text}
+                            if envelope.page_brand_text
                             else {}
                         ),
                     },

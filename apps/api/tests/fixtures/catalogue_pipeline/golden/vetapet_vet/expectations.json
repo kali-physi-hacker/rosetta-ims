@@ -33,7 +33,7 @@
     "sellable_qty"
   ],
   "known_gaps": {
-    "brand": "the vet pages' banners are categories or origin/promo text ('Made in Spain - Promotion: Mix over $1000, 10% off (Atopivet Collar/Mousse)'), and brand reads from the banner — every covered row differs from the sheet's brand",
+    "brand": "brand now reads the page's brand mark (page_brand — the zoetis/Dermoscent wordmark heading each page), which this hand-captured envelope predates, so every covered row is empty. Recapture the envelope with the updated prompt and the sheet's Zoetis/Dermoscent values become reachable — this gap failing to fail is the signal to move brand toward enforced",
     "package_configuration": "prints the declared 'unit' fallback; the packing text of these layouts is not parsed into count-and-noun form",
     "order_multiple": "not derived — the vet layouts declare no order-increment source, so the column is empty",
     "catalogue_price_basis_uom": "the AMOUNT is per order unit and basis_qty matches 11/11, but the uom label resolves to the declared 'unit' fallback wherever no ORDER UNIT column or readable slash-unit names the specific noun (sheet: BOX/BOTTLE/PACK)",

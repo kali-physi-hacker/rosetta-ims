@@ -416,6 +416,14 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
                 target = _role_target(contract_field.role)
                 if target:
                     fields.setdefault(target, section)
+    page_brand = _text((observation.source_metadata or {}).get("page_brand_text"))
+    if page_brand is not None:
+        for contract_field in runtime_contract.declaration.fields:
+            if contract_field.source_path == _PAGE_BRAND_SOURCE:
+                fields[f"source:{contract_field.field_key}"] = page_brand
+                target = _role_target(contract_field.role)
+                if target:
+                    fields.setdefault(target, page_brand)
     def _record(contract_field, value: Any) -> None:
         target = _role_target(contract_field.role) or f"additional:{contract_field.field_key}"
         # Preserve every declaration by its stable contract field key even
@@ -750,6 +758,16 @@ def _supplier_identity_issues(
     )
 
 
+#: Corporate boilerplate that never identifies a company on its own. Short
+#: tokens (< 4 chars) are excluded separately — "Pet Shop Ltd" must not vouch
+#: for "Kangaroo Pet Nutrition" on the strength of 'pet'.
+_IDENTITY_STOPWORDS = frozenset({
+    "and", "co", "company", "corp", "corporation", "enterprise", "enterprises",
+    "group", "holding", "holdings", "inc", "incorporated", "international",
+    "limited", "ltd", "the",
+})
+
+
 def _identity_names_overlap(left: str, right: str) -> bool:
     """Match printed supplier-identity text against a contract's declared name/code.
 
@@ -760,16 +778,41 @@ def _identity_names_overlap(left: str, right: str) -> bool:
     same company, one missing period). Stripping periods here would be too
     aggressive for column-heading matching (headers occasionally rely on
     exact punctuation) but is exactly right for a company name.
+
+    Three ways to match, each covering a real print-vs-declaration drift:
+    folded containment ("K.P.N Trading Ltd." printed, one period dropped);
+    COMPACT containment with every separator removed ("KPN Trading" printed
+    against "K.P.N. Trading" declared); and a shared distinctive token — the
+    Vetapet letterhead prints "C. VETAPET & COMPANY" while the operations
+    record is "Vetapet Vet", so neither fold contains the other, but
+    'vetapet' names the company on both sides. Distinctive means four or more
+    characters and not corporate boilerplate; the looseness this buys fails
+    SAFE — a missed mismatch suppresses an issue, never blocks a row — while
+    the routing case the check exists for (K.P.N. pages versus Kangaroo Pet
+    Nutrition pages) still fires on every form either company prints.
     """
 
     def _identity_fold(value: str) -> str:
-        return re.sub(r"[.\s/|]+", " ", value).strip().lower()
+        return re.sub(r"[.\s/|'&,()-]+", " ", value).strip().lower()
+
+    def _compact(value: str) -> str:
+        return re.sub(r"[^0-9a-z⺀-鿿豈-﫿]+", "", value.lower())
+
+    def _tokens(value: str) -> set[str]:
+        return {
+            token
+            for token in _identity_fold(value).split()
+            if len(token) >= 4 and token not in _IDENTITY_STOPWORDS and not token.isdigit()
+        }
 
     for left_key in (_identity_fold(left), _english_fold(left)):
         for right_key in (_identity_fold(right), _english_fold(right)):
             if left_key and right_key and (left_key in right_key or right_key in left_key):
                 return True
-    return False
+    left_compact, right_compact = _compact(left), _compact(right)
+    if left_compact and right_compact and (left_compact in right_compact or right_compact in left_compact):
+        return True
+    return bool(_tokens(left) & _tokens(right))
 
 
 def _carry_merged_cells(
@@ -1592,6 +1635,13 @@ _SECTION_HEADER_SOURCE = "section_header"
 # Resolves only when the row carries exactly one non-empty unlabeled value;
 # more than one is unresolvable ambiguity, not a guess to make.
 _UNLABELED_COLUMN_SOURCE = "unlabeled_column"
+
+# A contract declares this as source_path when a field's value is the brand
+# whose logo or name heads the PAGE — Vetapet prints the maker's wordmark
+# ('zoetis') top-right opposite its own letterhead, while the text above each
+# table is a category. Page-scoped like supplier_identity_text, and absent on
+# envelopes captured before the field existed.
+_PAGE_BRAND_SOURCE = "page_brand"
 
 
 # Spaces between CJK characters carry no meaning — Vetapet's retail section

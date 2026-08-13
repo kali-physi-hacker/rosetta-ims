@@ -113,10 +113,10 @@
       "field_key": "brand",
       "role": "BRAND",
       "requirement": "OPTIONAL",
-      "source_path": "section_header",
+      "source_path": "page_brand",
       "composed_from": [],
       "aliases": [],
-      "description": "Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
+      "description": "Product brand, read from the brand mark heading the page (e.g. the zoetis or Dermoscent wordmark) — never from the table banner, which names a category.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
