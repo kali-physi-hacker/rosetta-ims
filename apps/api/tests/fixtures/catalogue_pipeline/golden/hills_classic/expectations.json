@@ -46,5 +46,7 @@
   },
   "unfilled": {},
   "unpublishable": [],
-  "_conformed_comment": "Cells conformed to the chosen conventions (user authorization 2026-08-13): MBB text = the export's canonical typed rendering; packaging/basis text = what the page actually prints (a sheet cell asserting unprinted product knowledge is blanked or set to the export's reading). Substantive page-truth corrections are flagged in docs/catalogue/golden-sheet-conformance-ledger.md — the Google Sheet should be edited to match or future re-imports regress."
+  "_conformed_comment": "Cells conformed to the chosen conventions (user authorization 2026-08-13): MBB text = the export's canonical typed rendering; packaging/basis text = what the page actually prints (a sheet cell asserting unprinted product knowledge is blanked or set to the export's reading). Substantive page-truth corrections are flagged in docs/catalogue/golden-sheet-conformance-ledger.md — the Google Sheet should be edited to match or future re-imports regress.",
+  "sheet_supplier_label": "Hill's",
+  "parked_skus": []
 }

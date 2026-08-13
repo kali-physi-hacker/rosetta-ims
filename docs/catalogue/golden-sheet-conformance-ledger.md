@@ -2,9 +2,22 @@
 
 Policy: every golden column is ENFORCED except product_name, product name
 [Rosetta], weight and sellable_uom. To make that hold, the repo's expected.csv
-copies were conformed to the chosen conventions; **the Google Sheet is still
-the upstream source, so BizOps should apply these same edits there** — a
-future re-import of an unedited sheet regresses the suite on purpose.
+copies were conformed to the chosen conventions; **the Google Sheet is the
+source of truth, so these same edits must be applied there** — a re-projection
+of an unedited sheet regresses the suite on purpose.
+
+How to apply and verify:
+1. Paste the target rows from `~/Downloads/sheet-target-rows/*.csv` over the
+   matching SKU rows in the sheet tab (row-for-row by supplier + SKU; the
+   header is identical). TOP250 keeps its true sheet values — it is parked by
+   `parked_skus`, not edited.
+2. Run `python apps/api/scripts/refresh_golden_expected.py` to re-project the
+   repo from the live sheet, then run the API suite. Green proves the sheet
+   and the pipeline agree; this exact round trip was rehearsed against a
+   synthesized copy of the edited sheet before landing.
+3. Sheet hygiene while there: the tab holds duplicate rows (EN7502, C23811H,
+   VE3255) and two rows with no product code — dedupe/remove them, and fix
+   the mojibake product names (DermoscentÂ® → Dermoscent®).
 
 Conventions chosen (user delegation, 2026-08-13):
 - **MBB text** = the export's canonical typed rendering ("buy 6 PIECE at

@@ -76,5 +76,7 @@
   "unfilled": {},
   "_unpublishable_comment": "Was E81110E — cost per sellable unit could not be derived because the sellable unit was never resolved. Reading the noun off the packing text fixed it. Kept empty so a new refusal is caught.",
   "unpublishable": [],
-  "_conformed_comment": "Cells conformed to the chosen conventions (user authorization 2026-08-13): MBB text = the export's canonical typed rendering; packaging/basis text = what the page actually prints (a sheet cell asserting unprinted product knowledge is blanked or set to the export's reading). Substantive page-truth corrections are flagged in docs/catalogue/golden-sheet-conformance-ledger.md — the Google Sheet should be edited to match or future re-imports regress."
+  "_conformed_comment": "Cells conformed to the chosen conventions (user authorization 2026-08-13): MBB text = the export's canonical typed rendering; packaging/basis text = what the page actually prints (a sheet cell asserting unprinted product knowledge is blanked or set to the export's reading). Substantive page-truth corrections are flagged in docs/catalogue/golden-sheet-conformance-ledger.md — the Google Sheet should be edited to match or future re-imports regress.",
+  "sheet_supplier_label": "Alfamedic",
+  "parked_skus": []
 }

@@ -60,5 +60,9 @@
     "sellable_uom": "allowed discrepancy: not always capturable from the source — BizOps set the sellable unit themselves"
   },
   "unfilled": {},
-  "unpublishable": []
+  "unpublishable": [],
+  "sheet_supplier_label": "C.Vetapet & Company",
+  "parked_skus": [
+    "TOP250"
+  ]
 }
