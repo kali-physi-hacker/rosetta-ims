@@ -366,3 +366,35 @@ def test_page_brand_reaches_the_brand_field_only_when_stamped():
         _observation(row, metadata={"section": "PARASITE CONTROL"}),
     )
     assert not sectioned.raw_fields.get("brand")
+
+
+def test_a_measure_count_source_also_captures_the_content():
+    """'30ml/ bot' counts 30 (the Alfamedic trade) AND prints a measure — the
+    measure lands in packaging content so the export can say '30 ML / BOTTLE'
+    instead of a naked '30 / BOTTLE'."""
+    item = _conform_one(
+        "alfamedic.price_list.v1",
+        _observation({
+            "Order Code": "EN7502",
+            "Product Name": "Entyce® (capromorelin oral solution) 30mg/mL",
+            "Brand": "Elanco",
+            "Packing/ Unit": "30ml/ bot",
+            "Order Units": "1 bot",
+            "Price/ Unit (HKD)": "1390.0",
+        }),
+    )
+    packaging = item.normalized_fields["packaging"]
+    assert packaging["content_amount"] == "30"
+    assert packaging["content_uom"]["code"] == "ML"
+
+    # A countable pack text carries no measure — no content is invented.
+    countable = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "Code No": "401",
+            "Product Name": "Revolution 15mg for Puppies & Kittens (Mauve 5 lbs or less)",
+            "Packing Per Unit": "3 tubes / pack",
+            "Unit Price": "HK$128.0",
+        }),
+    )
+    assert "content_amount" not in countable.normalized_fields["packaging"]

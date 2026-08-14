@@ -1457,6 +1457,17 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
     # '30ml/ bot' keeps its 30: that row resolves BOTTLE.
     if sellable_count is not None and (read_unit or semantics.purchase_uom is not None):
         proposal["sellable_units_per_purchase_unit"] = str(sellable_count)
+    # '30ml/ bot' names a MEASURE, not a countable — the count above is the
+    # Alfamedic trade, but the measure itself is printed and belongs in the
+    # packaging as content ("30 ML / BOTTLE"). Captured only when no declared
+    # content source exists (the schema forbids one field serving as declared
+    # proof of both, and this is a reading of the page, not a declaration).
+    if "content_amount" not in proposal and semantics.content_measure_source_field is None:
+        implicit_content = _content_measure(sellable_source)
+        if implicit_content:
+            content_amount, content_uom = implicit_content
+            proposal["content_amount"] = str(content_amount)
+            proposal["content_uom"] = {"code": content_uom}
     # The count and its noun are printed together. Read the noun from the same
     # text rather than leaving it null whenever the contract has not declared
     # one — a declared value still wins, because the contract is the statement

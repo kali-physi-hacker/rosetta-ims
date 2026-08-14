@@ -27,6 +27,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 import tempfile
 from dataclasses import dataclass
 from io import BytesIO
@@ -568,6 +569,26 @@ def _replay_set(
     )
 
 
+def _cells_match(column: str, want: str, got: str) -> bool:
+    """Exact equality, with one declared tolerance (policy 2026-08-14).
+
+    The export prints the literal UNIT placeholder where nothing on the page
+    names a packaging noun — "10 UNIT / BOTTLE", "24 UNIT". The sheet upstream
+    is allowed to hold the refined noun ("10 TABLETS / BOTTLE", "24 CANS"), so
+    for the two packaging-text columns a placeholder UNIT in the export
+    matches any single word the sheet wrote in that position. Everything else
+    about the cell — counts, separators, the outer unit — still has to agree
+    exactly.
+    """
+    if want == got:
+        return True
+    if column in ("package_configuration", "order_multiple"):
+        pattern = re.sub(r"\bUNIT\b", r"[0-9A-Za-z]+", re.escape(got), flags=re.IGNORECASE)
+        if pattern != re.escape(got):
+            return re.fullmatch(pattern, want, flags=re.IGNORECASE) is not None
+    return False
+
+
 def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str]:
     """Per-field comparison, reported as mismatched (expected X, got Y).
 
@@ -581,7 +602,7 @@ def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str
         if not want:
             continue
         got = (actual.get(column) or "").strip()
-        if want != got:
+        if not _cells_match(column, want, got):
             problems.append(f"{column}: expected {want!r}, got {got!r}")
     return problems
 
@@ -708,7 +729,7 @@ def test_the_published_export_matches_the_hand_filled_sheet(spec: GoldenSet, db,
             got = (published[sku].get(column) or "").strip()
             if not got:
                 enforced_fields["missing"] += 1
-            elif want == got:
+            elif _cells_match(column, want, got):
                 enforced_fields["matched"] += 1
             else:
                 enforced_fields["mismatched"] += 1

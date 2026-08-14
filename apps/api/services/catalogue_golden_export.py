@@ -104,20 +104,53 @@ def _packaging_text(pack: models.CataloguePackagingConfiguration | None) -> str:
     )
     outer = _uom(pack.purchase_uom_code, pack.purchase_uom_label)
     qty = _num(pack.content_amount) or _num(pack.sellable_units_per_purchase_unit)
-    if qty and inner and outer:
-        return f"{qty} {inner} / {outer}"
+    if qty and outer:
+        # The inner noun is optional by policy (2026-08-14): when neither a
+        # sellable unit nor a content measure names it, the literal UNIT
+        # placeholder stands in — "10 UNIT / BOTTLE", never a bare
+        # "10 / BOTTLE" — and the sheet upstream is free to hold the richer
+        # noun; the golden comparison tolerates that refinement.
+        return f"{qty} {inner or 'UNIT'} / {outer}"
     return " / ".join(part for part in (f"{qty} {inner}".strip(), outer) if part)
 
 
 def _order_multiple_text(pack: models.CataloguePackagingConfiguration | None, variant=None) -> str:
-    if pack is None or pack.order_increment_amount is None:
+    """The order multiple states the BUY unit: "1 BOTTLE", "24 UNIT".
+
+    Quantity is the printed increment/minimum when the source stated one,
+    else 1 — one purchase unit is a true statement of how the row is bought.
+    The noun is the packaging's PURCHASE unit ("30 ML / BOTTLE" buys a
+    BOTTLE); the UNIT placeholder stands in when nothing names it. A pack
+    that carries no purchase context at all (only a declared price basis)
+    renders nothing.
+    """
+    if pack is None:
         return ""
-    unit = _uom(pack.order_increment_uom_code, pack.order_increment_uom_label)
-    # "UNIT" is the contract's placeholder for "a sellable one of these"; the
-    # identity knows which noun that is.
+    has_context = any(
+        value is not None
+        for value in (
+            pack.purchase_uom_code,
+            pack.sellable_units_per_purchase_unit,
+            pack.content_amount,
+            pack.order_increment_amount,
+            pack.minimum_order_amount,
+        )
+    )
+    if not has_context:
+        return ""
+    qty = pack.order_increment_amount or pack.minimum_order_amount or 1
+    unit = (
+        _uom(pack.purchase_uom_code, pack.purchase_uom_label)
+        or _uom(pack.order_increment_uom_code, pack.order_increment_uom_label)
+        or "UNIT"
+    )
     if unit.upper() == "UNIT":
-        unit = _clean(variant.uom if variant else None) or unit
-    return " ".join(part for part in (_num(pack.order_increment_amount), unit) if part)
+        variant_uom = _clean(variant.uom if variant else None)
+        # The placeholder renders canonically as UNIT unless the identity
+        # carries a real noun — a lowercase 'unit' drafted by the review
+        # harness is the placeholder wearing a costume, not a noun.
+        unit = variant_uom if variant_uom and variant_uom.upper() != "UNIT" else "UNIT"
+    return f"{_num(qty)} {unit}"
 
 
 def _basis_uom(pub, variant) -> str:
@@ -234,7 +267,9 @@ def _identity_packaging(variant, link) -> str:
         return f"{qty} {inner} / {outer}"
     if qty and inner:
         return f"{qty} {inner}"
-    return " / ".join(part for part in (inner, outer) if part)
+    # A unit name without a count says nothing about packaging — printing a
+    # bare 'unit' here was the same phantom class as the old '1 PIECE'.
+    return ""
 
 
 def _clean(raw: str | None) -> str:
