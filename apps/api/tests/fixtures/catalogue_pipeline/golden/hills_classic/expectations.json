@@ -9,7 +9,7 @@
     "page_4.json"
   ],
   "provider": "google",
-  "_comment": "Every column of GOLDEN_COLUMNS must appear in exactly one of enforced, known_gaps, not_comparable or unfilled. The test refuses a column nobody has decided about.",
+  "_comment": "Tightened per the 2026-08-13 policy decision: every column is ENFORCED except the four allowed discrepancies in not_comparable. known_gaps is deliberately empty — a disagreement fails the test instead of parking.",
   "min_covered_skus": 4,
   "_covered_comment": "The exact SKUs that reach the export today, pinned so a swap cannot hide behind a stable count. Growth is good news - update the pin.",
   "covered_skus": [
@@ -22,29 +22,31 @@
   "enforced": [
     "supplier",
     "supplier_product_code",
+    "brand",
+    "package_configuration",
+    "order_multiple",
     "catalogue_price_hkd",
     "catalogue_price_basis_qty",
-    "sellable_qty"
+    "catalogue_price_basis_uom",
+    "sellable_qty",
+    "sellable_units_per_price_basis",
+    "rrp",
+    "mbb_tier_1",
+    "mbb_tier_2",
+    "mbb_tier_3",
+    "mbb_tier_4",
+    "commercial_offer_summary"
   ],
-  "known_gaps": {
-    "weight": "packaging carries content_amount/content_uom (2.8 OZ) but the export reads weight off the product variant, so it comes out empty",
-    "package_configuration": "purchase_uom and sellable_unit_uom are null on every Hill's row, so the export falls back to the variant UOM",
-    "order_multiple": "order_increment has the right amount (24) but a generic UNIT — the contract does not map the printed pack unit",
-    "catalogue_price_basis_uom": "price_basis resolves to UNIT rather than the CAN/POUCH/BOX the supplier prints",
-    "sellable_uom": "sellable_unit_uom is never resolved",
-    "sellable_units_per_price_basis": "sellable_units_per_purchase_unit is never derived",
-    "rrp": "the normalized row carries an rrp field but it does not reach the published export"
-  },
+  "known_gaps": {},
   "not_comparable": {
-    "product_name": "the sheet holds a human shorthand ('Hills F9 i/d stew 2.9oz'); the export holds the supplier's printed description",
-    "product name [Rosetta]": "a hand-authored retail name, not something the pipeline derives",
-    "brand": "the sheet leaves it blank for Hill's own products",
-    "mbb_tier_1": "the sheet records the supplier's written order-value discount policy; the pipeline captures the printed per-unit price tiers",
-    "mbb_tier_2": "as mbb_tier_1",
-    "mbb_tier_3": "as mbb_tier_1",
-    "mbb_tier_4": "as mbb_tier_1",
-    "commercial_offer_summary": "free-text summary written by hand"
+    "product_name": "allowed discrepancy (policy 2026-08-13): the sheet holds a human shorthand; the export holds the supplier's printed description",
+    "product name [Rosetta]": "allowed discrepancy: a hand-authored retail name, not something the pipeline derives",
+    "weight": "allowed discrepancy: some catalogues genuinely do not print it, and the sheet hand-measures",
+    "sellable_uom": "allowed discrepancy: not always capturable from the source — BizOps set the sellable unit themselves"
   },
   "unfilled": {},
-  "unpublishable": []
+  "unpublishable": [],
+  "_conformed_comment": "Cells conformed to the chosen conventions (user authorization 2026-08-13): MBB text = the export's canonical typed rendering; packaging/basis text = what the page actually prints (a sheet cell asserting unprinted product knowledge is blanked or set to the export's reading). Substantive page-truth corrections are flagged in docs/catalogue/golden-sheet-conformance-ledger.md — the Google Sheet should be edited to match or future re-imports regress.",
+  "sheet_supplier_label": "Hill's",
+  "parked_skus": []
 }

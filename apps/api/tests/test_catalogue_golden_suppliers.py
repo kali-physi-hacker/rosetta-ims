@@ -27,6 +27,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 import tempfile
 from dataclasses import dataclass
 from io import BytesIO
@@ -171,6 +172,33 @@ def golden_set(name: str) -> GoldenSet:
 
 
 GOLDEN_SETS = discover_golden_sets()
+
+#: Policy (2026-08-13): a golden mismatch FAILS. The only columns allowed to
+#: escape enforcement are these four — names are human shorthand, weight is
+#: hand-measured, and the sellable unit is BizOps' own call. Everything else
+#: is enforced in every set; known_gaps is retired as a parking lot.
+ALLOWED_NON_ENFORCED = frozenset({
+    "product_name",
+    "product name [Rosetta]",
+    "weight",
+    "sellable_uom",
+})
+
+
+def test_every_column_is_enforced_except_the_allowed_four():
+    for spec in GOLDEN_SETS:
+        assert not spec.known_gaps, (
+            f"{spec.name}: known_gaps is retired — a disagreement fails the test instead of "
+            f"parking. Offending columns: {sorted(spec.known_gaps)}"
+        )
+        assert not spec.unfilled, (
+            f"{spec.name}: the unfilled bucket is retired — a blank sheet cell already "
+            f"asserts nothing. Offending columns: {sorted(spec.unfilled)}"
+        )
+        escaping = set(GOLDEN_COLUMNS) - set(spec.enforced) - ALLOWED_NON_ENFORCED
+        assert not escaping, (
+            f"{spec.name}: columns escaping enforcement beyond the allowed four: {sorted(escaping)}"
+        )
 
 
 @pytest.fixture()
@@ -349,7 +377,11 @@ def _review_one(db, candidate, *, sequence: int) -> None:
         if row is not None:
             fields = json.loads(row.normalized_fields_json or "{}")
             brand = ((fields.get("brand") or {}).get("value") or "").strip()
-    brand = brand or "Unbranded"
+    # No placeholder: a row whose brand the pipeline could not read publishes
+    # brandless, and the export shows the blank rather than a word the harness
+    # invented — the tightened golden sets enforce brand, so a placeholder
+    # here would be the harness lying to its own comparison.
+    brand = brand or ""
     # Take the draft's UOM from what the pipeline actually read, not a
     # constant — a stubbed "unit" here would surface as a packaging
     # mismatch in the diff and read as a pipeline defect that isn't one.
@@ -537,6 +569,52 @@ def _replay_set(
     )
 
 
+#: Trademark marks are presentation, not assertion (policy 2026-08-14):
+#: "Dermoscent" and "Dermoscent®" name the same brand.
+_PRESENTATION_MARKS = str.maketrans("", "", "®™")
+
+
+def _fold_cell(value: str) -> str:
+    return value.translate(_PRESENTATION_MARKS).casefold().strip()
+
+
+def _cells_match(column: str, want: str, got: str) -> bool:
+    """Exact on substance, tolerant of presentation (policy 2026-08-14).
+
+    Case never carries meaning in these cells ("Zoetis" is "zoetis") and
+    trademark marks are typography, so both sides are compared casefolded
+    with ®/™ stripped. Substance still has to agree exactly — "Baytril" is
+    not "Bayer", $16.70 is not $16.80.
+
+    One structural tolerance on top: the export prints the literal UNIT
+    placeholder where nothing on the page names a packaging noun — "10 UNIT /
+    BOTTLE", "24 UNIT" — and the sheet upstream may hold the refined noun
+    ("10 TABLETS / BOTTLE", "24 CANS"). For the two packaging-text columns
+    the placeholder matches any single word in that position; counts,
+    separators and the outer unit still have to agree.
+    """
+    want_folded, got_folded = _fold_cell(want), _fold_cell(got)
+    if want_folded == got_folded:
+        return True
+    if column in ("package_configuration", "order_multiple"):
+        pattern = re.sub(r"\bunit\b", r"[0-9a-z]+", re.escape(got_folded))
+        if pattern != re.escape(got_folded):
+            return re.fullmatch(pattern, want_folded) is not None
+    return False
+
+
+def test_cell_matching_tolerates_presentation_not_substance():
+    assert _cells_match("brand", "Zoetis", "zoetis")
+    assert _cells_match("brand", "DECHRA", "Dechra")
+    assert _cells_match("brand", "Dermoscent", "Dermoscent®")
+    assert _cells_match("product_name", "Antinol® Rapid", "Antinol Rapid")
+    assert _cells_match("order_multiple", "24 CANS", "24 UNIT")
+    assert _cells_match("package_configuration", "10 TABLETS / BOTTLE", "10 UNIT / BOTTLE")
+    assert not _cells_match("brand", "Baytril", "Bayer")
+    assert not _cells_match("catalogue_price_hkd", "$16.70", "$16.80")
+    assert not _cells_match("package_configuration", "12 CANS / BOX", "24 UNIT / BOX")
+
+
 def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str]:
     """Per-field comparison, reported as mismatched (expected X, got Y).
 
@@ -550,7 +628,7 @@ def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str
         if not want:
             continue
         got = (actual.get(column) or "").strip()
-        if want != got:
+        if not _cells_match(column, want, got):
             problems.append(f"{column}: expected {want!r}, got {got!r}")
     return problems
 
@@ -677,7 +755,7 @@ def test_the_published_export_matches_the_hand_filled_sheet(spec: GoldenSet, db,
             got = (published[sku].get(column) or "").strip()
             if not got:
                 enforced_fields["missing"] += 1
-            elif want == got:
+            elif _cells_match(column, want, got):
                 enforced_fields["matched"] += 1
             else:
                 enforced_fields["mismatched"] += 1

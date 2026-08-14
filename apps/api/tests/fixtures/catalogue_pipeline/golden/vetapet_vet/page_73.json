@@ -1,0 +1,52 @@
+{
+ "page_outcome": "evidence",
+ "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+ "page_brand_text": "Bioiberica",
+ "tables": [
+  {
+   "columns": [
+    "CODE NO",
+    "PRODUCT NAME",
+    "WHOLESALE PRICE",
+    "SUGGESTED RETAIL PRICE"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "141001",
+      "Atopivet® Collar for Cats & Small Dogs (35 cm/length)",
+      "HK$125.0",
+      "HK$250.0"
+     ]
+    },
+    {
+     "cells": [
+      "141101",
+      "Atopivet® Collar for Medium & Large Dogs (75 cm/length)",
+      "HK$145.0",
+      "HK$290.0"
+     ]
+    },
+    {
+     "cells": [
+      "109200",
+      "Atopivet® Mousse for Dogs, Cats, Ferrets, Rabbits & Rodents (250 ml/bot)",
+      "HK$220.0",
+      "HK$440.0"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Made in Spain"
+  },
+  {
+   "text": "Same as Dechra Atopivet®"
+  },
+  {
+   "text": "Promotion: Mix over $1000, 10% off"
+  }
+ ]
+}

@@ -80,14 +80,18 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             field_key="brand",
             role=SourceFieldRole.BRAND,
             requirement=SourceFieldRequirement.OPTIONAL,
-            # `section_header` exactly — it is the only source_path the
-            # conformance engine resolves (the banner spanning the table).
-            # "product_name or section_header" reads as a column name, matches
-            # no column, and captured nothing. Pulling a brand back out of the
-            # product name is not something the engine does, so that half of
-            # the intent is dropped rather than left as a claim we do not meet.
-            source_path="section_header",
-            description="Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
+            # `page_brand` — the maker's wordmark heading the PAGE ('zoetis'
+            # printed opposite Vetapet's own letterhead). The text above each
+            # table is a CATEGORY (PARASITE CONTROL, DRUG) or an origin/promo
+            # banner, so section_header here put categories into brand —
+            # worse than empty. Envelopes captured before page_brand_text
+            # existed leave this field empty on purpose.
+            source_path="page_brand",
+            description=(
+                "Product brand, read from the brand mark heading the page (e.g. the "
+                "zoetis or Dermoscent wordmark) — never from the table banner, which "
+                "names a category."
+            ),
             evidence=evidence_items,
         ),
         SourceFieldContract(
@@ -135,8 +139,11 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             role=SourceFieldRole.RRP,
             requirement=SourceFieldRequirement.OPTIONAL,
             source_column="SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價" if segment == "vet" else "零售價 / RETAIL PRICE",
-            aliases=["SUGGESTED RETAIL PRICE", "RETAIL PRICE", "零售價", "建議零售價"],
-            description="Suggested retail or retail price field; retail sections print 建議零售價.",
+            aliases=["SUGGESTED RETAIL PRICE", "RETAIL PRICE", "SUGGESTED PRICE", "零售價", "建議零售價"],
+            description=(
+                "Suggested retail or retail price field; retail sections print 建議零售價, "
+                "and the vet catalogue's retail-style brand tables print 'Suggested Price'."
+            ),
             evidence=evidence_items,
         ),
         SourceFieldContract(
@@ -144,7 +151,7 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             role=SourceFieldRole.MBB_TEXT,
             requirement=SourceFieldRequirement.OPTIONAL,
             source_column="TERMS / REMARKS",
-            aliases=["TERMS", "REMARKS"],
+            aliases=["TERMS", "REMARKS", "REMARK"],
             description=(
                 "Bulk buy terms, promotional offers, or discount conditions printed as row "
                 "columns (e.g., 'Buy 20+ at special price', 'Buy 3 get 1 free'). PAGE-level "
@@ -241,7 +248,12 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         schema_version=SUPPLIER_SOURCE_SCHEMA_VERSION,
         contract_id="vetapet.vet_price_list.v1",
         contract_version="v1",
-        supplier=SupplierSourceReference(supplier_id=91, supplier_name="Vetapet Vet", supplier_code=None),
+        # "C.Vetapet & Company" is the canonical trading name (user decision,
+        # 2026-08-13): it is what the letterhead prints and what the golden
+        # sheet writes. The operations supplier row 91 still says "Vetapet
+        # Vet" until BizOps renames it — the identity check reads THIS name,
+        # so the letterhead matches either way.
+        supplier=SupplierSourceReference(supplier_id=91, supplier_name="C.Vetapet & Company", supplier_code=None),
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Vetapet Vet PDF price list",
         source_format=SourceFormat.PDF_TABLE,
@@ -306,7 +318,12 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
             price_basis=UnitOfMeasure(code=UnitCode.UNIT),
             purchase_uom_source_field="order_unit",
             price_basis_follows_purchase_unit=True,
-            content_measure_source_field="pack_size",
+            # '3 tubes / pack' and '90 capsules / bottle' print the sellable
+            # count (and its noun) in the packing text itself — the Alfamedic
+            # trade: the leading number is read as the count, so the content
+            # measure claim is dropped rather than conflated (the schema
+            # refuses one field serving as proof of both).
+            sellable_units_per_purchase_unit_source_field="pack_size",
             break_pack_allowed=None,
             interpretation_rules=[
                 "Treat kg/g/ml size text as content measure, not sellable-unit count.",
@@ -315,7 +332,8 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
             ],
             unresolved_semantics=[
                 "Order increment and break-pack rules are not proven by checked-in source evidence.",
-                "PRICE-column layouts print no order-unit column; their UNIT fallback basis is not per-row verified.",
+                "Rows whose order-unit column is absent AND whose packing text names no known unit "
+                "('35 cm/length') keep the declared UNIT fallback basis.",
             ],
         ),
         mbb=MbbSourceSemantics(

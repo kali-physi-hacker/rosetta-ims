@@ -1601,13 +1601,19 @@ def _claim_issue_specs(staging: NormalizedRowV1) -> list[dict[str, Any]]:
                 {
                     "stage": ValidationStage.STAGING,
                     "issue_code": "STAGING_CONTENT_MEASURE_AS_SELLABLE_COUNT",
-                    "severity": IssueSeverity.BLOCKING,
+                    # WARNING, not BLOCKING (policy 2026-08-14): '30ml/ bot'
+                    # counting 30 with sellable unit ML is the accepted
+                    # convention — the golden sheet asserts exactly that, the
+                    # sellable unit is BizOps' own call, and the export shows
+                    # the measure honestly ('30 ML / BOTTLE'). The reviewer
+                    # still sees this note; the row is not held hostage to it.
+                    "severity": IssueSeverity.WARNING,
                     "message": "Content measurement appears to have been reused as a sellable-unit count.",
                     "field_path": "/normalized_fields/packaging/sellable_units_per_purchase_unit",
                     "raw_value": staging.raw_fields.packaging,
                     "proposed_value": str(packaging.sellable_units_per_purchase_unit),
                     "expected_value": "Sellable-unit count must be separate from content amount.",
-                    "review_guidance": "Confirm the number of sellable units separately; do not use mL or grams as the count.",
+                    "review_guidance": "Confirm the number of sellable units on review; a measure standing in as the count is accepted, not silent.",
                 }
             )
     return specs

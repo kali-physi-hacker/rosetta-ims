@@ -4,7 +4,7 @@
   "contract_version": "v1",
   "supplier": {
     "supplier_id": 91,
-    "supplier_name": "Vetapet Vet"
+    "supplier_name": "C.Vetapet & Company"
   },
   "document_type": "PRICE_LIST",
   "format_name": "Vetapet Vet PDF price list",
@@ -113,10 +113,10 @@
       "field_key": "brand",
       "role": "BRAND",
       "requirement": "OPTIONAL",
-      "source_path": "section_header",
+      "source_path": "page_brand",
       "composed_from": [],
       "aliases": [],
-      "description": "Product brand, read from the section banner printed above the table (e.g. Zoetis, Antinol, Dermoscent).",
+      "description": "Product brand, read from the brand mark heading the page (e.g. the zoetis or Dermoscent wordmark) — never from the table banner, which names a category.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -180,10 +180,11 @@
       "aliases": [
         "SUGGESTED RETAIL PRICE",
         "RETAIL PRICE",
+        "SUGGESTED PRICE",
         "零售價",
         "建議零售價"
       ],
-      "description": "Suggested retail or retail price field; retail sections print 建議零售價.",
+      "description": "Suggested retail or retail price field; retail sections print 建議零售價, and the vet catalogue's retail-style brand tables print 'Suggested Price'.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -201,7 +202,8 @@
       "composed_from": [],
       "aliases": [
         "TERMS",
-        "REMARKS"
+        "REMARKS",
+        "REMARK"
       ],
       "description": "Bulk buy terms, promotional offers, or discount conditions printed as row columns (e.g., 'Buy 20+ at special price', 'Buy 3 get 1 free'). PAGE-level promotions (banner text like 'Mix over $1000, 10% off' or brand-scoped '混合12件 9折') land in text_observations, which no contract field can reach today — see known_ambiguities.",
       "evidence": [
@@ -301,7 +303,7 @@
     "price_basis": {
       "code": "UNIT"
     },
-    "content_measure_source_field": "pack_size",
+    "sellable_units_per_purchase_unit_source_field": "pack_size",
     "purchase_uom_source_field": "order_unit",
     "price_basis_follows_purchase_unit": true,
     "interpretation_rules": [
@@ -311,7 +313,7 @@
     ],
     "unresolved_semantics": [
       "Order increment and break-pack rules are not proven by checked-in source evidence.",
-      "PRICE-column layouts print no order-unit column; their UNIT fallback basis is not per-row verified."
+      "Rows whose order-unit column is absent AND whose packing text names no known unit ('35 cm/length') keep the declared UNIT fallback basis."
     ]
   },
   "mbb": {

@@ -2,16 +2,24 @@
   "supplier": {
     "id": 91,
     "code": "VETAP2",
-    "name": "Vetapet Vet"
+    "name": "C.Vetapet & Company"
   },
   "pages": [
-    "page_1.json"
+    "page_3.json",
+    "page_5.json",
+    "page_49.json",
+    "page_52.json",
+    "page_61.json",
+    "page_73.json",
+    "page_74.json",
+    "page_84.json"
   ],
   "provider": "anthropic",
-  "_comment": "Every column of GOLDEN_COLUMNS must appear in exactly one of enforced, known_gaps, not_comparable or unfilled. The test refuses a column nobody has decided about.",
-  "_catalogue_comment": "The capture is the WHOLE Vetapet catalogue replayed under the vet contract, so most rows rightly dead-letter: the retail/non-vet sections' headings are not this contract's to claim (CONTRACT_REQUIRED_FIELD_MISSING on cost/description dominates). The 574-row lane split is pinned in the quality report, and the sheet's vet SKUs are the assertion surface.",
-  "_parked_comment": "TOP250 (Topizole Shampoo 250mL) is deliberately NOT in expected.csv. The catalogue prints it as two same-code rows — ORDER UNIT '1-10 bottles' at HK$82.0 and '11-20 bottles' at HK$78.0. The sheet's answer is right (base $82.00, tier 'buy 11-20 BOTTLES at HKD 78 per BOTTLE'), but no mechanism folds same-code quantity-band rows into base-plus-term yet: both rows become candidates and the deeper band supersedes, publishing $78.00 as the base cost. Parked rather than pinned-wrong; the contract's VETAPET_VET_QUANTITY_BAND_ROWS ambiguity carries the defect, and the review desk sees both band candidates in the meantime. Wound-care SKUs (500-00xx) print the same shape at 3/6/12 pcs.",
-  "_missing_comment": "APQ-L, VANG5L and VANG-RCP never reach the export: their tables print prices under headings the contract cannot claim (Apoquel's 'PRICE PER ORDER QTY: 1-19' / '20 or above' ladder columns; the vaccine tables' layout), so the rows dead-letter under CONTRACT_REQUIRED_FIELD_MISSING. They stay in expected.csv as open sheet assertions and join covered_skus only when the contract learns those layouts.",
+  "_comment": "Tightened per the 2026-08-13 policy decision: every column is ENFORCED except the four allowed discrepancies in not_comparable. known_gaps is deliberately empty — a disagreement fails the test instead of parking.",
+  "_capture_comment": "Per-page envelopes for the eight pages carrying the covered SKUs, captured in-session from Vetapet.pdf (verbatim tables, letterhead as supplier_identity_text, page brand marks as page_brand_text). The whole-document envelope this replaced predated both page-level fields.",
+  "_parked_comment": "TOP250 (Topizole) stays out of expected.csv: the catalogue prints it as two same-code quantity-band rows (1-10 bottles at $82, 11-20 at $78) and no folding mechanism exists — see VETAPET_VET_QUANTITY_BAND_ROWS on the contract. Its page (39) is deliberately not captured.",
+  "_missing_comment": "APQ-L, VANG5L and VANG-RCP stay in expected.csv but cannot publish: their tables price under headings the contract cannot claim (Apoquel's per-order-qty ladder columns; the vaccine layouts). Their pages (12, 7, 8) are not captured; they join covered_skus when the contract learns those layouts.",
+  "_conformed_comment": "Cells conformed to the chosen conventions (user authorization 2026-08-13, 'I'll ensure it's conformed to even if I have to change the golden samples'): brand = the verbatim page brand mark; basis/packaging text = the export's canonical rendering; a sheet cell asserting data the page does not print is blanked. Every conformed cell is listed in docs/../vetapet sheet-edit ledger accompanying the commit; substantive corrections (ROT prints 90 capsules, not 100 tablets) are called out there too.",
   "min_covered_skus": 11,
   "covered_skus": [
     "109300",
@@ -27,32 +35,34 @@
     "SR-12"
   ],
   "enforced": [
+    "supplier",
     "supplier_product_code",
+    "brand",
+    "package_configuration",
+    "order_multiple",
     "catalogue_price_hkd",
     "catalogue_price_basis_qty",
-    "sellable_qty"
+    "catalogue_price_basis_uom",
+    "sellable_qty",
+    "sellable_units_per_price_basis",
+    "rrp",
+    "mbb_tier_1",
+    "mbb_tier_2",
+    "mbb_tier_3",
+    "mbb_tier_4",
+    "commercial_offer_summary"
   ],
-  "known_gaps": {
-    "brand": "the vet pages' banners are categories or origin/promo text ('Made in Spain - Promotion: Mix over $1000, 10% off (Atopivet Collar/Mousse)'), and brand reads from the banner — every covered row differs from the sheet's brand",
-    "package_configuration": "prints the declared 'unit' fallback; the packing text of these layouts is not parsed into count-and-noun form",
-    "order_multiple": "not derived — the vet layouts declare no order-increment source, so the column is empty",
-    "catalogue_price_basis_uom": "the AMOUNT is per order unit and basis_qty matches 11/11, but the uom label resolves to the declared 'unit' fallback wherever no ORDER UNIT column or readable slash-unit names the specific noun (sheet: BOX/BOTTLE/PACK)",
-    "sellable_uom": "same 'unit' fallback as the price basis label",
-    "sellable_units_per_price_basis": "not derived for the vet layouts",
-    "rrp": "the vet tables print no RRP column, and the retail-style tables print 'Suggested Price', which is not a declared RRP alias — every covered row is empty",
-    "weight": "the sheet hand-fills weights; the export derives grams only from mass measures in packing text, and these rows print volume, length or nothing",
-    "mbb_tier_1": "three shapes, none reachable yet: page-banner promotions land in text_observations (21501 'Mix over $1000, 10% off'); free-goods remarks are captured as MBB text, not a structured tier (ROT 'buy 3, get 1 free'); and same-code quantity-band rows have no folding mechanism (TOP250, parked)"
-  },
+  "known_gaps": {},
   "not_comparable": {
-    "supplier": "the sheet labels these rows 'C.Vetapet & Company'; the operations supplier record this contract binds (id 91) is named 'Vetapet Vet'. Same company, two registers — the export prints the record's name. (Supplier master also carries id 4 'C. Vetapet' and id 61 'C. Vetapet & Company / Alfamedic'.)",
-    "product_name": "the sheet holds a human shorthand ('Revolution Pup and Kitten'); the export holds the supplier's printed description ('Revolution 15mg for Puppies & Kittens (Mauve 5 lbs or less)')",
-    "product name [Rosetta]": "a hand-authored retail name, not something the pipeline derives",
-    "commercial_offer_summary": "free-text summary written by hand"
+    "product_name": "allowed discrepancy (policy 2026-08-13): the sheet holds a human shorthand; the export holds the supplier's printed description",
+    "product name [Rosetta]": "allowed discrepancy: a hand-authored retail name, not something the pipeline derives",
+    "weight": "allowed discrepancy: some catalogues genuinely do not print it, and the sheet hand-measures",
+    "sellable_uom": "allowed discrepancy: not always capturable from the source — BizOps set the sellable unit themselves"
   },
-  "unfilled": {
-    "mbb_tier_2": "blank in every covered sheet row",
-    "mbb_tier_3": "blank in every covered sheet row",
-    "mbb_tier_4": "blank in every covered sheet row"
-  },
-  "unpublishable": []
+  "unfilled": {},
+  "unpublishable": [],
+  "sheet_supplier_label": "C.Vetapet & Company",
+  "parked_skus": [
+    "TOP250"
+  ]
 }

@@ -1,0 +1,44 @@
+{
+ "page_outcome": "evidence",
+ "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+ "page_brand_text": "Bioiberica",
+ "tables": [
+  {
+   "columns": [
+    "CODE NO",
+    "PRODUCT NAME",
+    "WHOLESALE PRICE",
+    "SUGGESTED RETAIL PRICE"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "149002",
+      "Atopivet® Soft Gelatin Capsules for Dogs & Cats (60 cap/pack)",
+      "HK$235.0",
+      "HK$470.0"
+     ]
+    },
+    {
+     "cells": [
+      "109300",
+      "Atopivet® Oral Suspension for Dogs & Cats (120ml/bot)",
+      "HK$220.0",
+      "HK$440.0"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Made in Spain"
+  },
+  {
+   "text": "Same as Dechra Atopivet®"
+  },
+  {
+   "text": "Promotion: Mix over $1000, 10% off"
+  }
+ ]
+}

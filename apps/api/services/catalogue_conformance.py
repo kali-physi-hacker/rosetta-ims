@@ -416,6 +416,14 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
                 target = _role_target(contract_field.role)
                 if target:
                     fields.setdefault(target, section)
+    page_brand = _text((observation.source_metadata or {}).get("page_brand_text"))
+    if page_brand is not None:
+        for contract_field in runtime_contract.declaration.fields:
+            if contract_field.source_path == _PAGE_BRAND_SOURCE:
+                fields[f"source:{contract_field.field_key}"] = page_brand
+                target = _role_target(contract_field.role)
+                if target:
+                    fields.setdefault(target, page_brand)
     def _record(contract_field, value: Any) -> None:
         target = _role_target(contract_field.role) or f"additional:{contract_field.field_key}"
         # Preserve every declaration by its stable contract field key even
@@ -750,6 +758,16 @@ def _supplier_identity_issues(
     )
 
 
+#: Corporate boilerplate that never identifies a company on its own. Short
+#: tokens (< 4 chars) are excluded separately — "Pet Shop Ltd" must not vouch
+#: for "Kangaroo Pet Nutrition" on the strength of 'pet'.
+_IDENTITY_STOPWORDS = frozenset({
+    "and", "co", "company", "corp", "corporation", "enterprise", "enterprises",
+    "group", "holding", "holdings", "inc", "incorporated", "international",
+    "limited", "ltd", "the",
+})
+
+
 def _identity_names_overlap(left: str, right: str) -> bool:
     """Match printed supplier-identity text against a contract's declared name/code.
 
@@ -760,16 +778,41 @@ def _identity_names_overlap(left: str, right: str) -> bool:
     same company, one missing period). Stripping periods here would be too
     aggressive for column-heading matching (headers occasionally rely on
     exact punctuation) but is exactly right for a company name.
+
+    Three ways to match, each covering a real print-vs-declaration drift:
+    folded containment ("K.P.N Trading Ltd." printed, one period dropped);
+    COMPACT containment with every separator removed ("KPN Trading" printed
+    against "K.P.N. Trading" declared); and a shared distinctive token — the
+    Vetapet letterhead prints "C. VETAPET & COMPANY" while the operations
+    record is "Vetapet Vet", so neither fold contains the other, but
+    'vetapet' names the company on both sides. Distinctive means four or more
+    characters and not corporate boilerplate; the looseness this buys fails
+    SAFE — a missed mismatch suppresses an issue, never blocks a row — while
+    the routing case the check exists for (K.P.N. pages versus Kangaroo Pet
+    Nutrition pages) still fires on every form either company prints.
     """
 
     def _identity_fold(value: str) -> str:
-        return re.sub(r"[.\s/|]+", " ", value).strip().lower()
+        return re.sub(r"[.\s/|'&,()-]+", " ", value).strip().lower()
+
+    def _compact(value: str) -> str:
+        return re.sub(r"[^0-9a-z⺀-鿿豈-﫿]+", "", value.lower())
+
+    def _tokens(value: str) -> set[str]:
+        return {
+            token
+            for token in _identity_fold(value).split()
+            if len(token) >= 4 and token not in _IDENTITY_STOPWORDS and not token.isdigit()
+        }
 
     for left_key in (_identity_fold(left), _english_fold(left)):
         for right_key in (_identity_fold(right), _english_fold(right)):
             if left_key and right_key and (left_key in right_key or right_key in left_key):
                 return True
-    return False
+    left_compact, right_compact = _compact(left), _compact(right)
+    if left_compact and right_compact and (left_compact in right_compact or right_compact in left_compact):
+        return True
+    return bool(_tokens(left) & _tokens(right))
 
 
 def _carry_merged_cells(
@@ -1233,9 +1276,23 @@ def _stable_term_uuid(evidence: dict[str, Any], field_key: str) -> uuid.UUID:
 
 
 def _read_purchase_unit(fields: dict[str, Any], semantics) -> str | None:
+    """The per-row purchase unit, from the declared field or the packing text.
+
+    Only for contracts that opted into per-row units (purchase_uom_source_field
+    declared). When that field is absent or unreadable on a row, the packing
+    text is the same fact written elsewhere — Vetapet's PARASITE CONTROL table
+    has no ORDER UNIT column, but '3 tubes / pack' names the unit after the
+    slash exactly the way Alfamedic's rows do. A packing text whose slash-unit
+    the vocabulary does not know ('35 cm/length') still resolves to nothing.
+    """
     if not semantics.purchase_uom_source_field:
         return None
-    return _purchase_unit_from_text(_source_field_value(fields, semantics.purchase_uom_source_field))
+    read = _purchase_unit_from_text(_source_field_value(fields, semantics.purchase_uom_source_field))
+    if read:
+        return read
+    if semantics.packaging_source_field and semantics.packaging_source_field != semantics.purchase_uom_source_field:
+        return _purchase_unit_from_text(_source_field_value(fields, semantics.packaging_source_field))
+    return None
 
 
 def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any], fields: dict[str, Any] | None = None) -> dict[str, Any] | None:
@@ -1393,8 +1450,24 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
         )
     sellable_source = _source_field_value(fields, semantics.sellable_units_per_purchase_unit_source_field)
     sellable_count = _leading_decimal(sellable_source)
-    if sellable_count is not None:
+    # A count is a count of units per PURCHASE — without a resolved purchase
+    # unit the claim dangles ("10 per what?") and, worse, a bare measure like
+    # '10 mL (8 mL when constituted)' reads its content volume as a sellable
+    # count and makes the publication guard refuse the row. Alfamedic's
+    # '30ml/ bot' keeps its 30: that row resolves BOTTLE.
+    if sellable_count is not None and (read_unit or semantics.purchase_uom is not None):
         proposal["sellable_units_per_purchase_unit"] = str(sellable_count)
+    # '30ml/ bot' names a MEASURE, not a countable — the count above is the
+    # Alfamedic trade, but the measure itself is printed and belongs in the
+    # packaging as content ("30 ML / BOTTLE"). Captured only when no declared
+    # content source exists (the schema forbids one field serving as declared
+    # proof of both, and this is a reading of the page, not a declaration).
+    if "content_amount" not in proposal and semantics.content_measure_source_field is None:
+        implicit_content = _content_measure(sellable_source)
+        if implicit_content:
+            content_amount, content_uom = implicit_content
+            proposal["content_amount"] = str(content_amount)
+            proposal["content_uom"] = {"code": content_uom}
     # The count and its noun are printed together. Read the noun from the same
     # text rather than leaving it null whenever the contract has not declared
     # one — a declared value still wins, because the contract is the statement
@@ -1592,6 +1665,13 @@ _SECTION_HEADER_SOURCE = "section_header"
 # Resolves only when the row carries exactly one non-empty unlabeled value;
 # more than one is unresolvable ambiguity, not a guess to make.
 _UNLABELED_COLUMN_SOURCE = "unlabeled_column"
+
+# A contract declares this as source_path when a field's value is the brand
+# whose logo or name heads the PAGE — Vetapet prints the maker's wordmark
+# ('zoetis') top-right opposite its own letterhead, while the text above each
+# table is a category. Page-scoped like supplier_identity_text, and absent on
+# envelopes captured before the field existed.
+_PAGE_BRAND_SOURCE = "page_brand"
 
 
 # Spaces between CJK characters carry no meaning — Vetapet's retail section

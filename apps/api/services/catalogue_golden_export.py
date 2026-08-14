@@ -104,20 +104,53 @@ def _packaging_text(pack: models.CataloguePackagingConfiguration | None) -> str:
     )
     outer = _uom(pack.purchase_uom_code, pack.purchase_uom_label)
     qty = _num(pack.content_amount) or _num(pack.sellable_units_per_purchase_unit)
-    if qty and inner and outer:
-        return f"{qty} {inner} / {outer}"
+    if qty and outer:
+        # The inner noun is optional by policy (2026-08-14): when neither a
+        # sellable unit nor a content measure names it, the literal UNIT
+        # placeholder stands in — "10 UNIT / BOTTLE", never a bare
+        # "10 / BOTTLE" — and the sheet upstream is free to hold the richer
+        # noun; the golden comparison tolerates that refinement.
+        return f"{qty} {inner or 'UNIT'} / {outer}"
     return " / ".join(part for part in (f"{qty} {inner}".strip(), outer) if part)
 
 
 def _order_multiple_text(pack: models.CataloguePackagingConfiguration | None, variant=None) -> str:
-    if pack is None or pack.order_increment_amount is None:
+    """The order multiple states the BUY unit: "1 BOTTLE", "24 UNIT".
+
+    Quantity is the printed increment/minimum when the source stated one,
+    else 1 — one purchase unit is a true statement of how the row is bought.
+    The noun is the packaging's PURCHASE unit ("30 ML / BOTTLE" buys a
+    BOTTLE); the UNIT placeholder stands in when nothing names it. A pack
+    that carries no purchase context at all (only a declared price basis)
+    renders nothing.
+    """
+    if pack is None:
         return ""
-    unit = _uom(pack.order_increment_uom_code, pack.order_increment_uom_label)
-    # "UNIT" is the contract's placeholder for "a sellable one of these"; the
-    # identity knows which noun that is.
+    has_context = any(
+        value is not None
+        for value in (
+            pack.purchase_uom_code,
+            pack.sellable_units_per_purchase_unit,
+            pack.content_amount,
+            pack.order_increment_amount,
+            pack.minimum_order_amount,
+        )
+    )
+    if not has_context:
+        return ""
+    qty = pack.order_increment_amount or pack.minimum_order_amount or 1
+    unit = (
+        _uom(pack.purchase_uom_code, pack.purchase_uom_label)
+        or _uom(pack.order_increment_uom_code, pack.order_increment_uom_label)
+        or "UNIT"
+    )
     if unit.upper() == "UNIT":
-        unit = _clean(variant.uom if variant else None) or unit
-    return " ".join(part for part in (_num(pack.order_increment_amount), unit) if part)
+        variant_uom = _clean(variant.uom if variant else None)
+        # The placeholder renders canonically as UNIT unless the identity
+        # carries a real noun — a lowercase 'unit' drafted by the review
+        # harness is the placeholder wearing a costume, not a noun.
+        unit = variant_uom if variant_uom and variant_uom.upper() != "UNIT" else "UNIT"
+    return f"{_num(qty)} {unit}"
 
 
 def _basis_uom(pub, variant) -> str:
@@ -134,15 +167,20 @@ def _basis_uom(pub, variant) -> str:
 
 
 def _identity_order_multiple(variant, link) -> str:
-    """The supplier link's ordering terms, which are kept separate from pack size."""
+    """The supplier link's ordering terms, which are kept separate from pack size.
+
+    An increment of one is not an ordering constraint — printing '1 PIECE'
+    asserts a rule the source never stated, so quantities below two render
+    as blank.
+    """
     # The order multiple IS the minimum: 24s means the smallest order is 24.
-    if link is not None and link.order_increment_qty:
+    if link is not None and link.order_increment_qty and link.order_increment_qty > 1:
         unit = _clean(link.order_increment_uom) or _clean(variant.uom if variant else None)
         return " ".join(part for part in (_num(link.order_increment_qty), unit) if part)
-    if link is not None and link.minimum_order_qty:
+    if link is not None and link.minimum_order_qty and link.minimum_order_qty > 1:
         unit = _clean(link.minimum_order_uom) or _clean(variant.uom if variant else None)
         return " ".join(part for part in (_num(link.minimum_order_qty), unit) if part)
-    if variant is not None and variant.min_purchase_qty:
+    if variant is not None and variant.min_purchase_qty and variant.min_purchase_qty > 1:
         return " ".join(part for part in (_num(variant.min_purchase_qty), _clean(variant.pack_unit)) if part)
     return ""
 
@@ -229,12 +267,42 @@ def _identity_packaging(variant, link) -> str:
         return f"{qty} {inner} / {outer}"
     if qty and inner:
         return f"{qty} {inner}"
-    return " / ".join(part for part in (inner, outer) if part)
+    # A unit name without a count says nothing about packaging — printing a
+    # bare 'unit' here was the same phantom class as the old '1 PIECE'.
+    return ""
 
 
 def _clean(raw: str | None) -> str:
     text = (raw or "").strip()
     return "" if text.upper() in {"#N/A", "N/A", "NA", "-", ""} else text
+
+
+def _normalized_rrps(db: Session, run: str) -> dict[str, tuple[str, str | None]]:
+    """The RRP the run READ, per catalogue item.
+
+    RRP currently ends its journey at the normalized row — the approved
+    snapshot does not carry it, and the pipeline deliberately writes no legacy
+    supplier-link rows yet. This export is a report of what the run read, so
+    the printed RRP proposal is the honest source; the legacy link stays as a
+    fallback for rows that predate the pipeline.
+    """
+    import json as _json
+
+    out: dict[str, tuple[str, str | None]] = {}
+    for row in (
+        db.query(models.CatalogueNormalizedRow)
+        .filter(models.CatalogueNormalizedRow.ingestion_run_uuid == run)
+        .all()
+    ):
+        try:
+            fields = _json.loads(row.normalized_fields_json or "{}")
+        except ValueError:
+            continue
+        proposal = fields.get("rrp") or {}
+        amount = proposal.get("amount") if isinstance(proposal, dict) else None
+        if amount:
+            out[row.catalogue_item_uuid] = (str(amount), proposal.get("currency"))
+    return out
 
 
 def _raw_supplier_names(db: Session, run: str) -> dict[str, str]:
@@ -320,6 +388,7 @@ def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
         for link in db.query(models.ProductSupplier).all()
     }
     raw_names = _raw_supplier_names(db, run)
+    raw_rrps = _normalized_rrps(db, run)
     candidate_items = {
         c.mastering_candidate_uuid: c.catalogue_item_uuid
         for c in db.query(models.CatalogueMasteringCandidate)
@@ -365,11 +434,15 @@ def golden_rows(db: Session, run_uuid: UUID) -> list[dict[str, str]]:
                 (_num(pack.sellable_units_per_purchase_unit) if pack else "")
                 or _units_per_pack(variant, link)
             ),
-            # products.rrp is the one that is actually populated; the per-supplier
-            # column exists but is null on every published row of this run.
-            "rrp": _money(
-                (link.rrp if link and link.rrp is not None else None)
-                if (link and link.rrp is not None) else (variant.rrp if variant else None)
+            # The RRP the run read, off the normalized row — the snapshot does
+            # not carry RRP and the pipeline writes no legacy link rows, so
+            # the printed proposal is the native source. Legacy link/variant
+            # values remain as fallbacks for pre-pipeline rows.
+            "rrp": (
+                _money(*raw_rrps[item_uuid]) if item_uuid in raw_rrps else _money(
+                    (link.rrp if link and link.rrp is not None else None)
+                    if (link and link.rrp is not None) else (variant.rrp if variant else None)
+                )
             ),
             "commercial_offer_summary": "; ".join(mbb),
         }
