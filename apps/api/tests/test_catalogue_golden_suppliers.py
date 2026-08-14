@@ -569,24 +569,50 @@ def _replay_set(
     )
 
 
-def _cells_match(column: str, want: str, got: str) -> bool:
-    """Exact equality, with one declared tolerance (policy 2026-08-14).
+#: Trademark marks are presentation, not assertion (policy 2026-08-14):
+#: "Dermoscent" and "Dermoscent®" name the same brand.
+_PRESENTATION_MARKS = str.maketrans("", "", "®™")
 
-    The export prints the literal UNIT placeholder where nothing on the page
-    names a packaging noun — "10 UNIT / BOTTLE", "24 UNIT". The sheet upstream
-    is allowed to hold the refined noun ("10 TABLETS / BOTTLE", "24 CANS"), so
-    for the two packaging-text columns a placeholder UNIT in the export
-    matches any single word the sheet wrote in that position. Everything else
-    about the cell — counts, separators, the outer unit — still has to agree
-    exactly.
+
+def _fold_cell(value: str) -> str:
+    return value.translate(_PRESENTATION_MARKS).casefold().strip()
+
+
+def _cells_match(column: str, want: str, got: str) -> bool:
+    """Exact on substance, tolerant of presentation (policy 2026-08-14).
+
+    Case never carries meaning in these cells ("Zoetis" is "zoetis") and
+    trademark marks are typography, so both sides are compared casefolded
+    with ®/™ stripped. Substance still has to agree exactly — "Baytril" is
+    not "Bayer", $16.70 is not $16.80.
+
+    One structural tolerance on top: the export prints the literal UNIT
+    placeholder where nothing on the page names a packaging noun — "10 UNIT /
+    BOTTLE", "24 UNIT" — and the sheet upstream may hold the refined noun
+    ("10 TABLETS / BOTTLE", "24 CANS"). For the two packaging-text columns
+    the placeholder matches any single word in that position; counts,
+    separators and the outer unit still have to agree.
     """
-    if want == got:
+    want_folded, got_folded = _fold_cell(want), _fold_cell(got)
+    if want_folded == got_folded:
         return True
     if column in ("package_configuration", "order_multiple"):
-        pattern = re.sub(r"\bUNIT\b", r"[0-9A-Za-z]+", re.escape(got), flags=re.IGNORECASE)
-        if pattern != re.escape(got):
-            return re.fullmatch(pattern, want, flags=re.IGNORECASE) is not None
+        pattern = re.sub(r"\bunit\b", r"[0-9a-z]+", re.escape(got_folded))
+        if pattern != re.escape(got_folded):
+            return re.fullmatch(pattern, want_folded) is not None
     return False
+
+
+def test_cell_matching_tolerates_presentation_not_substance():
+    assert _cells_match("brand", "Zoetis", "zoetis")
+    assert _cells_match("brand", "DECHRA", "Dechra")
+    assert _cells_match("brand", "Dermoscent", "Dermoscent®")
+    assert _cells_match("product_name", "Antinol® Rapid", "Antinol Rapid")
+    assert _cells_match("order_multiple", "24 CANS", "24 UNIT")
+    assert _cells_match("package_configuration", "10 TABLETS / BOTTLE", "10 UNIT / BOTTLE")
+    assert not _cells_match("brand", "Baytril", "Bayer")
+    assert not _cells_match("catalogue_price_hkd", "$16.70", "$16.80")
+    assert not _cells_match("package_configuration", "12 CANS / BOX", "24 UNIT / BOX")
 
 
 def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str]:
