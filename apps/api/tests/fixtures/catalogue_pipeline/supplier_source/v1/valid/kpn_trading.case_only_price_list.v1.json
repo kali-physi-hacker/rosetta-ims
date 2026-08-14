@@ -11,8 +11,6 @@
   "format_name": "K.P.N. Trading case-only price list",
   "source_format": "PDF_TABLE",
   "support_status": "PARTIALLY_VERIFIED",
-  "effective_from": null,
-  "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -38,7 +36,6 @@
       {
         "name": "kpn_trading_case_only_sections",
         "selector": "K.P.N. Trading sections whose ONLY printed wholesale amount is at case/box level, with a separately printed pack-level RRP but no pack-level wholesale figure.",
-        "header_row": null,
         "notes": "Observed on wet-food case pages and a 24-pack box layout."
       }
     ],
@@ -80,9 +77,7 @@
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
       "source_column": "產品編號 SKU# / sku#",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "產品編號 SKU#",
         "sku#",
@@ -106,23 +101,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "brand",
       "role": "BRAND",
-      "requirement": "REQUIRED",
-      "source_column": null,
+      "requirement": "OPTIONAL",
       "source_path": "section_header",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Printed row or section brand; observed brands are examples, not routing criteria.",
       "evidence": [
@@ -142,23 +128,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
       "requirement": "REQUIRED",
       "source_column": "產品內容 Product Description",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "產品內容",
         "產品內容 Product Description",
@@ -182,23 +159,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
       "source_column": "包裝",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "包裝",
         "Size"
@@ -221,23 +189,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "units_per_case",
       "role": "OTHER",
       "requirement": "REQUIRED",
       "source_column": "每箱盒數 Unit Per Case",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "每箱盒數",
         "Unit Per Case"
@@ -260,23 +219,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "wholesale_price",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
       "source_column": "每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "批發價 1盒24包",
         "每箱(12盒) 批發價 Wholesale Price Per Case (12 boxes)",
@@ -300,23 +250,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
       "source_column": "每盒 建議零售價 Recommended Retail Price Per box",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "零售價 每包",
         "每盒 建議零售價 Recommended Retail Price Per box"
@@ -339,23 +280,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "effective_date",
       "role": "EFFECTIVE_DATE",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "document or section effective-date / last-update label",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Document- or section-level effective or last-update date.",
       "evidence": [
@@ -375,23 +307,14 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "promotion_text",
       "role": "MBB_TEXT",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "document, section, or row promotion notes",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Printed spend, order-discount, or promotional terms.",
       "evidence": [
@@ -411,14 +334,7 @@
           "note": "Verified directly: wholesale amounts on these pages are printed only at case/box level (e.g. '批發價 1盒24包', '每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)') with NO per-pack/per-box wholesale figure anywhere in the source, even though RRP is separately printed at both case AND pack level on the same rows. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     }
   ],
   "pricing": {
@@ -426,8 +342,7 @@
     "rrp_source_field": "rrp",
     "currency": "HKD",
     "price_basis": {
-      "code": "CASE",
-      "label": null
+      "code": "CASE"
     },
     "price_basis_status": "VERIFIED",
     "autoswap_cost_rrp_allowed": false,
@@ -436,16 +351,8 @@
   },
   "packaging": {
     "packaging_source_field": "pack_size",
-    "purchase_uom": null,
-    "price_basis": null,
-    "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
-    "purchase_uom_source_field": null,
     "price_basis_follows_purchase_unit": false,
-    "order_increment_source_field": null,
-    "minimum_order_source_field": null,
     "break_pack_allowed": false,
     "interpretation_rules": [
       "Treat content size as a measure, not a sellable-unit count.",
@@ -525,8 +432,6 @@
   },
   "created_at": "2026-07-30T00:00:00Z",
   "created_by": "catalogue-contract-integration",
-  "updated_at": null,
-  "updated_by": null,
   "metadata": {
     "routing_strategy": "supplier_identity_and_layout_markers",
     "sample_reference": "KPN_Kangaroo.pdf",

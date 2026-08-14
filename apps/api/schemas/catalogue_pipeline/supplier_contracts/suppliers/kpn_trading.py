@@ -146,7 +146,11 @@ KPN_TRADING_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
-                requirement=SourceFieldRequirement.REQUIRED,
+                # OPTIONAL (PR-18 closing audit, finding 1): a brand we cannot
+                # read is not a reason to reject the price — REQUIRED here
+                # dead-lettered every row of any table whose banner the
+                # extraction missed, on all four layouts at once.
+                requirement=SourceFieldRequirement.OPTIONAL,
                 source_path="section_header",
                 description="Printed row or section brand; observed brands are examples, not routing criteria.",
                 evidence=_KPN_TRADING_EVIDENCE,
@@ -457,9 +461,18 @@ KPN_TRADING_PACK_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
-                requirement=SourceFieldRequirement.REQUIRED,
-                source_path="section_header",
-                description="Printed row or section brand; observed brands are examples, not routing criteria.",
+                # OPTIONAL (PR-18 closing audit, finding 1): a brand we cannot
+                # read is not a reason to reject the price — REQUIRED here
+                # dead-lettered every row of any table whose banner the
+                # extraction missed, on all four layouts at once.
+                requirement=SourceFieldRequirement.OPTIONAL,
+                # page_brand, not section_header (golden calibration): this
+                # layout's banners are product-line strips ("- RAW BLEND -",
+                # 凍乾生肉外層低溫烘焙乾糧...), not brands. The Stella & Chewy
+                # mark heads the PAGE; envelopes captured before
+                # page_brand_text existed leave brand empty on purpose.
+                source_path="page_brand",
+                description="Product brand, read from the brand mark heading the page — never from the table banner, which names a product line.",
                 evidence=_KPN_TRADING_PACK_EVIDENCE,
             ),
             SourceFieldContract(
@@ -740,7 +753,11 @@ KPN_TRADING_CASE_ONLY_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
-                requirement=SourceFieldRequirement.REQUIRED,
+                # OPTIONAL (PR-18 closing audit, finding 1): a brand we cannot
+                # read is not a reason to reject the price — REQUIRED here
+                # dead-lettered every row of any table whose banner the
+                # extraction missed, on all four layouts at once.
+                requirement=SourceFieldRequirement.OPTIONAL,
                 source_path="section_header",
                 description="Printed row or section brand; observed brands are examples, not routing criteria.",
                 evidence=_KPN_TRADING_CASE_ONLY_EVIDENCE,
@@ -983,7 +1000,11 @@ KPN_TRADING_PACK_AND_CASE_BULK_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
-                requirement=SourceFieldRequirement.REQUIRED,
+                # OPTIONAL (PR-18 closing audit, finding 1): a brand we cannot
+                # read is not a reason to reject the price — REQUIRED here
+                # dead-lettered every row of any table whose banner the
+                # extraction missed, on all four layouts at once.
+                requirement=SourceFieldRequirement.OPTIONAL,
                 source_path="section_header",
                 description="Printed row or section brand; observed brands are examples, not routing criteria.",
                 evidence=_KPN_TRADING_BULK_EVIDENCE,
