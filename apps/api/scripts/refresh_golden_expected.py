@@ -84,11 +84,25 @@ def refresh(source: str | None, only: str | None) -> int:
             print(f"{set_dir.name}: ZERO sheet rows for supplier label {label!r} — refusing to write")
             failures += 1
             continue
+        seen: set[str] = set()
         with (set_dir / "expected.csv").open("w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=list(GOLDEN_COLUMNS), lineterminator="\n")
             writer.writeheader()
             for row in kept:
-                writer.writerow({column: _project(row.get(column)) for column in GOLDEN_COLUMNS})
+                projected = {column: _project(row.get(column)) for column in GOLDEN_COLUMNS}
+                code = projected["supplier_product_code"]
+                # A row whose code projects to nothing ('N/A' placeholders)
+                # asserts nothing addressable; a repeated code would make
+                # last-row-wins comparisons silently ambiguous. Drop the junk,
+                # keep the first occurrence, and say so.
+                if not code:
+                    print(f"{set_dir.name}: dropped a row with no usable product code")
+                    continue
+                if code in seen:
+                    print(f"{set_dir.name}: dropped duplicate sheet row for {code!r} (first occurrence kept)")
+                    continue
+                seen.add(code)
+                writer.writerow(projected)
         dropped = sorted(set(r["supplier_product_code"].strip() for r in rows) & parked)
         print(
             f"{set_dir.name}: {len(kept)} rows from label {label!r}"
