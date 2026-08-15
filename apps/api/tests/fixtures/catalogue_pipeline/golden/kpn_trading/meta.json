@@ -1,0 +1,13 @@
+{
+  "source": "KPN_Kangaroo.pdf (53-page edition; Stella & Chewy's bag pages 51-53)",
+  "recorded_from": "hand-captured from claude (chat, one page per envelope via the literal VISION_EVIDENCE_PROMPT, 2026-08-11)",
+  "provider": "hand-captured",
+  "contract": "kpn_trading.pack_price_list.v1",
+  "supplier_id": 15,
+  "pages": {
+    "51": "SCRC013 raw coated kibble",
+    "52": "SCRB005 cage free 10lb",
+    "53": "CRB-CF-2.5 raw blend"
+  },
+  "note": "P12578723 (Purina) and EPSC35 (Earthz) from the golden sheet come from different source documents and are excluded."
+}

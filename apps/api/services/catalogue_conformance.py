@@ -130,6 +130,17 @@ def conform_observations(
                 skipped += 1
                 header_rows += 1
                 continue
+            # A "previous SKU" equal to the current one is a rename to itself
+            # — a claim the source never made. It happens when a contract
+            # aliases the bare code heading for BOTH fields (K.P.N.'s
+            # pack_price_list prints 新產品編號 + 產品編號 on renumbering
+            # pages, but ordinary pages print only 產品編號, and both fields
+            # then read the same cell). PR-18 closing audit, finding 2.
+            if fields.get("source:previous_supplier_sku") and (
+                fields.get("source:previous_supplier_sku") == fields.get("source:supplier_sku")
+            ):
+                for key in [k for k in fields if "previous_supplier_sku" in k]:
+                    fields.pop(key, None)
             page = observation.source_location.page_number
             if page != carried_page:
                 # The last product on a page owns nothing on the next one —

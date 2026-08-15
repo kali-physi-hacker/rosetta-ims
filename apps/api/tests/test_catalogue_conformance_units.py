@@ -398,3 +398,57 @@ def test_a_measure_count_source_also_captures_the_content():
         }),
     )
     assert "content_amount" not in countable.normalized_fields["packaging"]
+
+
+def test_a_missing_banner_does_not_reject_the_price():
+    """PR-18 closing audit, finding 1: brand is OPTIONAL on every KPN layout —
+    a table whose banner the extraction missed must not dead-letter its rows."""
+    item = _conform_one(
+        "kpn_trading.pack_and_case_bulk_list.v1",
+        _observation({
+            "產品編號": "FRB-3",
+            "產品名稱": "Stella's Super Beef 牛魔王",
+            "原箱包數": "6包",
+            "批發價 每包": "$204",
+        }),
+    )
+    assert not [
+        issue
+        for issue in item.issues
+        if issue.issue_code == "CONTRACT_REQUIRED_FIELD_MISSING" and "brand" in str(issue.message)
+    ]
+
+
+def test_a_previous_sku_equal_to_the_current_one_is_dropped():
+    """PR-18 closing audit, finding 2: a rename to itself is not a rename.
+
+    On ordinary pack_price_list pages only 產品編號 prints, and both the
+    current and the previous SKU fields alias that heading — the fabricated
+    previous==current claim is dropped. Renumbering pages that print both
+    新產品編號 and 產品編號 keep the genuine transition."""
+    import json as _json
+
+    single = _conform_one(
+        "kpn_trading.pack_price_list.v1",
+        _observation({
+            "產品編號": "SC001",
+            "產品內容 Product Description": "Stella's Super Beef",
+            "每包批發價 Wholesale Price Per Unit": "HK$113",
+        }),
+    )
+    blob = _json.dumps({"raw": single.raw_fields, "norm": single.normalized_fields}, ensure_ascii=False)
+    assert "SC001" in blob
+    assert "previous_supplier_sku" not in blob, "a previous SKU equal to the current one is fabricated"
+
+    renumbering = _conform_one(
+        "kpn_trading.pack_price_list.v1",
+        _observation({
+            "新產品編號": "NEW-01",
+            "產品編號": "OLD-01",
+            "產品內容 Product Description": "Canidae transition row",
+            "每包批發價 Wholesale Price Per Unit": "HK$99",
+        }),
+    )
+    blob = _json.dumps({"raw": renumbering.raw_fields, "norm": renumbering.normalized_fields}, ensure_ascii=False)
+    assert '"NEW-01"' in blob
+    assert "OLD-01" in blob, "a genuine SKU transition must survive the guard"

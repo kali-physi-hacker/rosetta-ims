@@ -11,8 +11,6 @@
   "format_name": "K.P.N. Trading catalogue bundle",
   "source_format": "PDF_TABLE",
   "support_status": "PARTIALLY_VERIFIED",
-  "effective_from": null,
-  "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -33,7 +31,6 @@
       {
         "name": "kpn_trading_identified_sections",
         "selector": "Catalogue sections attributed to supplier ID 15 or explicitly marked K.P.N. Trading / KPNTRADI",
-        "header_row": null,
         "notes": "The sample includes Stella & Chewy's, Canidae, and NOW FRESH, but a valid catalogue may contain any subset of brands."
       }
     ],
@@ -77,9 +74,7 @@
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
       "source_column": "產品編號 / SKU#",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "產品編號",
         "SKU#",
@@ -98,23 +93,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "previous_supplier_sku",
       "role": "OTHER",
       "requirement": "OPTIONAL",
       "source_column": "OLD SKU#",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "Old SKU",
         "Previous SKU"
@@ -132,23 +118,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "replacement_supplier_sku",
       "role": "OTHER",
       "requirement": "OPTIONAL",
       "source_column": "NEW SKU#",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "New SKU",
         "Replacement SKU",
@@ -167,23 +144,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "brand",
       "role": "BRAND",
-      "requirement": "REQUIRED",
-      "source_column": null,
+      "requirement": "OPTIONAL",
       "source_path": "section_header",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Printed row or section brand; observed brands are examples, not routing criteria.",
       "evidence": [
@@ -198,23 +166,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
       "requirement": "REQUIRED",
       "source_column": "產品名稱 / Product Description",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "產品名稱",
         "產品內容",
@@ -233,23 +192,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
       "source_column": "包裝 / Size",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "重量",
         "包裝",
@@ -268,23 +218,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "units_per_case",
       "role": "OTHER",
       "requirement": "OPTIONAL",
       "source_column": "原箱包數 / Unit Per Case",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "原箱包數",
         "每箱包數",
@@ -304,23 +245,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "wholesale_price",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
       "source_column": "批發價 / Wholesale Price",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "批發價",
         "每包批發價",
@@ -341,23 +273,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
       "source_column": "建議零售價 / Retail Price",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "建議零售價",
         "Retail Price Per Unit",
@@ -376,23 +299,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "availability",
       "role": "ROW_ELIGIBILITY",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "row availability or discontinued marker",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Availability or discontinued state printed for Canidae rows.",
       "evidence": [
@@ -407,23 +321,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "effective_date",
       "role": "EFFECTIVE_DATE",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "document or section effective-date / last-update label",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Document- or section-level effective or last-update date.",
       "evidence": [
@@ -438,23 +343,14 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "promotion_text",
       "role": "MBB_TEXT",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "document, section, or row promotion notes",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Printed spend, order-discount, or promotional terms.",
       "evidence": [
@@ -469,21 +365,13 @@
           "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     }
   ],
   "pricing": {
     "cost_source_field": "wholesale_price",
     "rrp_source_field": "rrp",
     "currency": "HKD",
-    "price_basis": null,
     "price_basis_status": "UNRESOLVED",
     "autoswap_cost_rrp_allowed": false,
     "null_cost_markers": [],
@@ -491,17 +379,8 @@
   },
   "packaging": {
     "packaging_source_field": "pack_size",
-    "purchase_uom": null,
-    "price_basis": null,
-    "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
-    "purchase_uom_source_field": null,
     "price_basis_follows_purchase_unit": false,
-    "order_increment_source_field": null,
-    "minimum_order_source_field": null,
-    "break_pack_allowed": null,
     "interpretation_rules": [
       "Treat content size as a measure, not a sellable-unit count.",
       "Treat units per case as case configuration only.",
@@ -595,8 +474,6 @@
   },
   "created_at": "2026-07-30T00:00:00Z",
   "created_by": "catalogue-contract-integration",
-  "updated_at": null,
-  "updated_by": null,
   "metadata": {
     "routing_strategy": "supplier_identity_and_content_markers",
     "sample_reference": "KPN_Kangaroo.pdf",

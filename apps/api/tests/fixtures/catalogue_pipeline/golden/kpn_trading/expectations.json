@@ -1,0 +1,73 @@
+{
+  "supplier": {
+    "id": 15,
+    "code": "KPNTRADI",
+    "name": "K.P.N. Trading"
+  },
+  "pages": [
+    "page_1.json"
+  ],
+  "provider": "anthropic",
+  "min_covered_skus": 3,
+  "covered_skus": [
+    "CRB-CF-2.5",
+    "SCRB005",
+    "SCRC013"
+  ],
+  "enforced": [
+    "supplier",
+    "supplier_product_code",
+    "brand",
+    "package_configuration",
+    "order_multiple",
+    "catalogue_price_hkd",
+    "catalogue_price_basis_qty",
+    "catalogue_price_basis_uom",
+    "sellable_qty",
+    "sellable_units_per_price_basis",
+    "rrp",
+    "mbb_tier_1",
+    "mbb_tier_2",
+    "mbb_tier_3",
+    "mbb_tier_4",
+    "commercial_offer_summary"
+  ],
+  "known_gaps": {},
+  "not_comparable": {
+    "product_name": "allowed discrepancy (policy 2026-08-13): the sheet holds a human shorthand; the export holds the supplier's printed description",
+    "product name [Rosetta]": "allowed discrepancy: a hand-authored retail name, not something the pipeline derives",
+    "weight": "allowed discrepancy: some catalogues genuinely do not print it, and the sheet hand-measures",
+    "sellable_uom": "allowed discrepancy: not always capturable from the source — BizOps set the sellable unit themselves"
+  },
+  "unfilled": {},
+  "unpublishable": [],
+  "contract_id": "kpn_trading.pack_price_list.v1",
+  "_contract_comment": "Used by the STAGED conformance test today, and required by the full golden framework later: this supplier has multiple contracts, so supplier-only resolution can never work.",
+  "_pages_comment": "Whole-catalogue envelope of KPN_Kangaroo-updated.pdf (2026-08-13 chat-agent capture, 6 chunks consolidated; 29 heading-less columns normalized to the 'unlabeled_column' sentinel to pass the envelope gate). Named page_1.json per the framework's page_N filename convention (whole catalogue as one page, like golden/vetapet_vet). Replaces the old-PDF pages 51-53 extract (['page_51.json', 'page_52.json', 'page_53.json']). Golden S&C SKU prices verified unchanged (240/488/212). CAVEAT: the document holds BOTH suppliers but a single envelope carries ONE supplier_identity_text ('K.P.N Trading Ltd.'), so per-page wrong-supplier flagging does not operate inside it.",
+  "_absent_comment": "P12578723 (Purina) and EPSC35 (Earthz Pet) are named on the golden sheet but absent from the updated catalogue (searched the full capture) — and in Rosetta those brands are layouts of the LEGACY kangaroo file, not KPN contracts, so their supplier attribution on the sheet is itself a BizOps question. Kept in expected.csv verbatim (the sheet is the source); they never publish, so covered_skus stays at the 3 S&C rows (alfamedic precedent for named-but-absent SKUs).",
+  "_graduated_comment": "Graduated from golden_staging/ on 2026-08-13 after the contract's promotion to SUPPORTED. The golden framework resolves supplier-only, which works because this supplier has exactly ONE SUPPORTED contract; contract_id is kept for the day a second layout is promoted (the runtime will then demand explicit selection).",
+  "_comment": "Tightened to the enforced-max policy on rebase (2026-08-14): every column ENFORCED except the four allowed discrepancies; known_gaps retired. The original per-column analysis from the recording session is preserved in _recording_notes.",
+  "_recording_notes": {
+    "known_gaps_at_recording": {
+      "supplier": "the sheet writes 'K.P.N. Trading Limited'; the export carries the contract supplier 'K.P.N. Trading'",
+      "catalogue_price_basis_uom": "sheet says BAG; the pack-basis contract declares PACK — unit vocabulary reconciliation pending",
+      "sellable_uom": "sheet says BAG; the review-desk draft falls back to 'unit' when packaging resolves no sellable UOM",
+      "package_configuration": "sheet says '1 BAG'; export falls back to the variant UOM 'unit' (same shape as the hills gap)",
+      "brand": "section banners carry product-line names, not the brand; the sheet holds Stella & Chewy",
+      "rrp": "the normalized row carries an rrp but it does not reach the published export (same as the hills set)"
+    },
+    "not_comparable_at_recording": {
+      "product_name": "the sheet holds a human shorthand ('Stella & Chewy Raw Coated Kibble...'); the export holds the supplier's printed description. NOTE for BizOps: the sheet calls SCRC013 'Grass-Fed Beef' but the PDF prints 'Grass-Fed Lamb' — the sheet looks wrong.",
+      "product name [Rosetta]": "a hand-authored retail name, not something the pipeline derives",
+      "weight": "sheet blank/na for these rows; export reads it off the variant",
+      "order_multiple": "not printed on this layout",
+      "sellable_units_per_price_basis": "not derivable on this layout",
+      "mbb_tier_1": "sheet holds prose promo notes; the structured export has no term for the S&C 15% banner (page-banner promos are unreachable)",
+      "mbb_tier_2": "unfilled variants of mbb_tier_1",
+      "mbb_tier_3": "unfilled variants of mbb_tier_1",
+      "mbb_tier_4": "unfilled variants of mbb_tier_1",
+      "commercial_offer_summary": "hand-authored summary column"
+    }
+  },
+  "_sheet_comment": "expected.csv is BizOps-authored but predates the sheet-as-truth projection flow — no sheet_supplier_label yet, so refresh_golden_expected.py skips this set until the tab's rows for this supplier are reconciled with these values (tab labels: 'K.P.N. Trading Limited' / 'Kangaroo')."
+}

@@ -1,10 +1,10 @@
 {
   "contract_id": "kpn_trading.pack_price_list.v1",
   "contract_version": "v1",
-  "row_evidence_status": "NEEDS_CONFIRMATION",
+  "row_evidence_status": "CONFIRMED",
   "supplier_id": 15,
   "supplier_name": "K.P.N. Trading",
-  "notes": "Split out of kpn_trading.catalogue_bundle.v1 after a full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf found the bundle's mixed price basis was three distinct, separately resolvable situations. This one covers layouts where exactly one wholesale amount is printed, always per pack/unit/bag, with no competing case-level figure.",
+  "notes": "Confirmed against the golden/kpn_trading set (whole-catalogue capture of KPN_Kangaroo-updated.pdf, 2026-08-13): the full-pipeline golden e2e reproduces the BizOps sheet (golden_samples_by_supplier/k_p_n_trading_limited.csv) on code, price, basis qty and sellable qty for the 3 covered S&C SKUs. Split out of kpn_trading.catalogue_bundle.v1 after a full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf found the bundle's mixed price basis was three distinct, separately resolvable situations. This one covers layouts where exactly one wholesale amount is printed, always per pack/unit/bag, with no competing case-level figure.",
   "examples": [
     {
       "example_id": "kpn-trading-pack-price-sc-unit-case",
@@ -12,11 +12,17 @@
         "sample_reference": "external-sample:KPN_Kangaroo.pdf",
         "page_number": 11,
         "supplier_identity_marker": "K.P.N. Trading Ltd. printed on the page",
-        "table_layout": "SC_UNIT_CASE"
+        "table_layout": "SC_UNIT_CASE",
+        "extraction_method": "whole-catalogue chat-agent capture (golden/kpn_trading/page_1.json)",
+        "text_excerpt": "SC001 牛魔王 (牛肉配方) Stella's Super Beef 5.5 oz. 12 HK$113 HK$172"
       },
       "printed_columns": [
-        "產品圖片 Product image", "產品編號 SKU#", "產品內容 Product Description",
-        "包裝 Size", "每箱包數 Unit Per Case", "每包批發價 Wholesale Price Per Unit",
+        "產品圖片 Product image",
+        "產品編號 SKU#",
+        "產品內容 Product Description",
+        "包裝 Size",
+        "每箱包數 Unit Per Case",
+        "每包批發價 Wholesale Price Per Unit",
         "每包 建議零售價 Recommended Retail Price Per Unit"
       ],
       "runtime_input": {
@@ -31,17 +37,21 @@
         "price_basis": "PACK",
         "currency": "HKD",
         "reason": "Exactly one wholesale column exists on this layout; no case-level figure competes with it."
+      },
+      "raw_row": {
+        "產品編號 SKU#": "SC001",
+        "產品內容 Product Description": "牛魔王 (牛肉配方)\nStella's Super Beef",
+        "包裝 Size": "5.5 oz.",
+        "每箱包數 Unit Per Case": "12",
+        "每包批發價 Wholesale Price Per Unit": "HK$113",
+        "每包建議零售價 Recommended Retail Price Per Unit": "HK$172"
+      },
+      "expected_runtime_item": {
+        "cost_price": "HK$113",
+        "rrp": "HK$172",
+        "units_per_case": "12"
       }
     }
   ],
-  "technical_debt": [
-    {
-      "debt_id": "KPN-TRADING-PACK-PRICE-LIST-NEEDS-BIZOPS-CONFIRMATION",
-      "status": "OPEN",
-      "summary": "Price basis was verified by direct arithmetic/structural inspection of the source, not by BizOps sign-off.",
-      "needed_confirmation": [
-        "BizOps confirmation that PACK is the correct transacting price basis for every layout this contract selects."
-      ]
-    }
-  ]
+  "technical_debt": []
 }

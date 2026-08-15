@@ -28,8 +28,17 @@ from schemas.catalogue_pipeline.supplier_contracts.registry import register_supp
 from ._shared import DECLARATION_CREATED_AT, DECLARATION_CREATED_BY, evidence, pipeline_mapping
 
 
+# supplier_id 81 = the same business as kangaroo_pet_nutrition.py's contracts
+# ("Kangaroo Pet Nutrition"): the vet-clinic and brand price lists these legacy
+# contracts describe sit inside the Kangaroo half of the combined KPN_Kangaroo
+# document, whose pages print '港澳總代理 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition
+# Ltd.'. Without a numeric id the runtime's belongs-to-supplier check can never
+# pass, so these contracts were unsubmittable. NOTE (pre-existing, deliberately
+# not changed here): supplier_code "KPN" collides with K.P.N. Trading's marker
+# vocabulary (KPNTRADI / "K.P.N. Trading") — a different supplier (id 15);
+# reconciling the code is a separate decision.
 _KPN_SUPPLIER = SupplierSourceReference(
-    supplier_id=None,
+    supplier_id=81,
     supplier_name="Kangaroo Pet Nutrition Ltd",
     supplier_code="KPN",
 )

@@ -44,8 +44,14 @@ def test_selects_only_supported_supplier_source_contracts():
     assert hills.slug == "hills.price_list.v1"
     assert alfamedic is not None
     assert alfamedic.slug == "alfamedic.price_list.v1"
-    assert runtime.load_contract(15) is None
-    assert runtime.load_contract(81) is None
+    # Suppliers 15 and 81 each have exactly one SUPPORTED contract since the
+    # 2026-08-13 promotions, so supplier-only resolution now selects it.
+    kpn_pack = runtime.load_contract(15)
+    assert kpn_pack is not None
+    assert kpn_pack.slug == "kpn_trading.pack_price_list.v1"
+    kangaroo_vet_clinic = runtime.load_contract(81)
+    assert kangaroo_vet_clinic is not None
+    assert kangaroo_vet_clinic.slug == "kangaroo_pet_nutrition.vet_clinic_price_list.v1"
     vetapet_vet = runtime.load_contract(91)
     assert vetapet_vet is not None
     assert vetapet_vet.slug == "vetapet.vet_price_list.v1"
@@ -107,7 +113,9 @@ def test_exact_resolution_rejects_unverified_or_partial_contracts_without_fallba
             contract_version="v1",
         )
 
-    with pytest.raises(runtime.SupplierContractIdentityError, match="belongs to supplier=KPN"):
+    # The legacy kangaroo contracts are bound to supplier 81 now, so the
+    # refusal names the numeric id instead of falling back to the code.
+    with pytest.raises(runtime.SupplierContractIdentityError, match="belongs to supplier=81"):
         runtime.resolve_supplier_contract(
             supplier_id=777,
             contract_id="kangaroo.earthz_pet_price_sheet.v1",
