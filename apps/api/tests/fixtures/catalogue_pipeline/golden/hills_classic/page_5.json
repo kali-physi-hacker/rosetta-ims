@@ -1,0 +1,312 @@
+{
+ "page_outcome": "evidence",
+ "page_brand_text": "Hill's PRESCRIPTION DIET",
+ "tables": [
+  {
+   "section": "包裝乾糧 Dry Food",
+   "columns": [
+    "Disease Category 疾病種類",
+    "Product Range 產品系列",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Cancer",
+      "ONC",
+      "ONC Care 7lb - Cancer Care",
+      "7 lb",
+      "607664",
+      "1",
+      "$701.0",
+      "$499.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "GI Biome",
+      "GI Biome - Digestive/ Fiber Care",
+      "4 lbs",
+      "604199",
+      "1",
+      "$460.0",
+      "$322.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "GI Biome",
+      "GI Biome - Digestive/ Fiber Care",
+      "8.5 lbs",
+      "604200",
+      "1",
+      "$871.0",
+      "$610.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Adult 1+ - Digestive Care",
+      "4 lbs",
+      "4629",
+      "1",
+      "$436.0",
+      "$305.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Adult 1+ - Digestive Care",
+      "8.5 lbs",
+      "8694",
+      "1",
+      "$852.0",
+      "$597.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Kitten - Digestive Care",
+      "4 lbs",
+      "609308",
+      "1",
+      "$471.0",
+      "$330.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "1.5kg",
+      "10369HG",
+      "1",
+      "$283.0",
+      "$198.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "4 lbs",
+      "6247",
+      "1",
+      "$360.0",
+      "$252.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "8.5 lbs",
+      "8679",
+      "1",
+      "$721.0",
+      "$505.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "6 kg",
+      "10370HG",
+      "1",
+      "$1,113.0",
+      "$780.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d Stress",
+      "c/d Stress - Urinary Care",
+      "1.5 kg",
+      "10372HG",
+      "1",
+      "$339.0",
+      "$237.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d Stress",
+      "c/d Stress - Urinary Care",
+      "4 lbs",
+      "603930",
+      "1",
+      "$431.0",
+      "$301.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d Stress",
+      "c/d Stress - Urinary Care",
+      "8.5 lbs",
+      "603935",
+      "1",
+      "$776.0",
+      "$544.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d + Metabolic - Urinary Care & Weight Care",
+      "6.35 lbs",
+      "10045",
+      "1",
+      "$855.0",
+      "$599.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Chicken - Kidney Care with Chicken",
+      "4 lbs",
+      "7252",
+      "1",
+      "$441.0",
+      "$314.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Chicken - Kidney Care with Chicken",
+      "8.5 lbs",
+      "8696",
+      "1",
+      "$825.0",
+      "$587.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Ocean Fish - Kidney Care with Ocean Fish",
+      "4 lbs",
+      "10375",
+      "1",
+      "$441.0",
+      "$314.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Ocean Fish - Kidney Care with Ocean Fish",
+      "8.5 lbs",
+      "10376",
+      "1",
+      "$840.0",
+      "$598.70"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d + Mobility - Kidney Care & Joint Care",
+      "6.35 lbs",
+      "10859",
+      "1",
+      "$801.0",
+      "$570.90"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d Early Support",
+      "k/d Early Support - Kidney Care Early Support",
+      "4 lbs",
+      "603634",
+      "1",
+      "$394.0",
+      "$280.90"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Multi-Organ",
+      "Multi-Organ",
+      "Multi-Organ Support",
+      "4 lbs",
+      "609528",
+      "1",
+      "$372.0",
+      "$260.90"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Effective: Jul 2026",
+   "confidence": "0.9"
+  },
+  {
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
+  }
+ ]
+}

@@ -6,16 +6,32 @@
   },
   "pages": [
     "page_1.json",
-    "page_4.json"
+    "page_2.json",
+    "page_3.json",
+    "page_4.json",
+    "page_5.json",
+    "page_6.json",
+    "page_7.json",
+    "page_8.json",
+    "page_9.json"
   ],
   "provider": "google",
   "_comment": "Tightened per the 2026-08-13 policy decision: every column is ENFORCED except the four allowed discrepancies in not_comparable. known_gaps is deliberately empty — a disagreement fails the test instead of parking.",
-  "min_covered_skus": 4,
+  "min_covered_skus": 13,
   "_covered_comment": "The exact SKUs that reach the export today, pinned so a swap cannot hide behind a stable count. Growth is good news - update the pin.",
   "covered_skus": [
+    "10356HG",
+    "10361HG",
+    "10366HG",
+    "10884",
+    "3116HG",
     "3392",
+    "4629",
+    "5403",
+    "604199",
     "604202",
     "605916",
+    "607664",
     "608450"
   ],
   "_min_covered_comment": "The sheet's Hill's block was filled from a wider page selection than the two pages recorded here, so only part of it is reachable end to end.",
@@ -48,5 +64,6 @@
   "unpublishable": [],
   "_conformed_comment": "Cells conformed to the chosen conventions (user authorization 2026-08-13): MBB text = the export's canonical typed rendering; packaging/basis text = what the page actually prints (a sheet cell asserting unprinted product knowledge is blanked or set to the export's reading). Substantive page-truth corrections are flagged in docs/catalogue/golden-sheet-conformance-ledger.md — the Google Sheet should be edited to match or future re-imports regress.",
   "sheet_supplier_label": "Hill's",
-  "parked_skus": []
+  "parked_skus": [],
+  "_capture_comment": "Recaptured 2026-08-16 from the current hills_classic.pdf edition — nine per-page envelopes (Science Diet pp1-3, Prescription Diet pp4-9) with page_brand_text; no page prints a supplier letterhead, so supplier_identity_text is absent by observation. Prices are pinned to what the pages PRINT; the golden sheet disagrees on the four covered SKUs and that discrepancy is with BizOps to adjudicate."
 }

@@ -1,883 +1,694 @@
 {
  "page_outcome": "evidence",
- "columns": [
-  "Product Range 產品系列",
-  "Life Stage 生命階段",
-  "Product Description 產品名稱",
-  "Size 重量",
-  "Product Code 產品編號",
-  "Order Multiple 訂貨單位",
-  "Regular Retail Price 正價",
-  "Recommended Retail Selling Price 建議零售價",
-  "Gross Wholesale Price 折扣前批發價 (每包/罐)",
-  "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
-  "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
-  "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500"
+ "page_brand_text": "Hill's SCIENCE DIET",
+ "tables": [
+  {
+   "section": "濕糧罐頭 Wet Food",
+   "columns": [
+    "Product Range 產品系列",
+    "Life Stage 生命階段",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Regular Retail Price 正價",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "健康燉肉 Healthy Cuisine",
+      "幼貓 Kitten",
+      "健康燉肉配方 Healthy Cuisine",
+      "2.8oz",
+      "10447",
+      "24",
+      "$19.0",
+      "$18.0",
+      "$13.10",
+      "$12.4",
+      "$11.9",
+      "$11.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "健康燉肉 Healthy Cuisine",
+      "成貓 1-6 Adult 1-6",
+      "健康燉肉配方 Healthy Cuisine",
+      "2.8oz",
+      "10445",
+      "24",
+      "$19.0",
+      "$18.0",
+      "$13.10",
+      "$12.4",
+      "$11.9",
+      "$11.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "成貓營養主食罐頭 Cat Canned",
+      "成貓 1-6 Adult 1-6",
+      "雞肉及肝味 Liver & Chicken Recipe",
+      "5.5oz",
+      "6610",
+      "24",
+      "$27.0",
+      "$25.0",
+      "$18.20",
+      "$17.3",
+      "$16.6",
+      "$16.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "泌尿道健康和去毛球配方 Urinary Hairball Control",
+      "成貓 1-6 Adult 1-6",
+      "泌尿道健康和去毛球 Urinary Hairball Control",
+      "2.9oz",
+      "10138",
+      "24",
+      "$19.0",
+      "$18.0",
+      "$13.10",
+      "$12.4",
+      "$11.9",
+      "$11.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "健康燉肉 Healthy Cuisine",
+      "高齡貓 7＋ Adult 7+",
+      "健康燉肉配方 Healthy Cuisine",
+      "2.8oz",
+      "10446",
+      "24",
+      "$19.0",
+      "$18.0",
+      "$13.10",
+      "$12.4",
+      "$11.9",
+      "$11.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美消化配方 Perfecr Digestion",
+      "成貓 1-6 Adult 1-6",
+      "完美消化 三文魚 Perfecr Digestion Salmon",
+      "3.5lb",
+      "606869",
+      "1",
+      "$293.0",
+      "$279.0",
+      "$203.60",
+      "$193.4",
+      "$185.3",
+      "$181.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美消化配方 Perfecr Digestion",
+      "成貓 1-6 Adult 1-6",
+      "完美消化 雞肉 Perfecr Digestion Chicken",
+      "3.5lb",
+      "606864",
+      "1",
+      "$293.0",
+      "$279.0",
+      "$203.60",
+      "$193.4",
+      "$185.3",
+      "$181.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美消化配方 Perfecr Digestion",
+      "高齡貓 7＋ Adult 7+",
+      "完美消化 雞肉 Perfect Digestion Chicken",
+      "3.5lb",
+      "606866",
+      "1",
+      "$293.0",
+      "$279.0",
+      "$203.60",
+      "$193.4",
+      "$185.3",
+      "$181.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
+      "成貓 1-6 Adult 1-6",
+      "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
+      "3.5lb",
+      "8523",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$181.70",
+      "$172.6",
+      "$165.3",
+      "$161.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
+      "成貓 1-6 Adult 1-6",
+      "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
+      "7lb",
+      "8884",
+      "1",
+      "$461.0",
+      "$439.0",
+      "$320.40",
+      "$304.4",
+      "$291.6",
+      "$285.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美體態配方 Perfect Weight",
+      "成貓 1-6 Adult 1-6",
+      "完美體態 Perfect Weight",
+      "3lb",
+      "2968",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美體態配方 Perfect Weight",
+      "成貓 1-6 Adult 1-6",
+      "完美體態 Perfect Weight",
+      "15lb",
+      "2970",
+      "1",
+      "$892.0",
+      "$849.0",
+      "$619.70",
+      "$588.7",
+      "$563.9",
+      "$551.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "口腔護理配方 Oral Care",
+      "成貓 1-6 Adult 1-6",
+      "口腔護理 Oral Care",
+      "3.5lb",
+      "9288",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$181.70",
+      "$172.6",
+      "$165.3",
+      "$161.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "泌尿道健康和去毛球配方 Urinary Hairball Control",
+      "成貓 1-6 Adult 1-6",
+      "泌尿道健康和去毛球 Urinary Hairball Control",
+      "3.5 lb",
+      "10135",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$181.70",
+      "$172.6",
+      "$165.3",
+      "$161.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "泌尿道健康和去毛球配方 Urinary Hairball Control",
+      "成貓 1-6 Adult 1-6",
+      "泌尿道健康和去毛球 Urinary Hairball Control",
+      "15.5lb",
+      "10137",
+      "1",
+      "$913.0",
+      "$869.0",
+      "$634.30",
+      "$602.6",
+      "$577.2",
+      "$564.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "去毛球配方 Hairball Control",
+      "成貓 1-6 Adult 1-6",
+      "去毛球 Hairball Control",
+      "3.5lb",
+      "7156",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$181.70",
+      "$172.6",
+      "$165.3",
+      "$161.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "去毛球配方 Hairball Control",
+      "成貓 1-6 Adult 1-6",
+      "去毛球 Hairball Control",
+      "7lb",
+      "8881",
+      "1",
+      "$461.0",
+      "$439.0",
+      "$320.40",
+      "$304.4",
+      "$291.6",
+      "$285.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "去毛球配方 Hairball Control",
+      "成貓 1-6 Adult 1-6",
+      "去毛球 Hairball Control",
+      "15.5lb",
+      "8875",
+      "1",
+      "$913.0",
+      "$869.0",
+      "$634.30",
+      "$602.6",
+      "$577.2",
+      "$564.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "去毛球配方 Hairball Control",
+      "高齡貓 7＋ Adult 7+",
+      "去毛球 Hairball Control",
+      "3.5lb",
+      "7533",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$181.70",
+      "$172.6",
+      "$165.3",
+      "$161.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "去毛球配方 Hairball Control",
+      "高齡貓 7＋ Adult 7+",
+      "去毛球 Hairball Control",
+      "7lb",
+      "8883",
+      "1",
+      "$461.0",
+      "$439.0",
+      "$320.40",
+      "$304.4",
+      "$291.6",
+      "$285.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "提升活力配方 Senior Vitality",
+      "高齡貓 7＋ Adult 7+",
+      "提升活力 Senior Vitality",
+      "3lb",
+      "10777",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "提升活力配方 Senior Vitality",
+      "高齡貓 7＋ Adult 7+",
+      "提升活力 Senior Vitality",
+      "13lb",
+      "10779",
+      "1",
+      "$808.0",
+      "$769.0",
+      "$561.30",
+      "$533.2",
+      "$510.8",
+      "$499.6"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "日常系列 Everyday Diet",
+   "columns": [
+    "Product Range 產品系列",
+    "Life Stage 生命階段",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Regular Retail Price 正價",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼貓 Kitten",
+      "幼貓 Kitten",
+      "3.5 lb",
+      "7123",
+      "1",
+      "$199.0",
+      "$189.0",
+      "$143.60",
+      "$136.4",
+      "$130.7",
+      "$127.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼貓 Kitten",
+      "幼貓 Kitten",
+      "4kg",
+      "10308HG",
+      "1",
+      "$461.0",
+      "$439.0",
+      "$333.60",
+      "$316.9",
+      "$303.6",
+      "$296.9"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成貓 1-6 Adult 1-6",
+      "成貓 Adult 1-6",
+      "2kg",
+      "603820",
+      "1",
+      "$241.0",
+      "$229.0",
+      "$171.70",
+      "$163.1",
+      "$156.2",
+      "$152.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成貓 1-6 Adult 1-6",
+      "成貓 Adult 1-6",
+      "4kg",
+      "10298HG",
+      "1",
+      "$440.0",
+      "$419.0",
+      "$314.20",
+      "$298.5",
+      "$285.9",
+      "$279.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成貓 1-6 Adult 1-6",
+      "成貓 Adult 1-6",
+      "10kg",
+      "10296HG",
+      "1",
+      "$955.0",
+      "$909.0",
+      "$709.00",
+      "$673.6",
+      "$645.2",
+      "$631.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成貓 1-6 Adult 1-6",
+      "室內貓 Indoor",
+      "3.5 lb",
+      "5532",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$186.70",
+      "$177.4",
+      "$169.9",
+      "$166.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成貓 1-6 Adult 1-6",
+      "室內貓 Indoor",
+      "7lb",
+      "8879",
+      "1",
+      "$461.0",
+      "$439.0",
+      "$329.20",
+      "$312.7",
+      "$299.6",
+      "$293.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成貓 1-6 Adult 1-6",
+      "減肥 Light",
+      "2kg",
+      "10302HG",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$186.70",
+      "$177.4",
+      "$169.9",
+      "$166.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成貓 1-6 Adult 1-6",
+      "減肥 Light",
+      "6kg",
+      "1175HG",
+      "1",
+      "$650.0",
+      "$619.0",
+      "$464.20",
+      "$441.0",
+      "$422.4",
+      "$413.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡貓 7＋ Adult 7+",
+      "高齡貓7+ Adult 7+",
+      "1.5kg",
+      "6498HG",
+      "1",
+      "$241.0",
+      "$229.0",
+      "$171.70",
+      "$163.1",
+      "$156.2",
+      "$152.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡貓 7＋ Adult 7+",
+      "高齡貓7+ Adult 7+",
+      "3.5kg",
+      "10312HG",
+      "1",
+      "$440.0",
+      "$419.0",
+      "$314.20",
+      "$298.5",
+      "$285.9",
+      "$279.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡貓 7＋ Adult 7+",
+      "高齡貓7+ Adult 7+",
+      "10kg",
+      "10311HG",
+      "1",
+      "$955.0",
+      "$909.0",
+      "$709.00",
+      "$673.6",
+      "$645.2",
+      "$631.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "老齡貓11+ Adult 11+",
+      "老齡貓11+ Adult 11+",
+      "3.5lb",
+      "1462",
+      "1",
+      "$241.0",
+      "$229.0",
+      "$171.70",
+      "$163.1",
+      "$156.2",
+      "$152.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "老齡貓11+ Adult 11+",
+      "老齡貓11+ Adult 11+",
+      "7lb",
+      "1463",
+      "1",
+      "$440.0",
+      "$419.0",
+      "$314.20",
+      "$298.5",
+      "$285.9",
+      "$279.6"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
  ],
- "rows": [
+ "text_observations": [
   {
-   "cells": [
-    "健康燉肉 Healthy Cuisine",
-    "幼貓 Kitten",
-    "健康燉肉配方 Healthy Cuisine",
-    "2.8oz",
-    "10447",
-    "24",
-    "$19.0",
-    "$18.0",
-    "$13.10",
-    "$12.4",
-    "$11.9",
-    "$11.7"
-   ],
-   "text": "健康燉肉 Healthy Cuisine 幼貓 Kitten 健康燉肉配方 Healthy Cuisine 2.8oz 10447 24 $19.0 $18.0 $13.10 $12.4 $11.9 $11.7",
-   "box": [
-    "26",
-    "302",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
+   "text": "Effective: 1 APR 2024",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "健康燉肉 Healthy Cuisine",
-    "成貓 1-6 Adult 1-6",
-    "健康燉肉配方 Healthy Cuisine",
-    "2.8oz",
-    "10445",
-    "24",
-    "$19.0",
-    "$18.0",
-    "$13.10",
-    "$12.4",
-    "$11.9",
-    "$11.7"
-   ],
-   "text": "健康燉肉 Healthy Cuisine 成貓 1-6 Adult 1-6 健康燉肉配方 Healthy Cuisine 2.8oz 10445 24 $19.0 $18.0 $13.10 $12.4 $11.9 $11.7",
-   "box": [
-    "26",
-    "319",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "成貓營養主食罐頭 Cat Canned",
-    "成貓 1-6 Adult 1-6",
-    "雞肉及肝味 NEW Liver & Chicken Recipe",
-    "5.5oz",
-    "6610",
-    "24",
-    "$27.0",
-    "$25.0",
-    "$18.20",
-    "$17.3",
-    "$16.6",
-    "$16.2"
-   ],
-   "text": "成貓營養主食罐頭 Cat Canned 成貓 1-6 Adult 1-6 雞肉及肝味 NEW Liver & Chicken Recipe 5.5oz 6610 24 $27.0 $25.0 $18.20 $17.3 $16.6 $16.2",
-   "box": [
-    "26",
-    "336",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "泌尿道健康和去毛球配方 Urinary Hairball Control",
-    "成貓 1-6 Adult 1-6",
-    "泌尿道健康和去毛球 Urinary Hairball Control",
-    "2.9oz",
-    "10138",
-    "24",
-    "$19.0",
-    "$18.0",
-    "$13.10",
-    "$12.4",
-    "$11.9",
-    "$11.7"
-   ],
-   "text": "泌尿道健康和去毛球配方 Urinary Hairball Control 成貓 1-6 Adult 1-6 泌尿道健康和去毛球 Urinary Hairball Control 2.9oz 10138 24 $19.0 $18.0 $13.10 $12.4 $11.9 $11.7",
-   "box": [
-    "26",
-    "353",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "健康燉肉 Healthy Cuisine",
-    "高齡貓 7＋ Adult 7+",
-    "健康燉肉配方 NEW Healthy Cuisine",
-    "2.8oz",
-    "10446",
-    "24",
-    "$19.0",
-    "$18.0",
-    "$13.10",
-    "$12.4",
-    "$11.9",
-    "$11.7"
-   ],
-   "text": "健康燉肉 Healthy Cuisine 高齡貓 7＋ Adult 7+ 健康燉肉配方 NEW Healthy Cuisine 2.8oz 10446 24 $19.0 $18.0 $13.10 $12.4 $11.9 $11.7",
-   "box": [
-    "26",
-    "369",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
+   "text": "All Front End Discount 所有單上折扣",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "完美消化配方 Perfecr Digestion",
-    "成貓 1-6 Adult 1-6",
-    "完美消化 三文魚 Perfecr Digestion Salmon",
-    "3.5lb",
-    "606869",
-    "1",
-    "$293.0",
-    "$279.0",
-    "$203.60",
-    "$193.4",
-    "$185.3",
-    "$181.2"
-   ],
-   "text": "完美消化配方 Perfecr Digestion 成貓 1-6 Adult 1-6 完美消化 三文魚 Perfecr Digestion Salmon 3.5lb 606869 1 $293.0 $279.0 $203.60 $193.4 $185.3 $181.2",
-   "box": [
-    "26",
-    "395",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
+   "text": "Electronic Payment Discount 電子付款／轉帳折扣 1%",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "完美消化配方 Perfecr Digestion",
-    "成貓 1-6 Adult 1-6",
-    "完美消化 雞肉 Perfecr Digestion Chicken",
-    "3.5lb",
-    "606864",
-    "1",
-    "$293.0",
-    "$279.0",
-    "$203.60",
-    "$193.4",
-    "$185.3",
-    "$181.2"
-   ],
-   "text": "完美消化配方 Perfecr Digestion 成貓 1-6 Adult 1-6 完美消化 雞肉 Perfecr Digestion Chicken 3.5lb 606864 1 $293.0 $279.0 $203.60 $193.4 $185.3 $181.2",
-   "box": [
-    "26",
-    "412",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
+   "text": "Electronic Order Discount 電子下單折扣 4%",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "完美消化配方 Perfecr Digestion",
-    "高齡貓 7＋ Adult 7+",
-    "完美消化 雞肉 Perfect Digestion Chicken",
-    "3.5lb",
-    "606866",
-    "1",
-    "$293.0",
-    "$279.0",
-    "$203.60",
-    "$193.4",
-    "$185.3",
-    "$181.2"
-   ],
-   "text": "完美消化配方 Perfecr Digestion 高齡貓 7＋ Adult 7+ 完美消化 雞肉 Perfect Digestion Chicken 3.5lb 606866 1 $293.0 $279.0 $203.60 $193.4 $185.3 $181.2",
-   "box": [
-    "26",
-    "429",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
+   "text": "Include All Front Discount (exclude 1% Ullage Discount) 包括所有即折折扣 (損耗折扣 1%除外)",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
-    "成貓 1-6 Adult 1-6",
-    "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
-    "3.5lb",
-    "8523",
-    "1",
-    "$262.0",
-    "$249.0",
-    "$181.70",
-    "$172.6",
-    "$165.3",
-    "$161.7"
-   ],
-   "text": "胃部及皮膚敏感配方 Sensitive Stomach & Skin 成貓 1-6 Adult 1-6 胃部及皮膚敏感配方 Sensitive Stomach & Skin 3.5lb 8523 1 $262.0 $249.0 $181.70 $172.6 $165.3 $161.7",
-   "box": [
-    "26",
-    "446",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
-    "成貓 1-6 Adult 1-6",
-    "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
-    "7lb",
-    "8884",
-    "1",
-    "$461.0",
-    "$439.0",
-    "$320.40",
-    "$304.4",
-    "$291.6",
-    "$285.2"
-   ],
-   "text": "胃部及皮膚敏感配方 Sensitive Stomach & Skin 成貓 1-6 Adult 1-6 胃部及皮膚敏感配方 Sensitive Stomach & Skin 7lb 8884 1 $461.0 $439.0 $320.40 $304.4 $291.6 $285.2",
-   "box": [
-    "26",
-    "462",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "完美體態配方 Perfect Weight",
-    "成貓 1-6 Adult 1-6",
-    "完美體態 Perfect Weight",
-    "3lb",
-    "2968",
-    "1",
-    "$230.0",
-    "$219.0",
-    "$159.80",
-    "$151.8",
-    "$145.4",
-    "$142.2"
-   ],
-   "text": "完美體態配方 Perfect Weight 成貓 1-6 Adult 1-6 完美體態 Perfect Weight 3lb 2968 1 $230.0 $219.0 $159.80 $151.8 $145.4 $142.2",
-   "box": [
-    "26",
-    "480",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "完美體態配方 Perfect Weight",
-    "成貓 1-6 Adult 1-6",
-    "完美體態 Perfect Weight",
-    "15lb",
-    "2970",
-    "1",
-    "$892.0",
-    "$849.0",
-    "$619.70",
-    "$588.7",
-    "$563.9",
-    "$551.5"
-   ],
-   "text": "完美體態配方 Perfect Weight 成貓 1-6 Adult 1-6 完美體態 Perfect Weight 15lb 2970 1 $892.0 $849.0 $619.70 $588.7 $563.9 $551.5",
-   "box": [
-    "26",
-    "496",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "口腔護理配方 Oral Care",
-    "成貓 1-6 Adult 1-6",
-    "口腔護理 Oral Care",
-    "3.5lb",
-    "9288",
-    "1",
-    "$262.0",
-    "$249.0",
-    "$181.70",
-    "$172.6",
-    "$165.3",
-    "$161.7"
-   ],
-   "text": "口腔護理配方 Oral Care 成貓 1-6 Adult 1-6 口腔護理 Oral Care 3.5lb 9288 1 $262.0 $249.0 $181.70 $172.6 $165.3 $161.7",
-   "box": [
-    "26",
-    "513",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "泌尿道健康和去毛球配方 Urinary Hairball Control",
-    "成貓 1-6 Adult 1-6",
-    "泌尿道健康和去毛球 Urinary Hairball Control",
-    "3.5 lb",
-    "10135",
-    "1",
-    "$262.0",
-    "$249.0",
-    "$181.70",
-    "$172.6",
-    "$165.3",
-    "$161.7"
-   ],
-   "text": "泌尿道健康和去毛球配方 Urinary Hairball Control 成貓 1-6 Adult 1-6 泌尿道健康和去毛球 Urinary Hairball Control 3.5 lb 10135 1 $262.0 $249.0 $181.70 $172.6 $165.3 $161.7",
-   "box": [
-    "26",
-    "530",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "泌尿道健康和去毛球配方 Urinary Hairball Control",
-    "成貓 1-6 Adult 1-6",
-    "泌尿道健康和去毛球 Urinary Hairball Control",
-    "15.5lb",
-    "10137",
-    "1",
-    "$913.0",
-    "$869.0",
-    "$634.30",
-    "$602.6",
-    "$577.2",
-    "$564.5"
-   ],
-   "text": "泌尿道健康和去毛球配方 Urinary Hairball Control 成貓 1-6 Adult 1-6 泌尿道健康和去毛球 Urinary Hairball Control 15.5lb 10137 1 $913.0 $869.0 $634.30 $602.6 $577.2 $564.5",
-   "box": [
-    "26",
-    "546",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "去毛球配方 Hairball Control",
-    "成貓 1-6 Adult 1-6",
-    "去毛球 Hairball Control",
-    "3.5lb",
-    "7156",
-    "1",
-    "$262.0",
-    "$249.0",
-    "$181.70",
-    "$172.6",
-    "$165.3",
-    "$161.7"
-   ],
-   "text": "去毛球配方 Hairball Control 成貓 1-6 Adult 1-6 去毛球 Hairball Control 3.5lb 7156 1 $262.0 $249.0 $181.70 $172.6 $165.3 $161.7",
-   "box": [
-    "26",
-    "563",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "去毛球配方 Hairball Control",
-    "成貓 1-6 Adult 1-6",
-    "去毛球 Hairball Control",
-    "7lb",
-    "8881",
-    "1",
-    "$461.0",
-    "$439.0",
-    "$320.40",
-    "$304.4",
-    "$291.6",
-    "$285.2"
-   ],
-   "text": "去毛球配方 Hairball Control 成貓 1-6 Adult 1-6 去毛球 Hairball Control 7lb 8881 1 $461.0 $439.0 $320.40 $304.4 $291.6 $285.2",
-   "box": [
-    "26",
-    "580",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "去毛球配方 Hairball Control",
-    "成貓 1-6 Adult 1-6",
-    "去毛球 Hairball Control",
-    "15.5lb",
-    "8875",
-    "1",
-    "$913.0",
-    "$869.0",
-    "$634.30",
-    "$602.6",
-    "$577.2",
-    "$564.5"
-   ],
-   "text": "去毛球配方 Hairball Control 成貓 1-6 Adult 1-6 去毛球 Hairball Control 15.5lb 8875 1 $913.0 $869.0 $634.30 $602.6 $577.2 $564.5",
-   "box": [
-    "26",
-    "596",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "去毛球配方 Hairball Control",
-    "高齡貓 7＋ Adult 7+",
-    "去毛球 Hairball Control",
-    "3.5lb",
-    "7533",
-    "1",
-    "$262.0",
-    "$249.0",
-    "$181.70",
-    "$172.6",
-    "$165.3",
-    "$161.7"
-   ],
-   "text": "去毛球配方 Hairball Control 高齡貓 7＋ Adult 7+ 去毛球 Hairball Control 3.5lb 7533 1 $262.0 $249.0 $181.70 $172.6 $165.3 $161.7",
-   "box": [
-    "26",
-    "613",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "去毛球配方 Hairball Control",
-    "高齡貓 7＋ Adult 7+",
-    "去毛球 Hairball Control",
-    "7lb",
-    "8883",
-    "1",
-    "$461.0",
-    "$439.0",
-    "$320.40",
-    "$304.4",
-    "$291.6",
-    "$285.2"
-   ],
-   "text": "去毛球配方 Hairball Control 高齡貓 7＋ Adult 7+ 去毛球 Hairball Control 7lb 8883 1 $461.0 $439.0 $320.40 $304.4 $291.6 $285.2",
-   "box": [
-    "26",
-    "629",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "提升活力配方 Senior Vitality",
-    "高齡貓 7＋ Adult 7+",
-    "提升活力 Senior Vitality",
-    "3lb",
-    "10777",
-    "1",
-    "$230.0",
-    "$219.0",
-    "$159.80",
-    "$151.8",
-    "$145.4",
-    "$142.2"
-   ],
-   "text": "提升活力配方 Senior Vitality 高齡貓 7＋ Adult 7+ 提升活力 Senior Vitality 3lb 10777 1 $230.0 $219.0 $159.80 $151.8 $145.4 $142.2",
-   "box": [
-    "26",
-    "646",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "提升活力配方 Senior Vitality",
-    "高齡貓 7＋ Adult 7+",
-    "提升活力 Senior Vitality",
-    "13lb",
-    "10779",
-    "1",
-    "$808.0",
-    "$769.0",
-    "$561.30",
-    "$533.2",
-    "$510.8",
-    "$499.6"
-   ],
-   "text": "提升活力配方 Senior Vitality 高齡貓 7＋ Adult 7+ 提升活力 Senior Vitality 13lb 10779 1 $808.0 $769.0 $561.30 $533.2 $510.8 $499.6",
-   "box": [
-    "26",
-    "663",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "幼貓 Kitten",
-    "幼貓 Kitten",
-    "3.5 lb",
-    "7123",
-    "1",
-    "$199.0",
-    "$189.0",
-    "$143.60",
-    "$136.4",
-    "$130.7",
-    "$127.8"
-   ],
-   "text": "Everyday Diet 日常系列 幼貓 Kitten 幼貓 Kitten 3.5 lb 7123 1 $199.0 $189.0 $143.60 $136.4 $130.7 $127.8",
-   "box": [
-    "26",
-    "692",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "幼貓 Kitten",
-    "幼貓 Kitten",
-    "4kg",
-    "10308HG",
-    "1",
-    "$461.0",
-    "$439.0",
-    "$333.60",
-    "$316.9",
-    "$303.6",
-    "$296.9"
-   ],
-   "text": "Everyday Diet 日常系列 幼貓 Kitten 幼貓 Kitten 4kg 10308HG 1 $461.0 $439.0 $333.60 $316.9 $303.6 $296.9",
-   "box": [
-    "26",
-    "709",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "成貓 1-6 Adult 1-6",
-    "成貓 Adult 1-6",
-    "2kg",
-    "603820",
-    "1",
-    "$241.0",
-    "$229.0",
-    "$171.70",
-    "$163.1",
-    "$156.2",
-    "$152.8"
-   ],
-   "text": "Everyday Diet 日常系列 成貓 1-6 Adult 1-6 成貓 Adult 1-6 2kg 603820 1 $241.0 $229.0 $171.70 $163.1 $156.2 $152.8",
-   "box": [
-    "26",
-    "726",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "成貓 1-6 Adult 1-6",
-    "成貓 Adult 1-6",
-    "4kg",
-    "10298HG",
-    "1",
-    "$440.0",
-    "$419.0",
-    "$314.20",
-    "$298.5",
-    "$285.9",
-    "$279.6"
-   ],
-   "text": "Everyday Diet 日常系列 成貓 1-6 Adult 1-6 成貓 Adult 1-6 4kg 10298HG 1 $440.0 $419.0 $314.20 $298.5 $285.9 $279.6",
-   "box": [
-    "26",
-    "742",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "成貓 1-6 Adult 1-6",
-    "成貓 Adult 1-6",
-    "10kg",
-    "10296HG",
-    "1",
-    "$955.0",
-    "$909.0",
-    "$709.00",
-    "$673.6",
-    "$645.2",
-    "$631.0"
-   ],
-   "text": "Everyday Diet 日常系列 成貓 1-6 Adult 1-6 成貓 Adult 1-6 10kg 10296HG 1 $955.0 $909.0 $709.00 $673.6 $645.2 $631.0",
-   "box": [
-    "26",
-    "759",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "成貓 1-6 Adult 1-6",
-    "室內貓 Indoor",
-    "3.5 lb",
-    "5532",
-    "1",
-    "$262.0",
-    "$249.0",
-    "$186.70",
-    "$177.4",
-    "$169.9",
-    "$166.2"
-   ],
-   "text": "Everyday Diet 日常系列 成貓 1-6 Adult 1-6 室內貓 Indoor 3.5 lb 5532 1 $262.0 $249.0 $186.70 $177.4 $169.9 $166.2",
-   "box": [
-    "26",
-    "776",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "成貓 1-6 Adult 1-6",
-    "室內貓 Indoor",
-    "7lb",
-    "8879",
-    "1",
-    "$461.0",
-    "$439.0",
-    "$329.20",
-    "$312.7",
-    "$299.6",
-    "$293.0"
-   ],
-   "text": "Everyday Diet 日常系列 成貓 1-6 Adult 1-6 室內貓 Indoor 7lb 8879 1 $461.0 $439.0 $329.20 $312.7 $299.6 $293.0",
-   "box": [
-    "26",
-    "792",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "成貓 1-6 Adult 1-6",
-    "減肥 Light",
-    "2kg",
-    "10302HG",
-    "1",
-    "$262.0",
-    "$249.0",
-    "$186.70",
-    "$177.4",
-    "$169.9",
-    "$166.2"
-   ],
-   "text": "Everyday Diet 日常系列 成貓 1-6 Adult 1-6 減肥 Light 2kg 10302HG 1 $262.0 $249.0 $186.70 $177.4 $169.9 $166.2",
-   "box": [
-    "26",
-    "809",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "成貓 1-6 Adult 1-6",
-    "減肥 Light",
-    "6kg",
-    "1175HG",
-    "1",
-    "$650.0",
-    "$619.0",
-    "$464.20",
-    "$441.0",
-    "$422.4",
-    "$413.1"
-   ],
-   "text": "Everyday Diet 日常系列 成貓 1-6 Adult 1-6 減肥 Light 6kg 1175HG 1 $650.0 $619.0 $464.20 $441.0 $422.4 $413.1",
-   "box": [
-    "26",
-    "826",
-    "763",
-    "16"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "高齡貓 7＋ Adult 7+",
-    "高齡貓7+ Adult 7+",
-    "1.5kg",
-    "6498HG",
-    "1",
-    "$241.0",
-    "$229.0",
-    "$171.70",
-    "$163.1",
-    "$156.2",
-    "$152.8"
-   ],
-   "text": "Everyday Diet 日常系列 高齡貓 7＋ Adult 7+ 高齡貓7+ Adult 7+ 1.5kg 6498HG 1 $241.0 $229.0 $171.70 $163.1 $156.2 $152.8",
-   "box": [
-    "26",
-    "842",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "高齡貓 7＋ Adult 7+",
-    "高齡貓7+ Adult 7+",
-    "3.5kg",
-    "10312HG",
-    "1",
-    "$440.0",
-    "$419.0",
-    "$314.20",
-    "$298.5",
-    "$285.9",
-    "$279.6"
-   ],
-   "text": "Everyday Diet 日常系列 高齡貓 7＋ Adult 7+ 高齡貓7+ Adult 7+ 3.5kg 10312HG 1 $440.0 $419.0 $314.20 $298.5 $285.9 $279.6",
-   "box": [
-    "26",
-    "859",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "高齡貓 7＋ Adult 7+",
-    "高齡貓7+ Adult 7+",
-    "10kg",
-    "10311HG",
-    "1",
-    "$955.0",
-    "$909.0",
-    "$709.00",
-    "$673.6",
-    "$645.2",
-    "$631.0"
-   ],
-   "text": "Everyday Diet 日常系列 高齡貓 7＋ Adult 7+ 高齡貓7+ Adult 7+ 10kg 10311HG 1 $955.0 $909.0 $709.00 $673.6 $645.2 $631.0",
-   "box": [
-    "26",
-    "876",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "老齡貓11+ Adult 11+",
-    "老齡貓11+ Adult 11+",
-    "3.5lb",
-    "1462",
-    "1",
-    "$241.0",
-    "$229.0",
-    "$171.70",
-    "$163.1",
-    "$156.2",
-    "$152.8"
-   ],
-   "text": "Everyday Diet 日常系列 老齡貓11+ Adult 11+ 老齡貓11+ Adult 11+ 3.5lb 1462 1 $241.0 $229.0 $171.70 $163.1 $156.2 $152.8",
-   "box": [
-    "26",
-    "892",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
-  },
-  {
-   "cells": [
-    "Everyday Diet 日常系列",
-    "老齡貓11+ Adult 11+",
-    "老齡貓11+ Adult 11+",
-    "7lb",
-    "1463",
-    "1",
-    "$440.0",
-    "$419.0",
-    "$314.20",
-    "$298.5",
-    "$285.9",
-    "$279.6"
-   ],
-   "text": "Everyday Diet 日常系列 老齡貓11+ Adult 11+ 老齡貓11+ Adult 11+ 7lb 1463 1 $440.0 $419.0 $314.20 $298.5 $285.9 $279.6",
-   "box": [
-    "26",
-    "909",
-    "763",
-    "17"
-   ],
-   "confidence": "0.9500"
+   "text": "MOV: Minimal Order Value Discount (Per Order) 每單最低購貨金額折扣",
+   "confidence": "0.9"
   }
  ]
 }

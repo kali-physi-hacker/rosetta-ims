@@ -1,475 +1,338 @@
 {
  "page_outcome": "evidence",
- "columns": [
-  "Disease Category 疾病種類",
-  "Product Range 產品系列",
-  "Product Description 產品名稱",
-  "Size 重量",
-  "Product Code 產品編號",
-  "Order Multiple 訂貨單位",
-  "Recommended Retail Selling Price 建議零售價",
-  "Gross Wholesale Price 折扣前批發價 （每包／罐）"
+ "page_brand_text": "Hill's PRESCRIPTION DIET",
+ "tables": [
+  {
+   "section": "濕糧罐頭 Wet Food",
+   "columns": [
+    "Disease Category 疾病種類",
+    "Product Range 產品系列",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Cancer",
+      "ONC",
+      "ONC Care Chicken Stew - Cancer Care",
+      "2.9 oz",
+      "607665",
+      "24",
+      "$36.0",
+      "$25.20"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "GI Biome",
+      "GI Biome Chicken & Vegetable Stew - Digestive/ Fiber Care",
+      "2.9 oz",
+      "604202",
+      "24",
+      "$27.0",
+      "$19.20"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Adult 1+ Chicken & Vegetable Stew - Digestive Care",
+      "2.9 oz",
+      "3392",
+      "24",
+      "$24.0",
+      "$16.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Adult 1+ Canned - Digestive Care",
+      "5.5 oz",
+      "4628",
+      "24",
+      "$42.0",
+      "$29.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Chicken Pouch - Digestive Care",
+      "85g",
+      "605916",
+      "12",
+      "$24.0",
+      "$16.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Canned Kitten",
+      "5.5 oz",
+      "609309",
+      "24",
+      "$46.0",
+      "$32.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d Stress",
+      "c/d Stress Vegetable & Tuna Stew - Urinary Care",
+      "2.9 oz",
+      "608449",
+      "24",
+      "$25.0",
+      "$17.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d Stress",
+      "c/d Stress Chicken & Vegetable Stew - Urinary Care",
+      "2.9 oz",
+      "3387",
+      "24",
+      "$25.0",
+      "$17.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d Stress",
+      "c/d Stress with Tuna Canned - Urinary Care",
+      "5.5 oz",
+      "608450",
+      "24",
+      "$42.0",
+      "$29.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare Tuna & Vegetable Stew - Urinary Care",
+      "2.9 oz",
+      "3385",
+      "24",
+      "$25.0",
+      "$17.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare Chicken & Vegetable Stew - Urinary Care",
+      "2.9 oz",
+      "3386",
+      "24",
+      "$25.0",
+      "$17.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare Canned - Urinary Care",
+      "5.5 oz",
+      "6238",
+      "24",
+      "$42.0",
+      "$29.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare Chicken Pouch - Urinary Care",
+      "85g",
+      "605908",
+      "12",
+      "$24.0",
+      "$16.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare Salmon Pouch - Urinary Care",
+      "85g",
+      "605915",
+      "12",
+      "$24.0",
+      "$16.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Tuna & Vegetable Stew - Kidney Care",
+      "2.9 oz",
+      "3394",
+      "24",
+      "$25.0",
+      "$17.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Chicken & Vegetable Stew - Kidney Care",
+      "2.9 oz",
+      "3393",
+      "24",
+      "$25.0",
+      "$17.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Canned - Kidney Care",
+      "5.5 oz",
+      "9453",
+      "24",
+      "$42.0",
+      "$29.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Chicken Pouch - Kidney Care",
+      "85g",
+      "606267",
+      "12",
+      "$24.0",
+      "$16.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Salmon Pouch - Kidney Care",
+      "85g",
+      "605931",
+      "12",
+      "$24.0",
+      "$16.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Multi-Organ",
+      "Multi-Organ",
+      "PD Fel Multi-Organ with Chicken",
+      "5.5 oz",
+      "609189",
+      "24",
+      "$46.0",
+      "$32.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "z/d",
+      "z/d Canned - Skin/ Food Sensitivities",
+      "5.5 oz",
+      "5238",
+      "24",
+      "$43.0",
+      "$30.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "d/d",
+      "d/d Duck & Green Pea",
+      "5.5 oz",
+      "5364",
+      "24",
+      "$46.0",
+      "$32.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d Canned - Multi Benefit",
+      "5.5 oz",
+      "9455",
+      "24",
+      "$42.0",
+      "$29.40"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
  ],
- "rows": [
+ "text_observations": [
   {
-   "cells": [
-    "Cancer",
-    "ONC",
-    "ONC Care Chicken Stew - Cancer Care",
-    "2.9 oz",
-    "607665",
-    "24",
-    "$36.0",
-    "$25.20"
-   ],
-   "text": "Cancer ONC ONC Care Chicken Stew - Cancer Care 2.9 oz 607665 24 $36.0 $25.20",
-   "box": [
-    "30",
-    "249",
-    "849",
-    "27"
-   ],
-   "confidence": "0.9900"
+   "text": "Effective: Jul 2026",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "GI",
-    "GI Biome",
-    "GI Biome Chicken & Vegetable Stew - Digestive/ Fiber Care",
-    "2.9 oz",
-    "604202",
-    "24",
-    "$27.0",
-    "$19.20"
-   ],
-   "text": "GI GI Biome GI Biome Chicken & Vegetable Stew - Digestive/ Fiber Care 2.9 oz 604202 24 $27.0 $19.20",
-   "box": [
-    "30",
-    "277",
-    "849",
-    "27"
-   ],
-   "confidence": "0.9900"
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "GI",
-    "i/d",
-    "i/d Adult 1+ Chicken & Vegetable Stew - Digestive Care",
-    "2.9 oz",
-    "3392",
-    "24",
-    "$24.0",
-    "$16.80"
-   ],
-   "text": "GI i/d i/d Adult 1+ Chicken & Vegetable Stew - Digestive Care 2.9 oz 3392 24 $24.0 $16.80",
-   "box": [
-    "30",
-    "305",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
   },
   {
-   "cells": [
-    "GI",
-    "i/d",
-    "i/d Adult 1+ Canned - Digestive Care",
-    "5.5 oz",
-    "4628",
-    "24",
-    "$42.0",
-    "$29.40"
-   ],
-   "text": "GI i/d i/d Adult 1+ Canned - Digestive Care 5.5 oz 4628 24 $42.0 $29.40",
-   "box": [
-    "30",
-    "334",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "GI",
-    "i/d",
-    "i/d Chicken Pouch - Digestive Care",
-    "85g",
-    "605916",
-    "12",
-    "$24.0",
-    "$16.10"
-   ],
-   "text": "GI i/d i/d Chicken Pouch - Digestive Care 85g 605916 12 $24.0 $16.10",
-   "box": [
-    "30",
-    "363",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "GI",
-    "i/d",
-    "i/d Canned Kitten NEW",
-    "5.5 oz",
-    "609309",
-    "24",
-    "$46.0",
-    "$32.00"
-   ],
-   "text": "GI i/d i/d Canned Kitten NEW 5.5 oz 609309 24 $46.0 $32.00",
-   "box": [
-    "30",
-    "392",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d Stress",
-    "c/d Stress Vegetable & Tuna Stew - Urinary Care",
-    "2.9 oz",
-    "608449",
-    "24",
-    "$25.0",
-    "$17.60"
-   ],
-   "text": "Urinary c/d Stress c/d Stress Vegetable & Tuna Stew - Urinary Care 2.9 oz 608449 24 $25.0 $17.60",
-   "box": [
-    "30",
-    "421",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d Stress",
-    "c/d Stress Chicken & Vegetable Stew - Urinary Care",
-    "2.9 oz",
-    "3387",
-    "24",
-    "$25.0",
-    "$17.60"
-   ],
-   "text": "Urinary c/d Stress c/d Stress Chicken & Vegetable Stew - Urinary Care 2.9 oz 3387 24 $25.0 $17.60",
-   "box": [
-    "30",
-    "450",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d Stress",
-    "c/d Stress with Tuna Canned - Urinary Care",
-    "5.5 oz",
-    "608450",
-    "24",
-    "$42.0",
-    "$29.40"
-   ],
-   "text": "Urinary c/d Stress c/d Stress with Tuna Canned - Urinary Care 5.5 oz 608450 24 $42.0 $29.40",
-   "box": [
-    "30",
-    "479",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d",
-    "c/d Multicare Tuna & Vegetable Stew - Urinary Care",
-    "2.9 oz",
-    "3385",
-    "24",
-    "$25.0",
-    "$17.60"
-   ],
-   "text": "Urinary c/d c/d Multicare Tuna & Vegetable Stew - Urinary Care 2.9 oz 3385 24 $25.0 $17.60",
-   "box": [
-    "30",
-    "508",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d",
-    "c/d Multicare Chicken & Vegetable Stew - Urinary Care",
-    "2.9 oz",
-    "3386",
-    "24",
-    "$25.0",
-    "$17.60"
-   ],
-   "text": "Urinary c/d c/d Multicare Chicken & Vegetable Stew - Urinary Care 2.9 oz 3386 24 $25.0 $17.60",
-   "box": [
-    "30",
-    "537",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d",
-    "c/d Multicare Canned - Urinary Care",
-    "5.5 oz",
-    "6238",
-    "24",
-    "$42.0",
-    "$29.40"
-   ],
-   "text": "Urinary c/d c/d Multicare Canned - Urinary Care 5.5 oz 6238 24 $42.0 $29.40",
-   "box": [
-    "30",
-    "566",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d",
-    "c/d Multicare Chicken Pouch - Urinary Care",
-    "85g",
-    "605908",
-    "12",
-    "$24.0",
-    "$16.10"
-   ],
-   "text": "Urinary c/d c/d Multicare Chicken Pouch - Urinary Care 85g 605908 12 $24.0 $16.10",
-   "box": [
-    "30",
-    "595",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Urinary",
-    "c/d",
-    "c/d Multicare Salmon Pouch - Urinary Care",
-    "85g",
-    "605915",
-    "12",
-    "$24.0",
-    "$16.10"
-   ],
-   "text": "Urinary c/d c/d Multicare Salmon Pouch - Urinary Care 85g 605915 12 $24.0 $16.10",
-   "box": [
-    "30",
-    "624",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Kidney",
-    "k/d",
-    "k/d Tuna & Vegetable Stew - Kidney Care",
-    "2.9 oz",
-    "3394",
-    "24",
-    "$25.0",
-    "$17.60"
-   ],
-   "text": "Kidney k/d k/d Tuna & Vegetable Stew - Kidney Care 2.9 oz 3394 24 $25.0 $17.60",
-   "box": [
-    "30",
-    "653",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Kidney",
-    "k/d",
-    "k/d Chicken & Vegetable Stew - Kidney Care",
-    "2.9 oz",
-    "3393",
-    "24",
-    "$25.0",
-    "$17.60"
-   ],
-   "text": "Kidney k/d k/d Chicken & Vegetable Stew - Kidney Care 2.9 oz 3393 24 $25.0 $17.60",
-   "box": [
-    "30",
-    "682",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Kidney",
-    "k/d",
-    "k/d Canned - Kidney Care",
-    "5.5 oz",
-    "9453",
-    "24",
-    "$42.0",
-    "$29.40"
-   ],
-   "text": "Kidney k/d k/d Canned - Kidney Care 5.5 oz 9453 24 $42.0 $29.40",
-   "box": [
-    "30",
-    "711",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Kidney",
-    "k/d",
-    "k/d Chicken Pouch - Kidney Care",
-    "85g",
-    "606267",
-    "12",
-    "$24.0",
-    "$16.10"
-   ],
-   "text": "Kidney k/d k/d Chicken Pouch - Kidney Care 85g 606267 12 $24.0 $16.10",
-   "box": [
-    "30",
-    "740",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Kidney",
-    "k/d",
-    "k/d Salmon Pouch - Kidney Care",
-    "85g",
-    "605931",
-    "12",
-    "$24.0",
-    "$16.10"
-   ],
-   "text": "Kidney k/d k/d Salmon Pouch - Kidney Care 85g 605931 12 $24.0 $16.10",
-   "box": [
-    "30",
-    "769",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Multi-Organ",
-    "Multi-Organ",
-    "PD Fel Multi-Organ with Chicken NEW",
-    "5.5 oz",
-    "609189",
-    "24",
-    "$46.0",
-    "$32.60"
-   ],
-   "text": "Multi-Organ Multi-Organ PD Fel Multi-Organ with Chicken NEW 5.5 oz 609189 24 $46.0 $32.60",
-   "box": [
-    "30",
-    "798",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Derm",
-    "z/d",
-    "z/d Canned - Skin/ Food Sensitivities",
-    "5.5 oz",
-    "5238",
-    "24",
-    "$43.0",
-    "$30.00"
-   ],
-   "text": "Derm z/d z/d Canned - Skin/ Food Sensitivities 5.5 oz 5238 24 $43.0 $30.00",
-   "box": [
-    "30",
-    "827",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Derm",
-    "d/d",
-    "d/d Duck & Green Pea",
-    "5.5 oz",
-    "5364",
-    "24",
-    "$46.0",
-    "$32.60"
-   ],
-   "text": "Derm d/d d/d Duck & Green Pea 5.5 oz 5364 24 $46.0 $32.60",
-   "box": [
-    "30",
-    "856",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
-  },
-  {
-   "cells": [
-    "Weight",
-    "w/d",
-    "w/d Canned - Multi Benefit",
-    "5.5 oz",
-    "9455",
-    "24",
-    "$42.0",
-    "$29.40"
-   ],
-   "text": "Weight w/d w/d Canned - Multi Benefit 5.5 oz 9455 24 $42.0 $29.40",
-   "box": [
-    "30",
-    "885",
-    "849",
-    "28"
-   ],
-   "confidence": "0.9900"
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
   }
  ]
 }

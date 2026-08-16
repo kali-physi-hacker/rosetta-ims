@@ -1,0 +1,377 @@
+{
+ "page_outcome": "evidence",
+ "page_brand_text": "Hill's PRESCRIPTION DIET",
+ "tables": [
+  {
+   "section": "濕糧罐頭 Wet Food",
+   "columns": [
+    "Product Range 產品系列",
+    "Product Range 產品系列",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Cancer Care",
+      "ONC",
+      "ONC Care Chicken Stew - Cancer Care",
+      "12.5 oz",
+      "607663",
+      "12",
+      "$61.0",
+      "$42.70"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Recovery",
+      "a/d",
+      "a/d Canned - Recovery",
+      "5.5 oz",
+      "5670",
+      "24",
+      "$42.0",
+      "$29.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "GI Biome",
+      "GI Biome Chicken & Vegetable Stew - Digestive/ Fiber Care",
+      "12.5 oz",
+      "605362",
+      "12",
+      "$61.0",
+      "$42.70"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d Low Fat",
+      "i/d Low Fat Chicken & Vegetable Stew - Digestive Care",
+      "5.5 oz",
+      "3391",
+      "24",
+      "$35.0",
+      "$24.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d Low Fat",
+      "i/d Low Fat Chicken & Vegetable Stew - Digestive Care",
+      "12.5 oz",
+      "10423",
+      "12",
+      "$58.0",
+      "$41.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d Low Fat",
+      "i/d Low Fat Canned - Digestive Care",
+      "13 oz",
+      "1863",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Adult 1+ Chicken & Vegetable Stew - Digestive Care",
+      "5.5 oz",
+      "3390",
+      "24",
+      "$35.0",
+      "$24.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Adult 1+ Chicken & Vegetable Stew - Digestive Care",
+      "12.5 oz",
+      "3389",
+      "12",
+      "$58.0",
+      "$41.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Adult 1+ Canned - Digestive Care",
+      "13 oz",
+      "7008",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "GI",
+      "i/d",
+      "i/d Canned Puppy - Digestive Care",
+      "13 oz",
+      "609307",
+      "12",
+      "$58.0",
+      "$41.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "Derm Complete",
+      "Derm Complete Rice & Egg Canned",
+      "13 oz",
+      "605725",
+      "12",
+      "$57.0",
+      "$39.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "z/d",
+      "z/d Ultra Canned",
+      "5.5 oz",
+      "5403",
+      "24",
+      "$40.0",
+      "$28.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "z/d",
+      "z/d Ultra Canned",
+      "13 oz",
+      "7018",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "z/d",
+      "z/d Low Fat Hydrolyzed Soy Canned",
+      "13 oz",
+      "608476",
+      "12",
+      "$57.0",
+      "$39.90"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "d/d",
+      "d/d Salmon & Potato Canned",
+      "13 oz",
+      "7004",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic Plus",
+      "Metabolic & Mobility Tuna & Vegetable Stew",
+      "12.5 oz",
+      "10086",
+      "12",
+      "$58.0",
+      "$41.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d Multi Benefit Chicken & Vegetable Stew",
+      "5.5 oz",
+      "10128",
+      "24",
+      "$35.0",
+      "$24.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d Multi Benefit Canned",
+      "13 oz",
+      "7017",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Chicken & Vegetable Stew - Kidney Care",
+      "5.5 oz",
+      "3396",
+      "24",
+      "$35.0",
+      "$24.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Chicken & Vegetable Stew - Kidney Care",
+      "12.5 oz",
+      "3395",
+      "12",
+      "$58.0",
+      "$41.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d Canned - Kidney Care",
+      "13 oz",
+      "7010",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Multi-Organ",
+      "Multi-Organ",
+      "Multi-Organ Vegetable & Turkey Stew",
+      "12.5oz",
+      "609655",
+      "12",
+      "$61.0",
+      "$42.70"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Chicken & Vegetable Stew - Urinary Care",
+      "5.5oz",
+      "3388",
+      "24",
+      "$31.0",
+      "$21.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Chicken & Vegetable Stew - Urinary Care",
+      "12.5 oz",
+      "3384",
+      "12",
+      "$58.0",
+      "$41.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Canned - Urinary Care",
+      "13 oz",
+      "7001",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "u/d",
+      "u/d Canned - Urinary Care",
+      "13 oz",
+      "7016",
+      "12",
+      "$54.0",
+      "$38.10"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Effective: Jul 2026",
+   "confidence": "0.9"
+  },
+  {
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
+  }
+ ]
+}

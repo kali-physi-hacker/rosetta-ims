@@ -1,0 +1,442 @@
+{
+ "page_outcome": "evidence",
+ "page_brand_text": "Hill's PRESCRIPTION DIET",
+ "tables": [
+  {
+   "section": "包裝乾糧 Dry Food",
+   "columns": [
+    "Disease Category 疾病種類",
+    "Product Range 產品系列",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Weight",
+      "Metabolic",
+      "Metabolic - Weight Management",
+      "1.5 kg",
+      "3116HG",
+      "1",
+      "$301.0",
+      "$214.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic",
+      "Metabolic - Weight Management",
+      "3.5 kg",
+      "10360HG",
+      "1",
+      "$649.0",
+      "$462.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic",
+      "Metabolic - Weight Management",
+      "5.5 kg",
+      "10361HG",
+      "1",
+      "$920.0",
+      "$655.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic",
+      "Metabolic - Weight Management",
+      "17.6 lbs",
+      "1952",
+      "1",
+      "$1,403.0",
+      "$940.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic Plus",
+      "Metabolic + Mobility - Weight Management Metabolic & Joint Care",
+      "8.5 lbs",
+      "603971",
+      "1",
+      "$744.0",
+      "$529.90"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic Plus",
+      "Metabolic + Mobility - Weight Management Metabolic & Joint Care",
+      "24 lbs",
+      "10044",
+      "1",
+      "$1,888.0",
+      "$1,345.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d - Multi Benefit",
+      "1.5 kg",
+      "10080HG",
+      "1",
+      "$269.0",
+      "$191.90"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d - Multi Benefit",
+      "8.5 lbs",
+      "8671",
+      "1",
+      "$614.0",
+      "$437.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d - Multi Benefit",
+      "5.5 kg",
+      "10366HG",
+      "1",
+      "$851.0",
+      "$606.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d - Multi Benefit",
+      "27.5 lbs",
+      "8602",
+      "1",
+      "$1,694.0",
+      "$1,207.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "r/d",
+      "r/d - Weight Reduction",
+      "1.5 kg",
+      "10078HG",
+      "1",
+      "$260.0",
+      "$185.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "r/d",
+      "r/d - Weight Reduction",
+      "8.5 lbs",
+      "8624",
+      "1",
+      "$614.0",
+      "$437.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "r/d",
+      "r/d - Weight Reduction",
+      "27.5 lbs",
+      "8599",
+      "1",
+      "$1,694.0",
+      "$1,207.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d - Kidney Care",
+      "1.5 kg",
+      "10077HG",
+      "1",
+      "$287.0",
+      "$204.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d - Kidney Care",
+      "8.5 lbs",
+      "8621",
+      "1",
+      "$626.0",
+      "$445.90"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d - Kidney Care",
+      "6.5 kg",
+      "10434HG",
+      "1",
+      "$1,008.0",
+      "$718.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d + Mobility - Kidney Care & Joint Care",
+      "8.5 lbs",
+      "10869",
+      "1",
+      "$662.0",
+      "$471.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Kidney",
+      "k/d",
+      "k/d + Mobility - Kidney Care & Joint Care",
+      "18.7 lbs",
+      "10867",
+      "1",
+      "$1,428.0",
+      "$1,018.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Multi-Organ",
+      "Multi-Organ",
+      "Multi-Organ Support",
+      "8.5 lbs",
+      "609191",
+      "1",
+      "$745.0",
+      "$531.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "1.5 kg",
+      "10074HG",
+      "1",
+      "$239.0",
+      "$170.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "8.5 lbs",
+      "10111",
+      "1",
+      "$577.0",
+      "$411.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "17.6 lbs",
+      "10104",
+      "1",
+      "$1,071.0",
+      "$763.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "c/d",
+      "c/d Multicare - Urinary Care",
+      "27.5 lbs",
+      "10012",
+      "1",
+      "$1,526.0",
+      "$1,087.20"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "u/d",
+      "u/d - Urinary Care",
+      "1.5 kg",
+      "10079HG",
+      "1",
+      "$283.0",
+      "$201.90"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Urinary",
+      "u/d",
+      "u/d - Urinary Care",
+      "8.5 lbs",
+      "8670",
+      "1",
+      "$643.0",
+      "$458.40"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Joint",
+      "j/d",
+      "j/d - Joint Care",
+      "8.5lbs",
+      "8620",
+      "1",
+      "$569.0",
+      "$405.70"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Joint",
+      "j/d",
+      "j/d - Joint Care",
+      "27.5 lbs",
+      "8598",
+      "1",
+      "$1,713.0",
+      "$1,220.50"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Heart",
+      "h/d",
+      "h/d -Heart Care",
+      "1.5 kg",
+      "10075HG",
+      "1",
+      "$268.0",
+      "$190.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Dental",
+      "t/d",
+      "t/d Original Bites - Dental Care",
+      "5 lbs",
+      "4013",
+      "1",
+      "$410.0",
+      "$292.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Dental",
+      "t/d",
+      "t/d Small Bites - Dental Care",
+      "5 lbs",
+      "4005",
+      "1",
+      "$465.0",
+      "$331.20"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Liver",
+      "l/d",
+      "l/d - Liver Care",
+      "1.5 kg",
+      "3006HG",
+      "1",
+      "$272.0",
+      "$194.10"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Effective: Jul 2026",
+   "confidence": "0.9"
+  },
+  {
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
+  }
+ ]
+}

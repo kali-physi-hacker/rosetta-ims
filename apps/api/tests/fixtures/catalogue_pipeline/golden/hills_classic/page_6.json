@@ -1,0 +1,260 @@
+{
+ "page_outcome": "evidence",
+ "page_brand_text": "Hill's PRESCRIPTION DIET",
+ "tables": [
+  {
+   "section": "包裝乾糧 Dry Food",
+   "columns": [
+    "Disease Category 疾病種類",
+    "Product Range 產品系列",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Derm",
+      "z/d",
+      "z/d - Skin/ Food Sensitivities",
+      "4 lbs",
+      "7905",
+      "1",
+      "$535.0",
+      "$381.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "d/d",
+      "d/d Duck & Green Pea - Skin/ Food Sensitivities",
+      "3.5 lbs",
+      "5351",
+      "1",
+      "$444.0",
+      "$316.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "d/d",
+      "d/d Venison & Green Pea - Skin/ Food Sensitivities",
+      "3.5 lbs",
+      "5350",
+      "1",
+      "$444.0",
+      "$316.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "d/d",
+      "d/d Duck & Green Pea - Skin/ Food Sensitivities",
+      "8.5 lbs",
+      "5355",
+      "1",
+      "$1,025.0",
+      "$730.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Derm",
+      "d/d",
+      "d/d Venison & Green Pea - Skin/ Food Sensitivities",
+      "8.5 lbs",
+      "5356",
+      "1",
+      "$1,025.0",
+      "$730.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic",
+      "Metabolic - Weight Management",
+      "1.5 kg",
+      "10362HG",
+      "1",
+      "$381.0",
+      "$271.80"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic",
+      "Metabolic - Weight Management",
+      "4 lbs",
+      "1954",
+      "1",
+      "$484.0",
+      "$339.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "Metabolic",
+      "Metabolic - Weight Management",
+      "8.5 lbs",
+      "1955",
+      "1",
+      "$897.0",
+      "$639.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d - Multi Benefit",
+      "1.5 kg",
+      "10367HG",
+      "1",
+      "$328.0",
+      "$233.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d - Multi Benefit",
+      "4 lbs",
+      "6159",
+      "1",
+      "$417.0",
+      "$297.10"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "w/d",
+      "w/d - Multi Benefit",
+      "8.5 lbs",
+      "5899",
+      "1",
+      "$762.0",
+      "$542.70"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "r/d",
+      "r/d - Weight Reduction",
+      "8.5 lbs",
+      "5898",
+      "1",
+      "$825.0",
+      "$588.20"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Weight",
+      "m/d",
+      "m/d - Gluco Support",
+      "4lbs",
+      "4273",
+      "1",
+      "$410.0",
+      "$292.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Dental",
+      "t/d",
+      "t/d - Dental Care",
+      "1.5 kg",
+      "10363HG",
+      "1",
+      "$336.0",
+      "$239.60"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Dental",
+      "t/d",
+      "t/d - Dental Care",
+      "4 lbs",
+      "4052",
+      "1",
+      "$427.0",
+      "$304.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Dental",
+      "t/d",
+      "t/d - Dental Care",
+      "8.5 lbs",
+      "8724",
+      "1",
+      "$758.0",
+      "$540.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Thyroid",
+      "y/d",
+      "y/d - Thyroid Care",
+      "4 lbs",
+      "1497",
+      "1",
+      "$498.0",
+      "$354.90"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Effective: Jul 2026",
+   "confidence": "0.9"
+  },
+  {
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
+  }
+ ]
+}

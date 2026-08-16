@@ -8,14 +8,13 @@ access and no provider nondeterminism.
 
 Each set's ``meta.json`` says how it was obtained, and the two differ:
 
-  hills_classic  recorded live through the provider seam by
-                 ``scripts/record_golden_envelopes.py`` — one envelope per page,
-                 exactly as production calls it.
+  hills_classic  hand-captured per page from the current edition (nine
+                 envelopes; originally recorded live through the provider seam
+                 from an older two-page sample). Covers all 13 sheet SKUs.
   alfamedic      hand-captured from a chat window, whole catalogue in a single
                  envelope. Everything from conformance onward is real; page
                  splitting, per-page retry and sparse-page detection are not
-                 exercised. Worth having anyway: it reaches 36 of the sheet's 38
-                 Alfamedic SKUs, against 4 of 13 for Hill's.
+                 exercised. It reaches 36 of the sheet's 38 Alfamedic SKUs.
 
 Both are compared against ``expected.csv``, which is the golden sample sheet's
 own flat table for that supplier — same 20 columns, in the same order, as
@@ -634,20 +633,25 @@ def _diff(expected: dict[str, str], actual: dict[str, str], columns) -> list[str
 
 
 def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
-    """Two REAL Hill's pages, one per header family (Life Stage / Disease
-    Category), from a live gemini-3.1-pro-preview run: every recorded row must
-    conform under the single hills.price_list.v1 contract and reach mastering.
+    """All nine REAL Hill's pages of the current edition — Science Diet and
+    Prescription Diet families alike — must conform under the single
+    hills.price_list.v1 contract and reach mastering.
 
-    Pinned to the provider that recorded them, which also runs the whole
-    pipeline once on the non-default provider — the toggle is not just a
-    lookup, it has to carry a real run."""
+    The spec keeps provider=google so the non-default provider CONFIG path
+    still carries a full run (the replay never reaches a network either way);
+    the envelopes themselves are hand-captured — meta.json is the authority
+    on provenance."""
 
     spec = golden_set("hills_classic")
     monkeypatch.setenv("CATALOGUE_VISION_PROVIDER", spec.provider)
     monkeypatch.setenv(spec.api_key_var, "golden-replay")
     pages = [spec.path / name for name in spec.page_names]
     calls = _install_golden_replay(monkeypatch, pages)
-    expected_rows = sum(len(json.loads(p.read_text())["rows"]) for p in pages)
+    envelopes = [json.loads(p.read_text()) for p in pages]
+    expected_rows = sum(len(table["rows"]) for env in envelopes for table in env["tables"])
+    # Text observations are extracted as evidence and then skipped as
+    # non-catalogue rows — they count toward rows_extracted, never staging.
+    expected_texts = sum(len(env.get("text_observations") or ()) for env in envelopes)
 
     service = CatalogueSubmissionService(
         db, upload_root=os.environ["CATALOGUE_UPLOAD_DIR"], max_upload_bytes=4 * 1024 * 1024
@@ -667,8 +671,9 @@ def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
     result = catalogue_ingestion_flow(ingestion_run_id=submitted.ingestion_run_id)
 
     assert result.terminal_status == "completed_with_warnings"  # declared contract ambiguity
-    assert calls["n"] == len(pages)
-    assert result.rows_extracted == expected_rows == 59
+    assert calls["n"] == len(pages) == 9
+    assert result.rows_extracted == expected_rows + expected_texts
+    assert result.rows_skipped_non_catalogue == expected_texts
     assert result.staging_items_created == expected_rows
 
     run_uuid = str(submitted.ingestion_run_id)
@@ -700,13 +705,13 @@ def test_hills_classic_golden_pages_run_the_full_pipeline(db, monkeypatch):
         sku = (fields.get("supplier_sku") or {}).get("value")
         if sku:
             by_sku[sku] = fields
-    classic = by_sku["10447"]  # Life Stage family (page 1)
+    classic = by_sku["10447"]  # Science Diet family (page 1) — same row, same price, both editions
     assert classic["cost"]["amount"] == "13.10"
     assert classic["cost"]["currency"] == "HKD"
     assert "Healthy Cuisine" in classic["product_name"]["value"]
-    prescription = by_sku["607665"]  # Disease Category family (page 4)
-    assert prescription["cost"]["amount"] == "25.20"
-    assert "Cancer" in prescription["product_name"]["value"]
+    prescription = by_sku["3392"]  # Prescription Diet stew family (page 4)
+    assert prescription["cost"]["amount"] == "16.80"
+    assert "Stew" in prescription["product_name"]["value"]
 
 
 

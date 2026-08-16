@@ -1,0 +1,543 @@
+{
+ "page_outcome": "evidence",
+ "page_brand_text": "Hill's SCIENCE DIET",
+ "tables": [
+  {
+   "section": "濕糧罐頭 Wet Food",
+   "columns": [
+    "Product Range 產品系列",
+    "Life Stage 生命階段",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Regular Retail Price 正價",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "健康燉肉 Healthy Cuisine",
+      "成犬 1-6 Adult 1-6",
+      "健康燉肉配方 Healthy Cuisine",
+      "12.5 oz",
+      "10450",
+      "12",
+      "$41.0",
+      "$39.0",
+      "$28.40",
+      "$27.0",
+      "$25.8",
+      "$25.3"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "特殊配方 Specialty Diet",
+   "columns": [
+    "Product Range 產品系列",
+    "Life Stage 生命階段",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Regular Retail Price 正價",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "完美消化配方 Perfect Digestion",
+      "成犬 1-6 Adult 1-6",
+      "完美消化 雞肉 細粒 Perfect Digestion Chicken Small Bites",
+      "3.5 lb",
+      "606861",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美消化配方 Perfect Digestion",
+      "成犬 1-6 Adult 1-6",
+      "完美消化 雞肉 細粒 Perfect Digestion Chicken Small Bites",
+      "12 lb",
+      "606862",
+      "1",
+      "$703.0",
+      "$669.0",
+      "$488.30",
+      "$463.9",
+      "$444.4",
+      "$434.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美消化配方 Perfect Digestion",
+      "成犬 1-6 Adult 1-6",
+      "完美消化 三文魚 標準粒 Perfect Digestion Salmon Original Bites",
+      "3.5 lb",
+      "606859",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美消化配方 Perfect Digestion",
+      "成犬 1-6 Adult 1-6",
+      "完美消化 雞肉 標準粒 Perfect Digestion Chicken Original Bites",
+      "3.5 lb",
+      "606857",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美消化配方 Perfect Digestion",
+      "高齡犬7+ Adult 7+",
+      "完美消化 雞肉 細粒 Perfect Digestion Chicken Small Bites",
+      "3.5 lb",
+      "606803",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
+      "成犬 1-6 Adult 1-6",
+      "胃部及皮膚敏感 Sensitive Stomach & Skin",
+      "4lb",
+      "607592",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
+      "成犬 1-6 Adult 1-6",
+      "胃部及皮膚敏感 Sensitive Stomach & Skin",
+      "30lb",
+      "606893",
+      "1",
+      "$1,291.0",
+      "$1,229.0",
+      "$897.10",
+      "$852.2",
+      "$816.4",
+      "$798.4"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "胃部及皮膚敏感配方 Sensitive Stomach & Skin",
+      "成犬 1-6 Adult 1-6",
+      "胃部及皮膚敏感 小型犬粒 Sensitive Stomach & Skin Small & Mini",
+      "4lb",
+      "10439",
+      "1",
+      "NA",
+      "$239.0",
+      "$175.00",
+      "$166.3",
+      "$159.3",
+      "$155.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美體態配方 Perfect Weight",
+      "成犬 1-6 Adult 1-6",
+      "完美體態 標準粒 Perfect Weight Original Bites",
+      "4lb",
+      "2972",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美體態配方 Perfect Weight",
+      "成犬 1-6 Adult 1-6",
+      "完美體態 標準粒 Perfect Weight Original Bites",
+      "25lb",
+      "607827",
+      "1",
+      "$1,102.0",
+      "$1,049.0",
+      "$765.70",
+      "$727.4",
+      "$696.8",
+      "$681.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美體態配方 Perfect Weight",
+      "成犬 1-6 Adult 1-6",
+      "完美體態 小型犬粒 Perfect Weight Small &Mini",
+      "4lb",
+      "3821",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "完美體態配方 Perfect Weight",
+      "成犬 1-6 Adult 1-6",
+      "完美體態 小型犬粒 Perfect Weight Small &Mini",
+      "12.5lb",
+      "607828",
+      "1",
+      "$650.0",
+      "$619.0",
+      "$451.80",
+      "$429.2",
+      "$411.1",
+      "$402.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "口腔護理配方 Oral Care",
+      "成犬 1-6 Adult 1-6",
+      "口腔護理 Oral Care",
+      "4lb",
+      "9281",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "提升活力配方 Senior Vitality",
+      "高齡犬7+ Adult 7+",
+      "提升活力 標準粒 Senior Vitality Original Bite",
+      "3.5lb",
+      "10772",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "提升活力配方 Senior Vitality",
+      "高齡犬7+ Adult 7+",
+      "提升活力 標準粒 Senior Vitality Original Bite",
+      "21.5lb",
+      "10774",
+      "1",
+      "$997.0",
+      "$949.0",
+      "$692.70",
+      "$658.1",
+      "$630.4",
+      "$616.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "提升活力配方 Senior Vitality",
+      "高齡犬7+ Adult 7+",
+      "提升活力 小型犬粒 Senior Vitality Small & Mini",
+      "3.5lb",
+      "10770",
+      "1",
+      "$230.0",
+      "$219.0",
+      "$159.80",
+      "$151.8",
+      "$145.4",
+      "$142.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "提升活力配方 Senior Vitality",
+      "高齡犬7+ Adult 7+",
+      "提升活力 小型犬粒 Senior Vitality Small & Mini",
+      "12.5lb",
+      "10771",
+      "1",
+      "$692.0",
+      "$659.0",
+      "$481.00",
+      "$457.0",
+      "$437.7",
+      "$428.1"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "小型犬專用配方 Small Paws",
+   "columns": [
+    "Product Range 產品系列",
+    "Life Stage 生命階段",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Regular Retail Price 正價",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "幼犬 Puppy >1",
+      "小型犬 Small Paws",
+      "1.5kg",
+      "603830",
+      "1",
+      "$199.0",
+      "$189.0",
+      "$137.90",
+      "$131.0",
+      "$125.5",
+      "$122.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "幼犬 Puppy >1",
+      "小型犬 Small Paws",
+      "12.5lb",
+      "607791",
+      "1",
+      "$640.0",
+      "$609.0",
+      "$444.50",
+      "$422.3",
+      "$404.5",
+      "$395.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "幼犬 Puppy >1",
+      "小型犬 Small Paws",
+      "15.5lb",
+      "9095",
+      "1",
+      "$713.0",
+      "$679.0",
+      "$495.60",
+      "$470.8",
+      "$451.0",
+      "$441.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "成犬 1-6 Adult 1-6",
+      "小型犬 Small Paws",
+      "1.5kg",
+      "603833",
+      "1",
+      "$178.0",
+      "$169.0",
+      "$123.30",
+      "$117.1",
+      "$112.2",
+      "$109.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "成犬 1-6 Adult 1-6",
+      "小型犬 Small Paws",
+      "15.5lb",
+      "9097",
+      "1",
+      "$692.0",
+      "$659.0",
+      "$481.00",
+      "$457.0",
+      "$437.7",
+      "$428.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "成犬 1-6 Adult 1-6",
+      "小型犬 羊飯 Small Paws Lamb & Rice",
+      "4.5lb",
+      "2896",
+      "1",
+      "$251.0",
+      "$239.0",
+      "$174.40",
+      "$165.7",
+      "$158.7",
+      "$155.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "高齡犬7+ Adult 7+",
+      "小型犬 Small Paws",
+      "1.5kg",
+      "603834",
+      "1",
+      "$188.0",
+      "$179.0",
+      "$130.60",
+      "$124.1",
+      "$118.8",
+      "$116.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "小型犬專用配方 Small Paws",
+      "高齡犬11+ Adult 11+",
+      "小型犬 Small Paws",
+      "4.5lb",
+      "2533",
+      "1",
+      "$251.0",
+      "$239.0",
+      "$174.40",
+      "$165.7",
+      "$158.7",
+      "$155.2"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Effective: 1 APR 2024",
+   "confidence": "0.9"
+  },
+  {
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All Front End Discount 所有單上折扣",
+   "confidence": "0.9"
+  },
+  {
+   "text": "Electronic Payment Discount 電子付款／轉帳折扣 1%",
+   "confidence": "0.9"
+  },
+  {
+   "text": "Electronic Order Discount 電子下單折扣 4%",
+   "confidence": "0.9"
+  },
+  {
+   "text": "Include All Front Discount (exclude 1% Ullage Discount) 包括所有即折折扣 (損耗折扣 1%除外)",
+   "confidence": "0.9"
+  },
+  {
+   "text": "MOV: Minimal Order Value Discount (Per Order) 每單最低購貨金額折扣",
+   "confidence": "0.9"
+  }
+ ]
+}

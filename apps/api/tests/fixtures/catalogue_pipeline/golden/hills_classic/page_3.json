@@ -1,0 +1,624 @@
+{
+ "page_outcome": "evidence",
+ "page_brand_text": "Hill's SCIENCE DIET",
+ "tables": [
+  {
+   "section": "日常系列 Everyday Diet",
+   "columns": [
+    "Product Range 產品系列",
+    "Life Stage 生命階段",
+    "Product Description 產品名稱",
+    "Size 重量",
+    "Product Code 產品編號",
+    "Order Multiple 訂貨單位",
+    "Regular Retail Price 正價",
+    "Recommended Retail Selling Price 建議零售價",
+    "Gross Wholesale Price 折扣前批發價（每包／罐）",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $1,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $2,200",
+    "Net Invoice Price* 折扣批發價* 購貨金額滿 MOV $4,500"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "細粒 Small Bite",
+      "4.5lb",
+      "7139",
+      "1",
+      "$199.0",
+      "$189.0",
+      "$143.6",
+      "$136.4",
+      "$130.7",
+      "$127.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "細粒 Small Bite",
+      "12.5lb",
+      "607793",
+      "1",
+      "$503.0",
+      "$479.0",
+      "$364.0",
+      "$345.8",
+      "$331.2",
+      "$324.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "細粒 Small Bite",
+      "12kg",
+      "604463",
+      "1",
+      "$860.0",
+      "$819.0",
+      "$638.8",
+      "$606.9",
+      "$581.3",
+      "$568.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "羊飯 Lamb & Rice",
+      "4lb",
+      "607763",
+      "1",
+      "$188.0",
+      "$179.0",
+      "$136.0",
+      "$129.2",
+      "$123.8",
+      "$121.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "羊飯 Lamb & Rice",
+      "25lb",
+      "607743",
+      "1",
+      "$923.0",
+      "$879.0",
+      "$668.0",
+      "$634.6",
+      "$607.9",
+      "$594.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "標準粒 Original Bite",
+      "3kg",
+      "6929HG",
+      "1",
+      "$262.0",
+      "$249.0",
+      "$189.2",
+      "$179.7",
+      "$172.2",
+      "$168.4"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "標準粒 Original Bite",
+      "15.5lb",
+      "9366",
+      "1",
+      "$556.0",
+      "$529.0",
+      "$402.0",
+      "$381.9",
+      "$365.8",
+      "$357.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "標準粒 Original Bite",
+      "15kg",
+      "6934HG",
+      "1",
+      "$1,081.0",
+      "$1,029.0",
+      "$802.6",
+      "$762.5",
+      "$730.4",
+      "$714.3"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "大型犬 Large Breed",
+      "4kg",
+      "10342HG",
+      "1",
+      "$346.0",
+      "$329.0",
+      "$250.0",
+      "$237.5",
+      "$227.5",
+      "$222.5"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "幼犬 Puppy >1",
+      "大型犬 Large Breed",
+      "15kg",
+      "6484HG",
+      "1",
+      "$1,081.0",
+      "$1,029.0",
+      "$802.6",
+      "$762.5",
+      "$730.4",
+      "$714.3"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "細粒 Small Bite",
+      "2kg",
+      "10323HG",
+      "1",
+      "$188.0",
+      "$179.0",
+      "$136.0",
+      "$129.2",
+      "$123.8",
+      "$121.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "細粒 Small Bite",
+      "15lb",
+      "603798",
+      "1",
+      "$535.0",
+      "$509.0",
+      "$386.8",
+      "$367.5",
+      "$352.0",
+      "$344.3"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "細粒 Small Bite",
+      "12kg",
+      "604464",
+      "1",
+      "$850.0",
+      "$809.0",
+      "$631.0",
+      "$599.5",
+      "$574.2",
+      "$561.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "細粒 羊飯 Small Bite Lamb & Rice",
+      "3kg",
+      "1141HG",
+      "1",
+      "$314.0",
+      "$299.0",
+      "$227.2",
+      "$215.8",
+      "$206.8",
+      "$202.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "細粒 羊飯 Small Bite Lamb & Rice",
+      "15.5lb",
+      "8557",
+      "1",
+      "$608.0",
+      "$579.0",
+      "$440.0",
+      "$418.0",
+      "$400.4",
+      "$391.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "細粒 羊飯 Small Bite Lamb & Rice",
+      "12kg",
+      "604469",
+      "1",
+      "$934.0",
+      "$889.0",
+      "$693.4",
+      "$658.7",
+      "$631.0",
+      "$617.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "標準粒 Original Bite",
+      "3kg",
+      "6486HG",
+      "1",
+      "$272.0",
+      "$259.0",
+      "$196.8",
+      "$187.0",
+      "$179.1",
+      "$175.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "標準粒 Original Bite",
+      "15lb",
+      "603796",
+      "1",
+      "$535.0",
+      "$509.0",
+      "$386.8",
+      "$367.5",
+      "$352.0",
+      "$344.3"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "標準粒 Original Bite",
+      "15kg",
+      "6488HG",
+      "1",
+      "$1,018.0",
+      "$969.0",
+      "$755.8",
+      "$718.0",
+      "$687.8",
+      "$672.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "標準粒 羊飯 Original Bite Lamb & Rice",
+      "3kg",
+      "1114HG",
+      "1",
+      "$314.0",
+      "$299.0",
+      "$227.2",
+      "$215.8",
+      "$206.8",
+      "$202.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "標準粒 羊飯 Original Bite Lamb & Rice",
+      "15.5lb",
+      "8556",
+      "1",
+      "$608.0",
+      "$579.0",
+      "$440.0",
+      "$418.0",
+      "$400.4",
+      "$391.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "標準粒 羊飯 Original Bite Lamb & Rice",
+      "33lb",
+      "2036",
+      "1",
+      "$1,123.0",
+      "$1,069.0",
+      "$833.8",
+      "$792.1",
+      "$758.8",
+      "$742.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-5 Adult 1-5",
+      "大型犬 Large Breed",
+      "15kg",
+      "6946HG",
+      "1",
+      "$1,018.0",
+      "$969.0",
+      "$755.8",
+      "$718.0",
+      "$687.8",
+      "$672.7"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "減肥 標準粒 Light Original Bite",
+      "15kg",
+      "1127HG",
+      "1",
+      "$1,123.0",
+      "$1,069.0",
+      "$833.8",
+      "$792.1",
+      "$758.8",
+      "$742.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "減肥 細粒 Light Small Bite",
+      "2kg",
+      "10321HG",
+      "1",
+      "$199.0",
+      "$189.0",
+      "$143.6",
+      "$136.4",
+      "$130.7",
+      "$127.8"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "減肥 細粒 Light Small Bite",
+      "15lb",
+      "603931",
+      "1",
+      "$598.0",
+      "$569.0",
+      "$443.8",
+      "$421.6",
+      "$403.9",
+      "$395.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "成犬 1-6 Adult 1-6",
+      "減肥 細粒 Light Small Bite",
+      "12kg",
+      "604468",
+      "1",
+      "$934.0",
+      "$889.0",
+      "$693.4",
+      "$658.7",
+      "$631.0",
+      "$617.1"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡犬7+ Adult 7+",
+      "細粒 Small Bite",
+      "2kg",
+      "10334HG",
+      "1",
+      "$188.0",
+      "$179.0",
+      "$136.0",
+      "$129.2",
+      "$123.8",
+      "$121.0"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡犬7+ Adult 7+",
+      "細粒 Small Bite",
+      "15lb",
+      "607593",
+      "1",
+      "$535.0",
+      "$509.0",
+      "$397.0",
+      "$377.2",
+      "$361.3",
+      "$353.3"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡犬7+ Adult 7+",
+      "標準粒 Original Bite",
+      "3kg",
+      "6938HG",
+      "1",
+      "$272.0",
+      "$259.0",
+      "$196.8",
+      "$187.0",
+      "$179.1",
+      "$175.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡犬7+ Adult 7+",
+      "標準粒 Original Bite",
+      "7.5kg",
+      "6939HG",
+      "1",
+      "$556.0",
+      "$529.0",
+      "$412.6",
+      "$392.0",
+      "$375.5",
+      "$367.2"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡犬7+ Adult 7+",
+      "標準粒 Original Bite",
+      "12kg",
+      "10336HG",
+      "1",
+      "$850.0",
+      "$809.0",
+      "$631.0",
+      "$599.5",
+      "$574.2",
+      "$561.6"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Everyday Diet 日常系列",
+      "高齡犬7+ Adult 7+",
+      "大型犬 Large Breed",
+      "12kg",
+      "10338HG",
+      "1",
+      "$850.0",
+      "$809.0",
+      "$631.0",
+      "$599.5",
+      "$574.2",
+      "$561.6"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Effective: 1 APR 2024",
+   "confidence": "0.9"
+  },
+  {
+   "text": "本價格表上所載之建議零售商價僅供參考，客戶／經銷商可以自行決定各項之零售價格 All recommended retail selling price are recommendations only. Final retail prices are at the sole discretion of the customers.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "所有希爾思寵物食品需根據希爾思分銷政策售賣 All Hill's Diet should be sold according to Hill's Distribution Policies.",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All rebates and incentives will be calculated against Net Invoice Amount",
+   "confidence": "0.9"
+  },
+  {
+   "text": "All Front End Discount 所有單上折扣",
+   "confidence": "0.9"
+  },
+  {
+   "text": "Electronic Payment Discount 電子付款／轉帳折扣 1%",
+   "confidence": "0.9"
+  },
+  {
+   "text": "Electronic Order Discount 電子下單折扣 4%",
+   "confidence": "0.9"
+  },
+  {
+   "text": "Include All Front Discount (exclude 1% Ullage Discount) 包括所有即折折扣 (損耗折扣 1%除外)",
+   "confidence": "0.9"
+  },
+  {
+   "text": "MOV: Minimal Order Value Discount (Per Order) 每單最低購貨金額折扣",
+   "confidence": "0.9"
+  }
+ ]
+}

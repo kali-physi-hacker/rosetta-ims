@@ -1,11 +1,17 @@
 {
- "source": "Hill's.pdf (9-page 2026 bilingual price list; classic Science-Diet header family on page 1, Prescription-Diet Disease-Category family on page 4)",
- "recorded_from": "live gemini-3.1-pro-preview extraction, thinking=HIGH, run ae91f48f-0f57-45cd-9b0c-36da6346049d (2026-07-28)",
- "contract": "hills.price_list.v1",
- "supplier_id": 14,
- "pages": {
-  "1": "Life Stage header family, 36 rows",
-  "4": "Disease Category header family, 23 rows"
- },
- "format": "compact envelope (columns once per page + positional row cells); mechanically converted from the verbose envelopes recorded live \u2014 all verbatim values, boxes and confidences unchanged"
+ "source": "hills_classic.pdf (current edition, 9 pages)",
+ "recorded_from": "hand-captured from claude (chat, per page) via scripts/import_golden_envelope.py",
+ "provider": "hand-captured",
+ "model": "claude (chat, per page)",
+ "pages": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9
+ ]
 }
