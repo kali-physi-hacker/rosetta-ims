@@ -29,6 +29,10 @@ interface BatchFile {
   name: string
   supplierFolder: string
   supplierId: number | null
+  /** Which document format to read the file with — required only when the
+   * supplier publishes more than one SUPPORTED format (resolution refuses
+   * to guess between layouts). Null = resolve from the supplier alone. */
+  contractId: string | null
   status: BatchStatus
   itemCount: number | null
   error: string | null
@@ -119,8 +123,14 @@ const RUN_PILL: Record<string, { bg: string; color: string }> = {
 
 export const Route = createFileRoute('/_authed/catalogues/')({ component: CataloguesPage })
 
+/** One SUPPORTED document format a supplier publishes. */
+interface SupplierContractOption { contract_id: string; contract_version: string; format_name: string; document_type: string }
+
 function CataloguesPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  // SUPPORTED formats per supplier id. Suppliers with one entry resolve
+  // automatically; with more, each file needs a format picked before upload.
+  const [supplierContracts, setSupplierContracts] = useState<Record<string, SupplierContractOption[]>>({})
   const [batchFiles, setBatchFiles] = useState<BatchFile[]>([])
   const [batchRunning, setBatchRunning] = useState(false)
   const [batchSupplierId, setBatchSupplierId] = useState<number | null>(null)
@@ -147,6 +157,10 @@ function CataloguesPage() {
       .then(r => r.json())
       .then(data => setSuppliers(Array.isArray(data) ? data : data.items ?? []))
       .catch(() => setSuppliers([]))
+    fetch(`${API}/catalogues/supplier-contracts`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setSupplierContracts(data.suppliers ?? {}))
+      .catch(() => setSupplierContracts({}))
   }, [])
 
   // Enable folder selection on the hidden input (non-standard attrs, set via ref).
@@ -198,9 +212,10 @@ function CataloguesPage() {
   }
 
   // Set the supplier for the whole batch (overrides folder-name inference).
+  // A changed supplier invalidates any format choice made for the old one.
   function setBatchSupplier(id: number | null) {
     setBatchSupplierId(id)
-    if (id != null) setBatchFiles(prev => prev.map(f => ({ ...f, supplierId: id })))
+    if (id != null) setBatchFiles(prev => prev.map(f => ({ ...f, supplierId: id, contractId: null })))
   }
 
   function handleBatchSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -224,6 +239,7 @@ function CataloguesPage() {
         file: f, name: f.name,
         supplierFolder: folder,
         supplierId: batchSupplierId ?? matchSupplierId(folder, suppliers),
+        contractId: null,
         status: 'queued', itemCount: null, error: null,
         fmt: null, supplierStatus: null, runId: null,
         sizeMB: f.size / 1e6, startedAt: null, progress: null,
@@ -267,10 +283,23 @@ function CataloguesPage() {
         : x))
       return
     }
+    // A supplier with several supported formats needs the file's format named
+    // up front — resolution refuses to guess between layouts.
+    const formats = supplierContracts[String(bf.supplierId)] ?? []
+    if (formats.length > 1 && !bf.contractId) {
+      setBatchFiles(prev => prev.map(x => x.key === bf.key
+        ? { ...x, status: 'error', error: 'This supplier publishes more than one catalogue format — pick which one this file is' }
+        : x))
+      return
+    }
     try {
       const fd = new FormData()
       fd.append('file', bf.file)
       fd.append('supplier_id', String(bf.supplierId))
+      if (bf.contractId) {
+        fd.append('contract_id', bf.contractId)
+        fd.append('contract_version', formats.find(f => f.contract_id === bf.contractId)?.contract_version ?? 'v1')
+      }
       const res = await fetch(`${API}/catalogues/ingestions`, { method: 'POST', body: fd, headers: authHeaders() })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -561,6 +590,28 @@ function CataloguesPage() {
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.name}>{b.name}</div>
+                          {/* Format picker: only when the file's supplier
+                              publishes several supported formats and this
+                              file has not started yet (or errored on the
+                              missing choice). */}
+                          {(b.status === 'queued' || b.status === 'error') && b.supplierId != null
+                            && (supplierContracts[String(b.supplierId)] ?? []).length > 1 && (
+                            <select
+                              value={b.contractId ?? ''}
+                              onChange={e => {
+                                const chosen = e.target.value || null
+                                setBatchFiles(prev => prev.map(x => x.key === b.key
+                                  ? { ...x, contractId: chosen, ...(x.status === 'error' ? { status: 'queued' as BatchStatus, error: null } : {}) }
+                                  : x))
+                              }}
+                              style={{ marginTop: 3, border: `1px solid ${b.contractId ? C.line : '#FDE68A'}`, borderRadius: 6, padding: '3px 7px', fontSize: 11, background: 'white', color: C.ink, maxWidth: 340 }}
+                            >
+                              <option value="">Which format is this file?</option>
+                              {(supplierContracts[String(b.supplierId)] ?? []).map(f => (
+                                <option key={f.contract_id} value={f.contract_id}>{f.format_name}</option>
+                              ))}
+                            </select>
+                          )}
                           {meta.length > 0 && (
                             <div style={{ fontSize: 10.5, color: b.status === 'uploading' ? '#1E40AF' : C.faint, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={meta.join(' · ')}>{meta.join(' · ')}</div>
                           )}

@@ -183,6 +183,35 @@ def removed_v1_catalogue_import() -> None:
     )
 
 
+@router.get("/supplier-contracts")
+def list_supported_supplier_contracts(
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """SUPPORTED document formats per supplier — the upload form's picker.
+
+    A supplier with one entry resolves automatically at submission; with
+    more than one, the upload must say which format the file is, because
+    supplier-only resolution refuses to guess between layouts.
+    """
+    from schemas.catalogue_pipeline.supplier_contracts import (
+        SupplierContractSupportStatus,
+        iter_supplier_source_contracts,
+    )
+
+    suppliers: dict[str, list[dict[str, Any]]] = {}
+    for item in iter_supplier_source_contracts():
+        if item.support_status != SupplierContractSupportStatus.SUPPORTED:
+            continue
+        declaration = item.declaration
+        suppliers.setdefault(str(declaration.supplier.supplier_id), []).append({
+            "contract_id": declaration.contract_id,
+            "contract_version": declaration.contract_version,
+            "format_name": declaration.format_name,
+            "document_type": declaration.document_type.value,
+        })
+    return {"suppliers": suppliers}
+
+
 @router.post(
     "/ingestions",
     response_model=CatalogueSubmissionResponse,
