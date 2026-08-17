@@ -1,9 +1,10 @@
 {
- "source": "alfamedic_full.pdf",
- "recorded_from": "hand-captured from claude (chat, whole document in one envelope) via scripts/import_golden_envelope.py",
- "provider": "hand-captured",
- "model": "claude (chat, whole document in one envelope)",
- "pages": [
-  1
- ]
+  "source": "alfamedic_full.pdf",
+  "recorded_from": "hand-captured from claude (chat, whole document in one envelope) via scripts/import_golden_envelope.py",
+  "provider": "hand-captured",
+  "model": "claude (chat, whole document in one envelope)",
+  "pages": [
+    1
+  ],
+  "capture_conditions": "claude-sonnet with MEDIUM extended thinking in claude.ai chat, free-form JSON (stated by the capturer 2026-08-17). NOT the production API path, which runs claude-sonnet-5 with thinking OFF and a FORCED envelope tool call (services/catalogue_vision_provider.py) — so the first live API-path upload of each document is the reconciliation arbiter: if it extracts differently, the sparse-page warning and the golden smoke surface it, and thinking budget vs forced-tool is re-decided on measurement."
 }

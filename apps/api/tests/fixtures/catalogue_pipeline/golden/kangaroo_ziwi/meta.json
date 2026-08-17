@@ -12,5 +12,6 @@
     "9": "Ziwi Peak steam-dried dog (ZSDB…)",
     "10": "Ziwi Peak steam-dried cat (ZSCB…)"
   },
-  "note": "Prices cross-checked against the PDF text layer (2026-08-17 bundle audit: capture and text layer agree on every code)."
+  "note": "Prices cross-checked against the PDF text layer (2026-08-17 bundle audit: capture and text layer agree on every code).",
+  "capture_conditions": "claude-sonnet with MEDIUM extended thinking in claude.ai chat, free-form JSON (stated by the capturer 2026-08-17). NOT the production API path, which runs claude-sonnet-5 with thinking OFF and a FORCED envelope tool call (services/catalogue_vision_provider.py) — so the first live API-path upload of each document is the reconciliation arbiter: if it extracts differently, the sparse-page warning and the golden smoke surface it, and thinking budget vs forced-tool is re-decided on measurement."
 }

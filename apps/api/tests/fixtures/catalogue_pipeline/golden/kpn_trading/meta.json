@@ -9,5 +9,6 @@
     "52": "SCRB005 cage free 10lb",
     "53": "CRB-CF-2.5 raw blend"
   },
-  "note": "P12578723 (Purina) and EPSC35 (Earthz) from the golden sheet come from different source documents and are excluded."
+  "note": "P12578723 (Purina) and EPSC35 (Earthz) from the golden sheet come from different source documents and are excluded.",
+  "capture_conditions": "claude-sonnet with MEDIUM extended thinking in claude.ai chat, free-form JSON (stated by the capturer 2026-08-17). NOT the production API path, which runs claude-sonnet-5 with thinking OFF and a FORCED envelope tool call (services/catalogue_vision_provider.py) — so the first live API-path upload of each document is the reconciliation arbiter: if it extracts differently, the sparse-page warning and the golden smoke surface it, and thinking budget vs forced-tool is re-decided on measurement."
 }
