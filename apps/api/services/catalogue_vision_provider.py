@@ -38,15 +38,21 @@ DEFAULT_PROVIDER = "anthropic"
 # golden/live smoke harness is the arbiter whenever the model changes.
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5"
 # Anthropic requires an explicit output ceiling and rejects one above the
-# model's cap. A dense catalogue page emits ~30k tokens of verbatim cells, so
-# this must stay well clear of that; it is separate from the Gemini ceiling
-# because the caps differ.
-DEFAULT_ANTHROPIC_MAX_TOKENS = 48000
-# Extended thinking, off by default: transcribing printed cells is not a
-# reasoning task, and thinking cannot be combined with forcing the tool call,
-# so turning it on downgrades the envelope from guaranteed to merely asked for.
-# Set a token budget only if measurement earns it.
-DEFAULT_ANTHROPIC_THINKING_BUDGET = 0
+# model's cap. A dense catalogue page emits ~30k tokens of verbatim cells AND
+# the thinking budget spends from inside this same ceiling, so the ceiling
+# must cover both; it is separate from the Gemini ceiling because the caps
+# differ.
+DEFAULT_ANTHROPIC_MAX_TOKENS = 64000
+# Thinking ON at MEDIUM effort by default (user ruling 2026-08-17): the golden
+# evidence was hand-captured in claude.ai chat with Sonnet at MEDIUM thinking,
+# and production must read pages under the same conditions or local captures
+# and live runs drift apart. The Claude 5 API does this as adaptive thinking
+# plus output_config.effort — the same low/medium/high vocabulary the chat
+# selector uses — and, probed live on claude-sonnet-5 (2026-08-17), it is
+# COMPATIBLE with the forced envelope tool call, so matching the capture
+# conditions costs nothing: the structure guarantee stays. Set "none" to
+# disable thinking entirely.
+DEFAULT_ANTHROPIC_THINKING_EFFORT = "medium"
 
 # The envelope, as a tool the model must call. Deliberately permissive — it
 # exists to make the ANSWER STRUCTURED, not to validate it; _VisionEnvelope is
@@ -187,22 +193,20 @@ class AnthropicVisionProvider(VisionProvider):
                 if media_type == "application/pdf"
                 else {"type": "image", "source": source}
             )
-            thinking_budget = _int_setting("ANTHROPIC_VISION_THINKING_BUDGET", DEFAULT_ANTHROPIC_THINKING_BUDGET)
+            effort = _setting("ANTHROPIC_VISION_THINKING_EFFORT", DEFAULT_ANTHROPIC_THINKING_EFFORT).lower()
             request: dict[str, Any] = {
                 "model": self.model,
                 "max_tokens": _int_setting("ANTHROPIC_VISION_MAX_TOKENS", DEFAULT_ANTHROPIC_MAX_TOKENS),
                 "messages": [{"role": "user", "content": [block, {"type": "text", "text": prompt}]}],
                 "tools": [_EVIDENCE_TOOL],
-                # Forced, so the page cannot come back as prose. Thinking and a
-                # forced tool are mutually exclusive, so asking for thinking
-                # means asking for the tool rather than requiring it.
-                "tool_choice": (
-                    {"type": "auto"} if thinking_budget > 0
-                    else {"type": "tool", "name": _EVIDENCE_TOOL_NAME}
-                ),
+                # Forced, so the page cannot come back as prose — and kept
+                # even with thinking on: adaptive thinking + a forced tool is
+                # a valid combination on the Claude 5 API (probed live).
+                "tool_choice": {"type": "tool", "name": _EVIDENCE_TOOL_NAME},
             }
-            if thinking_budget > 0:
-                request["thinking"] = {"type": "enabled", "budget_tokens": thinking_budget}
+            if effort not in ("", "none", "off", "0"):
+                request["thinking"] = {"type": "adaptive"}
+                request["output_config"] = {"effort": effort}
 
             # Streamed, not because anything consumes the chunks, but because
             # the SDK refuses a blocking call whose max_tokens could run past
@@ -228,9 +232,8 @@ class AnthropicVisionProvider(VisionProvider):
 def _anthropic_envelope(response: Any) -> str:
     """The envelope as JSON text, however the model chose to deliver it.
 
-    Normally that is the forced tool call's input. With thinking enabled the
-    tool is only requested, so a text answer is accepted as a fallback —
-    thinking blocks are never the answer.
+    Normally that is the forced tool call's input; a text answer is accepted
+    as a belt-and-braces fallback, and thinking blocks are never the answer.
     """
     for block in getattr(response, "content", None) or []:
         if getattr(block, "type", None) == "tool_use" and getattr(block, "input", None) is not None:

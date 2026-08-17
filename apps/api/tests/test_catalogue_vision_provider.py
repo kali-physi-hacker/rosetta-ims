@@ -147,23 +147,41 @@ def test_a_scan_is_sent_as_an_image_block(monkeypatch):
     assert block["source"]["media_type"] == "image/png"
 
 
-def test_the_envelope_arrives_as_a_forced_tool_call(monkeypatch):
-    """Not text that has to be parsed, and not optional.
-
-    Prefilling the assistant turn with "{" would be the lighter trick, but
-    claude-sonnet-5 rejects assistant prefill outright (400), so the structure
-    has to come from the tool.
-    """
+def test_medium_thinking_with_the_forced_tool_is_the_default(monkeypatch):
+    """Production reads pages under the same conditions the golden evidence
+    was captured under (Sonnet at MEDIUM thinking — user ruling 2026-08-17).
+    Adaptive thinking + effort is the Claude 5 shape, and it is compatible
+    with the forced envelope tool (probed live), so the structure guarantee
+    is kept: not text that has to be parsed, and not optional. Prefilling the
+    assistant turn with "{" would be the lighter trick, but claude-sonnet-5
+    rejects assistant prefill outright (400), so the structure comes from the
+    tool."""
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.delenv("ANTHROPIC_VISION_THINKING_EFFORT", raising=False)
     captured = _fake_anthropic(monkeypatch)
 
     response = vision.AnthropicVisionProvider().call(b"pdf", media_type="application/pdf", prompt=PROMPT)
 
+    assert captured["thinking"] == {"type": "adaptive"}
+    assert captured["output_config"] == {"effort": "medium"}
     assert captured["tool_choice"] == {"type": "tool", "name": "record_catalogue_evidence"}
     assert [t["name"] for t in captured["tools"]] == ["record_catalogue_evidence"]
     assert [m["role"] for m in captured["messages"]] == ["user"], "no assistant prefill"
     assert json.loads(response.text)["page_outcome"] == "evidence"
     assert response.request_id == "msg_01ABC"
+
+
+def test_effort_none_disables_thinking_and_keeps_the_forced_tool(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.setenv("ANTHROPIC_VISION_THINKING_EFFORT", "none")
+    captured = _fake_anthropic(monkeypatch)
+
+    response = vision.AnthropicVisionProvider().call(b"pdf", media_type="application/pdf", prompt=PROMPT)
+
+    assert "thinking" not in captured
+    assert "output_config" not in captured
+    assert captured["tool_choice"] == {"type": "tool", "name": "record_catalogue_evidence"}
+    assert json.loads(response.text)["page_outcome"] == "evidence"
 
 
 def test_cells_are_typed_as_strings_so_a_price_keeps_its_trailing_zero(monkeypatch):
@@ -176,14 +194,13 @@ def test_cells_are_typed_as_strings_so_a_price_keeps_its_trailing_zero(monkeypat
     assert rows["items"]["properties"]["cells"]["items"]["type"] == ["string", "null"]
 
 
-def test_thinking_downgrades_the_tool_from_required_to_requested(monkeypatch):
-    """The API refuses a forced tool alongside thinking, so the guarantee softens.
-
-    That trade is the whole reason thinking is off by default; when it is on,
-    a plain text envelope has to be accepted too.
-    """
+def test_effort_overrides_per_page_and_text_answers_still_parse(monkeypatch):
+    """The effort knob is read per page (ANTHROPIC_VISION_THINKING_EFFORT),
+    and even though the tool is forced, a text envelope preceded by thinking
+    blocks is accepted as a belt-and-braces fallback — the thinking block is
+    never the answer."""
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
-    monkeypatch.setenv("ANTHROPIC_VISION_THINKING_BUDGET", "4096")
+    monkeypatch.setenv("ANTHROPIC_VISION_THINKING_EFFORT", "high")
     captured = _fake_anthropic(monkeypatch, reply=_Message([
         _Block("thinking"),
         _Block("text", json.dumps(ENVELOPE)),
@@ -191,8 +208,8 @@ def test_thinking_downgrades_the_tool_from_required_to_requested(monkeypatch):
 
     response = vision.AnthropicVisionProvider().call(b"pdf", media_type="application/pdf", prompt=PROMPT)
 
-    assert captured["thinking"] == {"type": "enabled", "budget_tokens": 4096}
-    assert captured["tool_choice"] == {"type": "auto"}
+    assert captured["thinking"] == {"type": "adaptive"}
+    assert captured["output_config"] == {"effort": "high"}
     # The thinking block is not the answer.
     assert json.loads(response.text)["page_outcome"] == "evidence"
 
