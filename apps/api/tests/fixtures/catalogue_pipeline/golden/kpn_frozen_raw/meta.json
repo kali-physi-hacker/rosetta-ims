@@ -1,0 +1,14 @@
+{
+  "source": "KPN_Kangaroo.pdf (53-page edition; Stella & Chewy's frozen-raw pages 1-4)",
+  "recorded_from": "hand-captured from claude (chat, one page per envelope via the literal VISION_EVIDENCE_PROMPT incl. page_brand_text, 2026-08-17 re-extraction)",
+  "provider": "hand-captured",
+  "contract": "kpn_trading.pack_and_case_bulk_list.v1",
+  "supplier_id": 15,
+  "pages": {
+    "1": "Frozen Raw Dinner Patties (FRB/FRC/FRD)",
+    "2": "Frozen Raw Dinner Patties (FRL) + Morsels",
+    "3": "Frozen Raw Dinner Morsels (FRBM/FRCM/FRDM)",
+    "4": "Frozen Raw Dinner Morsels For Cats (CAT-*)"
+  },
+  "note": "Prices cross-checked against the PDF text layer (2026-08-17 bundle audit: capture and text layer agree on every code)."
+}

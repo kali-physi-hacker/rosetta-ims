@@ -1,23 +1,38 @@
 {
   "contract_id": "kangaroo_pet_nutrition.unit_price_list.v1",
   "contract_version": "v1",
-  "row_evidence_status": "NEEDS_CONFIRMATION",
+  "row_evidence_status": "CONFIRMED",
   "supplier_id": 81,
   "supplier_name": "Kangaroo Pet Nutrition",
-  "notes": "Split out of kangaroo_pet_nutrition.catalogue_bundle.v1 after a full read of its 9 pages found the bundle's mixed price basis was two separable situations. This one covers layouts printing exactly one wholesale amount per row (ZIWI dry/treat pages with '批發價 (HKD)', Ecuphar pages with bare '批發價') and no case-level column.",
+  "notes": "Split out of kangaroo_pet_nutrition.catalogue_bundle.v1 after a full read of its 9 pages found the bundle's mixed price basis was two separable situations. This one covers layouts printing exactly one wholesale amount per row (ZIWI dry/treat pages with '批發價 (HKD)', Ecuphar pages with bare '批發價') and no case-level column. CONFIRMED 2026-08-17: verified against the six Ziwi pages of the user's per-page KPN_Kangaroo capture — 46/70 rows conform with cost, page-mark brands and rrp (pinned by the kangaroo_ziwi golden set); the 24 per-case canned rows are refused per the case-total ruling and surface in the held lane by design.",
   "examples": [
     {
       "example_id": "kangaroo-pn-unit-adl04",
       "source": {
         "sample_reference": "external-sample:KPN_Kangaroo.pdf",
         "page_number": 5,
-        "supplier_identity_marker": "港澳總代理 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition Ltd. printed on the page",
-        "table_layout": "ZIWI_DRY_HKD"
+        "supplier_identity_marker": "upload anchored to ingestion supplier 81; the Ziwi pages print no supplier identity (2026-08-17 per-page capture), so the mismatch check has nothing to fire on",
+        "table_layout": "ZIWI_UNIT_PRICE",
+        "text_excerpt": "ADL0.4 454g $265 $385 (Ziwi Peak air-dried dog food pricelist)"
       },
-      "printed_columns": ["包裝", "產品內容", "產品編號", "重量", "批發價 (HKD)", "建議零售價 (HKD)"],
+      "printed_columns": [
+        "包裝",
+        "產品內容",
+        "產品編號",
+        "重量",
+        "批發價 (HKD)",
+        "建議零售價 (HKD)"
+      ],
+      "raw_row": {
+        "產品內容": "Air-Dried Lamb Recipe For Dogs 風乾狗糧 羊肉配方",
+        "產品編號": "ADL0.4",
+        "重量": "454g",
+        "批發價 (HKD)": "$265",
+        "建議零售價 (HKD)": "$385"
+      },
       "runtime_input": {
         "supplier_sku": "ADL0.4",
-        "description": "Air-Dried Lamb For Dogs\n風乾狗糧 羊肉配方",
+        "description": "Air-Dried Lamb Recipe For Dogs 風乾狗糧 羊肉配方",
         "pack_size": "454g",
         "wholesale_price": "$265",
         "rrp": "$385"
@@ -25,19 +40,16 @@
       "expected_semantics": {
         "price_basis": "UNIT",
         "currency": "HKD",
-        "reason": "Exactly one wholesale amount is printed per row and no case-level column exists on this layout — the price buys one sellable unit (one 454g bag)."
+        "reason": "One wholesale amount per row, priced per single item (a 454g bag). The rrp column shares the basis — an RRP column beside the price confirms unit pricing (ruling 2026-08-17).",
+        "known_gap": null
+      },
+      "expected_runtime_item": {
+        "cost_price": "$265",
+        "rrp": "$385",
+        "units_per_pack": 1,
+        "weight_grams": 454.0
       }
     }
   ],
-  "technical_debt": [
-    {
-      "debt_id": "KANGAROO-PN-UNIT-NEEDS-BIZOPS-CONFIRMATION",
-      "status": "OPEN",
-      "summary": "Price basis was verified by direct structural inspection of the source, not by BizOps sign-off.",
-      "needed_confirmation": [
-        "BizOps confirmation that UNIT is the correct transacting price basis for every layout this contract selects.",
-        "Brand attribution: ZIWI Peak / Ecuphar appear only as page-logo images, so brand stays unmapped."
-      ]
-    }
-  ]
+  "technical_debt": []
 }

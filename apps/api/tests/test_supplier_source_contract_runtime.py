@@ -44,14 +44,25 @@ def test_selects_only_supported_supplier_source_contracts():
     assert hills.slug == "hills.price_list.v1"
     assert alfamedic is not None
     assert alfamedic.slug == "alfamedic.price_list.v1"
-    # Suppliers 15 and 81 each have exactly one SUPPORTED contract since the
-    # 2026-08-13 promotions, so supplier-only resolution now selects it.
+    # Supplier 15 is back to ONE supported contract: the pack+case layout
+    # folded into pack_price_list as an optional bulk-term column (user ruling
+    # 2026-08-17), so supplier-only resolution selects it again.
     kpn_pack = runtime.load_contract(15)
     assert kpn_pack is not None
     assert kpn_pack.slug == "kpn_trading.pack_price_list.v1"
-    kangaroo_vet_clinic = runtime.load_contract(81)
-    assert kangaroo_vet_clinic is not None
+    # Supplier 81 has TWO supported contracts since the Ziwi unit price list
+    # was verified (2026-08-17) — genuinely different documents, so supplier-
+    # only resolution must refuse to guess and demand an explicit contract.
+    with pytest.raises(runtime.SupplierContractAmbiguousError):
+        runtime.load_contract(81)
+    kangaroo_vet_clinic = runtime.resolve_supplier_contract(
+        supplier_id=81, contract_id="kangaroo_pet_nutrition.vet_clinic_price_list.v1", contract_version="v1",
+    )
     assert kangaroo_vet_clinic.slug == "kangaroo_pet_nutrition.vet_clinic_price_list.v1"
+    kangaroo_ziwi = runtime.resolve_supplier_contract(
+        supplier_id=81, contract_id="kangaroo_pet_nutrition.unit_price_list.v1", contract_version="v1",
+    )
+    assert kangaroo_ziwi.slug == "kangaroo_pet_nutrition.unit_price_list.v1"
     vetapet_vet = runtime.load_contract(91)
     assert vetapet_vet is not None
     assert vetapet_vet.slug == "vetapet.vet_price_list.v1"

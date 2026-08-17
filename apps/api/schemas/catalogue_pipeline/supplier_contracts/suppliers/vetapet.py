@@ -121,7 +121,13 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
                 # retail sections print it alone, and matching it here would let
                 # this contract claim retail rows under a UNIT basis nobody has
                 # verified — the non_vet contract owns those rows.
-                ["WHOLESALE PRICE", "UNIT PRICE", "PRICE", "UNIT PRICE PER TEST"]
+                # 'Unit Price (box)' is the REGULAR price on the diagnostics
+                # Special-Offer tables: the whole-doc capture split the struck
+                # render into '(single)'/'(box)' columns, and every '(single)'
+                # value is exactly 70% of '(box)' — the promo badge, never a
+                # per-test price (a box cannot cost less than two singles).
+                # Regular price = cost, per the struck-price ruling.
+                ["WHOLESALE PRICE", "UNIT PRICE", "PRICE", "UNIT PRICE PER TEST", "Unit Price (box)"]
                 if segment == "vet"
                 else ["批發價", "WHOLESALE PRICE"]
             ),
@@ -329,11 +335,16 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 "Treat kg/g/ml size text as content measure, not sellable-unit count.",
                 "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms.",
                 "ORDER UNIT names what one UNIT PRICE buys; PACKING PER UNIT describes what is inside it.",
+                "A layout that prints an RRP column quotes unit prices: retail is per one "
+                "of the row's item, so the cost beside it is too (ruling 2026-08-17). The "
+                "bare PRICE tables all print SUGGESTED PRICE, which is why their UNIT "
+                "basis is layout-confirmed rather than a fallback guess.",
             ],
             unresolved_semantics=[
                 "Order increment and break-pack rules are not proven by checked-in source evidence.",
-                "Rows whose order-unit column is absent AND whose packing text names no known unit "
-                "('35 cm/length') keep the declared UNIT fallback basis.",
+                "Rows whose order-unit column is absent, whose packing text names no known "
+                "unit ('35 cm/length'), AND whose table prints no RRP column keep the "
+                "declared UNIT fallback basis without layout confirmation.",
             ],
         ),
         mbb=MbbSourceSemantics(
@@ -344,83 +355,56 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 "The qualifying products or exact threshold basis are not explicit.",
                 "Stacking rules or exclusions are not defined."
             ],
+            # Both banner notations printed on the sampled vet pages (52/61/73/74):
+            # 'Promotion: Mix over $1000, 10% off' and '混合12件 9折 24件 8折'.
+            page_promotion_shapes=["mix_over_spend_percent", "mixed_quantity_percent_tiers"],
+            # Topizole TOP250 prints its ladder as same-code rows whose ORDER
+            # UNIT carries the band ('1-10 bottles' / '11-20 bottles'): the
+            # deeper row folds into the first as a minimum-quantity term.
+            quantity_band_source_field="order_unit",
+            # 'Special Offer: N% off' bands strike the regular price and badge
+            # the offer beside it (sample page 20: HK$1056 struck, $739 badge);
+            # the cell arrives as two unmarked amounts. Larger = regular cost,
+            # smaller = unconditional Special-Offer term.
+            struck_price_offer_source_field="cost",
+            # The indent-order sections price whole rows as quantity ladders —
+            # vaccines ('PRICE: 50 doses or above (per unit)'), drugs ('PRICE
+            # PER ORDER QTY: 1-19', 'PRICE: 3-9'), and single-rung 'Price: 1
+            # or above' tables. Ruling 2026-08-17: lowest filled rung = base
+            # cost (+ its bound as minimum order when above 1), deeper rungs
+            # = minimum-quantity terms.
+            quantity_ladder_heading_prefixes=["PRICE:", "PRICE PER ORDER QTY:", "Price:"],
             notes="Vetapet uses various MBB formats including 'Buy X get Y free', 'Buy X+ at special price', and percentage discounts.",
         ),
         validation_rules=_VET_VALIDATION_RULES,
         known_ambiguities=[
-            AmbiguityRule(
-                issue_code="VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
-                condition=(
-                    "The supplied Vetapet PDF contains Unit Price tables (with ORDER UNIT "
-                    "columns), bare PRICE tables (without), and Wholesale/Retail/Terms "
-                    "tables. All are now declared via cost aliases with a per-row order-unit "
-                    "basis where printed; the PRICE layouts fall back to an unverified UNIT "
-                    "basis."
-                ),
-                review_guidance=(
-                    "Answered by the golden sample sheet: BizOps filled a per-row basis for "
-                    "golden SKUs from the PRICE layouts (21501/24106/141001/109300), and the "
-                    "vetapet_vet golden set pins the pipeline's resolved basis against those "
-                    "answers row by row. Where the two still disagree, the disagreement is a "
-                    "named known_gap in the golden expectations — visible, not assumed."
-                ),
-                blocks_supported_status=False,
-            ),
-            AmbiguityRule(
-                issue_code="VETAPET_VET_SPECIAL_OFFER_STRUCK_PRICES",
-                condition=(
-                    "Some vet pages print 'Special Offer: N% off' bands with the original "
-                    "price struck through and a badge price beside it (sample page 20: "
-                    "HK$1056 struck, $739 badge). Which amount lands in the UNIT PRICE "
-                    "column of the extracted evidence depends on the render; the offer is "
-                    "time-limited and neither amount is flagged as promotional in the row."
-                ),
-                review_guidance=(
-                    "Structurally prevented since the conformance hardening that shipped "
-                    "with the KPN/Kangaroo contracts: a cell carrying two unmarked amounts "
-                    "('$739 HK$1056.0') refuses to parse — choosing between two printed "
-                    "prices is a guess the parser will not make — so such rows dead-letter "
-                    "for a person instead of silently landing either number. That is "
-                    "exactly the review this guidance demanded, now enforced by the engine."
-                ),
-                blocks_supported_status=False,
-            ),
-            AmbiguityRule(
-                issue_code="VETAPET_VET_QUANTITY_BAND_ROWS",
-                condition=(
-                    "Some sections print the SAME code at several quantity bands as "
-                    "separate rows — Topizole TOP250 prints ORDER UNIT '1-10 bottles' at "
-                    "HK$82.0 and '11-20 bottles' at HK$78.0; wound-care 500-00xx SKUs "
-                    "print 3/6/12-piece bands the same way. No mechanism folds same-code "
-                    "band rows into a base price plus quantity terms (MBB_TIER_ROW handles "
-                    "code-less tier lines; tier_quantity_field handles same-row columns), "
-                    "so each band becomes its own candidate and a later publication "
-                    "supersedes the earlier — the deepest band can end up as the base cost."
-                ),
-                review_guidance=(
-                    "Until band folding exists, both band candidates reach the review desk: "
-                    "approve the base band (the lowest-quantity row) and reject the deeper "
-                    "bands, recording the discount as supplier terms. The golden set parks "
-                    "TOP250 for exactly this reason (see its expectations.json)."
-                ),
-                blocks_supported_status=False,
-            ),
-            AmbiguityRule(
-                issue_code="VETAPET_PAGE_BANNER_PROMOTIONS_UNREACHABLE",
-                condition=(
-                    "Order- and brand-scoped promotions print as page banners ('Promotion: "
-                    "Mix over $1000, 10% off'; '混合12件 9折 24件 8折'), which extraction "
-                    "stores as page-level text_observations — no contract field mechanism "
-                    "reaches those today, so they are preserved as evidence but never "
-                    "attached to rows."
-                ),
-                review_guidance=(
-                    "Needs a shared mechanism (like supplier_identity_text) threading page "
-                    "text into row metadata, or reviewer awareness that banner promos live "
-                    "in the run's unmapped text evidence."
-                ),
-                blocks_supported_status=False,
-            ),
+            # The former VETAPET_VET_MULTIPLE_TABLE_LAYOUTS ambiguity is resolved.
+            # Unit Price tables carry their basis per row (ORDER UNIT); the bare
+            # PRICE tables all print an RRP column, and an RRP column means the
+            # price beside it is a unit price (ruling 2026-08-17, recorded in
+            # interpretation_rules) — so no layout's basis is a guess anymore.
+            # The golden set additionally pins the resolved basis for the PRICE-
+            # layout SKUs (21501/24106/141001/109300) against the sheet's answers.
+            # The former VETAPET_VET_SPECIAL_OFFER_STRUCK_PRICES ambiguity is
+            # resolved by mbb.struck_price_offer_source_field above: a two-
+            # amount struck-price cell now conforms as regular cost (larger)
+            # plus an unconditional Special-Offer term (smaller). A cell the
+            # guards refuse (equal amounts, three amounts) still dead-letters
+            # for a person, and a single-amount render is indistinguishable
+            # from a normal row — no banner can fix what the page never said.
+            # The former VETAPET_VET_QUANTITY_BAND_ROWS ambiguity is resolved:
+            # same-code closed-range band rows fold into the base row as
+            # minimum-quantity terms via mbb.quantity_band_source_field above.
+            # A band the fold's guards refuse (open range, overlap, unit
+            # mismatch, not cheaper, unproven notation like the wound-care
+            # 500-00xx piece bands) simply stays two visible candidates on the
+            # desk — reviewable per row, needing no standing banner.
+            # The former VETAPET_PAGE_BANNER_PROMOTIONS_UNREACHABLE ambiguity is
+            # resolved, not reworded: banners now arrive as page_promotion_text and
+            # the two printed notations are declared in mbb.page_promotion_shapes
+            # above, so they conform into ORDER-scoped percentage terms. A banner in
+            # an UNdeclared notation staying verbatim evidence is engine-wide
+            # behavior, not a Vetapet ambiguity.
         ],
         pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category", "order_unit"),
         created_at=DECLARATION_CREATED_AT,

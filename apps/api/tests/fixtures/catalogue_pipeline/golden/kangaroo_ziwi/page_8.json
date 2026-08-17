@@ -1,0 +1,161 @@
+{
+  "page_outcome": "evidence",
+  "page_brand_text": "Ziwi Peak",
+  "tables": [
+    {
+      "section": "鮮肉貓罐頭系列 Ziwi Peak Moist Cat Food 價錢表 Pricelist",
+      "columns": [
+        "產品內容",
+        "產品編號",
+        "重量",
+        "批發價(HKD) 每箱*",
+        "建議零售價(HKD) 每箱",
+        "建議零售價(HKD) 每罐"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "Wet Lamb Recipe for Cats 羊肉配方",
+            "CCL85",
+            "85g / 3oz",
+            "590 (@24.6)",
+            "$840",
+            "$38"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Lamb Recipe for Cats 羊肉配方",
+            "CCL185",
+            "185g / 6.5oz",
+            "$398 (@33.2)",
+            "$575",
+            "$56.5"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Beef Recipe for Cats 牛肉配方",
+            "CCB85",
+            "85g / 3oz",
+            "590 (@24.6)",
+            "$840",
+            "$38"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Beef Recipe for Cats 牛肉配方",
+            "CCB185",
+            "185g / 6.5oz",
+            "$398 (@33.2)",
+            "$575",
+            "$56.5"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Mackerel & Lamb Recipe for Cats 鯖魚及羊肉配方",
+            "CCML85",
+            "85g / 3oz",
+            "590 (@24.6)",
+            "$840",
+            "$38"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Mackerel & Lamb Recipe for Cats 鯖魚及羊肉配方",
+            "CCML185",
+            "185g / 6.5oz",
+            "$398 (@33.2)",
+            "$575",
+            "$56.5"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Free-Range Chicken Recipe for Cats 放養雞配方",
+            "CCC85",
+            "85g / 3oz",
+            "590 (@24.6)",
+            "$840",
+            "$38"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Free-Range Chicken Recipe for Cats 放養雞配方",
+            "CCC185",
+            "185g / 6.5oz",
+            "$398 (@33.2)",
+            "$575",
+            "$56.5"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Venison Recipe for Cats 鹿肉配方",
+            "CCV85",
+            "85g / 3oz",
+            "695 (@29)",
+            "$1,002",
+            "$48.5"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Venison Recipe for Cats 鹿肉配方",
+            "CCV185",
+            "185g / 6.5oz",
+            "$540 (@45)",
+            "$760",
+            "$73"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Mackerel Recipe for Cats 鯖魚配方",
+            "CCM85",
+            "85g / 3oz",
+            "590 (@24.6)",
+            "$840",
+            "$38"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Mackerel Recipe for Cats 鯖魚配方",
+            "CCM185",
+            "185g / 6.5oz",
+            "$398 (@33.2)",
+            "$575",
+            "$56.5"
+          ],
+          "confidence": "0.95"
+        }
+      ]
+    }
+  ],
+  "text_observations": [
+    {
+      "text": "With effect from 1 Mar 2026",
+      "confidence": "0.9"
+    },
+    {
+      "text": "*85g貓罐 每箱24罐 185g貓罐 每箱12罐",
+      "confidence": "0.9"
+    }
+  ]
+}

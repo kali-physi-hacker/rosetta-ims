@@ -170,7 +170,7 @@ _FRB_ROW = {
 
 
 def test_supplier_identity_mismatch_fires_only_on_contrary_evidence():
-    contract_id = "kpn_trading.pack_and_case_bulk_list.v1"
+    contract_id = "kpn_trading.pack_price_list.v1"
     wrong = _conform_one(
         contract_id,
         _observation(_FRB_ROW, metadata={"supplier_identity_text": "Kangaroo Pet Nutrition Ltd."}),
@@ -189,7 +189,7 @@ def test_supplier_identity_mismatch_fires_only_on_contrary_evidence():
 
 def test_quantity_conditioned_case_tier_emits_structured_term():
     """FRB-3: buy 6+ packs -> pay the printed per-pack average of 182."""
-    item = _conform_one("kpn_trading.pack_and_case_bulk_list.v1", _observation(_FRB_ROW))
+    item = _conform_one("kpn_trading.pack_price_list.v1", _observation(_FRB_ROW))
     assert item.normalized_fields["cost"]["amount"] == "204"
     assert item.normalized_fields["cost"]["price_basis"]["code"] == "PACK"
     (term,) = item.normalized_fields["mbb_terms"]
@@ -204,21 +204,27 @@ def test_case_total_without_printed_unit_rate_emits_no_term():
     per-unit rate the source never printed."""
     row = dict(_FRB_ROW)
     row["批發價 每箱 (平均每包價)"] = "$1094"
-    item = _conform_one("kpn_trading.pack_and_case_bulk_list.v1", _observation(row))
+    item = _conform_one("kpn_trading.pack_price_list.v1", _observation(row))
     assert item.normalized_fields["mbb_terms"] == []
 
 
 def test_unlabeled_column_resolves_only_when_exactly_one_value_exists():
-    contract_id = "kpn_trading.pack_and_case_bulk_list.v1"
-    single = dict(_FRB_ROW)
-    single[""] = "3lb"  # the frozen-raw size column prints no heading
-    item = _conform_one(contract_id, _observation(single))
-    assert item.raw_fields["packaging"] == "3lb"
+    """The NOW FRESH single-price layout prints the product NAME under an
+    unlabeled column; the sentinel resolves it only when the row carries
+    exactly one non-empty unlabeled value."""
+    contract_id = "kpn_trading.pack_price_list.v1"
+    row = {
+        "": "Adult Dog 成犬 雞肉配方 Cage-Free Chicken",
+        "sku#": "FG00610",
+        "包裝": "3.5lb",
+        "批發價": "$215",
+        "零售價": "$310",
+    }
+    item = _conform_one(contract_id, _observation(row))
+    assert item.raw_fields["product_name"] == "Adult Dog 成犬 雞肉配方 Cage-Free Chicken"
 
     # Two populated unlabeled columns are indistinguishable — refuse, never guess.
-    ambiguous = _observation(
-        {**_FRB_ROW, "": "3lb"},
-    )
+    ambiguous = _observation(row)
     two = ExtractedEvidence(
         observation_key="row-2",
         source_location=SourceLocation(row_number=1, source_object_key="row-2"),
@@ -230,7 +236,7 @@ def test_unlabeled_column_resolves_only_when_exactly_one_value_exists():
     registration = get_supplier_source_contract(contract_id, "v1")
     contract = runtime.SupplierSourceRuntimeContract(declaration=registration.declaration)
     outcome = conform_observations((two,), (uuid4(),), contract)
-    assert outcome.items[0].raw_fields["packaging"] is None
+    assert outcome.items[0].raw_fields["product_name"] is None
 
 
 def test_canidae_transition_rows_conform_under_the_new_code():
@@ -404,7 +410,7 @@ def test_a_missing_banner_does_not_reject_the_price():
     """PR-18 closing audit, finding 1: brand is OPTIONAL on every KPN layout —
     a table whose banner the extraction missed must not dead-letter its rows."""
     item = _conform_one(
-        "kpn_trading.pack_and_case_bulk_list.v1",
+        "kpn_trading.pack_price_list.v1",
         _observation({
             "產品編號": "FRB-3",
             "產品名稱": "Stella's Super Beef 牛魔王",
@@ -452,3 +458,397 @@ def test_a_previous_sku_equal_to_the_current_one_is_dropped():
     blob = _json.dumps({"raw": renumbering.raw_fields, "norm": renumbering.normalized_fields}, ensure_ascii=False)
     assert '"NEW-01"' in blob
     assert "OLD-01" in blob, "a genuine SKU transition must survive the guard"
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Page-banner promotions — a banner is typed only where the contract has
+# declared its notation; everywhere else it stays verbatim page evidence.
+# ─────────────────────────────────────────────────────────────────────────
+
+_REVOLUTION_ROW = {
+    "Code No": "401",
+    "Product Name": "Revolution 15mg for Puppies & Kittens (Mauve 5 lbs or less)",
+    "Packing Per Unit": "3 tubes / pack",
+    "Unit Price": "HK$128.0",
+}
+
+
+def test_declared_page_banner_promotion_becomes_an_order_scope_term():
+    """'Mix over $1000, 10% off' speaks about the ORDER, so every row of the
+    page carries the same typed spend/percentage term."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation(
+            _REVOLUTION_ROW,
+            metadata={"page_promotion_text": "Promotion: Mix over $1000, 10% off"},
+        ),
+    )
+    (term,) = item.normalized_fields["mbb_terms"]
+    assert term["scope"] == "SUPPLIER_ORDER"
+    assert term["condition"] == {
+        "condition_type": "minimum_spend",
+        "spend": {"amount": "1000", "currency": "HKD"},
+    }
+    assert term["benefit"] == {"benefit_type": "percentage_discount", "percentage": "10"}
+    assert term["description"] == "Promotion: Mix over $1000, 10% off"
+
+
+def test_mixed_quantity_zhe_tiers_translate_to_percent_off():
+    """混合12件 9折 24件 8折 — 9折 means pay 90%, so 12 items unlock 10% off
+    and 24 items unlock 20% off; both tiers are separate order-scope terms."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation(_REVOLUTION_ROW, metadata={"page_promotion_text": "混合12件 9折 24件 8折"}),
+    )
+    first, second = item.normalized_fields["mbb_terms"]
+    for term in (first, second):
+        assert term["scope"] == "SUPPLIER_ORDER"
+        assert term["condition"]["condition_type"] == "minimum_quantity"
+        assert term["benefit"]["benefit_type"] == "percentage_discount"
+        assert term["description"] == "混合12件 9折 24件 8折"
+    assert first["condition"]["quantity"]["amount"] == "12"
+    assert first["benefit"]["percentage"] == "10"
+    assert second["condition"]["quantity"]["amount"] == "24"
+    assert second["benefit"]["percentage"] == "20"
+
+
+def test_banner_on_an_undeclared_contract_stays_evidence():
+    """KPN declares no page_promotion_shapes, so a stamped banner parses into
+    nothing — the row keeps only its own case-tier term."""
+    item = _conform_one(
+        "kpn_trading.pack_price_list.v1",
+        _observation(
+            _FRB_ROW,
+            metadata={"page_promotion_text": "Promotion: Mix over $1000, 10% off"},
+        ),
+    )
+    scopes = [term["scope"] for term in item.normalized_fields["mbb_terms"]]
+    assert scopes == ["SUPPLIER_SKU"], "the banner must not add order terms on an undeclared contract"
+
+
+def test_unrecognised_banner_text_parses_into_nothing():
+    """A banner in a notation the contract did not declare is preserved as
+    evidence, never guessed into a term."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation(
+            _REVOLUTION_ROW,
+            metadata={"page_promotion_text": "Summer clearance — everything must go"},
+        ),
+    )
+    assert item.normalized_fields["mbb_terms"] == []
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Same-code quantity bands — the deeper band row is an MBB term on the base
+# row, never a second candidate whose publication would supersede the base.
+# ─────────────────────────────────────────────────────────────────────────
+
+_TOPIZOLE_BASE = {
+    "CODE NO": "TOP250",
+    "PRODUCT NAME": "Topizole 5mg/ml Oral Suspension 30ml",
+    "ORDER UNIT": "1-10 bottles",
+    "UNIT PRICE": "HK$82.0",
+}
+_TOPIZOLE_DEEP = {
+    "CODE NO": "TOP250",
+    "PRODUCT NAME": "Topizole 5mg/ml Oral Suspension 30ml",
+    "ORDER UNIT": "11-20 bottles",
+    "UNIT PRICE": "HK$78.0",
+}
+
+
+def _conform_many(contract_id: str, rows: list[dict[str, str]]):
+    registration = get_supplier_source_contract(contract_id, "v1")
+    contract = runtime.SupplierSourceRuntimeContract(declaration=registration.declaration)
+    observations = tuple(_observation(cells, key=f"row-{i}") for i, cells in enumerate(rows, start=1))
+    return conform_observations(observations, tuple(uuid4() for _ in rows), contract)
+
+
+def test_same_code_quantity_band_folds_into_a_term_on_the_base_row():
+    """TOP250's '11-20 bottles' row: buy eleven, pay 78 per bottle — a term,
+    not a duplicate candidate."""
+    out = _conform_many("vetapet.vet_price_list.v1", [_TOPIZOLE_BASE, _TOPIZOLE_DEEP])
+    (item,) = out.items
+    assert item.normalized_fields["cost"]["amount"] == "82.0"
+    assert item.normalized_fields["cost"]["price_basis"]["code"] == "BOTTLE"
+    (term,) = item.normalized_fields["mbb_terms"]
+    assert term["scope"] == "SUPPLIER_SKU"
+    assert term["condition"]["condition_type"] == "minimum_quantity"
+    assert term["condition"]["quantity"]["amount"] == "11"
+    assert term["condition"]["quantity"]["uom"]["code"] == "BOTTLE"
+    assert term["benefit"]["discounted_price"]["amount"] == "78.0"
+    assert term["description"] == "11-20 bottles"
+    assert out.metadata["skipped_quantity_band_rows"] == 1
+
+
+def test_three_bands_fold_into_two_terms_on_one_base():
+    third = dict(_TOPIZOLE_DEEP, **{"ORDER UNIT": "21-40 bottles", "UNIT PRICE": "HK$75.0"})
+    out = _conform_many("vetapet.vet_price_list.v1", [_TOPIZOLE_BASE, _TOPIZOLE_DEEP, third])
+    (item,) = out.items
+    starts = [t["condition"]["quantity"]["amount"] for t in item.normalized_fields["mbb_terms"]]
+    prices = [t["benefit"]["discounted_price"]["amount"] for t in item.normalized_fields["mbb_terms"]]
+    assert starts == ["11", "21"]
+    assert prices == ["78.0", "75.0"]
+    assert out.metadata["skipped_quantity_band_rows"] == 2
+
+
+def test_a_band_that_is_not_cheaper_does_not_fold():
+    """A 'discount' at the same price would corrupt downstream costs — both
+    rows stay candidates for a person."""
+    dearer = dict(_TOPIZOLE_DEEP, **{"UNIT PRICE": "HK$82.0"})
+    out = _conform_many("vetapet.vet_price_list.v1", [_TOPIZOLE_BASE, dearer])
+    assert len(out.items) == 2
+    assert out.metadata["skipped_quantity_band_rows"] == 0
+
+
+def test_a_repeated_code_without_a_base_band_stays_two_candidates():
+    """A duplicate code where the earlier row prints no band is a duplicate to
+    review, not a ladder to fold."""
+    plain_base = dict(_TOPIZOLE_BASE, **{"ORDER UNIT": "1 bottle"})
+    out = _conform_many("vetapet.vet_price_list.v1", [plain_base, _TOPIZOLE_DEEP])
+    assert len(out.items) == 2
+    assert out.metadata["skipped_quantity_band_rows"] == 0
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Struck-price Special Offers — two unmarked amounts parse ONLY where the
+# contract declared that render; everywhere else the refusal stands.
+# ─────────────────────────────────────────────────────────────────────────
+
+
+def test_a_declared_struck_price_cell_becomes_cost_plus_special_offer():
+    """'$739 HK$1056.0' under Vetapet's declaration: the larger amount is the
+    regular cost, the smaller an unconditional Special-Offer term."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "CODE NO": "EAB10",
+            "PRODUCT NAME": "Special Offer sample product",
+            "ORDER UNIT": "1 bottle",
+            "UNIT PRICE": "$739 HK$1056.0",
+        }),
+    )
+    assert item.normalized_fields["cost"]["amount"] == "1056.0"
+    assert item.normalized_fields["cost"]["price_basis"]["code"] == "BOTTLE"
+    (term,) = item.normalized_fields["mbb_terms"]
+    assert term["scope"] == "SUPPLIER_SKU"
+    assert term["condition"]["condition_type"] == "minimum_quantity"
+    assert term["condition"]["quantity"]["amount"] == "1"
+    assert term["benefit"]["discounted_price"]["amount"] == "739"
+    assert term["benefit"]["discounted_price"]["price_basis"]["code"] == "BOTTLE"
+    assert term["description"] == "$739 HK$1056.0"
+
+
+def test_two_unmarked_amounts_still_refuse_on_undeclared_contracts():
+    """The KPN/Kangaroo hardening is untouched: without the declaration, two
+    printed prices stay a guess the parser will not make."""
+    item = _conform_one(
+        "kpn_trading.pack_price_list.v1",
+        _observation({
+            "產品編號": "SC001",
+            "產品內容 Product Description": "Stella & Chewy Chicken Dinner",
+            "每包批發價 Wholesale Price Per Unit": "$99 HK$120.0",
+        }),
+    )
+    assert "cost" not in item.normalized_fields
+    assert item.normalized_fields["mbb_terms"] == []
+
+
+def test_struck_price_guards_refuse_equal_or_extra_amounts():
+    """Equal amounts are no discount; three amounts are a misread — both keep
+    dead-lettering for a person even under the declaration."""
+    for printed in ("$1056 HK$1056.0", "$739 HK$1056.0 $88"):
+        item = _conform_one(
+            "vetapet.vet_price_list.v1",
+            _observation({
+                "CODE NO": "EAB10",
+                "PRODUCT NAME": "Special Offer sample product",
+                "ORDER UNIT": "1 bottle",
+                "UNIT PRICE": printed,
+            }),
+        )
+        assert "cost" not in item.normalized_fields, printed
+        assert item.normalized_fields["mbb_terms"] == [], printed
+
+
+def test_case_quantity_reads_the_counter_not_the_leading_size():
+    """The real frozen-raw pages merge size and count ('12lb 2包' = two 12-lb
+    bags per case): the tier quantity is the number wearing the counter noun,
+    never the leading size — and the heading prints WITHOUT a space before
+    the parenthesis, which the alias covers."""
+    for packing, price_cell, want_qty, want_price in (
+        ("3lb 6包", "$1094/箱 ($182/包)", "6", "182"),
+        ("12lb 2包", "$1306/箱 ($653/包)", "2", "653"),
+        ("1.25lb 4包", "$336/箱 ($84/包)", "4", "84"),
+    ):
+        item = _conform_one(
+            "kpn_trading.pack_price_list.v1",
+            _observation({
+                "產品編號": "FRX-1",
+                "產品名稱": "Frozen sample",
+                "原箱包數": packing,
+                "批發價 每包": "$204" if want_qty != "2" else "$679",
+                "批發價 每箱(平均每包價)": price_cell,
+                "建議零售價 每包": "$276",
+            }),
+        )
+        (term,) = item.normalized_fields["mbb_terms"]
+        assert term["condition"]["quantity"]["amount"] == want_qty, packing
+        assert term["benefit"]["discounted_price"]["amount"] == want_price, packing
+
+
+def test_good_gravy_rows_take_their_name_from_the_section_heading():
+    """The Good Gravy layout prints the product name ONLY as the block heading
+    above the rows (user-confirmed against the rendered page 47): description
+    composes from section_name when no name column resolves — and never
+    overrides a printed name column where one exists."""
+    item = _conform_one(
+        "kpn_trading.pack_price_list.v1",
+        _observation(
+            {
+                "barcode#": "8 15260 00767 2",
+                "包裝": "3.5lb",
+                "sku#": "FG00654",
+                "批發價": "$215",
+                "零售價": "$310",
+            },
+            metadata={"section": "ADULT DOG BEEF 成犬 香濃火雞骨湯外層乾糧 - 牛肉配方(含古代穀物)"},
+        ),
+    )
+    assert item.raw_fields["product_name"] == "ADULT DOG BEEF 成犬 香濃火雞骨湯外層乾糧 - 牛肉配方(含古代穀物)"
+    assert item.raw_fields["barcode"] == "8 15260 00767 2"
+    assert item.normalized_fields["cost"]["amount"] == "215"
+
+    named = _conform_one(
+        "kpn_trading.pack_price_list.v1",
+        _observation(
+            {
+                "產品編號": "SC001",
+                "產品內容": "Stella's Super Beef 牛魔王",
+                "批發價": "HK$113",
+            },
+            metadata={"section": "SOME SECTION BANNER"},
+        ),
+    )
+    assert named.raw_fields["product_name"] == "Stella's Super Beef 牛魔王"
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Quantity-ladder price columns — the indent-order sections price whole rows
+# as a ladder; ruling 2026-08-17: lowest filled rung = base cost (+ minimum
+# order when its bound exceeds 1), deeper rungs = terms.
+# ─────────────────────────────────────────────────────────────────────────
+
+
+def test_vaccine_ladder_lowest_rung_is_cost_and_its_bound_is_the_moq():
+    """VANG-B: 50+ at $41 (per unit -> per dose), 300+ at $39 becomes a term."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "Code No": "VANG-B",
+            "Product Name": "Vanguard B (Intranasal)(Kennel Cough)",
+            "Packing Per Unit": "25 doses / pack",
+            "PRICE: 50 doses or above (per unit)": "HK$41.0",
+            "PRICE: 100 doses or above (per unit)": "----",
+            "PRICE: 300 doses or above (per unit)": "HK$39.0",
+        }),
+    )
+    cost = item.normalized_fields["cost"]
+    assert cost["amount"] == "41.0"
+    assert cost["price_basis"]["code"] == "UNIT", "the heading says per unit — never the packing's /pack"
+    packaging = item.normalized_fields["packaging"]
+    assert packaging["minimum_order_quantity"] == {"amount": "50", "uom": cost["price_basis"]}
+    (term,) = item.normalized_fields["mbb_terms"]
+    assert term["condition"]["quantity"]["amount"] == "300"
+    assert term["benefit"]["discounted_price"]["amount"] == "39.0"
+
+
+def test_ladder_skips_empty_rungs_when_choosing_the_base():
+    """VANG5CVL prints nothing at 50+: the lowest FILLED rung (100+) is base."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "Code No": "VANG5CVL",
+            "Product Name": "Vanguard Plus 5CV-L (DHPPi/L2 + CV)",
+            "Packing Per Unit": "25 doses / pack",
+            "PRICE: 50 doses or above (per unit)": "----",
+            "PRICE: 100 doses or above (per unit)": "HK$39.0",
+            "PRICE: 300 doses or above (per unit)": "HK$36.0",
+        }),
+    )
+    assert item.normalized_fields["cost"]["amount"] == "39.0"
+    assert item.normalized_fields["packaging"]["minimum_order_quantity"]["amount"] == "100"
+    (term,) = item.normalized_fields["mbb_terms"]
+    assert term["condition"]["quantity"]["amount"] == "300"
+
+
+def test_drug_ladder_starting_at_one_has_no_moq_and_keeps_the_row_basis():
+    """RIM-25: 'PRICE: 1-2' is the base (a bound of 1 is no constraint) and the
+    price is per BOTTLE — no '(per unit)' in these headings."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "Code No": "RIM-25",
+            "Product Name": "Rimadyl Chewable Tablets 25mg",
+            "Packing Per Unit": "60 tab / bottle",
+            "PRICE: 1-2": "HK$116.0",
+            "PRICE: 3-9": "HK$106.0",
+            "PRICE: 10 or above": "HK$101.0",
+        }),
+    )
+    cost = item.normalized_fields["cost"]
+    assert cost["amount"] == "116.0"
+    assert cost["price_basis"]["code"] == "BOTTLE"
+    assert "minimum_order_quantity" not in item.normalized_fields["packaging"]
+    terms = item.normalized_fields["mbb_terms"]
+    assert [(t["condition"]["quantity"]["amount"], t["benefit"]["discounted_price"]["amount"]) for t in terms] == [
+        ("3", "106.0"), ("10", "101.0"),
+    ]
+
+
+def test_single_rung_price_tables_degenerate_to_a_plain_cost():
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "Code No": "JCH-C",
+            "Product Name": "Chlorhex-C Antiseptic/Disinfectant Concentrate",
+            "Price: 1 or above": "HK$590",
+        }),
+    )
+    assert item.normalized_fields["cost"]["amount"] == "590"
+    assert item.normalized_fields["mbb_terms"] == []
+
+
+def test_diagnostics_regular_box_price_is_the_cost_and_the_badge_price_is_not():
+    """The diagnostics Special-Offer tables were captured as two columns:
+    'Unit Price (single)' is the 30%-off promo badge (verified: every value is
+    exactly 0.70 x the box price), 'Unit Price (box)' the regular price. Per
+    the struck-price ruling the REGULAR price is the cost; the badge stays
+    evidence until its offer-term treatment is confirmed."""
+    clean = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "Code No": "510-0005-10",
+            "Product Name": "Canine Pancreatic Lipase (cPL) Rapid Test",
+            "Packing Per Unit": "10 tests / box",
+            "Order Unit": "1 box",
+            "Unit Price (single)": None,
+            "Unit Price (box)": "HK$1958.0",
+        }),
+    )
+    assert clean.normalized_fields["cost"]["amount"] == "1958.0"
+    assert clean.normalized_fields["cost"]["price_basis"]["code"] == "BOX"
+
+    offered = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation({
+            "Code No": "200-1501",
+            "Product Name": "Rapid Test sample",
+            "Packing Per Unit": "10 tests / box",
+            "Order Unit": "1 box",
+            "Unit Price (single)": "$739",
+            "Unit Price (box)": "HK$1056.0",
+        }),
+    )
+    assert offered.normalized_fields["cost"]["amount"] == "1056.0", "the regular price, never the badge"

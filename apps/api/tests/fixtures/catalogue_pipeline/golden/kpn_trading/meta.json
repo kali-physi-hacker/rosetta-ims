@@ -1,6 +1,6 @@
 {
   "source": "KPN_Kangaroo.pdf (53-page edition; Stella & Chewy's bag pages 51-53)",
-  "recorded_from": "hand-captured from claude (chat, one page per envelope via the literal VISION_EVIDENCE_PROMPT, 2026-08-11)",
+  "recorded_from": "hand-captured from claude (chat, one page per envelope via the literal VISION_EVIDENCE_PROMPT incl. page_brand_text, 2026-08-17 re-extraction)",
   "provider": "hand-captured",
   "contract": "kpn_trading.pack_price_list.v1",
   "supplier_id": 15,

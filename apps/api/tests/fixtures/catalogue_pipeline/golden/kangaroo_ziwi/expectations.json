@@ -1,0 +1,53 @@
+{
+  "supplier": {
+    "id": 81,
+    "code": "KANGAR",
+    "name": "Kangaroo Pet Nutrition"
+  },
+  "provider": "anthropic",
+  "contract_id": "kangaroo_pet_nutrition.unit_price_list.v1",
+  "pages": [
+    "page_5.json",
+    "page_6.json",
+    "page_7.json",
+    "page_8.json",
+    "page_9.json",
+    "page_10.json"
+  ],
+  "_pages_comment": "Per-page envelopes for the six Ziwi pages, hand-captured 2026-08-17 from KPN_Kangaroo.pdf with the current VISION_EVIDENCE_PROMPT. Each page carries its brand mark as page_brand_text; no page of this bundle prints a supplier letterhead. This is the verification evidence that flipped the contract SUPPORTED. The canned pages (7-8) price per case only and their rows are REFUSED per the case-total ruling (2026-08-17: no derived per-unit rates) — they are dead letters by design, not coverage gaps.",
+  "_recording_notes": "Recorded set: the golden sheet's Kangaroo tab is not reconciled yet, so expected.csv is recorded from the verified replay (prices cross-checked against the PDF text layer) rather than projected from the sheet. When the tab lands, add sheet_supplier_label and refresh FROM the sheet.",
+  "min_covered_skus": 4,
+  "covered_skus": [
+    "ADL0.4",
+    "ADML4",
+    "ZSCB2.2",
+    "ZSDB0.8"
+  ],
+  "enforced": [
+    "supplier",
+    "supplier_product_code",
+    "brand",
+    "package_configuration",
+    "order_multiple",
+    "catalogue_price_hkd",
+    "catalogue_price_basis_qty",
+    "catalogue_price_basis_uom",
+    "sellable_qty",
+    "sellable_units_per_price_basis",
+    "rrp",
+    "mbb_tier_1",
+    "mbb_tier_2",
+    "mbb_tier_3",
+    "mbb_tier_4",
+    "commercial_offer_summary"
+  ],
+  "known_gaps": {},
+  "not_comparable": {
+    "product_name": "allowed discrepancy (policy 2026-08-13): the sheet holds a human shorthand; the export holds the supplier's printed description",
+    "product name [Rosetta]": "allowed discrepancy: a hand-authored retail name, not something the pipeline derives",
+    "weight": "allowed discrepancy: some catalogues genuinely do not print it, and the sheet hand-measures",
+    "sellable_uom": "allowed discrepancy: not always capturable from the source — BizOps set the sellable unit themselves"
+  },
+  "unfilled": {},
+  "unpublishable": []
+}

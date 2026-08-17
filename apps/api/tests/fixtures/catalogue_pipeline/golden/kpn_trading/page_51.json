@@ -1,0 +1,74 @@
+{
+  "page_outcome": "evidence",
+  "page_brand_text": "Stella & Chewy's Raw Coated Kibble 香港版 HK",
+  "tables": [
+    {
+      "section": "凍乾生肉外層低溫烘焙乾糧 Raw Coated Baked Kibble for Dogs",
+      "columns": [
+        "SKU#",
+        "產品內容",
+        "包裝",
+        "每包批發價",
+        "每包建議零售價"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "SCRC013",
+            "草飼羊配方 Grass-Fed Lamb Recipe",
+            "3.5 lb.",
+            "HK$240",
+            "HK$335"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRC014",
+            "草飼羊配方 Grass-Fed Lamb Recipe",
+            "22 lb.",
+            "HK$795",
+            "HK$1,058"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRC015",
+            "幼犬配方 Cage-Free Chicken Recipe for Puppies",
+            "3.5 lb.",
+            "HK$245",
+            "HK$340"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRC016",
+            "幼犬配方 Cage-Free Chicken Recipe for Puppies",
+            "10 lb.",
+            "HK$465",
+            "HK$645"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRC017",
+            "幼犬配方 Cage-Free Chicken Recipe for Puppies",
+            "22 lb.",
+            "HK$805",
+            "HK$1,068"
+          ],
+          "confidence": "0.95"
+        }
+      ]
+    }
+  ],
+  "text_observations": [
+    {
+      "text": "Last Updated: JAN 2024",
+      "confidence": "0.9"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "page_outcome": "evidence",
+  "page_brand_text": "Stella & Chewy's",
+  "tables": [
+    {
+      "section": "冷凍生肉 (肉粒) Frozen Raw Dinner Morsels",
+      "columns": [
+        "產品編號",
+        "產品名稱",
+        "原箱包數",
+        "批發價 每包",
+        "批發價 每箱(平均每包價)",
+        "建議零售價 每包",
+        "建議零售價 每箱(平均每包價)"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "FRBM-4",
+            "Stella's Super Beef 牛魔王 (牛肉配方)",
+            "4lb 4包",
+            "$270",
+            "$1007/箱 ($252/包)",
+            "$374",
+            "$1421/箱 ($355/包)"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "FRCM-4",
+            "Chewy's Chicken 籠外鳳凰 (雞肉配方)",
+            "4lb 4包",
+            "$270",
+            "$1007/箱 ($252/包)",
+            "$374",
+            "$1421/箱 ($355/包)"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "FRDM-4",
+            "Duck Duck Goose 鴨朋鵝友 (鴨肉及鵝肉配方)",
+            "4lb 4包",
+            "$293",
+            "$1099/箱 ($275/包)",
+            "$400",
+            "$1509/箱 ($377/包)"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "FRLM-4",
+            "Dandy Lamb 羊羊得意 (羊肉配方)",
+            "4lb 4包",
+            "$293",
+            "$1099/箱 ($275/包)",
+            "$400",
+            "$1509/箱 ($377/包)"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "FRTM-4",
+            "Tantalizing Turkey 火雞誘惑 (火雞肉配方)",
+            "4lb 4包",
+            "$270",
+            "$1007/箱 ($252/包)",
+            "$374",
+            "$1421/箱 ($355/包)"
+          ],
+          "confidence": "0.95"
+        }
+      ]
+    }
+  ],
+  "text_observations": [
+    {
+      "text": "Last update: 1 JUL 2023",
+      "confidence": "0.9"
+    }
+  ]
+}

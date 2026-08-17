@@ -1,57 +1,55 @@
 {
- "page_outcome": "evidence",
- "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
- "page_brand_text": "Dermoscent®",
- "tables": [
-  {
-   "columns": [
-    "CODE NO",
-    "PRODUCT NAME",
-    "WHOLESALE PRICE",
-    "SUGGESTED RETAIL PRICE"
-   ],
-   "rows": [
+  "page_outcome": "evidence",
+  "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+  "page_brand_text": "Dermoscent®",
+  "page_promotion_text": "Promotion: Mix over $1000, 10% off",
+  "tables": [
     {
-     "cells": [
-      "11501",
-      "Dermoscent® Essential 6® spot-on for cats",
-      "HK$145.0",
-      "HK$260.0"
-     ]
-    },
-    {
-     "cells": [
-      "21501",
-      "Dermoscent® Essential 6® spot-on for dogs & small mammals 0-10kg",
-      "HK$145.0",
-      "HK$260.0"
-     ]
-    },
-    {
-     "cells": [
-      "21502",
-      "Dermoscent® Essential 6® spot-on for dogs 10-20kg",
-      "HK$156.0",
-      "HK$290.0"
-     ]
-    },
-    {
-     "cells": [
-      "21503",
-      "Dermoscent® Essential 6® spot-on for dogs 20-40kg",
-      "HK$176.0",
-      "HK$330.0"
-     ]
+      "columns": [
+        "CODE NO",
+        "PRODUCT NAME",
+        "WHOLESALE PRICE",
+        "SUGGESTED RETAIL PRICE"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "11501",
+            "Dermoscent® Essential 6® spot-on for cats",
+            "HK$145.0",
+            "HK$260.0"
+          ]
+        },
+        {
+          "cells": [
+            "21501",
+            "Dermoscent® Essential 6® spot-on for dogs & small mammals 0-10kg",
+            "HK$145.0",
+            "HK$260.0"
+          ]
+        },
+        {
+          "cells": [
+            "21502",
+            "Dermoscent® Essential 6® spot-on for dogs 10-20kg",
+            "HK$156.0",
+            "HK$290.0"
+          ]
+        },
+        {
+          "cells": [
+            "21503",
+            "Dermoscent® Essential 6® spot-on for dogs 20-40kg",
+            "HK$176.0",
+            "HK$330.0"
+          ]
+        }
+      ]
     }
-   ]
-  }
- ],
- "text_observations": [
-  {
-   "text": "Made in France"
-  },
-  {
-   "text": "Promotion: Mix over $1000, 10% off"
-  }
- ]
+  ],
+  "text_observations": [
+    {
+      "text": "Made in France"
+    }
+  ]
 }

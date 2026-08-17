@@ -10,9 +10,7 @@
   "document_type": "CATALOGUE",
   "format_name": "Kangaroo Pet Nutrition unit-basis price list",
   "source_format": "PDF_TABLE",
-  "support_status": "PARTIALLY_VERIFIED",
-  "effective_from": null,
-  "effective_to": null,
+  "support_status": "SUPPORTED",
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -38,7 +36,6 @@
       {
         "name": "kangaroo_pn_unit_price_sections",
         "selector": "Kangaroo Pet Nutrition sections whose price columns print exactly one wholesale amount, with no case-level price column.",
-        "header_row": null,
         "notes": "Observed on ZIWI dry/treat pages and Ecuphar pages."
       }
     ],
@@ -75,9 +72,7 @@
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
       "source_column": "產品編號",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "Product Code"
       ],
@@ -99,23 +94,14 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
       "requirement": "REQUIRED",
       "source_column": "產品內容",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "產品名稱",
         "Product Description"
@@ -138,25 +124,16 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "brand",
       "role": "BRAND",
       "requirement": "OPTIONAL",
-      "source_column": null,
-      "source_path": "brand page logo (image only; not extractable text)",
+      "source_path": "page_brand",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
-      "description": "ZIWI Peak / Ecuphar appear only as page-logo images; section banners read '價錢表 Pricelist'. Deliberately unmapped rather than wrong.",
+      "description": "The brand wordmark heading the page, verbatim.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -174,23 +151,14 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
       "source_column": "重量",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "包裝",
         "Size"
@@ -213,23 +181,14 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "wholesale_price",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
       "source_column": "批發價 (HKD)",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "批發價",
         "Wholesale Price"
@@ -252,23 +211,14 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
       "source_column": "建議零售價 (HKD)",
-      "source_path": null,
       "composed_from": [],
-      "constant_value": null,
       "aliases": [
         "零售價",
         "建議零售價"
@@ -291,23 +241,14 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "effective_date",
       "role": "EFFECTIVE_DATE",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "document or section effective-date label",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "'With effect from ...' / '生效日期' page labels.",
       "evidence": [
@@ -327,23 +268,14 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     },
     {
       "field_key": "promotion_text",
       "role": "MBB_TEXT",
       "requirement": "OPTIONAL",
-      "source_column": null,
       "source_path": "document, section, or row promotion notes",
       "composed_from": [],
-      "constant_value": null,
       "aliases": [],
       "description": "Printed promotion or spend-discount terms.",
       "evidence": [
@@ -363,14 +295,7 @@
           "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
         }
       ],
-      "tier_minimum_spend": null,
-      "tier_order": null,
-      "source_column_occurrence": null,
-      "tier_quantity_field": null,
-      "tier_price_field": null,
-      "continues_row_above_when_matching": null,
-      "inherits_from_row_above": false,
-      "source_column_prefix": null
+      "inherits_from_row_above": false
     }
   ],
   "pricing": {
@@ -378,8 +303,7 @@
     "rrp_source_field": "rrp",
     "currency": "HKD",
     "price_basis": {
-      "code": "UNIT",
-      "label": null
+      "code": "UNIT"
     },
     "price_basis_status": "VERIFIED",
     "autoswap_cost_rrp_allowed": false,
@@ -388,17 +312,8 @@
   },
   "packaging": {
     "packaging_source_field": "pack_size",
-    "purchase_uom": null,
-    "price_basis": null,
-    "sellable_unit_uom": null,
-    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
-    "content_measure_uom": null,
-    "purchase_uom_source_field": null,
     "price_basis_follows_purchase_unit": false,
-    "order_increment_source_field": null,
-    "minimum_order_source_field": null,
-    "break_pack_allowed": null,
     "interpretation_rules": [
       "Treat content weight/size as a measure, not a sellable-unit count."
     ],
@@ -418,6 +333,8 @@
     "benefit_patterns": [
       "percentage discount"
     ],
+    "page_promotion_shapes": [],
+    "quantity_ladder_heading_prefixes": [],
     "requires_validation_issue_when": [
       "The qualifying products, threshold basis, or stacking rules are not explicit."
     ],
@@ -428,13 +345,13 @@
     {
       "issue_code": "KANGAROO_PN_UNIT_SUPPLIER_IDENTITY_REQUIRED",
       "condition": "A source may contain multiple suppliers or only a subset of previously observed brands.",
-      "review_guidance": "Select this declaration only from ingestion supplier ID 81 or an explicit Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand.",
-      "blocks_supported_status": true
+      "review_guidance": "Select this declaration only from ingestion supplier ID 81 or an explicit Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand. CONTRACT_SUPPLIER_IDENTITY_MISMATCH verifies this automatically whenever a page prints an identity (the current per-page capture shows the Ziwi pages print none, so selection anchors to the upload's supplier — the same footing every SUPPORTED sibling stands on).",
+      "blocks_supported_status": false
     },
     {
       "issue_code": "KANGAROO_PN_PAGE_BANNER_PROMOTIONS_UNREACHABLE",
-      "condition": "Standing mix/spend promotions print as page banners captured in text_observations; no contract field mechanism reaches those today.",
-      "review_guidance": "Reviewers must read the run's unmapped text evidence for banner promos until a threading mechanism exists.",
+      "condition": "Standing mix/spend promotions print as page banners. Extraction captures them verbatim as page_promotion_text, but this contract declares no mbb.page_promotion_shapes — no real Kangaroo page has proven a banner notation yet — so banners stay unparsed page evidence.",
+      "review_guidance": "Reviewers must read the run's page evidence for banner promos. Once a real Kangaroo page proves a notation the engine knows (see MbbSourceSemantics.page_promotion_shapes), declare it and banners conform into ORDER-scoped terms as they do for Vetapet.",
       "blocks_supported_status": false
     }
   ],
@@ -474,8 +391,6 @@
   },
   "created_at": "2026-07-30T00:00:00Z",
   "created_by": "catalogue-contract-integration",
-  "updated_at": null,
-  "updated_by": null,
   "metadata": {
     "routing_strategy": "supplier_identity_and_layout_markers",
     "sample_reference": "KPN_Kangaroo.pdf",

@@ -1,0 +1,5 @@
+supplier,supplier_product_code,product_name,product name [Rosetta],weight,brand,package_configuration,order_multiple,catalogue_price_hkd,catalogue_price_basis_qty,catalogue_price_basis_uom,sellable_qty,sellable_uom,sellable_units_per_price_basis,rrp,mbb_tier_1,mbb_tier_2,mbb_tier_3,mbb_tier_4,commercial_offer_summary
+K.P.N. Trading,FRB-3,Stella's Super Beef 牛魔王 (牛肉配方),,,Stella & Chewy's,,,$204.00,1,PACK,1,,,$276.00,buy 6 PACK at $182.00 per PACK,,,,buy 6 PACK at $182.00 per PACK
+K.P.N. Trading,FRL-12,Dandy Lamb 羊羊得意 (羊肉配方),,,Stella & Chewy's,,,$679.00,1,PACK,1,,,$897.00,buy 2 PACK at $653.00 per PACK,,,,buy 2 PACK at $653.00 per PACK
+K.P.N. Trading,FRBM-4,Stella's Super Beef 牛魔王 (牛肉配方),,,Stella & Chewy's,,,$270.00,1,PACK,1,,,$374.00,buy 4 PACK at $252.00 per PACK,,,,buy 4 PACK at $252.00 per PACK
+K.P.N. Trading,CAT-FRC-1.25,Chick Chick Chicken 籠外鳳凰 (雞肉配方),,,Stella & Chewy's,,,$96.00,1,PACK,1,,,$142.00,buy 4 PACK at $84.00 per PACK,,,,buy 4 PACK at $84.00 per PACK

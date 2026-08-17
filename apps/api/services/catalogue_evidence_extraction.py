@@ -302,6 +302,11 @@ class _VisionEnvelope(BaseModel):
     # whole page is one brand's products. A page shared by several brands
     # omits it — attributing rows to brands is not extraction's call.
     page_brand_text: str | None = Field(None, min_length=1)
+    # A commercial promotion printed as a PAGE banner ('Promotion: Mix over
+    # $1000, 10% off'), verbatim. These are order- or brand-scoped terms that
+    # belong to every row of the page; conformance parses the shapes a
+    # contract declares and leaves anything else as evidence.
+    page_promotion_text: str | None = Field(None, min_length=1)
     # Backward-compatible reader for recorded compact-v1 envelopes. New provider
     # requests use tables/text_observations so one page can carry multiple
     # independent header families.
@@ -350,6 +355,7 @@ Return one JSON object with exactly this shape:
   "page_outcome": "evidence",
   "supplier_identity_text": "printed supplier/distributor name (letterhead, footer, or \"Distributed by ...\" line), verbatim; omit entirely when no such text is visible on this page",
   "page_brand_text": "the product brand whose logo or name heads this page (a brand wordmark counts — transcribe it as text), verbatim; omit entirely when absent or when several brands share the page",
+  "page_promotion_text": "a promotion printed as a page banner ('Promotion: Mix over $1000, 10% off'), verbatim; omit entirely when the page prints none",
   "tables": [
     {
       "section": "banner printed across the table, verbatim; omit when absent",
@@ -396,6 +402,9 @@ Rules:
   distinct from the supplier identity: the supplier sells the products, the
   brand made them. If more than one brand shares the page, omit the field
   rather than guess which rows belong to which brand.
+- A promotion printed as a page banner ('Promotion: Mix over $1000, 10% off',
+  '混合12件 9折') is a commercial term for every row of the page — it goes in
+  page_promotion_text, verbatim, never in text_observations.
 - Decorative titles, page numbers and non-identifying contact details
   (phone/address/email) may still be omitted.
 - Each tabular row's cells align by position to its table's columns; use null
@@ -1181,6 +1190,11 @@ def _vision_observations(
                         **(
                             {"page_brand_text": envelope.page_brand_text}
                             if envelope.page_brand_text
+                            else {}
+                        ),
+                        **(
+                            {"page_promotion_text": envelope.page_promotion_text}
+                            if envelope.page_promotion_text
                             else {}
                         ),
                     },

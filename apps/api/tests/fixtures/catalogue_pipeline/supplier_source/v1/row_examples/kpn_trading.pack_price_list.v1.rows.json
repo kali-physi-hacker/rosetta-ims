@@ -4,7 +4,7 @@
   "row_evidence_status": "CONFIRMED",
   "supplier_id": 15,
   "supplier_name": "K.P.N. Trading",
-  "notes": "Confirmed against the golden/kpn_trading set (whole-catalogue capture of KPN_Kangaroo-updated.pdf, 2026-08-13): the full-pipeline golden e2e reproduces the BizOps sheet (golden_samples_by_supplier/k_p_n_trading_limited.csv) on code, price, basis qty and sellable qty for the 3 covered S&C SKUs. Split out of kpn_trading.catalogue_bundle.v1 after a full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf found the bundle's mixed price basis was three distinct, separately resolvable situations. This one covers layouts where exactly one wholesale amount is printed, always per pack/unit/bag, with no competing case-level figure.",
+  "notes": "Confirmed against the golden/kpn_trading set (whole-catalogue capture of KPN_Kangaroo-updated.pdf, 2026-08-13): the full-pipeline golden e2e reproduces the BizOps sheet (golden_samples_by_supplier/k_p_n_trading_limited.csv) on code, price, basis qty and sellable qty for the 3 covered S&C SKUs. Split out of kpn_trading.catalogue_bundle.v1 after a full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf found the bundle's mixed price basis was three distinct, separately resolvable situations. This one covers layouts where exactly one wholesale amount is printed, always per pack/unit/bag, with no competing case-level figure. 2026-08-17: the pack+case frozen-raw layout folded into this contract as the OPTIONAL case_wholesale_price bulk-term column (user ruling: pack+case is the pack layout plus an MBB column) — its FRB-3 example lives here now, and the retired kpn_trading.pack_and_case_bulk_list.v1 fixture is deleted.",
   "examples": [
     {
       "example_id": "kpn-trading-pack-price-sc-unit-case",
@@ -50,6 +50,55 @@
         "cost_price": "HK$113",
         "rrp": "HK$172",
         "units_per_case": "12"
+      }
+    },
+    {
+      "example_id": "kpn-trading-pack-frozen-frb-3",
+      "source": {
+        "sample_reference": "external-sample:KPN_Kangaroo.pdf",
+        "page_number": 1,
+        "supplier_identity_marker": "upload anchored to ingestion supplier 15; the frozen-raw pages print no supplier identity (2026-08-17 per-page capture), so the mismatch check has nothing to fire on",
+        "table_layout": "FROZEN_PACK_CASE",
+        "text_excerpt": "FRB-3 Stella's Super Beef 牛魔王 (牛肉配方) 3lb 6包 $204 $1094/箱 ($182/包) $276 $1570/箱 ($262/包)"
+      },
+      "printed_columns": [
+        "產品編號",
+        "產品名稱",
+        "原箱包數",
+        "批發價 每包",
+        "批發價 每箱 (平均每包價)",
+        "建議零售價 每包",
+        "建議零售價 每箱 (平均每包價)"
+      ],
+      "runtime_input": {
+        "supplier_sku": "FRB-3",
+        "description": "Stella’s Super Beef 牛魔王 (牛肉配方)",
+        "pack_size": "3lb",
+        "units_per_case": "6包",
+        "wholesale_price": "$204",
+        "case_wholesale_price": "$1094/箱\n($182/包)",
+        "rrp": "$276"
+      },
+      "expected_semantics": {
+        "price_basis": "PACK",
+        "currency": "HKD",
+        "reason": "wholesale_price ($204) is the standard per-pack price. case_wholesale_price ($1094 for a 6-pack case) is a bulk discount worth 10.6% off buying 6 packs individually (6 x $204 = $1224 vs $1094) — a genuine SKU-specific discount. The embedded '($182/包)' per-pack rate is printed on the page and becomes the typed term's discounted price: buy 6 PACK at $182 per PACK.",
+        "known_gap": null
+      },
+      "expected_runtime_item": {
+        "cost_price": "$204",
+        "rrp": "$276",
+        "units_per_case": "6包",
+        "weight_grams": 1361.0
+      },
+      "raw_row": {
+        "產品編號": "FRB-3",
+        "產品名稱": "Stella's Super Beef 牛魔王 (牛肉配方)",
+        "原箱包數": "3lb 6包",
+        "批發價 每包": "$204",
+        "批發價 每箱(平均每包價)": "$1094/箱 ($182/包)",
+        "建議零售價 每包": "$276",
+        "建議零售價 每箱(平均每包價)": "$1570/箱 ($262/包)"
       }
     }
   ],

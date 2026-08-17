@@ -202,6 +202,10 @@ def _mbb_text(term: models.CatalogueSupplierMbbTerm) -> str:
         basis = _uom(term.discounted_price_basis_uom_code, term.discounted_price_basis_uom_label)
         if term.condition_type == "minimum_spend":
             return f"spend {_money(term.condition_spend_amount, term.condition_spend_currency)} at {price}"
+        if term.condition_type == "minimum_quantity" and qty == "1":
+            # Conditioned on buying one = unconditional: the struck-price
+            # Special Offer shape, which "buy 1" would misstate as a tier.
+            return f"special offer: {price} per {basis}" if basis else f"special offer: {price}"
         head = f"buy {qty} {qty_uom}".strip() if qty else "buy"
         return f"{head} at {price} per {basis}" if basis else f"{head} at {price}"
     if term.benefit_type == "percentage_discount":

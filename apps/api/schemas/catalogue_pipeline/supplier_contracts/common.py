@@ -444,6 +444,53 @@ class MbbSourceSemantics(SupplierSourceModel):
     supported_scopes: list[MbbScope] = Field(default_factory=list, description="MBB scopes this format can express.")
     condition_patterns: list[str] = Field(default_factory=list, description="Known condition notations.")
     benefit_patterns: list[str] = Field(default_factory=list, description="Known benefit notations.")
+    page_promotion_shapes: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Page-BANNER promotion notations this source prints, parsed into order-scoped "
+            "MBB terms from the page-level page_promotion_text the extraction stamps onto "
+            "every row of the page. Only declared shapes parse — an undeclared banner stays "
+            "evidence, never a guess. Known shapes: 'mix_over_spend_percent' "
+            "('Promotion: Mix over $1000, 10% off') and 'mixed_quantity_percent_tiers' "
+            "('混合12件 9折 24件 8折' — N items unlocks (10-折)x10 percent off)."
+        ),
+    )
+    quantity_band_source_field: str | None = Field(
+        None,
+        description=(
+            "Field whose printed text may carry a same-code quantity band ('1-10 bottles', "
+            "'11-20 bottles'). When declared, a row whose code equals an earlier row's and "
+            "whose band range starts above that row's band end folds into the earlier row "
+            "as a minimum-quantity discounted-price term instead of becoming a duplicate "
+            "candidate. Only the closed 'N-M unit' notation folds; anything else — open "
+            "ranges, overlapping ranges, a duplicate code without band text, a band that "
+            "is not cheaper — leaves the rows as separate candidates for a person."
+        ),
+    )
+    quantity_ladder_heading_prefixes: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Heading prefixes that mark quantity-banded PRICE COLUMNS ('PRICE: 50 doses "
+            "or above (per unit)', 'PRICE PER ORDER QTY: 1-19', 'Price: 1 or above'). "
+            "Ruling 2026-08-17: the LOWEST filled rung is the row's base cost and its "
+            "lower-bound quantity is the minimum order (a bound of 1 is no constraint); "
+            "deeper filled rungs become minimum-quantity discounted-price terms. A rung "
+            "heading containing 'per unit' pins the price basis to UNIT; otherwise the "
+            "row's ordinary basis resolution applies. Undeclared contracts never parse "
+            "ladder headings."
+        ),
+    )
+    struck_price_offer_source_field: str | None = Field(
+        None,
+        description=(
+            "Cost field whose cell may print a struck-through regular price beside a "
+            "'Special Offer' badge price, arriving as TWO unmarked amounts ('$739 "
+            "HK$1056.0'). When declared, exactly two distinct amounts read as the LARGER "
+            "being the row's cost and the smaller an unconditional (minimum quantity 1) "
+            "discounted-price term. Undeclared contracts keep the refusal: two unmarked "
+            "prices dead-letter for a person rather than land as a guess."
+        ),
+    )
     requires_validation_issue_when: list[str] = Field(
         default_factory=list,
         description="Ambiguity cases that require ValidationIssueV1 instead of normalization.",
@@ -582,6 +629,12 @@ class SupplierSourceContractV1(SupplierSourceModel):
         self._assert_field_ref(self.packaging.minimum_order_source_field, known_fields, "packaging.minimum_order_source_field")
         for source_field in self.mbb.source_fields:
             self._assert_field_ref(source_field, known_fields, "mbb.source_fields")
+        self._assert_field_ref(
+            self.mbb.quantity_band_source_field, known_fields, "mbb.quantity_band_source_field"
+        )
+        self._assert_field_ref(
+            self.mbb.struck_price_offer_source_field, known_fields, "mbb.struck_price_offer_source_field"
+        )
         for source_field in (
             self.pipeline_mapping.raw_observation_fields
             + self.pipeline_mapping.staging_raw_field_keys

@@ -1,0 +1,157 @@
+{
+  "page_outcome": "evidence",
+  "page_brand_text": "Ziwi Peak",
+  "tables": [
+    {
+      "section": "鮮肉狗罐頭系列 Ziwi Peak Moist Dog Food 價錢表 Pricelist",
+      "columns": [
+        "產品內容",
+        "產品編號",
+        "重量",
+        "批發價(HKD) 每箱(12罐)",
+        "建議零售價(HKD) 每箱(12罐)",
+        "建議零售價(HKD) 每罐"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "Wet Lamb Recipe for Dogs 羊肉配方",
+            "CDL170",
+            "170g",
+            "$340 (@28.3)",
+            "$485",
+            "$44"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Lamb Recipe for Dogs 羊肉配方",
+            "CDL",
+            "390g",
+            "$535 (@44.6)",
+            "$735",
+            "$70"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Beef Recipe for Dogs 牛肉配方",
+            "CDB170",
+            "170g",
+            "$340 (@28.3)",
+            "$485",
+            "$44"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Beef Recipe for Dogs 牛肉配方",
+            "CDB",
+            "390g",
+            "$535 (@44.6)",
+            "$735",
+            "$70"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Mackerel & Lamb Recipe for Dogs 鯖魚及羊肉配方",
+            "CDML170",
+            "170g",
+            "$340 (@28.3)",
+            "$485",
+            "$44"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Mackerel & Lamb Recipe for Dogs 鯖魚及羊肉配方",
+            "CDML",
+            "390g",
+            "$535 (@44.6)",
+            "$735",
+            "$70"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Free-Range Chicken Recipe for Dogs 放養雞配方",
+            "CDC170",
+            "170g",
+            "$340 (@28.3)",
+            "$485",
+            "$44"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Free-Range Chicken Recipe for Dogs 放養雞配方",
+            "CDC",
+            "390g",
+            "$535 (@44.6)",
+            "$735",
+            "$70"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Tripe & Lamb Recipe for Dogs 草胃及羊肉配方",
+            "CDTL170",
+            "170g",
+            "$340 (@28.3)",
+            "$485",
+            "$44"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Tripe & Lamb Recipe for Dogs 草胃及羊肉配方",
+            "CDTL",
+            "390g",
+            "$535 (@44.6)",
+            "$735",
+            "$70"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Venison Recipe for Dogs 鹿肉配方",
+            "CDV170",
+            "170g",
+            "$500 (@41.7)",
+            "$685",
+            "$61.5"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "Wet Venison Recipe for Dogs 鹿肉配方",
+            "CDV",
+            "390g",
+            "$735 (@61.3)",
+            "$1,075",
+            "$95"
+          ],
+          "confidence": "0.95"
+        }
+      ]
+    }
+  ],
+  "text_observations": [
+    {
+      "text": "With effect from 1 Mar 2026",
+      "confidence": "0.9"
+    }
+  ]
+}

@@ -1,65 +1,63 @@
 {
- "page_outcome": "evidence",
- "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
- "page_brand_text": "Dermoscent®",
- "tables": [
-  {
-   "columns": [
-    "CODE NO",
-    "PRODUCT NAME",
-    "WHOLESALE PRICE",
-    "SUGGESTED RETAIL PRICE"
-   ],
-   "rows": [
+  "page_outcome": "evidence",
+  "supplier_identity_text": "C. VETAPET & COMPANY 施惠德洋行",
+  "page_brand_text": "Dermoscent®",
+  "page_promotion_text": "Promotion: Mix over $1000, 10% off",
+  "tables": [
     {
-     "cells": [
-      "44515",
-      "Dermoscent® PYOclean® Spray for dogs & cats - 50mL",
-      "HK$135.0",
-      "HK$260.0"
-     ]
-    },
-    {
-     "cells": [
-      "44717",
-      "Dermoscent® PYOclean® Mousse for dogs & cats - 150mL",
-      "HK$125.0",
-      "HK$255.0"
-     ]
-    },
-    {
-     "cells": [
-      "45407",
-      "Dermoscent® PYOclean® Shampoo for dogs & cats - 200mL",
-      "HK$105.0",
-      "HK$190.0"
-     ]
-    },
-    {
-     "cells": [
-      "24106",
-      "Dermoscent® PYOclean® Oto for dogs & cats - 10x5mL",
-      "HK$100.0",
-      "HK$200.0"
-     ]
-    },
-    {
-     "cells": [
-      "24104",
-      "Dermoscent® PYOclean® Wipes for dogs & cats - 20 wipes",
-      "HK$65.0",
-      "HK$120.0"
-     ]
+      "columns": [
+        "CODE NO",
+        "PRODUCT NAME",
+        "WHOLESALE PRICE",
+        "SUGGESTED RETAIL PRICE"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "44515",
+            "Dermoscent® PYOclean® Spray for dogs & cats - 50mL",
+            "HK$135.0",
+            "HK$260.0"
+          ]
+        },
+        {
+          "cells": [
+            "44717",
+            "Dermoscent® PYOclean® Mousse for dogs & cats - 150mL",
+            "HK$125.0",
+            "HK$255.0"
+          ]
+        },
+        {
+          "cells": [
+            "45407",
+            "Dermoscent® PYOclean® Shampoo for dogs & cats - 200mL",
+            "HK$105.0",
+            "HK$190.0"
+          ]
+        },
+        {
+          "cells": [
+            "24106",
+            "Dermoscent® PYOclean® Oto for dogs & cats - 10x5mL",
+            "HK$100.0",
+            "HK$200.0"
+          ]
+        },
+        {
+          "cells": [
+            "24104",
+            "Dermoscent® PYOclean® Wipes for dogs & cats - 20 wipes",
+            "HK$65.0",
+            "HK$120.0"
+          ]
+        }
+      ]
     }
-   ]
-  }
- ],
- "text_observations": [
-  {
-   "text": "Made in France"
-  },
-  {
-   "text": "Promotion: Mix over $1000, 10% off"
-  }
- ]
+  ],
+  "text_observations": [
+    {
+      "text": "Made in France"
+    }
+  ]
 }

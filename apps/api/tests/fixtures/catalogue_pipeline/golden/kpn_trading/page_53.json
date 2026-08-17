@@ -1,0 +1,186 @@
+{
+  "page_outcome": "evidence",
+  "page_brand_text": "Stella & Chewy's Kibble For Cats 香港版 HK",
+  "tables": [
+    {
+      "section": "- RAW COATED -",
+      "columns": [
+        "SKU#",
+        "產品內容",
+        "包裝",
+        "每包批發價",
+        "每包建議零售價"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "CRC-CFC-2.5",
+            "放養雞配方 Raw Coated Kibble Cage-Free Chicken Recipe",
+            "2.5 lb.",
+            "HK$170",
+            "HK$258"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-CFC-5",
+            "放養雞配方 Raw Coated Kibble Cage-Free Chicken Recipe",
+            "5 lb.",
+            "HK$248",
+            "HK$365"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-CFC-10",
+            "放養雞配方 Raw Coated Kibble Cage-Free Chicken Recipe",
+            "10 lb.",
+            "HK$408",
+            "HK$595"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-WCS-2.5",
+            "野生捕撈三文魚配方 Raw Coated Kibble Wild-Caught Salmon Recipe",
+            "2.5 lb.",
+            "HK$182",
+            "HK$282"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-WCS-5",
+            "野生捕撈三文魚配方 Raw Coated Kibble Wild-Caught Salmon Recipe",
+            "5 lb.",
+            "HK$258",
+            "HK$375"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-WCS-10",
+            "野生捕撈三文魚配方 Raw Coated Kibble Wild-Caught Salmon Recipe",
+            "10 lb.",
+            "HK$425",
+            "HK$605"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-DK-2.5",
+            "放養鴨配方 Raw Coated Kibble Cage Free Duck Recipe",
+            "2.5 lb.",
+            "HK$182",
+            "HK$282"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-DK-5",
+            "放養鴨配方 Raw Coated Kibble Cage Free Duck Recipe",
+            "5 lb.",
+            "HK$258",
+            "HK$375"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-KIT-2.5",
+            "放養雞幼貓配方 Raw Coated Kibble Cage-Free Chicken Recipe FOR KITTENS",
+            "2.5 lb.",
+            "HK$170",
+            "HK$258"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRC-KIT-5",
+            "放養雞幼貓配方 Raw Coated Kibble Cage-Free Chicken Recipe FOR KITTENS",
+            "5 lb.",
+            "HK$248",
+            "HK$365"
+          ],
+          "confidence": "0.95"
+        }
+      ]
+    },
+    {
+      "section": "- RAW BLEND -",
+      "columns": [
+        "SKU#",
+        "產品內容",
+        "包裝",
+        "每包批發價",
+        "每包建議零售價"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "CRB-CF-2.5",
+            "放養配方 Raw Blend Cage Free Recipe",
+            "2.5 lb.",
+            "HK$212",
+            "HK$319"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRB-CF-5",
+            "放養配方 Raw Blend Cage Free Recipe",
+            "5 lb.",
+            "HK$328",
+            "HK$460"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRB-CF-10",
+            "放養配方 Raw Blend Cage Free Recipe",
+            "10 lb.",
+            "HK$490",
+            "HK$699"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRB-WC-2.5",
+            "野生捕撈配方 Raw Blend Kibble Wild Caught Recipe",
+            "2.5 lb.",
+            "HK$212",
+            "HK$319"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "CRB-WC-5",
+            "野生捕撈配方 Raw Blend Kibble Wild Caught Recipe",
+            "5 lb.",
+            "HK$328",
+            "HK$460"
+          ],
+          "confidence": "0.95"
+        }
+      ]
+    }
+  ],
+  "text_observations": [
+    {
+      "text": "生效日期 Effective from (MM-DD-YYYY): 30-11-2022",
+      "confidence": "0.9"
+    }
+  ]
+}

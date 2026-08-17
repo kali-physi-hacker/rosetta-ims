@@ -159,7 +159,8 @@
         "WHOLESALE PRICE",
         "UNIT PRICE",
         "PRICE",
-        "UNIT PRICE PER TEST"
+        "UNIT PRICE PER TEST",
+        "Unit Price (box)"
       ],
       "description": "Supplier cost. The vet sections price by UNIT PRICE / PRICE — verified on the sample that UNIT PRICE is the price of one ORDER UNIT (a box/set/pc named per row), not one test; see packaging.purchase_uom_source_field. Retail sections print 批發價 (letter-spaced in print; matched via CJK-space-insensitive folding).",
       "evidence": [
@@ -309,11 +310,12 @@
     "interpretation_rules": [
       "Treat kg/g/ml size text as content measure, not sellable-unit count.",
       "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms.",
-      "ORDER UNIT names what one UNIT PRICE buys; PACKING PER UNIT describes what is inside it."
+      "ORDER UNIT names what one UNIT PRICE buys; PACKING PER UNIT describes what is inside it.",
+      "A layout that prints an RRP column quotes unit prices: retail is per one of the row's item, so the cost beside it is too (ruling 2026-08-17). The bare PRICE tables all print SUGGESTED PRICE, which is why their UNIT basis is layout-confirmed rather than a fallback guess."
     ],
     "unresolved_semantics": [
       "Order increment and break-pack rules are not proven by checked-in source evidence.",
-      "Rows whose order-unit column is absent AND whose packing text names no known unit ('35 cm/length') keep the declared UNIT fallback basis."
+      "Rows whose order-unit column is absent, whose packing text names no known unit ('35 cm/length'), AND whose table prints no RRP column keep the declared UNIT fallback basis without layout confirmation."
     ]
   },
   "mbb": {
@@ -330,6 +332,17 @@
       "percentage discount",
       "fixed price per unit"
     ],
+    "page_promotion_shapes": [
+      "mix_over_spend_percent",
+      "mixed_quantity_percent_tiers"
+    ],
+    "quantity_band_source_field": "order_unit",
+    "quantity_ladder_heading_prefixes": [
+      "PRICE:",
+      "PRICE PER ORDER QTY:",
+      "Price:"
+    ],
+    "struck_price_offer_source_field": "cost",
     "requires_validation_issue_when": [
       "The qualifying products or exact threshold basis are not explicit.",
       "Stacking rules or exclusions are not defined."
@@ -368,32 +381,7 @@
       ]
     }
   ],
-  "known_ambiguities": [
-    {
-      "issue_code": "VETAPET_VET_MULTIPLE_TABLE_LAYOUTS",
-      "condition": "The supplied Vetapet PDF contains Unit Price tables (with ORDER UNIT columns), bare PRICE tables (without), and Wholesale/Retail/Terms tables. All are now declared via cost aliases with a per-row order-unit basis where printed; the PRICE layouts fall back to an unverified UNIT basis.",
-      "review_guidance": "Answered by the golden sample sheet: BizOps filled a per-row basis for golden SKUs from the PRICE layouts (21501/24106/141001/109300), and the vetapet_vet golden set pins the pipeline's resolved basis against those answers row by row. Where the two still disagree, the disagreement is a named known_gap in the golden expectations — visible, not assumed.",
-      "blocks_supported_status": false
-    },
-    {
-      "issue_code": "VETAPET_VET_SPECIAL_OFFER_STRUCK_PRICES",
-      "condition": "Some vet pages print 'Special Offer: N% off' bands with the original price struck through and a badge price beside it (sample page 20: HK$1056 struck, $739 badge). Which amount lands in the UNIT PRICE column of the extracted evidence depends on the render; the offer is time-limited and neither amount is flagged as promotional in the row.",
-      "review_guidance": "Structurally prevented since the conformance hardening that shipped with the KPN/Kangaroo contracts: a cell carrying two unmarked amounts ('$739 HK$1056.0') refuses to parse — choosing between two printed prices is a guess the parser will not make — so such rows dead-letter for a person instead of silently landing either number. That is exactly the review this guidance demanded, now enforced by the engine.",
-      "blocks_supported_status": false
-    },
-    {
-      "issue_code": "VETAPET_VET_QUANTITY_BAND_ROWS",
-      "condition": "Some sections print the SAME code at several quantity bands as separate rows — Topizole TOP250 prints ORDER UNIT '1-10 bottles' at HK$82.0 and '11-20 bottles' at HK$78.0; wound-care 500-00xx SKUs print 3/6/12-piece bands the same way. No mechanism folds same-code band rows into a base price plus quantity terms (MBB_TIER_ROW handles code-less tier lines; tier_quantity_field handles same-row columns), so each band becomes its own candidate and a later publication supersedes the earlier — the deepest band can end up as the base cost.",
-      "review_guidance": "Until band folding exists, both band candidates reach the review desk: approve the base band (the lowest-quantity row) and reject the deeper bands, recording the discount as supplier terms. The golden set parks TOP250 for exactly this reason (see its expectations.json).",
-      "blocks_supported_status": false
-    },
-    {
-      "issue_code": "VETAPET_PAGE_BANNER_PROMOTIONS_UNREACHABLE",
-      "condition": "Order- and brand-scoped promotions print as page banners ('Promotion: Mix over $1000, 10% off'; '混合12件 9折 24件 8折'), which extraction stores as page-level text_observations — no contract field mechanism reaches those today, so they are preserved as evidence but never attached to rows.",
-      "review_guidance": "Needs a shared mechanism (like supplier_identity_text) threading page text into row metadata, or reviewer awareness that banner promos live in the run's unmapped text evidence.",
-      "blocks_supported_status": false
-    }
-  ],
+  "known_ambiguities": [],
   "pipeline_mapping": {
     "raw_observation_contract_id": "catalogue.extracted_evidence.v1",
     "staging_item_contract_id": "catalogue.normalized_row.v1",

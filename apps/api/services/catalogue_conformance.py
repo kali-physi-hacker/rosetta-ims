@@ -120,6 +120,7 @@ def conform_observations(
     unconformable = 0
     ineligible = 0
     tier_rows = 0
+    band_rows = 0
     discontinued = 0
     for observation, raw_id in zip(observations, raw_observation_ids, strict=True):
         key = observation.observation_key
@@ -141,6 +142,9 @@ def conform_observations(
             ):
                 for key in [k for k in fields if "previous_supplier_sku" in k]:
                     fields.pop(key, None)
+            # Quantity-ladder pricing resolves BEFORE row issues are computed,
+            # so a ladder-satisfied cost also satisfies the REQUIRED check.
+            _apply_quantity_ladder(fields, observation, runtime_contract)
             page = observation.source_location.page_number
             if page != carried_page:
                 # The last product on a page owns nothing on the next one —
@@ -166,6 +170,17 @@ def conform_observations(
                 items[previous] = replace(items[previous], normalized_fields=merged)
                 skipped += 1
                 tier_rows += 1
+                continue
+            band = _quantity_band_term(fields, runtime_contract, items, raw_id, observation)
+            if band is not None:
+                # The same code printed again at a deeper quantity band: a
+                # discount on the product above, not a second product.
+                base_index, term = band
+                merged = dict(items[base_index].normalized_fields)
+                merged["mbb_terms"] = [*merged.get("mbb_terms", []), term]
+                items[base_index] = replace(items[base_index], normalized_fields=merged)
+                skipped += 1
+                band_rows += 1
                 continue
             if _is_ineligible_row(fields, runtime_contract):
                 # Carries neither an identity nor a price: a divider, a blank
@@ -243,6 +258,7 @@ def conform_observations(
             # Named as a skip so every reason a row did not become an item
             # lives under one prefix and the set sums to skipped_count.
             "skipped_tier_rows": tier_rows,
+            "skipped_quantity_band_rows": band_rows,
             "skipped_discontinued_rows": discontinued,
             "skipped_non_tabular_text": furniture,
             "unconformable_items": unconformable,
@@ -532,15 +548,44 @@ def _item_from_fields(
         normalized["effective_date"] = effective_date
 
     cost = _cost_proposal(fields.get("cost_price"), runtime_contract, evidence, fields)
+    struck_offer_term = None
+    if cost is None:
+        # A declared struck-price render ('$739 HK$1056.0') is the one two-
+        # amount cell that is not a guess: the larger is the regular price,
+        # the smaller the printed Special Offer.
+        struck = _struck_price_offer(fields, runtime_contract, evidence)
+        if struck is not None:
+            cost, struck_offer_term = struck
+    ladder = fields.get("__quantity_ladder__")
+    if ladder and cost is not None and ladder.get("per_unit_basis"):
+        # The rung heading literally says "(per unit)" — the price is per
+        # single unit (dose), never per the packing text's slash-unit.
+        cost = {**cost, "price_basis": UnitOfMeasure(code=UnitCode.UNIT).model_dump(mode="json")}
     if cost is not None:
         normalized["cost"] = cost
     rrp = _money_proposal(fields.get("rrp"), runtime_contract, evidence)
     if rrp is not None:
         normalized["rrp"] = rrp
     packaging = _packaging_proposal(fields, runtime_contract, evidence)
+    if ladder and ladder.get("minimum_order") and packaging is not None and cost is not None:
+        # The lowest rung's bound is the minimum order ("50 doses or above"
+        # means you cannot order fewer) — a bound of 1 was dropped upstream
+        # because an increment of one is not a constraint.
+        packaging = {
+            **packaging,
+            "minimum_order_quantity": {
+                "amount": ladder["minimum_order"],
+                "uom": cost["price_basis"],
+            },
+        }
     if packaging is not None:
         normalized["packaging"] = packaging
-    normalized["mbb_terms"] = _tier_price_terms(fields, runtime_contract, evidence, cost)
+    normalized["mbb_terms"] = (
+        _tier_price_terms(fields, runtime_contract, evidence, cost)
+        + _page_promotion_terms(observation, runtime_contract, evidence)
+        + ([struck_offer_term] if struck_offer_term else [])
+        + _quantity_ladder_terms(ladder, cost, evidence)
+    )
 
     return ConformedRow(
         observation_key=observation.observation_key,
@@ -1041,6 +1086,255 @@ def _tier_row_term(
     return parent_index, term, lifted_cost
 
 
+# The first number after a declared ladder prefix is the rung's lower bound:
+# 'PRICE: 50 doses or above (per unit)' -> 50; 'PRICE PER ORDER QTY: 1-19' -> 1.
+_LADDER_LOWER_BOUND = re.compile(r"(\d+(?:\.\d+)?)")
+
+
+def _quantity_ladder_terms(
+    ladder: dict[str, Any] | None,
+    cost: dict[str, Any] | None,
+    evidence: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Deeper ladder rungs as minimum-quantity discounted-price terms."""
+    if not ladder or cost is None:
+        return []
+    base = _decimal_or_none(ladder.get("base_amount"))
+    terms: list[dict[str, Any]] = []
+    for qty, amount in ladder.get("tiers") or []:
+        rate = _decimal_or_none(amount)
+        if rate is None or (base is not None and rate >= base):
+            # A deeper rung that is not cheaper is not a discount.
+            continue
+        terms.append({
+            "mbb_term_id": str(_stable_term_uuid(evidence, f"quantity_ladder:{qty}")),
+            "scope": "SUPPLIER_SKU",
+            "condition": {
+                "condition_type": "minimum_quantity",
+                "quantity": {"amount": qty, "uom": cost["price_basis"]},
+            },
+            "benefit": {
+                "benefit_type": "discounted_unit_price",
+                "discounted_price": {
+                    "amount": str(rate),
+                    "currency": cost["currency"],
+                    "price_basis": cost["price_basis"],
+                },
+            },
+            "description": None,
+            "evidence": evidence,
+        })
+    return terms
+
+
+def _apply_quantity_ladder(
+    fields: dict[str, Any],
+    observation: ExtractedEvidence,
+    runtime_contract,
+) -> None:
+    """Resolve quantity-banded price COLUMNS into the row's cost slot.
+
+    Vetapet's indent-order sections price whole rows as a ladder — 'PRICE:
+    50 doses or above', 'PRICE: 100 doses or above' — with no unconditional
+    price anywhere. Ruling 2026-08-17: the LOWEST filled rung IS the base
+    cost and its lower bound is the minimum order; deeper rungs are deals.
+
+    Only contracts that declare mbb.quantity_ladder_heading_prefixes
+    participate, and only when the ordinary cost field resolved nothing —
+    a printed plain price always wins over ladder interpretation. The rung
+    chosen and the deeper rungs are stashed for _item_from_fields, which
+    pins the basis, injects the minimum order, and emits the terms.
+    """
+    prefixes = [p.casefold() for p in runtime_contract.declaration.mbb.quantity_ladder_heading_prefixes]
+    if not prefixes:
+        return
+    cost_field = runtime_contract.declaration.pricing.cost_source_field
+    if not cost_field or _text(fields.get(f"source:{cost_field}")) is not None:
+        return
+    rungs: list[tuple[Decimal, Decimal, str, bool]] = []
+    for cell in observation.raw_cells:
+        heading = (cell.column_name or "").strip()
+        folded = heading.casefold()
+        match_prefix = next((p for p in prefixes if folded.startswith(p)), None)
+        if match_prefix is None:
+            continue
+        remainder = heading[len(match_prefix):]
+        bound = _LADDER_LOWER_BOUND.search(remainder)
+        amount = _decimal_value(cell.raw_value)
+        if bound is None or amount is None or amount <= 0:
+            continue
+        rungs.append((Decimal(bound.group(1)), amount, str(cell.raw_value), "per unit" in folded))
+    if not rungs:
+        return
+    rungs.sort(key=lambda r: r[0])
+    base_qty, base_amount, base_raw, per_unit = rungs[0]
+    fields[f"source:{cost_field}"] = base_raw
+    fields.setdefault("cost_price", base_raw)
+    fields["__quantity_ladder__"] = {
+        "minimum_order": str(base_qty) if base_qty > 1 else None,
+        "per_unit_basis": per_unit,
+        "base_amount": str(base_amount),
+        "tiers": [(str(qty), str(amount)) for qty, amount, _raw, _pu in rungs[1:]],
+    }
+
+
+def _struck_price_offer(
+    fields: dict[str, Any],
+    runtime_contract,
+    evidence: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """The regular price plus a Special-Offer term from a struck-price cell, or None.
+
+    Vet pages print 'Special Offer: N% off' bands with the original price
+    struck through and a badge price beside it; the extracted cell then
+    carries both amounts unmarked ('$739 HK$1056.0'). For every contract that
+    has NOT declared this render, such a cell keeps refusing to parse — two
+    unmarked prices are a guess — and the row dead-letters for a person.
+
+    A contract that HAS declared it (mbb.struck_price_offer_source_field) has
+    stated which field prints that render, and then nothing is guessed: a
+    discount's offer price is necessarily the smaller amount, so the larger is
+    the row's regular cost and the smaller becomes an unconditional
+    (minimum quantity 1) discounted-price term. Anything but exactly two
+    distinct amounts still refuses — equal amounts are no discount, and three
+    are a misread.
+    """
+    offer_field = runtime_contract.declaration.mbb.struck_price_offer_source_field
+    if not offer_field:
+        return None
+    raw = _source_field_value(fields, offer_field)
+    amounts = _money_amounts(raw)
+    if len(amounts) != 2 or amounts[0] == amounts[1]:
+        return None
+    offer, original = min(amounts), max(amounts)
+    if offer <= 0:
+        return None
+    cost = _cost_proposal(str(original), runtime_contract, evidence, fields)
+    if cost is None:
+        return None
+    term = {
+        "mbb_term_id": str(_stable_term_uuid(evidence, f"{offer_field}:struck_offer")),
+        "scope": "SUPPLIER_SKU",
+        # Quantity one: the printed offer asks nothing beyond buying it. The
+        # existing condition vocabulary states that exactly.
+        "condition": {
+            "condition_type": "minimum_quantity",
+            "quantity": {"amount": "1", "uom": cost["price_basis"]},
+        },
+        "benefit": {
+            "benefit_type": "discounted_unit_price",
+            "discounted_price": {
+                "amount": str(offer),
+                "currency": cost["currency"],
+                "price_basis": cost["price_basis"],
+            },
+        },
+        "description": raw,
+        "evidence": evidence,
+    }
+    return cost, term
+
+
+# The one band notation a real page has proven (Topizole TOP250): a closed
+# 'N-M unit' range. Open ranges ('21+') stay unfolded until a page prints one.
+_QUANTITY_BAND = re.compile(r"^\s*(\d+)\s*[-–—]\s*(\d+)\s+(.+?)\s*$")
+
+
+def _quantity_band_term(
+    fields: dict[str, Any],
+    runtime_contract,
+    items: list[ConformedRow],
+    raw_observation_id: UUID,
+    observation: ExtractedEvidence,
+) -> tuple[int, dict[str, Any]] | None:
+    """A deeper quantity band printed as its own same-code row, or None.
+
+    Vetapet prints the ladder as full rows that repeat the code:
+
+        TOP250  Topizole 5mg/ml ...  1-10 bottles   82.0
+        TOP250  Topizole 5mg/ml ...  11-20 bottles  78.0
+
+    Both halves are on the page — buy eleven, pay 78.00 per bottle — so the
+    deeper row is a fully determined term on the first row's product, not a
+    second candidate for the same SKU (whose later publication would supersede
+    the base price with the deep-band price).
+
+    Only contracts that declare mbb.quantity_band_source_field participate,
+    and every guard refuses toward "two candidates for a person" rather than
+    folding on a maybe: the earlier row must carry a parseable band of the
+    same unit noun, the deeper range must start above the earlier range's
+    end, both prices must resolve on the same basis, and the deeper price
+    must be cheaper.
+    """
+    band_field = runtime_contract.declaration.mbb.quantity_band_source_field
+    if not band_field:
+        return None
+    own_text = _text(fields.get(f"source:{band_field}"))
+    own_band = _QUANTITY_BAND.match(own_text or "")
+    if own_band is None:
+        return None
+    sku = _text(fields.get("supplier_sku"))
+    if sku is None:
+        return None
+    base_index = next(
+        (i for i in range(len(items) - 1, -1, -1) if items[i].raw_fields.get("supplier_sku") == sku),
+        None,
+    )
+    if base_index is None:
+        return None
+    base = items[base_index]
+    base_text = _text((base.raw_fields.get("additional_fields") or {}).get(band_field))
+    base_band = _QUANTITY_BAND.match(base_text or "")
+    if base_band is None:
+        # A repeated code without band semantics is a duplicate to review,
+        # not a ladder to fold.
+        return None
+    own_start = int(own_band.group(1))
+    own_unit = own_band.group(3).strip().casefold()
+    base_end = int(base_band.group(2))
+    base_unit = base_band.group(3).strip().casefold()
+    if own_unit != base_unit or own_start <= base_end:
+        # A different noun or an overlapping/reordered range is a misread
+        # page, and folding a misread would erase a stocked SKU.
+        return None
+    evidence = {
+        "raw_observation_id": str(raw_observation_id),
+        "field_path": "/raw_cells",
+        "confidence": _confidence_text(fields.get("confidence"), observation.confidence),
+    }
+    cost = _cost_proposal(fields.get("cost_price"), runtime_contract, evidence, fields)
+    base_cost = base.normalized_fields.get("cost") or {}
+    base_amount = _decimal_or_none(base_cost.get("amount"))
+    if cost is None or base_amount is None:
+        return None
+    if cost["price_basis"].get("code") != (base_cost.get("price_basis") or {}).get("code"):
+        return None
+    if Decimal(cost["amount"]) >= base_amount:
+        # A band that is not cheaper is not a discount — leave both rows
+        # standing for review rather than assert one.
+        return None
+    term = {
+        "mbb_term_id": str(_stable_term_uuid(evidence, f"{band_field}:band:{own_start}")),
+        # The quantity is of THIS product, same shapes as the tier-ROW path.
+        "scope": "SUPPLIER_SKU",
+        "condition": {
+            "condition_type": "minimum_quantity",
+            "quantity": {"amount": str(own_start), "uom": cost["price_basis"]},
+        },
+        "benefit": {
+            "benefit_type": "discounted_unit_price",
+            "discounted_price": {
+                "amount": cost["amount"],
+                "currency": cost["currency"],
+                "price_basis": cost["price_basis"],
+            },
+        },
+        "description": own_text,
+        "evidence": evidence,
+    }
+    return base_index, term
+
+
 def _is_discontinued(fields: dict[str, Any], runtime_contract) -> bool:
     """True when the supplier has marked this line as no longer sold.
 
@@ -1237,7 +1531,7 @@ def _tier_price_terms(
         # (平均每包價)'), unlocked by buying the quantity another declared field
         # states (units per case). Both halves are printed on the row, so the
         # term is as fully determined as Hill's spend ladder.
-        quantity = _leading_decimal(fields.get(f"source:{tier.tier_quantity_field}"))
+        quantity = _counted_quantity(fields.get(f"source:{tier.tier_quantity_field}"))
         if quantity is None or quantity <= 1:
             continue
         amounts = _money_amounts(fields.get(f"source:{tier.field_key}"))
@@ -1277,6 +1571,80 @@ def _tier_price_terms(
             "description": tier.description,
             "evidence": evidence,
         })
+    return terms
+
+
+# The two page-banner promotion notations a contract may declare. Strict on
+# purpose: a banner that matches neither stays evidence, never a guessed term.
+_PAGE_PROMO_SPEND_PERCENT = re.compile(
+    r"mix\s+over\s+\$?\s*([\d,]+(?:\.\d+)?)\s*[,，]?\s*(\d+(?:\.\d+)?)\s*%\s*off",
+    re.IGNORECASE,
+)
+_PAGE_PROMO_ZHE_TIER = re.compile(r"(\d+)\s*件\s*(\d{1,2}(?:\.\d)?)\s*折")
+
+
+def _page_promotion_terms(
+    observation: ExtractedEvidence,
+    runtime_contract,
+    evidence: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Order-scoped terms from the page's promotion banner.
+
+    Extraction stamps ``page_promotion_text`` (verbatim banner) onto every
+    observation of the page; a contract that DECLARES the banner's notation in
+    ``mbb.page_promotion_shapes`` gets it parsed into typed terms on each row.
+    Undeclared contracts and unrecognised banners produce nothing — the text
+    remains page evidence, which is exactly what it was before this existed.
+
+    折 arithmetic: 9折 means "pay 90%%", so the discount is (10 - 折) × 10
+    percent — 9折 → 10%% off, 8.5折 → 15%% off.
+    """
+    shapes = tuple(runtime_contract.declaration.mbb.page_promotion_shapes)
+    if not shapes:
+        return []
+    text = _text((observation.source_metadata or {}).get("page_promotion_text"))
+    if not text:
+        return []
+    currency = runtime_contract.declaration.pricing.currency
+    terms: list[dict[str, Any]] = []
+
+    def _term(index: int, condition: dict[str, Any], percentage: str) -> dict[str, Any]:
+        seed = f"{evidence.get('raw_observation_id')}:page-promo:{index}"
+        return {
+            "mbb_term_id": str(uuid.uuid5(uuid.NAMESPACE_URL, f"rosetta:mbb-page-promo:{seed}")),
+            # The banner speaks about the ORDER ("mix over…", "mix 12 items"),
+            # not this row alone — the same scope word Hill's spend ladder uses.
+            "scope": "SUPPLIER_ORDER",
+            "condition": condition,
+            "benefit": {"benefit_type": "percentage_discount", "percentage": percentage},
+            "description": text,
+            "evidence": evidence,
+        }
+
+    index = 0
+    if "mix_over_spend_percent" in shapes:
+        for match in _PAGE_PROMO_SPEND_PERCENT.finditer(text):
+            amount = match.group(1).replace(",", "")
+            terms.append(_term(
+                index,
+                {"condition_type": "minimum_spend", "spend": {"amount": amount, "currency": currency}},
+                match.group(2),
+            ))
+            index += 1
+    if "mixed_quantity_percent_tiers" in shapes:
+        for match in _PAGE_PROMO_ZHE_TIER.finditer(text):
+            # 折 permits one decimal digit, so the percentage is always an
+            # integer; quantize keeps it out of Decimal's 1E+1 rendering.
+            percent = Decimal(100) - Decimal(match.group(2)) * 10
+            if percent <= 0 or percent >= 100:
+                continue
+            terms.append(_term(
+                index,
+                {"condition_type": "minimum_quantity",
+                 "quantity": {"amount": match.group(1), "uom": {"code": "UNIT", "label": None}}},
+                str(percent.quantize(Decimal("1"))),
+            ))
+            index += 1
     return terms
 
 
@@ -1527,6 +1895,34 @@ def _source_field_value(fields: dict[str, Any], field_key: str | None) -> str | 
     if not field_key:
         return None
     return _text(fields.get(f"source:{field_key}"))
+
+
+# A count wearing its counter noun. K.P.N.'s case column merges the content
+# size with the case count ('3lb 6包' = six 3-lb bags per case): the leading
+# number is the SIZE, and reading it as the quantity would price "buy 3" —
+# or "buy 12" on '12lb 2包' — where the page says buy 6 (or 2).
+_COUNTED_QUANTITY = re.compile(
+    r"(\d+(?:\.\d+)?)\s*(?:包|罐|盒|支|袋|樽|瓶|pcs?|packs?|tins?|cans?|bags?|bottles?)\b",
+    re.IGNORECASE,
+)
+
+
+def _counted_quantity(value: Any) -> Decimal | None:
+    """The quantity in a case-configuration cell.
+
+    Prefers the number attached to a counter noun over the leading number,
+    because packing cells print measure-then-count. A clean cell ('6包',
+    '24') still reads through the leading-number fallback.
+    """
+    if value is None:
+        return None
+    match = _COUNTED_QUANTITY.search(str(value))
+    if match:
+        try:
+            return Decimal(match.group(1))
+        except InvalidOperation:
+            return None
+    return _leading_decimal(value)
 
 
 def _leading_decimal(value: Any) -> Decimal | None:

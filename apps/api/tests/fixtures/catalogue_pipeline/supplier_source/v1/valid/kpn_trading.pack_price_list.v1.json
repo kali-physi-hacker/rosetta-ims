@@ -45,27 +45,33 @@
       "SKU#",
       "sku#",
       "產品內容",
+      "產品名稱",
       "Product Description",
       "包裝",
       "Size",
       "重量",
       "每箱包數",
       "Unit Per Case",
+      "原箱包數",
       "每包批發價",
       "Wholesale Price Per Unit",
       "Wholesale Price Per Pack",
       "批發價",
       "批發價 (HKD)",
+      "批發價 每包",
+      "批發價 每箱 (平均每包價)",
+      "批發價 每箱(平均每包價)",
       "每包 建議零售價",
       "Recommended Retail Price Per Unit",
       "零售價",
       "建議零售價 (HKD)",
+      "建議零售價 每包",
       "barcode#",
       "新產品編號"
     ],
     "row_eligibility_rules": [
       "The ingestion supplier must be ID 15, or the enclosing source section must explicitly identify K.P.N. Trading / KPNTRADI.",
-      "Select this contract only when the row's table prints one wholesale amount and no separate case/box price column.",
+      "Select this contract for every layout whose STANDARD wholesale amount is per pack/unit/bag — with or without an additional case column (a printed case price is a bulk term, never the cost).",
       "Rows require a product code, product description, and printed wholesale price."
     ],
     "discontinued_markers": [],
@@ -176,13 +182,42 @@
       "requirement": "REQUIRED",
       "source_column": "產品內容 / Product Description",
       "source_path": "unlabeled_column",
-      "composed_from": [],
+      "composed_from": [
+        "section_name"
+      ],
       "aliases": [
         "產品內容",
         "產品名稱",
         "Product Description"
       ],
-      "description": "Printed English/Chinese product description. The NOW FRESH single-price layout prints the product name under an unlabeled (empty-heading) first column — claimed via the unlabeled_column sentinel, which resolves only when the row carries exactly one non-empty unlabeled value. Labeled headings are always tried first, so every other layout in this group is unaffected.",
+      "description": "Printed English/Chinese product description. The NOW FRESH single-price layout prints the product name under an unlabeled (empty-heading) first column — claimed via the unlabeled_column sentinel, which resolves only when the row carries exactly one non-empty unlabeled value. The Good Gravy layout prints the name only as the section heading above each block ('ADULT DOG BEEF 成犬 …牛肉配方'), reached through the section_name composition fallback. Labeled headings are always tried first, so every other layout in this group is unaffected.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=11-27,39-47,50-53",
+          "note": "Every layout in this group prints exactly one wholesale number, always per pack/unit/bag (e.g. '每包批發價 Wholesale Price Per Unit', bare '批發價' with no case column present, CANIDAE's single 批發價 (HKD) column). Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "inherits_from_row_above": false
+    },
+    {
+      "field_key": "section_name",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_path": "section_header",
+      "composed_from": [],
+      "aliases": [],
+      "description": "The block heading printed above a group of rows ('ADULT DOG BEEF 成犬 香濃火雞骨湯外層乾糧 - 牛肉配方(含古代穀物)'). On the Good Gravy layout this is the only place the product name is printed — description composes from it when no name column resolves.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -241,9 +276,11 @@
       "composed_from": [],
       "aliases": [
         "每箱包數",
-        "Unit Per Case"
+        "Unit Per Case",
+        "原箱包數",
+        "每箱罐數"
       ],
-      "description": "Printed case configuration where shown; not present on every layout in this group.",
+      "description": "Printed case configuration where shown; not present on every layout in this group. Doubles as the case-term quantity: buying this many unlocks the case rate where a case column is printed.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -273,9 +310,10 @@
         "每包批發價",
         "Wholesale Price Per Unit",
         "Wholesale Price Per Pack",
-        "批發價 (HKD)"
+        "批發價 (HKD)",
+        "批發價 每包"
       ],
-      "description": "The single printed wholesale amount for this group's layouts — always per pack/unit/bag.",
+      "description": "The STANDARD wholesale amount — always the per-pack/per-tin figure, never a case figure.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -304,7 +342,8 @@
       "aliases": [
         "每包 建議零售價",
         "Recommended Retail Price Per Unit",
-        "建議零售價 (HKD)"
+        "建議零售價 (HKD)",
+        "建議零售價 每包"
       ],
       "description": "Recommended retail amount, same basis as wholesale_price for this group.",
       "evidence": [
@@ -324,6 +363,38 @@
           "note": "Every layout in this group prints exactly one wholesale number, always per pack/unit/bag (e.g. '每包批發價 Wholesale Price Per Unit', bare '批發價' with no case column present, CANIDAE's single 批發價 (HKD) column). Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
         }
       ],
+      "inherits_from_row_above": false
+    },
+    {
+      "field_key": "case_wholesale_price",
+      "role": "MBB_TIER_PRICE",
+      "requirement": "OPTIONAL",
+      "source_column": "批發價 每箱 (平均每包價)",
+      "composed_from": [],
+      "aliases": [
+        "批發價 每箱(平均每包價)",
+        "每箱(24包) 批發價 Wholesale Price Per Case (24 packs)",
+        "每箱(24罐) 批發價 Wholesale Price Per Case (24 tins)"
+      ],
+      "description": "OPTIONAL case-quantity BULK price — an MBB tier, not a replacement for wholesale_price (user ruling 2026-08-17: pack+case is the pack layout plus a bulk term, one contract). Buying the quantity units_per_case states unlocks the printed per-unit case rate. On Stella & Chewy's frozen-raw rows the cell embeds the case total and its printed per-pack average in one string ('$1094/箱 ($182/包)'); the per-unit rate is the smaller printed amount, and a cell carrying only a bundle total is refused by the cheaper-than-gross guard rather than divided — no value is computed that the source did not print.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as K.P.N. Trading with Stella & Chewy's, Canidae, and NOW FRESH catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 15 with code KPNTRADI."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=1-4,29-30,32",
+          "note": "Verified arithmetically against every row on these pages: the case price is always less than pack_price x units_per_case, by a DIFFERENT percentage per SKU (e.g. FRB-3: 10.6% off, FRB-6: 6.8% off, FRB-12: 2.4% off) — proving the case price is a genuine per-SKU bulk discount, not the same price expressed two ways. The '(平均每包價)' figure on FRB-style rows is exactly case_price / units_per_case in every sampled row, confirming it is a printed convenience calculation, not an independently sourced value. Full read of all 44 K.P.N. Trading pages in KPN_Kangaroo.pdf (excludes the 9 pages footed Kangaroo Pet Nutrition Ltd.), grouped by printed table layout and verified arithmetically against printed case/pack price relationships."
+        }
+      ],
+      "tier_quantity_field": "units_per_case",
       "inherits_from_row_above": false
     },
     {
@@ -424,13 +495,16 @@
     "packaging_source_field": "pack_size",
     "content_measure_source_field": "pack_size",
     "price_basis_follows_purchase_unit": false,
+    "break_pack_allowed": true,
     "interpretation_rules": [
       "Treat content size/weight as a measure, not a sellable-unit count.",
-      "Treat units per case as case configuration only; it is not printed as an ordering constraint."
+      "Treat units per case as case configuration only; it is not printed as an ordering constraint.",
+      "wholesale_price is always pack/tin-basis; never substitute a case figure into it.",
+      "The case-average figure printed in parentheses is derived (case_price / units_per_case); do not treat it as an independent price.",
+      "A case column printing ONLY a bundle total yields no bulk term (ruling 2026-08-17): dividing the total by units_per_case to derive a per-unit rate is not acceptable — deals exist only where the page prints the per-unit rate itself."
     ],
     "unresolved_semantics": [
-      "Purchase UOM (pack vs bag vs bottle) varies by sub-layout and is not separately declared.",
-      "Break-pack permission is not established by the source."
+      "Purchase UOM (pack vs bag vs bottle) varies by sub-layout and is not separately declared."
     ]
   },
   "mbb": {
@@ -446,6 +520,7 @@
       "percentage discount",
       "free quantity"
     ],
+    "page_promotion_shapes": [],
     "requires_validation_issue_when": [
       "The qualifying products, threshold basis, or mix-and-match rules are not explicit."
     ],
@@ -457,18 +532,6 @@
       "issue_code": "KPN_TRADING_PACK_SUPPLIER_IDENTITY_REQUIRED",
       "condition": "A source may contain multiple suppliers or only a subset of previously observed brands.",
       "review_guidance": "Select this declaration only from ingestion supplier ID 15 or an explicit K.P.N. Trading / KPNTRADI source marker; never from page position or brand. CONTRACT_SUPPLIER_IDENTITY_MISMATCH also verifies this automatically from captured evidence — but only once the source has been re-extracted with the prompt that captures supplier_identity_text (see catalogue_evidence_extraction.py's VISION_EVIDENCE_PROMPT); older or not-yet-re-extracted evidence still relies on this manual guidance alone. Downgraded from blocking at promotion (2026-08-13): the automatic check is live-verified on re-extracted KPN evidence (it split the combined document's 84 Kangaroo rows from the 356 KPN rows exactly), and the current extraction prompt captures identity text on every new source.",
-      "blocks_supported_status": false
-    },
-    {
-      "issue_code": "KPN_TRADING_PACK_BARCODE_COLUMN_INCONSISTENT",
-      "condition": "The pages 46-47 NOW FRESH layout's 'barcode#' column is inconsistent: on page 47 it genuinely holds barcodes (e.g. '8 15260 00767 2'); on page 46 the same heading sometimes holds product-name text (e.g. '細細粒 小型犬配方') and is otherwise blank. This looks like inconsistent vision extraction (a section banner sometimes folded into this column) rather than one clean pattern, so this contract does not map 'description' to it — doing so would risk misreading real barcodes as product names on page 47.",
-      "review_guidance": "Confirm against the actual PDF page images whether page 46's product-name text is a genuine section banner the extraction mis-attributed to this column, or whether the source itself is inconsistent. description remains unresolved for these specific rows until that's confirmed.",
-      "blocks_supported_status": false
-    },
-    {
-      "issue_code": "KPN_TRADING_PACK_UNLABELED_COLUMN_SINGLE_VALUE_ONLY",
-      "condition": "The NOW FRESH single-price layout (observed on pages 43-45 of the sample; identified by its column signature, not page position) prints the product name under an unlabeled column, now claimed via the unlabeled_column sentinel. The sentinel resolves only when a row carries exactly ONE non-empty unlabeled value — a future layout printing values in two unlabeled columns on the same row would resolve to nothing (refused as ambiguous), never to a guess between them.",
-      "review_guidance": "If a layout with multiple populated unlabeled columns ever appears, positional addressing (column_index) would be needed — a shared-code extension, with the same cross-contract regression rigor as prior conformance changes.",
       "blocks_supported_status": false
     }
   ],

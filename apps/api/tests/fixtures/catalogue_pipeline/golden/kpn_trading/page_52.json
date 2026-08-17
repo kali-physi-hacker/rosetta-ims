@@ -1,0 +1,144 @@
+{
+  "page_outcome": "evidence",
+  "page_brand_text": "Stella & Chewy's Raw Blend 香港版 HK",
+  "tables": [
+    {
+      "section": "凍乾生肉外層低溫烘焙乾糧+凍乾生肉粒 Raw Blend Baked Kibble for Dogs",
+      "columns": [
+        "SKU#",
+        "產品內容",
+        "包裝",
+        "每包批發價",
+        "每包建議零售價"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "SCRB001",
+            "紅肉配方 Red Meat Recipe",
+            "3.5 lb.",
+            "HK$272",
+            "HK$395"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB002",
+            "紅肉配方 Red Meat Recipe",
+            "10 lb.",
+            "HK$488",
+            "HK$670"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB003",
+            "紅肉配方 Red Meat Recipe",
+            "22 lb.",
+            "HK$845",
+            "HK$1,088"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB004",
+            "放養配方 Cage-Free Recipe",
+            "3.5 lb.",
+            "HK$272",
+            "HK$395"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB005",
+            "放養配方 Cage-Free Recipe",
+            "10 lb.",
+            "HK$488",
+            "HK$670"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB006",
+            "放養配方 Cage-Free Recipe",
+            "22 lb.",
+            "HK$845",
+            "HK$1,088"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB007",
+            "小羊撞鹿配方 Free Range Recipe",
+            "3.5 lb.",
+            "HK$272",
+            "HK$395"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB008",
+            "小羊撞鹿配方 Free Range Recipe",
+            "22 lb.",
+            "HK$845",
+            "HK$1,088"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB009",
+            "紅肉小型犬配方 Small Breed Red Meat Recipe",
+            "3.5 lb.",
+            "HK$272",
+            "HK$395"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB010",
+            "紅肉小型犬配方 Small Breed Red Meat Recipe",
+            "10 lb.",
+            "HK$488",
+            "HK$670"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB011",
+            "野生捕撈配方 Wild Caught Recipe",
+            "3.5 lb.",
+            "HK$272",
+            "HK$395"
+          ],
+          "confidence": "0.95"
+        },
+        {
+          "cells": [
+            "SCRB012",
+            "野生捕撈配方 Wild Caught Recipe",
+            "22 lb.",
+            "HK$845",
+            "HK$1,088"
+          ],
+          "confidence": "0.95"
+        }
+      ]
+    }
+  ],
+  "text_observations": [
+    {
+      "text": "生效日期 Effective from (MM-DD-YYYY): 30-11-2022",
+      "confidence": "0.9"
+    }
+  ]
+}

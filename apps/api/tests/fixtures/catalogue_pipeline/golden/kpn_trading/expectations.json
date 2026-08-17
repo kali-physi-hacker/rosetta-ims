@@ -5,7 +5,9 @@
     "name": "K.P.N. Trading"
   },
   "pages": [
-    "page_1.json"
+    "page_51.json",
+    "page_52.json",
+    "page_53.json"
   ],
   "provider": "anthropic",
   "min_covered_skus": 3,
@@ -43,7 +45,7 @@
   "unpublishable": [],
   "contract_id": "kpn_trading.pack_price_list.v1",
   "_contract_comment": "Used by the STAGED conformance test today, and required by the full golden framework later: this supplier has multiple contracts, so supplier-only resolution can never work.",
-  "_pages_comment": "Whole-catalogue envelope of KPN_Kangaroo-updated.pdf (2026-08-13 chat-agent capture, 6 chunks consolidated; 29 heading-less columns normalized to the 'unlabeled_column' sentinel to pass the envelope gate). Named page_1.json per the framework's page_N filename convention (whole catalogue as one page, like golden/vetapet_vet). Replaces the old-PDF pages 51-53 extract (['page_51.json', 'page_52.json', 'page_53.json']). Golden S&C SKU prices verified unchanged (240/488/212). CAVEAT: the document holds BOTH suppliers but a single envelope carries ONE supplier_identity_text ('K.P.N Trading Ltd.'), so per-page wrong-supplier flagging does not operate inside it.",
+  "_pages_comment": "Per-page envelopes for the three Stella & Chewy bag pages (51-53), hand-captured 2026-08-17 from KPN_Kangaroo.pdf with the current VISION_EVIDENCE_PROMPT — each page carries its printed brand mark as page_brand_text, so the brand column is pinned. No page of this bundle prints a supplier letterhead (supplier_identity_text is absent by honest observation, not omission), so identity checks pass on absence and the wrong-supplier guard only fires on contrary evidence. Replaces the 2026-08-13 whole-catalogue single envelope (85 tables, no page marks, 29 unlabeled-column sentinels). Golden S&C SKU prices verified unchanged (240/488/212).",
   "_absent_comment": "P12578723 (Purina) and EPSC35 (Earthz Pet) are named on the golden sheet but absent from the updated catalogue (searched the full capture) — and in Rosetta those brands are layouts of the LEGACY kangaroo file, not KPN contracts, so their supplier attribution on the sheet is itself a BizOps question. Kept in expected.csv verbatim (the sheet is the source); they never publish, so covered_skus stays at the 3 S&C rows (alfamedic precedent for named-but-absent SKUs).",
   "_graduated_comment": "Graduated from golden_staging/ on 2026-08-13 after the contract's promotion to SUPPORTED. The golden framework resolves supplier-only, which works because this supplier has exactly ONE SUPPORTED contract; contract_id is kept for the day a second layout is promoted (the runtime will then demand explicit selection).",
   "_comment": "Tightened to the enforced-max policy on rebase (2026-08-14): every column ENFORCED except the four allowed discrepancies; known_gaps retired. The original per-column analysis from the recording session is preserved in _recording_notes.",

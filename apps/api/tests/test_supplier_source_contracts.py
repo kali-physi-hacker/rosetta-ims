@@ -39,7 +39,6 @@ EXPECTED_CONTRACT_IDS = [
     "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
     "kpn_trading.case_only_price_list.v1",
     "kpn_trading.catalogue_bundle.v1",
-    "kpn_trading.pack_and_case_bulk_list.v1",
     "kpn_trading.pack_price_list.v1",
     "vetapet.non_vet_price_list.v1",
     "vetapet.vet_price_list.v1",
@@ -190,8 +189,13 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         "vetapet.vet_price_list.v1",
         # Promoted 2026-08-13 on the strength of their golden e2e runs
         # (kpn_trading / kangaroo_vet_clinic staged sets, sheets reproduced).
+        # pack_price_list also carries the pack+case bulk column since
+        # 2026-08-17, verified by the kpn_frozen_raw golden set.
         "kpn_trading.pack_price_list.v1",
         "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
+        # Promoted 2026-08-17: verified against the six Ziwi pages of the
+        # per-page KPN_Kangaroo capture, pinned by kangaroo_ziwi.
+        "kangaroo_pet_nutrition.unit_price_list.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):

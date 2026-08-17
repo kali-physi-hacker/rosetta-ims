@@ -35,8 +35,9 @@ supplier if surprising):
 - **cepha200**: packing "240 tabs/ box", ordered per **BOX**; the sheet said BOTTLE.
 - **D031329-15** (Lubrithal): the printed 12-tube tier price is **$120.0**; the
   sheet said $107.
-- **TOP250** stays parked (two same-code quantity-band rows; no folding
-  mechanism yet — see VETAPET_VET_QUANTITY_BAND_ROWS).
+- **TOP250** stays parked only until its page (39) is captured: the band fold
+  (mbb.quantity_band_source_field) now conforms its two same-code rows into one
+  candidate at $82/BOTTLE carrying a buy-11 $78-per-bottle term.
 
 Every conformed cell:
 
@@ -95,7 +96,14 @@ Every conformed cell:
 | vetapet_vet | 504 | rrp | N/A | — | sheet cell held literal N/A; the vet tables print no RRP column |
 | vetapet_vet | ROT | rrp | N/A | — | sheet cell held literal N/A; the vet tables print no RRP column |
 | vetapet_vet | SR-12 | rrp | N/A | — | sheet cell held literal N/A; the vet tables print no RRP column |
-| vetapet_vet | 21501 | mbb_tier_1 | Mix over $1000, 10% off | — | page-level banner promo (Mix over $1000) — unreachable by row fields; VETAPET_PAGE_BANNER_PROMOTIONS_UNREACHABLE |
+| vetapet_vet | 21501 | mbb_tier_1 | Mix over $1000, 10% off | spend $1,000.00 for 10% off | banner promos are now typed: page_promotion_text + declared page_promotion_shapes conform into an ORDER-scope term; cell takes the export's canonical rendering (supersedes the earlier "blank it" instruction) |
+| vetapet_vet | 21501 | commercial_offer_summary | (blank) | spend $1,000.00 for 10% off | same banner term — the summary column mirrors mbb_tier_1 for single-term rows |
+| vetapet_vet | 24106 | mbb_tier_1 | (blank) | spend $1,000.00 for 10% off | page 61 prints the same banner; every row of a banner page carries the term |
+| vetapet_vet | 24106 | commercial_offer_summary | (blank) | spend $1,000.00 for 10% off | as above |
+| vetapet_vet | 141001 | mbb_tier_1 | (blank) | spend $1,000.00 for 10% off | page 73 prints the same banner |
+| vetapet_vet | 141001 | commercial_offer_summary | (blank) | spend $1,000.00 for 10% off | as above |
+| vetapet_vet | 109300 | mbb_tier_1 | (blank) | spend $1,000.00 for 10% off | page 74 prints the same banner |
+| vetapet_vet | 109300 | commercial_offer_summary | (blank) | spend $1,000.00 for 10% off | as above |
 | vetapet_vet | ROT | mbb_tier_1 | buy 3, get 1 free | — | printed as REMARK '3+1'; captured as promotion text but no parser builds a typed term yet |
 | vetapet_vet | ROT | commercial_offer_summary | Buy 3 get 1; effective HKD 221.25 per bottle | — | as mbb_tier_1 — the 3+1 term is not typed yet |
 | vetapet_vet | ROT | sellable_units_per_price_basis | 1 | 90 | convention: the count is sellable units per priced purchase (90 capsules per bottle), matching Alfamedic; the sheet counted the bottle itself |

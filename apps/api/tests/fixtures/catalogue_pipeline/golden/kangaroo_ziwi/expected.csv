@@ -1,0 +1,5 @@
+supplier,supplier_product_code,product_name,product name [Rosetta],weight,brand,package_configuration,order_multiple,catalogue_price_hkd,catalogue_price_basis_qty,catalogue_price_basis_uom,sellable_qty,sellable_uom,sellable_units_per_price_basis,rrp,mbb_tier_1,mbb_tier_2,mbb_tier_3,mbb_tier_4,commercial_offer_summary
+Kangaroo Pet Nutrition,ADL0.4,Air-Dried Lamb For Dogs 風乾狗糧 羊肉配方,,,Ziwi Peak,,1 UNIT,$265.00,1,unit,1,,,$385.00,,,,,
+Kangaroo Pet Nutrition,ADML4,Air-Dried Mackerel & Lamb For Dogs 風乾狗糧 鯖魚及羊肉配方,,,Ziwi Peak,,1 UNIT,"$1,592.00",1,unit,1,,,"$2,215.00",,,,,
+Kangaroo Pet Nutrition,ZSCB2.2,Grass-fed Beef With Southern Blue Whiting Recipe For Cats 柔蒸溫乾貓糧 草飼牛肉 配南藍鱈 食譜,,,Ziwi Peak Steam Dried 柔蒸溫乾 貓糧,,1 UNIT,$525.00,1,unit,1,,,$725.00,,,,,
+Kangaroo Pet Nutrition,ZSDB0.8,Grass-fed Beef with Pumpkin Recipe For Dogs 柔蒸溫乾狗糧 草飼牛肉 配南瓜 食譜,,,Ziwi Peak Steam Dried 柔蒸溫乾 狗糧,,1 UNIT,$210.00,1,unit,1,,,$290.00,,,,,

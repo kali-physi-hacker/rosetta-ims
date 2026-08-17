@@ -1,0 +1,52 @@
+{
+  "supplier": {
+    "id": 15,
+    "code": "KPNTRADI",
+    "name": "K.P.N. Trading"
+  },
+  "provider": "anthropic",
+  "contract_id": "kpn_trading.pack_price_list.v1",
+  "pages": [
+    "page_1.json",
+    "page_2.json",
+    "page_3.json",
+    "page_4.json"
+  ],
+  "_pages_comment": "Per-page envelopes for the four Stella & Chewy frozen-raw pages, hand-captured 2026-08-17 from KPN_Kangaroo.pdf with the current VISION_EVIDENCE_PROMPT. Each page carries its brand mark as page_brand_text; no page of this bundle prints a supplier letterhead (identity absent by honest observation). This is the verification evidence for the pack+case bulk column, which lives ON kpn_trading.pack_price_list.v1 (user ruling 2026-08-17: pack+case is the pack layout plus an optional MBB column, one contract — the separate pack_and_case contract is retired).",
+  "_recording_notes": "Recorded set: the golden sheet has no reconciled K.P.N. tab yet, so expected.csv is recorded from the verified replay (prices/terms cross-checked against the PDF text layer and the printed pages) rather than projected from the sheet. When the sheet tab lands, add sheet_supplier_label and refresh FROM the sheet.",
+  "_pins_comment": "Pins chosen for trap diversity: FRB-3 proves the merged size+count cell ('3lb 6包' -> buy 6), FRL-12 proves the leading-number trap ('12lb 2包' -> buy 2, not 12), CAT-FRC-1.25 proves decimal sizes ('1.25lb 4包' -> buy 4), FRBM-4 pins the morsels layout.",
+  "min_covered_skus": 4,
+  "covered_skus": [
+    "CAT-FRC-1.25",
+    "FRB-3",
+    "FRBM-4",
+    "FRL-12"
+  ],
+  "enforced": [
+    "supplier",
+    "supplier_product_code",
+    "brand",
+    "package_configuration",
+    "order_multiple",
+    "catalogue_price_hkd",
+    "catalogue_price_basis_qty",
+    "catalogue_price_basis_uom",
+    "sellable_qty",
+    "sellable_units_per_price_basis",
+    "rrp",
+    "mbb_tier_1",
+    "mbb_tier_2",
+    "mbb_tier_3",
+    "mbb_tier_4",
+    "commercial_offer_summary"
+  ],
+  "known_gaps": {},
+  "not_comparable": {
+    "product_name": "allowed discrepancy (policy 2026-08-13): the sheet holds a human shorthand; the export holds the supplier's printed description",
+    "product name [Rosetta]": "allowed discrepancy: a hand-authored retail name, not something the pipeline derives",
+    "weight": "allowed discrepancy: some catalogues genuinely do not print it, and the sheet hand-measures",
+    "sellable_uom": "allowed discrepancy: not always capturable from the source — BizOps set the sellable unit themselves"
+  },
+  "unfilled": {},
+  "unpublishable": []
+}

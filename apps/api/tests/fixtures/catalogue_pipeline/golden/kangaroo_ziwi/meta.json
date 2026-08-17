@@ -1,0 +1,16 @@
+{
+  "source": "KPN_Kangaroo.pdf (53-page edition; Ziwi pages 5-10 — user ruling: 'Ziwi all belong to Kangaroo Pet Nutrition')",
+  "recorded_from": "hand-captured from claude (chat, one page per envelope via the literal VISION_EVIDENCE_PROMPT incl. page_brand_text, 2026-08-17 re-extraction)",
+  "provider": "hand-captured",
+  "contract": "kangaroo_pet_nutrition.unit_price_list.v1",
+  "supplier_id": 81,
+  "pages": {
+    "5": "Ziwi Peak air-dried dog (ADL/ADB/ADML/ADC…)",
+    "6": "Ziwi Peak air-dried + provenance ranges",
+    "7": "Ziwi Peak canned dog (per-case columns — held by the case-total ruling)",
+    "8": "Ziwi Peak canned cat (per-case columns — held)",
+    "9": "Ziwi Peak steam-dried dog (ZSDB…)",
+    "10": "Ziwi Peak steam-dried cat (ZSCB…)"
+  },
+  "note": "Prices cross-checked against the PDF text layer (2026-08-17 bundle audit: capture and text layer agree on every code)."
+}

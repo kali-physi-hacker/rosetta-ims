@@ -81,6 +81,10 @@ class GoldenSet:
     supplier_name: str
     page_names: tuple[str, ...]
     provider: str
+    #: The supplier-source contract this set replays under. Required the moment
+    #: a supplier has more than one SUPPORTED contract (K.P.N. has one per
+    #: layout) — supplier-only resolution is then ambiguous by design.
+    contract_id: str | None
     min_covered_skus: int
     #: The exact SKUs expected to reach the export, when pinned. A bare floor
     #: lets a swap hide — lose one covered SKU, gain another, count unchanged.
@@ -144,6 +148,7 @@ def discover_golden_sets() -> list[GoldenSet]:
                     supplier_name=supplier["name"],
                     page_names=tuple(spec["pages"]),
                     provider=spec["provider"],
+                    contract_id=spec.get("contract_id"),
                     min_covered_skus=int(spec["min_covered_skus"]),
                     covered_skus=tuple(spec.get("covered_skus") or ()),
                     enforced=tuple(spec["enforced"]),
@@ -208,8 +213,14 @@ def db(tmp_path, monkeypatch):
     try:
         _reset(session)
         # Seeded from the sets themselves, so a new fixture directory brings its
-        # own supplier rather than needing one added here.
+        # own supplier rather than needing one added here. Two sets may share a
+        # supplier (K.P.N. has one set per layout) — session.get cannot see the
+        # first set's still-pending add, so track ids explicitly.
+        seeded: set[int] = set()
         for spec in GOLDEN_SETS:
+            if spec.supplier_id in seeded:
+                continue
+            seeded.add(spec.supplier_id)
             if session.get(models.Supplier, spec.supplier_id) is None:
                 session.add(models.Supplier(
                     id=spec.supplier_id,
@@ -440,6 +451,7 @@ def _replay_to_published(
     supplier_id: int,
     provider: str,
     api_key_var: str,
+    contract_id: str | None = None,
     only_skus: set[str] | None = None,
     refused: dict[str, str] | None = None,
 ) -> dict[str, dict[str, str]]:
@@ -463,8 +475,8 @@ def _replay_to_published(
             original_filename=f"{fixture_dir.name}-golden.pdf",
             content_type="application/pdf",
             stream=BytesIO(_blank_pdf(len(pages))),
-            contract_id=None,
-            contract_version=None,
+            contract_id=contract_id,
+            contract_version="v1" if contract_id else None,
             idempotency_key=None,
             submitted_by="golden",
         )
@@ -563,6 +575,7 @@ def _replay_set(
         supplier_id=spec.supplier_id,
         provider=spec.provider,
         api_key_var=spec.api_key_var,
+        contract_id=spec.contract_id,
         only_skus=only_skus,
         refused=refused,
     )

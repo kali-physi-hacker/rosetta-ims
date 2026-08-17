@@ -339,7 +339,12 @@ KANGAROO_PET_NUTRITION_UNIT_PRICE_LIST_V1 = register_supplier_source_contract(
         document_type=SupplierDocumentType.CATALOGUE,
         format_name="Kangaroo Pet Nutrition unit-basis price list",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        # SUPPORTED 2026-08-17: verified against the six Ziwi pages of the
+        # user's per-page KPN_Kangaroo capture — 46/70 rows conform with cost,
+        # brand page marks, and rrp; the 24 per-case canned rows are refused
+        # per the case-total ruling and surface in the held lane. Pinned by
+        # the kangaroo_ziwi golden set.
+        support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_KANGAROO_PN_UNIT_EVIDENCE,
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
@@ -397,11 +402,13 @@ KANGAROO_PET_NUTRITION_UNIT_PRICE_LIST_V1 = register_supplier_source_contract(
                 field_key="brand",
                 role=SourceFieldRole.BRAND,
                 requirement=SourceFieldRequirement.OPTIONAL,
-                source_path="brand page logo (image only; not extractable text)",
-                description=(
-                    "ZIWI Peak / Ecuphar appear only as page-logo images; section banners "
-                    "read '價錢表 Pricelist'. Deliberately unmapped rather than wrong."
-                ),
+                # page_brand since 2026-08-17: the current per-page capture
+                # transcribes the page wordmark ('Ziwi Peak', 'Ziwi Peak Steam
+                # Dried 柔蒸溫乾…') into page_brand_text — the logo is no longer
+                # image-only. Section banners still read '價錢表 Pricelist' and
+                # stay unmapped.
+                source_path="page_brand",
+                description="The brand wordmark heading the page, verbatim.",
                 evidence=_KANGAROO_PN_UNIT_EVIDENCE,
             ),
             SourceFieldContract(
@@ -489,19 +496,31 @@ KANGAROO_PET_NUTRITION_UNIT_PRICE_LIST_V1 = register_supplier_source_contract(
                 condition="A source may contain multiple suppliers or only a subset of previously observed brands.",
                 review_guidance=(
                     "Select this declaration only from ingestion supplier ID 81 or an explicit "
-                    "Kangaroo Pet Nutrition / KANGAR source marker; never from page position or brand."
+                    "Kangaroo Pet Nutrition / KANGAR source marker; never from page position or "
+                    "brand. CONTRACT_SUPPLIER_IDENTITY_MISMATCH verifies this automatically "
+                    "whenever a page prints an identity (the current per-page capture shows the "
+                    "Ziwi pages print none, so selection anchors to the upload's supplier — the "
+                    "same footing every SUPPORTED sibling stands on)."
                 ),
-                blocks_supported_status=True,
+                # Non-blocking for the same reason as the KPN and vet-clinic
+                # twins: selection is anchored at submission and the mismatch
+                # check fires automatically on contrary printed evidence.
+                blocks_supported_status=False,
             ),
             AmbiguityRule(
                 issue_code="KANGAROO_PN_PAGE_BANNER_PROMOTIONS_UNREACHABLE",
                 condition=(
-                    "Standing mix/spend promotions print as page banners captured in "
-                    "text_observations; no contract field mechanism reaches those today."
+                    "Standing mix/spend promotions print as page banners. Extraction "
+                    "captures them verbatim as page_promotion_text, but this contract "
+                    "declares no mbb.page_promotion_shapes — no real Kangaroo page has "
+                    "proven a banner notation yet — so banners stay unparsed page "
+                    "evidence."
                 ),
                 review_guidance=(
-                    "Reviewers must read the run's unmapped text evidence for banner promos "
-                    "until a threading mechanism exists."
+                    "Reviewers must read the run's page evidence for banner promos. Once "
+                    "a real Kangaroo page proves a notation the engine knows (see "
+                    "MbbSourceSemantics.page_promotion_shapes), declare it and banners "
+                    "conform into ORDER-scoped terms as they do for Vetapet."
                 ),
                 blocks_supported_status=False,
             ),

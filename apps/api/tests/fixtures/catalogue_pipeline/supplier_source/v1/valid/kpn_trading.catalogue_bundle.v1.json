@@ -406,6 +406,7 @@
       "percentage discount",
       "free quantity"
     ],
+    "page_promotion_shapes": [],
     "requires_validation_issue_when": [
       "The qualifying products, threshold basis, or mix-and-match rules are not explicit."
     ],
@@ -478,7 +479,7 @@
     "routing_strategy": "supplier_identity_and_content_markers",
     "sample_reference": "KPN_Kangaroo.pdf",
     "observed_brands": "Stella & Chewy's, Canidae, NOW FRESH",
-    "superseded_by_layout_specific_contracts": "kpn_trading.pack_price_list.v1, kpn_trading.case_only_price_list.v1, kpn_trading.pack_and_case_bulk_list.v1",
+    "superseded_by_layout_specific_contracts": "kpn_trading.pack_price_list.v1 (incl. pack+case bulk rows), kpn_trading.case_only_price_list.v1",
     "layout_specific_contracts_note": "This bundle contract remains the correct choice only when a source's table layout has not been pre-sorted. Once a page's layout is identified, prefer the matching layout-specific contract above, which has a resolved price_basis."
   }
 }
