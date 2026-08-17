@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react'
 import { Spinner } from '@/components/Spinner'
 import { toast } from '@/lib/toast'
 import { DESK_CSS } from '@/lib/deskCss'
-import { fetchSummary, latest, isStaged, isApproved, isDecided, reviewApi, failureInfo, retryRun, type RunStatus } from '@/lib/review'
+import { fetchSummary, fetchDeadLetters, latest, isStaged, isApproved, isDecided, reviewApi, failureInfo, retryRun, type RunStatus } from '@/lib/review'
 
 export const Route = createFileRoute('/_authed/catalogues/review/')({ component: ReviewRunsPage })
 
@@ -83,7 +83,9 @@ function ContractGroup({ contract, rows }: { contract: string; rows: RunRow[] })
       {usable.map((run, index) => (
         <div key={run.ingestion_run_id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '9px 14px', borderTop: index ? '1px solid var(--line2)' : 'none', opacity: index === 0 ? 1 : 0.65, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 11.5, color: 'var(--faint)', width: 110, flex: 'none' }}>{fmtWhen(run.submitted_at)}</span>
-          <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{run.items_extracted != null ? `${run.items_extracted} rows` : WORKING.has(run.status) ? 'processing…' : '—'}</span>
+          {/* product_rows, never items_extracted: BOs count products, and the
+              raw figure includes page banners and date lines. */}
+          <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{(run.product_rows ?? run.items_extracted) != null ? `${run.product_rows ?? run.items_extracted} rows` : WORKING.has(run.status) ? 'processing…' : '—'}</span>
           {index === 0 && !WORKING.has(run.status) ? <RunProgress runId={run.ingestion_run_id} /> : <span style={{ flex: 1 }} />}
           {index === 0 ? (
             <Link className="btn pri sm" to="/catalogues/review/$runId" params={{ runId: run.ingestion_run_id }}>Open desk →</Link>
@@ -101,9 +103,12 @@ function ContractGroup({ contract, rows }: { contract: string; rows: RunRow[] })
   )
 }
 
-// Live progress chips for the newest run of a contract — one summary fetch.
+// Live progress chips for the newest run of a contract — one summary fetch,
+// plus the held-rows count so unreadable rows are visible from the list.
 function RunProgress({ runId }: { runId: string }) {
   const summary = useQuery({ queryKey: ['review-summary', runId], queryFn: () => fetchSummary(runId), staleTime: 30_000 })
+  const held = useQuery({ queryKey: ['dead-letters', runId], queryFn: () => fetchDeadLetters(runId), staleTime: 60_000 })
+  const heldCount = held.data?.count ?? 0
   if (summary.isLoading) return <span style={{ flex: 1, fontSize: 11, color: 'var(--faint)' }}>…</span>
   if (summary.isError || !summary.data) return <span style={{ flex: 1 }} />
   const items = latest(summary.data.items)
@@ -114,6 +119,13 @@ function RunProgress({ runId }: { runId: string }) {
   return (
     <span style={{ flex: 1, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
       {needsYou > 0 && <span className="bdg warn">{needsYou} to decide</span>}
+      {heldCount > 0 && (
+        <Link className="bdg neu" style={{ textDecoration: 'none', cursor: 'pointer' }}
+          to="/catalogues/review/$runId/held" params={{ runId }}
+          title="Rows printed in the catalogue that could not be read into reviewable items — open to see why and re-run them">
+          {heldCount} couldn&apos;t be read →
+        </Link>
+      )}
       {staged > 0 && <span className="bdg acc">{staged} staged</span>}
       {live > 0 && <span className="bdg ok"><span className="st" />{live} live</span>}
       {done && live === 0 && <span className="bdg neu">reviewed · nothing published</span>}

@@ -1201,6 +1201,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogues/ingestions/{run_uuid}/evidence/{raw_observation_uuid}/correct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Correct Catalogue Evidence
+         * @description Correct misread cells on one observation, with a durable audit stamp.
+         *
+         *     Nothing re-runs here: re-parse the run (or retrigger its dead-lettered
+         *     rows) afterwards and the pipeline re-reads the corrected evidence. On a
+         *     re-parse child the correction also lands on the extraction-source run's
+         *     copy, so re-parsing again cannot resurrect the misread.
+         */
+        post: operations["correct_catalogue_evidence_catalogues_ingestions__run_uuid__evidence__raw_observation_uuid__correct_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalogues/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/apply": {
         parameters: {
             query?: never;
@@ -1248,6 +1273,41 @@ export interface paths {
          *     append-only raw-stage verification history. No file content, no meaning.
          */
         get: operations["get_raw_layer_catalogues_ingestions__run_uuid__raw_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/dead-letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dead Letters
+         * @description Rows the machine could not interpret, and what one fix would clear.
+         *
+         *     `lanes` accounts for every normalized row of the run, so a row is here
+         *     because nothing else claimed it — not published, not awaiting review, not
+         *     rejected by a person. `reconciliation` carries the RAW counts beside the
+         *     lanes so a shortfall cannot be mistaken for a silent drop.
+         *
+         *     After a retrigger the two views deliberately differ: `lanes` is this run's
+         *     HISTORY and never follows the chain, while `count`, `dead_letters` and
+         *     `by_issue_code` follow retriggers — rows a later run cleared are gone, and
+         *     survivors carry `attempts`. lanes.dead_lettered > count is a run that has
+         *     been partially rescued, not an inconsistency.
+         *
+         *     `rows_cleared_if_fixed` is the number worth acting on: rows a code holds
+         *     ALONE. A row held by two codes is freed by neither on its own, so the
+         *     larger `rows_blocked` overstates what a single fix buys.
+         */
+        get: operations["get_dead_letters_catalogues_ingestions__run_uuid__dead_letters_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1318,6 +1378,157 @@ export interface paths {
          *     supplier so each result carries its cost/margin sanity context.
          */
         get: operations["search_catalogue_product_variants_catalogues_ingestions__run_uuid__variant_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/reparse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reparse Catalogue Ingestion
+         * @description Re-run the interpretation over evidence this run already holds.
+         *
+         *     The supplier contract is consumed at conformance, which reaches no model
+         *     provider — so a mapping change needs the stored observations re-read, not
+         *     the pages re-scanned. Costs nothing at the provider and takes about a
+         *     second where a retry takes a minute and a half.
+         *
+         *     Creates a NEW run linked by parent_run_id; the source run's decisions are
+         *     append-only and are left alone.
+         */
+        post: operations["reparse_catalogue_ingestion_catalogues_ingestions__run_uuid__reparse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/retrigger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retrigger Catalogue Ingestion
+         * @description Re-drive exactly the rows this run's dead-letter queue is holding.
+         *
+         *     A re-parse limited to the observations behind the selected rows — stored
+         *     evidence only, no vision call, no spend. Selection comes from the followed
+         *     queue, so rows an earlier retrigger cleared and rows a person decided on
+         *     are not selectable; an explicit id that is not in the queue is refused by
+         *     name with the reason.
+         */
+        post: operations["retrigger_catalogue_ingestion_catalogues_ingestions__run_uuid__retrigger_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalogue Source File
+         * @description The supplier catalogue this run read, as the file itself.
+         *
+         *     Goes through the same verified loader the pipeline uses, so a file that has
+         *     been moved, truncated or altered since the scan fails here rather than
+         *     being served as if it were the document the prices came from.
+         *
+         *     A re-parse never opened a file, so it serves its source run's document —
+         *     which is the same document, and the one its evidence came from.
+         */
+        get: operations["get_catalogue_source_file_catalogues_ingestions__run_uuid__source_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/receipt/golden.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Published Golden Csv
+         * @description This run's published items in the golden-sample sheet's exact columns.
+         *
+         *     For regression testing: the sheet is 122 hand-filled SKUs that say what the
+         *     packaging, price basis, sellable unit and bulk terms really are. Exporting
+         *     our published output in the same 20 columns, in the same order, makes the
+         *     two directly diffable.
+         */
+        get: operations["export_published_golden_csv_catalogues_ingestions__run_uuid__receipt_golden_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/receipt/golden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Published Golden Rows
+         * @description The same rows as JSON, for a test harness that would rather not parse CSV.
+         */
+        get: operations["export_published_golden_rows_catalogues_ingestions__run_uuid__receipt_golden_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogues/ingestions/{run_uuid}/duplicate-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check For Duplicate Product
+         * @description What stands between this create draft and a new SKU.
+         *
+         *     Blockers are facts (a barcode or an identical name already owned by a
+         *     product) and cannot be overridden. `similar` is judgement — above
+         *     `threshold` the reviewer must say what makes their row different, and that
+         *     reason is stored on the decision.
+         */
+        get: operations["check_for_duplicate_product_catalogues_ingestions__run_uuid__duplicate_check_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2463,6 +2674,8 @@ export interface components {
             completed_at?: string | null;
             /** Items Extracted */
             items_extracted?: number | null;
+            /** Product Rows */
+            product_rows?: number | null;
             /** Metrics */
             metrics?: Record<string, never> | null;
             /** Error Summary */
@@ -2471,6 +2684,26 @@ export interface components {
             retry_of?: string | null;
             /** Superseded By Run */
             superseded_by_run?: string | null;
+            /** Source Filename */
+            source_filename?: string | null;
+            /** Source Received At */
+            source_received_at?: string | null;
+            /** Reparse Of */
+            reparse_of?: string | null;
+            /** Stage */
+            stage?: string | null;
+            /** Stage Label */
+            stage_label?: string | null;
+            /** Stage Started At */
+            stage_started_at?: string | null;
+            /** Stage Index */
+            stage_index?: number | null;
+            /** Stage Count */
+            stage_count?: number | null;
+            /** Units Done */
+            units_done?: number | null;
+            /** Units Total */
+            units_total?: number | null;
         };
         /** CatalogueSubmissionResponse */
         CatalogueSubmissionResponse: {
@@ -2651,6 +2884,24 @@ export interface components {
             formula?: string | null;
             /** Note */
             note?: string | null;
+        };
+        /**
+         * EvidenceCorrectionRequest
+         * @description Human correction of misread cells on one extracted-evidence observation.
+         *
+         *     Cells are keyed by the observation's own column names and REPLACE what the
+         *     extraction read there — columns the observation does not carry refuse by
+         *     name. The original values, reason, and author are stamped into the
+         *     observation's metadata; re-parse or retrigger then re-reads the corrected
+         *     evidence.
+         */
+        EvidenceCorrectionRequest: {
+            /** Reason */
+            reason: string;
+            /** Cells */
+            cells: {
+                [key: string]: string | null;
+            };
         };
         /**
          * ExternalMapping
@@ -3151,6 +3402,32 @@ export interface components {
         RefreshBody: {
             /** Product Id */
             product_id: number;
+        };
+        /**
+         * ReparseRequest
+         * @description Where to pick the flow back up. Only conformance today — see ReparseStage.
+         */
+        ReparseRequest: {
+            /**
+             * From Stage
+             * @default conformance
+             */
+            from_stage: string;
+        };
+        /**
+         * RetriggerRequest
+         * @description What to re-drive: one issue code, explicit rows, or the whole queue.
+         */
+        RetriggerRequest: {
+            /** Issue Code */
+            issue_code?: string | null;
+            /** Catalogue Item Ids */
+            catalogue_item_ids?: string[] | null;
+            /**
+             * From Stage
+             * @default conformance
+             */
+            from_stage: string;
         };
         /**
          * ReviewStatus
@@ -5596,6 +5873,42 @@ export interface operations {
             };
         };
     };
+    correct_catalogue_evidence_catalogues_ingestions__run_uuid__evidence__raw_observation_uuid__correct_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+                raw_observation_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceCorrectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     apply_catalogue_mastering_candidate_catalogues_ingestions__run_uuid__mastering_candidates__mastering_candidate_id__apply_post: {
         parameters: {
             query?: never;
@@ -5701,6 +6014,42 @@ export interface operations {
             };
         };
     };
+    get_dead_letters_catalogues_ingestions__run_uuid__dead_letters_get: {
+        parameters: {
+            query?: {
+                /** @description Only rows this code is holding. */
+                issue_code?: string | null;
+                /** @description Only rows blocked at this stage. */
+                stage?: string | null;
+            };
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_staging_layer_catalogues_ingestions__run_uuid__staging_get: {
         parameters: {
             query?: never;
@@ -5772,6 +6121,205 @@ export interface operations {
                 /** @description Matches sku_code, name, or brand (case-insensitive). */
                 q: string;
                 limit?: number;
+            };
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reparse_catalogue_ingestion_catalogues_ingestions__run_uuid__reparse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReparseRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueSubmissionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retrigger_catalogue_ingestion_catalogues_ingestions__run_uuid__retrigger_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RetriggerRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalogue_source_file_catalogues_ingestions__run_uuid__source_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_published_golden_csv_catalogues_ingestions__run_uuid__receipt_golden_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_published_golden_rows_catalogues_ingestions__run_uuid__receipt_golden_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_for_duplicate_product_catalogues_ingestions__run_uuid__duplicate_check_get: {
+        parameters: {
+            query?: {
+                /** @description The draft product name being typed. */
+                name?: string;
+                /** @description Barcode from the supplier row, when it has one. */
+                barcode?: string | null;
             };
             header?: never;
             path: {

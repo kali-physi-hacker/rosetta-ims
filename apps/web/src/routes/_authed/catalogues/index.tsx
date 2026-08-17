@@ -105,6 +105,9 @@ interface RunRow {
   status: string
   submitted_at: string
   items_extracted: number | null
+  /** Catalogue product rows — the BO-facing figure; items_extracted counts
+   * raw observations including page text lines. */
+  product_rows?: number | null
 }
 const RUN_PILL: Record<string, { bg: string; color: string }> = {
   completed: { bg: C.greenBg, color: C.green },
@@ -315,7 +318,7 @@ function CataloguesPage() {
         }
         setBatchFiles(prev => prev.map(x => x.key === key
           ? { ...x, status: terminal.status,
-              itemCount: run.items_extracted ?? null,
+              itemCount: run.product_rows ?? run.items_extracted ?? null,
               supplierStatus: run.status,
               progress: null,
               error: terminal.status === 'error' ? String(terminal.note(run) ?? 'ingestion failed') : x.error }
@@ -344,7 +347,7 @@ function CataloguesPage() {
               ...file,
               status: run.status === 'completed' || run.status === 'completed_with_warnings' ? 'done' as BatchStatus : terminal ? 'error' as BatchStatus : 'processing' as BatchStatus,
               supplierStatus: run.status,
-              itemCount: run.items_extracted ?? file.itemCount,
+              itemCount: run.product_rows ?? run.items_extracted ?? file.itemCount,
               error: run.status === 'failed'
                 ? String(run.error_summary?.message ?? run.error_summary ?? 'ingestion failed')
                 : run.status === 'cancelled' ? 'ingestion was cancelled' : file.error,
@@ -613,7 +616,7 @@ function CataloguesPage() {
                   <td style={{ padding: '9px 16px' }}>
                     <span style={{ fontSize: 10.5, fontWeight: 700, borderRadius: 999, padding: '2px 9px', background: pill.bg, color: pill.color }}>{run.status}</span>
                   </td>
-                  <td style={{ padding: '9px 16px', fontFamily: MONO, fontSize: 11.5, color: C.sub }}>{run.items_extracted ?? '—'}</td>
+                  <td style={{ padding: '9px 16px', fontFamily: MONO, fontSize: 11.5, color: C.sub }}>{run.product_rows ?? run.items_extracted ?? '—'}</td>
                   <td style={{ padding: '9px 16px', textAlign: 'right' }}>
                     <Link to="/catalogues/review/$runId" params={{ runId: run.ingestion_run_id }} style={{ fontSize: 12, fontWeight: 650, color: C.indigoStrong, textDecoration: 'none' }}>
                       Open board →

@@ -135,7 +135,14 @@ export interface VariantDraft {
 }
 
 export interface EvidenceCell { column_name: string | null; value: unknown }
-export interface CandidateEvidence { raw_observation_id: string; page: number | null; raw_text: string | null; cells: EvidenceCell[] }
+export interface CandidateEvidence {
+  raw_observation_id: string; page: number | null; raw_text: string | null; cells: EvidenceCell[]
+  // What the PAGE printed around the row, stamped by extraction — the marks
+  // that drive brand and order-scope promotion terms.
+  page_brand_text?: string | null
+  supplier_identity_text?: string | null
+  page_promotion_text?: string | null
+}
 export interface CandidateDetail {
   candidate: Record<string, any>
   evidence: CandidateEvidence[]
@@ -280,6 +287,87 @@ export const correctToNewProduct = (
       },
     }),
   })
+
+/**
+ * Fix the printed details of a row — code, barcode, cost, packaging, brand.
+ *
+ * Sections REPLACE wholesale on the revision: always send the row's full
+ * current section with the edits applied, never a fragment, or the untouched
+ * parts of that section vanish. Like every correction this supersedes the
+ * candidate with an immutable revision; the reason is what the audit reads.
+ */
+export const correctRowDetails = (
+  runId: string, id: string, reason: string,
+  sections: Partial<Record<
+    | 'supplier_product_resolution'
+    | 'supplier_price_resolution'
+    | 'packaging_resolution'
+    | 'brand_resolution'
+    | 'category_resolution',
+    Record<string, any>
+  >>,
+) =>
+  reviewApi(`/catalogues/ingestions/${runId}/mastering-candidates/${id}/correct`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, ...sections }),
+  })
+
+/**
+ * Fix what extraction READ off the page — the raw evidence cells themselves.
+ *
+ * Different layer from correctRowDetails: this replaces misread cell values
+ * on the persisted observation (keyed by the observation's own column names),
+ * stamping the originals and the reason into its audit trail. Nothing
+ * re-runs on save — re-parse the run (or retrigger its dead-lettered rows)
+ * afterwards and the pipeline re-reads the corrected evidence; on a re-parse
+ * child the fix also lands on the extraction-source run so a later re-parse
+ * cannot resurrect the misread.
+ */
+export const correctEvidence = (
+  runId: string, observationId: string, reason: string,
+  cells: Record<string, string>,
+) =>
+  reviewApi(`/catalogues/ingestions/${runId}/evidence/${observationId}/correct`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, cells }),
+  })
+
+/** One held row — a row the machine could not read into a candidate. */
+export interface DeadLetterEntry {
+  catalogue_item_id: string
+  supplier_sku: string | null
+  product_name?: string | null
+  stage: string
+  issue_codes: string[]
+  attempts: number
+  field_path: string | null
+  review_guidance: string | null
+  first_seen_at: string
+  age_days: number | null
+  raw_observation_id?: string | null
+  observation_ids?: string[]
+}
+export interface DeadLettersResponse {
+  ingestion_run_id: string
+  lanes: Record<string, number>
+  by_issue_code: { issue_code: string; rows_blocked: number; rows_cleared_if_fixed: number }[]
+  count: number
+  dead_letters: DeadLetterEntry[]
+}
+export const fetchDeadLetters = (runId: string) =>
+  reviewApi<DeadLettersResponse>(`/catalogues/ingestions/${runId}/dead-letters`)
+
+/** One observation's verbatim evidence — same shape the review room renders. */
+export const fetchObservationEvidence = (runId: string, observationId: string) =>
+  reviewApi<CandidateEvidence>(`/catalogues/ingestions/${runId}/evidence/${observationId}`)
+
+/** Re-drive held rows from stored evidence — a new run, no re-scan, no spend.
+ * Scope with issue_code or explicit catalogue_item_ids; empty = every held row. */
+export const retriggerHeldRows = (
+  runId: string, body: { issue_code?: string; catalogue_item_ids?: string[] } = {},
+) =>
+  reviewApi<{ ingestion_run_id: string; rows_selected: number; observations: number }>(
+    `/catalogues/ingestions/${runId}/retrigger`, { method: 'POST', body: JSON.stringify(body) })
 
 export const applyCandidate = (runId: string, id: string) =>
   reviewApi(`/catalogues/ingestions/${runId}/mastering-candidates/${id}/apply`, { method: 'POST', body: '{}' })
@@ -461,6 +549,9 @@ export interface RunStatus {
   started_at?: string | null
   completed_at: string | null
   items_extracted: number | null
+  /** Catalogue PRODUCT rows — what a business user means by "rows".
+   * items_extracted counts raw observations incl. page text lines. */
+  product_rows?: number | null
   error_summary?: Record<string, any> | string | null
   retry_of?: string | null
   superseded_by_run?: string | null

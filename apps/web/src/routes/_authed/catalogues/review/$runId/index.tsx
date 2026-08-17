@@ -14,14 +14,15 @@ import { promptDialog } from '@/lib/confirm'
 import { skuToPath } from '@/lib/sku'
 import { DESK_CSS } from '@/lib/deskCss'
 import { IngestionProgress } from '@/components/IngestionProgress'
+import { FixEvidencePanel } from '@/components/FixEvidencePanel'
 import { MatchedProduct, MATCHED_PRODUCT_CSS } from '@/components/MatchedProduct'
 import {
   fetchSummary, fetchDetail, fetchReceipt, searchVariants, latest, groupOf, isPulled,
   isDecided, isApproved, isStaged, sampleIds, suggestTerms,
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
-  correctToNewProduct, checkDuplicates, fetchSkuCategories, willCreate, openSourceFile, unstageCandidate,
+  correctToNewProduct, correctRowDetails, checkDuplicates, fetchSkuCategories, willCreate, openSourceFile, unstageCandidate,
   resolveRunIssue, fanOut, fmtDelta, marginPct, per,
-  fetchRunStatus, retryRun, reparseRun, failureInfo, TERMINAL_RUN_STATUSES,
+  fetchRunStatus, fetchDeadLetters, retryRun, reparseRun, failureInfo, TERMINAL_RUN_STATUSES,
   REASON_CHIPS, PULL_THRESHOLD_PCT,
   type SummaryItem, type VariantHit, type ReceiptChange, type RunStatus, type FailureView,
   type DuplicateCheck, type VariantDraft,
@@ -59,6 +60,207 @@ function canApprove(item: SummaryItem): boolean {
  * a missing *product* — the reviewer has to see what already exists before
  * they can mint anything.
  */
+// One business phrase per typed MBB term — the same canonical renderings the
+// golden export uses, so the desk and the sheet say deals the same way.
+function mbbTermText(term: any): string {
+  const benefit = term?.benefit ?? {}
+  const condition = term?.condition ?? {}
+  const qty = condition?.quantity?.amount
+  const uom = String(condition?.quantity?.uom?.code ?? '').toLowerCase()
+  const money = (v: any) => (v == null ? '' : `$${Number(v).toFixed(2)}`)
+  if (benefit.benefit_type === 'discounted_unit_price') {
+    const price = money(benefit.discounted_price?.amount)
+    const basis = String(benefit.discounted_price?.price_basis?.code ?? '').toLowerCase()
+    if (condition.condition_type === 'minimum_spend') return `spend ${money(condition.spend?.amount)} at ${price}`
+    if (String(qty) === '1') return `special offer: ${price} per ${basis}`
+    return `buy ${qty} ${uom} at ${price} per ${basis}`
+  }
+  if (benefit.benefit_type === 'percentage_discount') {
+    if (condition.condition_type === 'minimum_spend') return `spend ${money(condition.spend?.amount)} for ${benefit.percentage}% off`
+    return qty ? `buy ${qty} ${uom} for ${benefit.percentage}% off` : `${benefit.percentage}% off`
+  }
+  if (benefit.benefit_type === 'free_quantity') return `buy ${qty} get ${benefit.quantity?.amount} free`
+  return String(term?.description ?? 'printed deal')
+}
+
+
+// The controlled unit vocabulary (backend UnitCode enum). OTHER is excluded
+// because it requires a label this form does not carry, and UNKNOWN is a
+// machine state, not something a person asserts about a page.
+const UOM_CODES = [
+  'PIECE', 'UNIT', 'PACK', 'BOX', 'CASE', 'CARTON', 'BOTTLE', 'BAG', 'CAN',
+  'POUCH', 'SACHET', 'TABLET', 'CAPSULE', 'VIAL', 'TUBE', 'TEST', 'STRIP',
+  'KG', 'G', 'OZ', 'LB', 'L', 'ML',
+]
+
+function UomSelect({ value, onChange }: { value: string; onChange: (code: string) => void }) {
+  // A candidate can carry a code from outside today's list (an older enum, a
+  // labelled OTHER) — keep it selectable so opening the form never silently
+  // rewrites a value the reviewer did not touch.
+  const options = value && !UOM_CODES.includes(value) ? [value, ...UOM_CODES] : UOM_CODES
+  return (
+    <select className="fin" value={value} onChange={e => onChange(e.target.value)}>
+      <option value="">—</option>
+      {options.map(code => <option key={code} value={code}>{code}</option>)}
+    </select>
+  )
+}
+
+
+function FixDetailsPanel({ runId, item, candidate, onCancel, onFixed }: {
+  runId: string; item: SummaryItem; candidate: Record<string, any>; onCancel: () => void
+  onFixed: (revisionId: string | null) => void | Promise<void>
+}) {
+  // Prefill from the candidate's CURRENT resolution sections — a correction
+  // replaces a section wholesale, so the form must carry everything the
+  // section already says and change only what the reviewer touches.
+  const productRes = candidate.supplier_product_resolution ?? {}
+  const priceRes = candidate.supplier_price_resolution ?? {}
+  const packagingRes = candidate.packaging_resolution ?? {}
+  const brandRes = candidate.brand_resolution ?? {}
+  const cost0 = priceRes.current_cost ?? {}
+  const pack0 = packagingRes.packaging ?? {}
+
+  const [sku, setSku] = useState<string>(productRes.supplier_sku ?? item.supplier_sku ?? '')
+  const [barcode, setBarcode] = useState<string>(productRes.barcode ?? item.barcode ?? '')
+  const [costAmount, setCostAmount] = useState<string>(cost0.amount != null ? String(cost0.amount) : '')
+  const [basisCode, setBasisCode] = useState<string>(cost0.price_basis?.code ?? '')
+  const [brand, setBrand] = useState<string>(brandRes.value ?? '')
+  const [purchaseUom, setPurchaseUom] = useState<string>(pack0.purchase_uom?.code ?? '')
+  const [sellableUom, setSellableUom] = useState<string>(pack0.sellable_unit_uom?.code ?? '')
+  const [unitsPer, setUnitsPer] = useState<string>(
+    pack0.sellable_units_per_purchase_unit != null ? String(pack0.sellable_units_per_purchase_unit) : '')
+  const [why, setWhy] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const initial = useRef({
+    sku: productRes.supplier_sku ?? item.supplier_sku ?? '',
+    barcode: productRes.barcode ?? item.barcode ?? '',
+    costAmount: cost0.amount != null ? String(cost0.amount) : '',
+    basisCode: cost0.price_basis?.code ?? '',
+    brand: brandRes.value ?? '',
+    purchaseUom: pack0.purchase_uom?.code ?? '',
+    sellableUom: pack0.sellable_unit_uom?.code ?? '',
+    unitsPer: pack0.sellable_units_per_purchase_unit != null ? String(pack0.sellable_units_per_purchase_unit) : '',
+  }).current
+
+  const productDirty = sku.trim() !== initial.sku || barcode.trim() !== initial.barcode
+  const priceDirty = costAmount.trim() !== initial.costAmount || basisCode.trim().toUpperCase() !== initial.basisCode
+  const brandDirty = brand.trim() !== initial.brand
+  const packDirty = purchaseUom.trim().toUpperCase() !== initial.purchaseUom
+    || sellableUom.trim().toUpperCase() !== initial.sellableUom
+    || unitsPer.trim() !== initial.unitsPer
+  const anythingDirty = productDirty || priceDirty || brandDirty || packDirty
+  const ready = anythingDirty && why.trim().length > 3 && (!priceDirty || costAmount.trim().length > 0)
+
+  async function save() {
+    setSaving(true)
+    try {
+      const sections: Record<string, any> = {}
+      if (productDirty) {
+        sections.supplier_product_resolution = {
+          ...productRes,
+          supplier_sku: sku.trim() || null,
+          barcode: barcode.trim() || null,
+        }
+      }
+      if (priceDirty) {
+        sections.supplier_price_resolution = {
+          ...priceRes,
+          current_cost: {
+            ...cost0,
+            amount: costAmount.trim(),
+            currency: cost0.currency ?? 'HKD',
+            price_basis: basisCode.trim()
+              ? { ...(cost0.price_basis ?? {}), code: basisCode.trim().toUpperCase(), label: cost0.price_basis?.label ?? null }
+              : (cost0.price_basis ?? null),
+          },
+        }
+      }
+      if (brandDirty) {
+        sections.brand_resolution = { ...brandRes, value: brand.trim() || null, value_id: null }
+      }
+      if (packDirty) {
+        sections.packaging_resolution = {
+          ...packagingRes,
+          packaging: {
+            ...pack0,
+            purchase_uom: purchaseUom.trim()
+              ? { ...(pack0.purchase_uom ?? {}), code: purchaseUom.trim().toUpperCase(), label: pack0.purchase_uom?.label ?? null }
+              : null,
+            sellable_unit_uom: sellableUom.trim()
+              ? { ...(pack0.sellable_unit_uom ?? {}), code: sellableUom.trim().toUpperCase(), label: pack0.sellable_unit_uom?.label ?? null }
+              : null,
+            sellable_units_per_purchase_unit: unitsPer.trim() || null,
+          },
+        }
+      }
+      const result = await correctRowDetails(
+        runId, item.mastering_candidate_id, `Fixed printed details — ${why.trim()}`, sections,
+      )
+      const revision = (result as any)?.output_ids?.[0]
+      toast.success('Details corrected — the fixed row replaces this one')
+      await onFixed(typeof revision === 'string' ? revision : null)
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="panel" style={{ background: 'var(--card)', borderColor: 'var(--accent-line)' }}>
+      <div className="cdh">
+        <span>Fix the printed details</span>
+        <span className="cdnote">saves a corrected copy — the original stays on the record</span>
+      </div>
+
+      <div className="cdgrid">
+        <div>
+          <div className="cdlab">As read from the page</div>
+          <div className="cdev"><span>Code</span><b className="mono">{initial.sku || '—'}</b></div>
+          <div className="cdev"><span>Cost</span><b>{initial.costAmount ? `${initial.costAmount} ${cost0.currency ?? 'HKD'}${initial.basisCode ? ` / ${initial.basisCode.toLowerCase()}` : ''}` : '—'}</b></div>
+          <div className="cdev"><span>Brand</span><b>{initial.brand || '—'}</b></div>
+          <div className="cdev"><span>Packaging</span><b>{initial.unitsPer || initial.purchaseUom
+            ? `${initial.unitsPer || '?'} ${initial.sellableUom || 'unit'} / ${initial.purchaseUom || '?'}`
+            : '—'}</b></div>
+        </div>
+
+        <div>
+          <div className="cdlab">Corrected values — change only what is wrong</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <label className="cdf"><span>Supplier code</span>
+              <input className="fin mono" value={sku} onChange={e => setSku(e.target.value)} /></label>
+            <label className="cdf"><span>Barcode</span>
+              <input className="fin mono" value={barcode} onChange={e => setBarcode(e.target.value)} /></label>
+            <label className="cdf"><span>Cost ({cost0.currency ?? 'HKD'})</span>
+              <input className="fin" inputMode="decimal" value={costAmount} onChange={e => setCostAmount(e.target.value)} /></label>
+            <label className="cdf"><span>Priced per</span>
+              <UomSelect value={basisCode} onChange={setBasisCode} /></label>
+            <label className="cdf"><span>Brand</span>
+              <input className="fin" value={brand} onChange={e => setBrand(e.target.value)} /></label>
+            <label className="cdf"><span>Units inside one purchase</span>
+              <input className="fin" inputMode="numeric" value={unitsPer} onChange={e => setUnitsPer(e.target.value)} /></label>
+            <label className="cdf"><span>Unit sold</span>
+              <UomSelect value={sellableUom} onChange={setSellableUom} /></label>
+            <label className="cdf"><span>Bought as</span>
+              <UomSelect value={purchaseUom} onChange={setPurchaseUom} /></label>
+          </div>
+          <label className="cdf"><span>What was wrong? — required, this is the audit trail</span>
+            <input className="fin" value={why} onChange={e => setWhy(e.target.value)}
+              placeholder="e.g. the page prints $128.0 but the row was read as $1,280" /></label>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '10px 12px' }}>
+        <button className="btn sm" onClick={onCancel} disabled={saving}>Cancel</button>
+        <button className="btn pri sm" onClick={save} disabled={!ready || saving}>
+          {saving ? 'Saving…' : 'Save the correction'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
 function CreateDraftPanel({ runId, item, onCancel, onCreated }: {
   runId: string; item: SummaryItem; onCancel: () => void
   onCreated: (revisionId: string | null) => void | Promise<void>
@@ -250,6 +452,15 @@ function RunDeskPage() {
   const runState = status.data?.status ?? ''
   const reviewable = runState === 'completed' || runState === 'completed_with_warnings'
   const summary = useQuery({ queryKey: ['review-summary', runId], queryFn: () => fetchSummary(runId), enabled: reviewable })
+  // Held rows are part of the run's truth: a BO must see that some printed
+  // rows never became reviewable, or "440 rows, 291 to decide" reads short.
+  const heldRows = useQuery({
+    queryKey: ['dead-letters', runId],
+    queryFn: () => fetchDeadLetters(runId),
+    enabled: reviewable,
+    staleTime: 30_000,
+  })
+  const heldCount = heldRows.data?.count ?? 0
   const items = useMemo(() => latest(summary.data?.items ?? []), [summary.data])
 
   // ── lanes ──
@@ -465,7 +676,8 @@ function RunDeskPage() {
   if (summary.isError) return <div style={{ padding: 24, color: '#C0362C', fontSize: 13 }}>{String((summary.error as Error)?.message)}</div>
 
   // lifecycle
-  const rows = status.data?.items_extracted ?? items.length
+  // product_rows, never items_extracted: BOs count products, not page text.
+  const rows = status.data?.product_rows ?? status.data?.items_extracted ?? items.length
   const decisionsDone = needsYou === 0 && cleanPending === 0
   const liveStage = published.length > 0
 
@@ -541,7 +753,7 @@ function RunDeskPage() {
       {/* lifecycle — plain words, counts per stage */}
       <div className="life">
         <span className="stage done"><span className="sdot">✓</span>Received</span>
-        <span className="stage done"><span className="sdot">✓</span>Checked <span className="scount">{rows} rows</span></span>
+        <span className="stage done"><span className="sdot">✓</span>Checked <span className="scount">{rows} rows{heldCount > 0 && <> · <Link className="lnk" to="/catalogues/review/$runId/held" params={{ runId }}>{heldCount} couldn&apos;t be read →</Link></>}</span></span>
         <span className={`stage ${!decisionsDone ? 'now' : 'done'}`}>
           <span className="sdot">{decisionsDone ? '✓' : needsYou}</span>Decisions
           {/* These three partition every row, so they sum to the row count —
@@ -1285,6 +1497,8 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
   const [note, setNote] = useState('')
   const [noteOpen, setNoteOpen] = useState(false)
   const [drafting, setDrafting] = useState(false)
+  const [fixing, setFixing] = useState(false)
+  const [fixingEvidence, setFixingEvidence] = useState(false)
   // Open by default only when there is no product to look at, so an unmatched
   // row still lands straight on its suggestions.
   const [repickOpen, setRepickOpen] = useState(false)
@@ -1292,7 +1506,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
 
   useEffect(() => {
     setPicked(null); setSugg(null); setQuery(''); setHits([]); setNote(''); setNoteOpen(false); setSearching(false)
-    setDrafting(false); setRepickOpen(false)
+    setDrafting(false); setFixing(false); setFixingEvidence(false); setRepickOpen(false)
     if (!current) return
     const terms = suggestTerms(current)
     if (terms.length < 2) { setSugg([]); return }
@@ -1374,6 +1588,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
 
   if (!current) return null
   const evidence = detail.data?.evidence?.[0]
+  const mbbTerms: any[] = detail.data?.candidate?.mbb_resolution?.terms ?? []
   const list = query.trim().length >= 2 ? hits : (sugg ?? [])
   // Whichever product is in play: the one just picked, else the standing match.
   const subjectSku = picked?.sku_code
@@ -1432,9 +1647,30 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
                     <tr><td colSpan={2} className="v mono" style={{ fontSize: 11.5, whiteSpace: 'pre-wrap' }}>{evidence.raw_text}</td></tr>
                   )}
                 </tbody></table>
+                {/* What the PAGE printed around this row — the marks that drive
+                    brand and order-scope promotion terms. */}
+                {(evidence?.page_brand_text || evidence?.page_promotion_text || evidence?.supplier_identity_text) && (
+                  <div className="readas" style={{ borderTopStyle: 'dashed' }}>
+                    {evidence.page_brand_text && <>Page brand mark: <b>{evidence.page_brand_text}</b></>}
+                    {evidence.page_promotion_text && <>{evidence.page_brand_text ? ' · ' : ''}Page promotion: <b>{evidence.page_promotion_text}</b></>}
+                    {evidence.supplier_identity_text && <>{(evidence.page_brand_text || evidence.page_promotion_text) ? ' · ' : ''}Supplier printed: <b>{evidence.supplier_identity_text}</b></>}
+                  </div>
+                )}
                 <div className="readas">
                   Read as: <b>{current.name ?? '—'}</b> · {current.cost_amount != null ? `${current.cost_amount.toFixed(2)} ${current.cost_currency ?? ''}${current.cost_basis ? `/${current.cost_basis.toLowerCase()}` : per(current.uom)}` : 'no cost'} · code {current.supplier_sku ?? '—'}
                   {current.barcode ? ` · barcode ${current.barcode}` : ''}
+                  {/* The typed deals this row carries — a case price the page
+                      prints is only trustworthy if the reviewer can SEE that
+                      it became a term, not the cost. */}
+                  {mbbTerms.length > 0 && (
+                    <> · deal{mbbTerms.length > 1 ? 's' : ''}: <b>{mbbTerms.map(mbbTermText).join('; ')}</b></>
+                  )}
+                  {!isDecided(current) && detail.data && (
+                    <> · <button className="lnk" onClick={() => { setDrafting(false); setFixingEvidence(false); setFixing(true) }}>read wrong? fix the details</button></>
+                  )}
+                  {!isDecided(current) && !!evidence?.cells?.length && (
+                    <> · <button className="lnk" onClick={() => { setDrafting(false); setFixing(false); setFixingEvidence(true) }}>page misread? fix the evidence</button></>
+                  )}
                 </div>
               </>
             )}
@@ -1454,6 +1690,32 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
                 // still reads as undecided.
                 await queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
                 if (revision) onMove(revision)
+              }}
+            />
+          ) : fixing && detail.data ? (
+            <FixDetailsPanel
+              runId={runId}
+              item={current}
+              candidate={detail.data.candidate}
+              onCancel={() => setFixing(false)}
+              onFixed={async revision => {
+                setFixing(false)
+                // Same rule as drafting: the fix IS a new candidate — wait for
+                // the summary to carry it before following it.
+                await queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
+                if (revision) onMove(revision)
+              }}
+            />
+          ) : fixingEvidence && evidence ? (
+            <FixEvidencePanel
+              runId={runId}
+              evidence={evidence}
+              onCancel={() => setFixingEvidence(false)}
+              onSaved={async () => {
+                setFixingEvidence(false)
+                // The candidate is untouched — only the verbatim card changes,
+                // so refetch the detail and stay on this row.
+                await queryClient.invalidateQueries({ queryKey: ['review-detail', runId, current.mastering_candidate_id] })
               }}
             />
           ) : (
