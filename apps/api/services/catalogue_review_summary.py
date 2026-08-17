@@ -368,6 +368,14 @@ def candidate_evidence(db: Session, candidate: models.CatalogueMasteringCandidat
                 {"column_name": cell.get("column_name"), "value": cell.get("raw_value")}
                 for cell in _loads(row.raw_cells_json, default=[])
             ],
+            # Page-level evidence extraction stamped onto this observation —
+            # what the PAGE printed around the row (brand wordmark, letterhead,
+            # banner promotion). Without these the desk shows the cells but
+            # hides the marks that drive brand and promotion terms.
+            **{
+                key: (_loads(row.source_metadata_json, default={}) or {}).get(key)
+                for key in ("page_brand_text", "supplier_identity_text", "page_promotion_text")
+            },
         }
         for row in rows
     ]

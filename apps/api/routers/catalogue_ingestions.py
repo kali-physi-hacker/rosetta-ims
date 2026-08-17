@@ -9,6 +9,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from pydantic import BaseModel, Field
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import database
@@ -16,6 +17,7 @@ import models
 from permissions import has_capability, require_capability
 from services import audit_log
 from services import catalogue_dead_letters as dead_letters
+from services import catalogue_evidence_corrections as evidence_corrections
 from services import catalogue_pipeline_persistence as persistence
 from services import catalogue_pipeline_stages as stages
 from services import catalogue_review_summary as review_summary
@@ -80,6 +82,10 @@ class CatalogueIngestionStatusResponse(BaseModel):
     started_at: str | None = None
     completed_at: str | None = None
     items_extracted: int | None = None
+    # The BO-facing rows figure: catalogue PRODUCT rows (normalized rows).
+    # items_extracted counts raw observations, which include page-level text
+    # lines (banners, effective dates) — extraction accounting, not products.
+    product_rows: int | None = None
     metrics: dict[str, Any] | None = None
     error_summary: dict[str, Any] | str | None = None
     retry_of: str | None = None
@@ -110,6 +116,20 @@ class MasteringReviewRequest(BaseModel):
     override_reason: str | None = None
     expected_candidate_created_at: str | None = None
     decided_at: datetime | None = None
+
+
+class EvidenceCorrectionRequest(BaseModel):
+    """Human correction of misread cells on one extracted-evidence observation.
+
+    Cells are keyed by the observation's own column names and REPLACE what the
+    extraction read there — columns the observation does not carry refuse by
+    name. The original values, reason, and author are stamped into the
+    observation's metadata; re-parse or retrigger then re-reads the corrected
+    evidence.
+    """
+
+    reason: str = Field(min_length=4)
+    cells: dict[str, str | None] = Field(min_length=1)
 
 
 class MasteringCorrectionRequest(BaseModel):
@@ -234,7 +254,8 @@ def get_catalogue_ingestions_run_ids(
 ):
     service = CatalogueSubmissionService(db)
     runs = service.list()
-    return [_status_response(run) for run in runs]
+    counts = _product_row_counts(db, [str(run.ingestion_run_id) for run in runs])
+    return [_status_response(run, product_rows=counts.get(str(run.ingestion_run_id))) for run in runs]
 
 
 @router.get(
@@ -251,7 +272,8 @@ def get_catalogue_ingestion_status(
         result = service.get_status(run_uuid)
     except Exception as exc:
         raise _http_error(exc) from exc
-    return _status_response(result)
+    counts = _product_row_counts(db, [str(run_uuid)])
+    return _status_response(result, product_rows=counts.get(str(run_uuid)))
 
 
 @router.post(
@@ -479,6 +501,68 @@ def correct_catalogue_mastering_candidate(
     return _action_response(result)
 
 
+@router.post("/ingestions/{run_uuid}/evidence/{raw_observation_uuid}/correct")
+def correct_catalogue_evidence(
+    run_uuid: UUID,
+    raw_observation_uuid: UUID,
+    body: EvidenceCorrectionRequest,
+    request: Request,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Correct misread cells on one observation, with a durable audit stamp.
+
+    Nothing re-runs here: re-parse the run (or retrigger its dead-lettered
+    rows) afterwards and the pipeline re-reads the corrected evidence. On a
+    re-parse child the correction also lands on the extraction-source run's
+    copy, so re-parsing again cannot resurrect the misread.
+    """
+    try:
+        result = evidence_corrections.correct_evidence(
+            db,
+            run_uuid=run_uuid,
+            raw_observation_uuid=raw_observation_uuid,
+            cells=body.cells,
+            reason=body.reason,
+            corrected_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+        )
+    except evidence_corrections.EvidenceNotFound as exc:
+        raise HTTPException(status_code=404, detail=_detail("EVIDENCE_NOT_FOUND", str(exc))) from exc
+    except evidence_corrections.EvidenceCorrectionError as exc:
+        raise HTTPException(status_code=422, detail=_detail("EVIDENCE_CORRECTION_REFUSED", str(exc))) from exc
+    try:
+        audit_log.record(
+            db,
+            action="catalogue.evidence_correct",
+            actor=user,
+            entity_type="catalogue_extracted_evidence",
+            entity_id=result.raw_observation_id,
+            entity_label=f"run {run_uuid}",
+            details={
+                "ingestion_run_id": str(run_uuid),
+                "corrected_columns": list(result.corrected_columns),
+                "reason": body.reason,
+                "source_run_id": result.source_run_id,
+                "source_raw_observation_id": result.source_raw_observation_id,
+            },
+            request=request,
+            commit=True,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception(
+            "evidence correction %s was saved but audit logging failed", result.raw_observation_id
+        )
+    return {
+        "ingestion_run_id": str(run_uuid),
+        "raw_observation_id": result.raw_observation_id,
+        "corrected_columns": list(result.corrected_columns),
+        "source_run_id": result.source_run_id,
+        "source_raw_observation_id": result.source_raw_observation_id,
+        "next_step": "re-parse the run (or retrigger its dead-lettered rows) to re-read the corrected evidence",
+    }
+
+
 @router.post(
     "/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/apply",
     response_model=PipelineActionResponse,
@@ -588,6 +672,50 @@ def get_raw_layer(
     }
 
 
+@router.get("/ingestions/{run_uuid}/evidence/{raw_observation_uuid}")
+def get_catalogue_evidence(
+    run_uuid: UUID,
+    raw_observation_uuid: UUID,
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """One observation's verbatim evidence — cells plus the page-level marks.
+
+    The same shape the candidate detail's evidence entries use, so the held-
+    rows lane and the review room render (and correct) evidence identically.
+    """
+    import json as _json
+
+    _load_run_or_404(db, run_uuid)
+    row = (
+        db.query(models.CatalogueExtractedEvidence)
+        .filter_by(ingestion_run_uuid=str(run_uuid), raw_observation_uuid=str(raw_observation_uuid))
+        .first()
+    )
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=_detail("EVIDENCE_NOT_FOUND", f"Observation {raw_observation_uuid} is not part of run {run_uuid}"),
+        )
+    try:
+        metadata = _json.loads(row.source_metadata_json or "{}") or {}
+    except ValueError:
+        metadata = {}
+    try:
+        cells = _json.loads(row.raw_cells_json or "[]")
+    except ValueError:
+        cells = []
+    return {
+        "raw_observation_id": row.raw_observation_uuid,
+        "page": row.page_number,
+        "raw_text": row.raw_text,
+        "cells": [{"column_name": cell.get("column_name"), "value": cell.get("raw_value")} for cell in cells],
+        "page_brand_text": metadata.get("page_brand_text"),
+        "supplier_identity_text": metadata.get("supplier_identity_text"),
+        "page_promotion_text": metadata.get("page_promotion_text"),
+    }
+
+
 @router.get("/ingestions/{run_uuid}/dead-letters")
 def get_dead_letters(
     run_uuid: UUID,
@@ -617,6 +745,7 @@ def get_dead_letters(
     run = str(run_uuid)
     entries = dead_letters.dead_letters(db, run_uuid=run, issue_code=issue_code, stage=stage)
     reconciliation = dead_letters.reconcile(db, run)
+    names = _row_names(db, {entry.catalogue_item_uuid for entry in entries})
     return {
         "ingestion_run_id": run,
         "lanes": reconciliation.lane_counts,
@@ -644,6 +773,7 @@ def get_dead_letters(
                 "catalogue_item_id": entry.catalogue_item_uuid,
                 "supplier_id": entry.supplier_id,
                 "supplier_sku": entry.supplier_sku,
+                "product_name": names.get(entry.catalogue_item_uuid),
                 "stage": entry.stage,
                 "issue_codes": list(entry.issue_codes),
                 # Runs that have tried this row: 1 + one per completed
@@ -653,10 +783,41 @@ def get_dead_letters(
                 "review_guidance": entry.review_guidance,
                 "first_seen_at": entry.first_seen_at,
                 "age_days": entry.age_days,
+                # The observation behind the row — the handle the evidence
+                # panel corrects and a retrigger re-drives.
+                "raw_observation_id": entry.observation_uuids[0] if entry.observation_uuids else None,
+                "observation_ids": list(entry.observation_uuids),
             }
             for entry in entries
         ],
     }
+
+
+def _row_names(db: Session, item_uuids: set[str]) -> dict[str, str]:
+    """The printed product description per held row, so a person can recognise
+    it without decoding SKUs."""
+    if not item_uuids:
+        return {}
+    import json as _json
+
+    out: dict[str, str] = {}
+    rows = (
+        db.query(
+            models.CatalogueNormalizedRow.catalogue_item_uuid,
+            models.CatalogueNormalizedRow.raw_fields_json,
+        )
+        .filter(models.CatalogueNormalizedRow.catalogue_item_uuid.in_(item_uuids))
+        .all()
+    )
+    for item_uuid, raw_json in rows:
+        try:
+            raw = _json.loads(raw_json or "{}")
+        except ValueError:
+            continue
+        name = raw.get("product_name") or raw.get("original_product_name")
+        if name:
+            out[item_uuid] = str(name)
+    return out
 
 
 @router.get("/ingestions/{run_uuid}/staging")
@@ -1197,8 +1358,27 @@ def _submission_response(result: CatalogueSubmissionResult) -> CatalogueSubmissi
     return CatalogueSubmissionResponse(**result.__dict__)
 
 
-def _status_response(result: CatalogueIngestionStatus) -> CatalogueIngestionStatusResponse:
-    return CatalogueIngestionStatusResponse(**result.__dict__)
+def _product_row_counts(db: Session, run_uuids: list[str]) -> dict[str, int]:
+    """Catalogue product rows per run — normalized rows, the figure a business
+    user means by 'rows'. Computed live so historical runs read correctly."""
+    if not run_uuids:
+        return {}
+    rows = (
+        db.query(
+            models.CatalogueNormalizedRow.ingestion_run_uuid,
+            func.count(models.CatalogueNormalizedRow.id),
+        )
+        .filter(models.CatalogueNormalizedRow.ingestion_run_uuid.in_(run_uuids))
+        .group_by(models.CatalogueNormalizedRow.ingestion_run_uuid)
+        .all()
+    )
+    return {run_uuid: count for run_uuid, count in rows}
+
+
+def _status_response(
+    result: CatalogueIngestionStatus, *, product_rows: int | None = None
+) -> CatalogueIngestionStatusResponse:
+    return CatalogueIngestionStatusResponse(**result.__dict__, product_rows=product_rows)
 
 
 def _http_error(exc: Exception) -> HTTPException:
