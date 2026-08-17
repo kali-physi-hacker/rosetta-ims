@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://v2.178.128.127.5.nip.io/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
