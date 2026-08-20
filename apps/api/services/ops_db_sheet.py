@@ -76,6 +76,86 @@ def _cell(value):
     return text
 
 
+def _a1(column: str) -> str:
+    """Spreadsheet letter for a column in OPS_COLUMNS."""
+    index = OPS_COLUMNS.index(column) + 1
+    letters = ""
+    while index:
+        index, rest = divmod(index - 1, 26)
+        letters = chr(65 + rest) + letters
+    return letters
+
+
+CHANNELS = ("shopify", "hktvm", "daysmart")
+
+
+def _formula(column: str, line: int, data: dict) -> str | None:
+    """The live formula for a derived cell, or None to write the value.
+
+    The derived figures go in as FORMULAS, not answers. Someone trying a
+    different selling price or a new platform fee should see the margin move
+    under their hands; a pushed number would just sit there being wrong until
+    the next push.
+    """
+    def at(col: str) -> str:
+        return f"{_a1(col)}{line}"
+
+    if column == "cost_per_unit":
+        price, basis = at("cost_price_amount"), at("cost_price_basis_uom")
+        buy, sell = at("purchase_uom"), at("sellable_uom")
+        per = at("sellable_units_per_purchase_unit")
+        return (f'=IF({price}="","",IF(OR(UPPER({basis})="UNIT",{buy}="",UPPER({buy})=UPPER({sell})),'
+                f'{price},IF(N({per})>0,{price}/{per},"")))')
+
+    for channel in CHANNELS:
+        sell = at(f"selling_price_{channel}")
+        fee, logistics = at(f"platform_fee_percent_{channel}"), at(f"logistics_cost_per_unit_{channel}")
+
+        def gross(cost: str) -> str:
+            return f'=IF(OR({cost}="",{sell}=""),"",ROUND(({sell}-{cost})/{sell}*100,2))'
+
+        def net(cost: str) -> str:
+            return (f'=IF(OR({cost}="",{sell}=""),"",ROUND(({sell}-{cost}-'
+                    f'({sell}*N({fee})/100)-N({logistics}))/{sell}*100,2))')
+
+        if column == f"{channel}_gross_margin":
+            return gross(at("cost_per_unit"))
+        if column == f"{channel}_net_margin":
+            return net(at("cost_per_unit"))
+        for tier in range(1, 5):
+            cost = at(f"mbb_tier_{tier}_cost_per_unit")
+            if column == f"mbb_tier_{tier}_{channel}_gross_margin":
+                return gross(cost)
+            if column == f"mbb_tier_{tier}_{channel}_net_margin":
+                return net(cost)
+
+    for tier in range(1, 5):
+        if column != f"mbb_tier_{tier}_cost_per_unit":
+            continue
+        # A deal the exporter refused — a basis it could not line up, or a price
+        # that is really the base spread across a minimum order — gets no
+        # formula. Writing one would resurrect a margin nobody can achieve.
+        if not data.get(column):
+            return ""
+        kind = data.get(f"mbb_tier_{tier}_type")
+        base, value = at("cost_per_unit"), at(f"mbb_tier_{tier}_value")
+        uom, qty = at(f"mbb_tier_{tier}_value_uom"), at(f"mbb_tier_{tier}_min_qty")
+        per = at("sellable_units_per_purchase_unit")
+        if kind == "BULK_PRICE":
+            # "HKD per PIECE" prices the thing you buy, so it divides by the
+            # pack count; a bare "HKD" is already per unit and must not.
+            return (f'=IF({value}="","",IF(AND(ISNUMBER(SEARCH(" per ",{uom})),N({per})>1),'
+                    f'{value}/{per},{value}))')
+        if kind == "PERCENT_OFF":
+            return f'=IF(OR({base}="",{value}=""),"",ROUND({base}*(1-{value}/100),4))'
+        if kind == "FREE_ITEMS":
+            return f'=IF(OR({base}="",{value}="",{qty}=""),"",ROUND({base}*{qty}/({qty}+{value}),4))'
+        if kind == "AMOUNT_OFF":
+            return f'=IF(OR({base}="",{value}=""),"",ROUND({base}-{value},4))'
+        return ""
+    return None
+
+
 def push_published_rows(
     db: Session,
     *,
@@ -100,7 +180,13 @@ def push_published_rows(
     if tab is None:
         raise OpsSheetError(f"The ops sheet has no tab with id {tab_gid}.")
 
-    payload = [list(OPS_COLUMNS)] + [[_cell(r.get(c)) for c in OPS_COLUMNS] for r in rows]
+    payload = [list(OPS_COLUMNS)]
+    for line, row in enumerate(rows, start=2):   # row 1 is the header
+        cells = []
+        for column in OPS_COLUMNS:
+            formula = _formula(column, line, row)
+            cells.append(_cell(row.get(column)) if formula is None else formula)
+        payload.append(cells)
     # Clear first: a shorter run than last time would otherwise leave stale rows
     # below the new data, reading as current stock.
     tab.clear()
