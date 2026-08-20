@@ -1855,6 +1855,16 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
         read_sellable = _sellable_unit_from_text(sellable_source)
         if read_sellable:
             proposal["sellable_unit_uom"] = {"code": read_sellable, "label": None}
+        elif "content_amount" in proposal:
+            # "30ml/ bot" names a MEASURE, so no countable was read — but the row
+            # still sells something, and what it sells is the thing you buy: a
+            # bottle. Naming it here is what lets a cost per unit exist at all;
+            # left null, the 30 stands in as if the row sold millilitres.
+            # Only fires alongside a captured content measure, so the packaging
+            # phrase is untouched — the content noun already wins that slot.
+            purchase = proposal.get("purchase_uom")
+            if purchase and purchase.get("code"):
+                proposal["sellable_unit_uom"] = {"code": purchase["code"], "label": None}
     quantity_uom = semantics.sellable_unit_uom or semantics.price_basis
     order_increment = _leading_decimal(_source_field_value(fields, semantics.order_increment_source_field))
     if order_increment is not None and quantity_uom is not None and quantity_uom.code is not None:
