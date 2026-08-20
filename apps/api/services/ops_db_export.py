@@ -15,22 +15,18 @@ achieve.
 
 from __future__ import annotations
 
-import json
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal, InvalidOperation
 
 import sqlalchemy
 
-import database
 import models
 from services.catalogue_golden_export import (
     _identity_packaging,
-    _raw_supplier_names,
     _mbb_text,
     _num,
     _order_multiple_text,
     _packaging_text,
     _uom,
-    _units_per_pack,
 )
 
 BENEFIT_LABEL = {
@@ -527,7 +523,6 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
     sellable_uom = _uom(getattr(pack, "sellable_unit_uom_code", None), getattr(pack, "sellable_unit_uom_label", None)) or (
         (variant.uom if variant else "") or ""
     )
-    content_uom = _uom(getattr(pack, "content_uom_code", None), getattr(pack, "content_uom_label", None))
     if not sellable_uom or sellable_uom.upper() in MEASURE_CODES:
         # Nothing named a unit, or the only noun is a measure ("30 ML / BOTTLE").
         # What you sell defaults to what you buy: you cannot sell a unit the
