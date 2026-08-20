@@ -904,6 +904,7 @@ function NewInventoryPage() {
           <ScopeSwitch scope={scope} onPick={setScope} counts={scopeCounts} settled={settled} />
           <button className="btn" onClick={() => setExportOpen(true)}>↓ Export</button>
           {editable && <button className="btn" onClick={() => setBatchOpen(true)}>Batch update</button>}
+          {editable && <PushToOpsSheet />}
           <div style={{ position: 'relative' }}>
             <button className="btn" onClick={() => setTasksOpen(o => !o)} title="Data tasks">⋯</button>
             {tasksOpen && <DataTasksMenu onClose={() => setTasksOpen(false)} onShortcuts={() => { setTasksOpen(false); setShortcuts(true) }} />}
@@ -1532,6 +1533,47 @@ function FiltersPanel(props: {
         <button className="btn pri" style={{ marginLeft: 'auto' }} onClick={props.onClose}>Show {props.resultCount.toLocaleString()} results</button>
       </div>
     </div>
+  )
+}
+
+/** Publish the ops view of the catalogue to the BizOps sheet.
+ *
+ *  The push REPLACES the tab's contents, so it asks first — someone may be
+ *  reading those numbers to cost an order. Only published rows travel: a row
+ *  still in review has not been agreed by anyone, and the sheet is read as
+ *  fact. */
+function PushToOpsSheet() {
+  const [busy, setBusy] = useState(false)
+  const [last, setLast] = useState<{ rows: number; at: string } | null>(null)
+
+  const push = useCallback(async () => {
+    const ok = await confirmDialog({
+      title: 'Push to the ops sheet?',
+      message:
+        'This replaces everything on the sheet with the products published today. '
+        + 'Anyone reading it while you push will see the new figures.',
+      confirmLabel: 'Push',
+    })
+    if (!ok) return
+    setBusy(true)
+    try {
+      const res = await fetch(`${API}/ops-db/push-to-sheet`, { method: 'POST', headers: authHeaders() })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body?.detail || `Push failed (${res.status})`)
+      setLast({ rows: body.rows_written, at: new Date().toLocaleTimeString() })
+      toast.success(`${body.rows_written.toLocaleString()} products written to “${body.tab}”`)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not write to the sheet')
+    } finally {
+      setBusy(false)
+    }
+  }, [])
+
+  return (
+    <button className="btn" onClick={push} disabled={busy}
+      title={last ? `Last pushed ${last.rows} products at ${last.at}` : 'Write published products to the ops sheet'}>
+      {busy ? 'Pushing…' : '↗ Push to ops sheet'}
+    </button>
   )
 }
 
