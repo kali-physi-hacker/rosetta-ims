@@ -595,6 +595,10 @@ function NewInventoryPage() {
   const [channelFilter, setChannelFilter] = useState(params.get('ch') ?? 'any')
   const [storageFilter, setStorageFilter] = useState(params.get('store') ?? 'any')
   const [heroFilter, setHeroFilter] = useState(params.get('hero') ?? 'any')
+  /** Where the cost came from. 'catalogue' means it was read off a supplier's
+   *  own catalogue and cleared review, rather than typed in by hand — the
+   *  difference between a price we can point at a page for and one we cannot. */
+  const [verifiedFilter, setVerifiedFilter] = useState(params.get('verified') ?? 'any')
   const [gapFilter, setGapFilter] = useState(params.get('gap') ?? 'any')
   const [expiryFilter, setExpiryFilter] = useState(params.get('exp') ?? 'any')
   const [collectionId, setCollectionId] = useState<number | null>(params.get('col') ? Number(params.get('col')) : null)
@@ -643,6 +647,7 @@ function NewInventoryPage() {
     if (channelFilter !== 'any') p.set('ch', channelFilter)
     if (storageFilter !== 'any') p.set('store', storageFilter)
     if (heroFilter !== 'any') p.set('hero', heroFilter)
+    if (verifiedFilter !== 'any') p.set('verified', verifiedFilter)
     if (gapFilter !== 'any') p.set('gap', gapFilter)
     if (expiryFilter !== 'any') p.set('exp', expiryFilter)
     if (collectionId != null) p.set('col', String(collectionId))
@@ -651,7 +656,7 @@ function NewInventoryPage() {
     const qs = p.toString()
     window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
   }, [scope, view, search, attention, category, supplier, stockFilter, gradeFilter,
-      channelFilter, storageFilter, heroFilter, gapFilter, expiryFilter, collectionId, sortCol, sortAsc])
+      channelFilter, storageFilter, heroFilter, verifiedFilter, gapFilter, expiryFilter, collectionId, sortCol, sortAsc])
 
   // ── stream the catalogue ──
   const fetchData = useCallback(async () => {
@@ -759,6 +764,8 @@ function NewInventoryPage() {
       if (storageFilter === 'any_loc' && i.storage_rule === 'clinic_only') return false
       if (heroFilter === 'hero' && !i.hero_sku) return false
       if (heroFilter === 'not_hero' && i.hero_sku) return false
+      if (verifiedFilter === 'catalogue' && i.cost_source !== 'catalogue') return false
+      if (verifiedFilter === 'not_catalogue' && i.cost_source === 'catalogue') return false
       if (collectionSkus && !collectionSkus.has(i.sku_code)) return false
       if (gapFilter === 'no_sku' && /^\d{6,}$/.test(i.sku_code.trim())) return false
       if (gapFilter === 'no_supplier' && (i.all_suppliers ?? []).some(sp => sp.name)) return false
@@ -776,7 +783,7 @@ function NewInventoryPage() {
       return true
     })
   }, [scoped, search, category, supplier, stockFilter, gradeFilter, attention, expiryFilter,
-      channelFilter, storageFilter, heroFilter, gapFilter, collectionSkus])
+      channelFilter, storageFilter, heroFilter, verifiedFilter, gapFilter, collectionSkus])
 
   const sorted = useMemo(() => {
     const val = (p: Product): string | number | null => {
@@ -812,7 +819,7 @@ function NewInventoryPage() {
   // "Everything" can be 11k rows — keep incremental rendering there only.
   const [renderLimit, setRenderLimit] = useState(300)
   useEffect(() => { setRenderLimit(300) }, [scope, view, search, attention, category, supplier, stockFilter, gradeFilter,
-    channelFilter, storageFilter, heroFilter, gapFilter, expiryFilter, collectionSkus])
+    channelFilter, storageFilter, heroFilter, verifiedFilter, gapFilter, expiryFilter, collectionSkus])
   const rows = useMemo(() => sorted.slice(0, renderLimit), [sorted, renderLimit])
 
   const activeFilters = [
@@ -824,13 +831,16 @@ function NewInventoryPage() {
     ...(channelFilter !== 'any' ? [{ label: `Channel: ${channelFilter}`, clear: () => setChannelFilter('any') }] : []),
     ...(storageFilter !== 'any' ? [{ label: storageFilter === 'clinic_only' ? 'Clinic only' : 'Warehouse OK', clear: () => setStorageFilter('any') }] : []),
     ...(heroFilter !== 'any' ? [{ label: heroFilter === 'hero' ? '★ Hero SKUs' : 'Not hero', clear: () => setHeroFilter('any') }] : []),
+    ...(verifiedFilter !== 'any' ? [{ label: verifiedFilter === 'catalogue' ? 'Catalogue verified' : 'Not catalogue verified',
+      clear: () => setVerifiedFilter('any') }] : []),
     ...(gapFilter !== 'any' ? [{ label: GAP_LABEL[gapFilter] ?? gapFilter, clear: () => setGapFilter('any') }] : []),
     ...(expiryFilter !== 'any' ? [{ label: EXPIRY_LABEL[expiryFilter] ?? expiryFilter, clear: () => setExpiryFilter('any') }] : []),
     ...(collectionId != null ? [{ label: `Collection: ${collections.find(c => c.id === collectionId)?.name ?? collectionId}`, clear: () => setCollectionId(null) }] : []),
   ]
   const clearAll = () => {
     setCategory([]); setSupplier('All'); setStockFilter('any'); setGradeFilter('any'); setAttention(null)
-    setChannelFilter('any'); setStorageFilter('any'); setHeroFilter('any'); setGapFilter('any'); setExpiryFilter('any')
+    setChannelFilter('any'); setStorageFilter('any'); setHeroFilter('any'); setVerifiedFilter('any')
+    setGapFilter('any'); setExpiryFilter('any')
     setCollectionId(null); setSearchInput('')
   }
 
@@ -904,7 +914,7 @@ function NewInventoryPage() {
           <ScopeSwitch scope={scope} onPick={setScope} counts={scopeCounts} settled={settled} />
           <button className="btn" onClick={() => setExportOpen(true)}>↓ Export</button>
           {editable && <button className="btn" onClick={() => setBatchOpen(true)}>Batch update</button>}
-          {editable && <PushToOpsSheet />}
+          {can('sheet') && <PushToOpsSheet />}
           <div style={{ position: 'relative' }}>
             <button className="btn" onClick={() => setTasksOpen(o => !o)} title="Data tasks">⋯</button>
             {tasksOpen && <DataTasksMenu onClose={() => setTasksOpen(false)} onShortcuts={() => { setTasksOpen(false); setShortcuts(true) }} />}
@@ -975,6 +985,7 @@ function NewInventoryPage() {
               channelFilter={channelFilter} setChannelFilter={setChannelFilter}
               storageFilter={storageFilter} setStorageFilter={setStorageFilter}
               heroFilter={heroFilter} setHeroFilter={setHeroFilter}
+              verifiedFilter={verifiedFilter} setVerifiedFilter={setVerifiedFilter}
               gapFilter={gapFilter} setGapFilter={setGapFilter}
               expiryFilter={expiryFilter} setExpiryFilter={setExpiryFilter}
               collections={collections} collectionId={collectionId} setCollectionId={setCollectionId}
@@ -1394,6 +1405,7 @@ function FiltersPanel(props: {
   channelFilter: string; setChannelFilter: (s: string) => void
   storageFilter: string; setStorageFilter: (s: string) => void
   heroFilter: string; setHeroFilter: (s: string) => void
+  verifiedFilter: string; setVerifiedFilter: (s: string) => void
   gapFilter: string; setGapFilter: (s: string) => void
   expiryFilter: string; setExpiryFilter: (s: string) => void
   collections: { id: number; name: string; count: number }[]
@@ -1487,6 +1499,14 @@ function FiltersPanel(props: {
               {seg('any', props.heroFilter, props.setHeroFilter, 'Any')}
               {seg('hero', props.heroFilter, props.setHeroFilter, '★ Hero only')}
               {seg('not_hero', props.heroFilter, props.setHeroFilter, 'Not hero')}
+            </span>
+          </div>
+          <div>
+            <span className="flab">Cost verified</span>
+            <span className="seg">
+              {seg('any', props.verifiedFilter, props.setVerifiedFilter, 'Any')}
+              {seg('catalogue', props.verifiedFilter, props.setVerifiedFilter, 'Catalogue')}
+              {seg('not_catalogue', props.verifiedFilter, props.setVerifiedFilter, 'Not catalogue')}
             </span>
           </div>
           <div>

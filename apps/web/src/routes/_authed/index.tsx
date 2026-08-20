@@ -480,6 +480,7 @@ function InventoryView() {
   const searchParams = new URLSearchParams(window.location.search)
   const [items, setItems]         = useState<Product[]>(() => _invCache?.items ?? [])
   const [showBatch, setShowBatch] = useState(false)
+  const [opsPushing, setOpsPushing] = useState(false)
   const [summary, setSummary]     = useState<SummaryResponse | null>(null)
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [algoSyncing, setAlgoSyncing] = useState(false)
@@ -714,6 +715,34 @@ function InventoryView() {
   }
 
   // Push IMS → SSOT sheet. Dry-run first to preview, then confirm before writing.
+  /** Write the ops view of the catalogue to the BizOps sheet.
+   *
+   *  Distinct from "Push to Sheet" above, which syncs the SSOT sheet. This one
+   *  replaces the ops tab with the published catalogue rows: cost per unit,
+   *  every deal, and the margin on each channel. It replaces rather than
+   *  appends, so it asks first — someone may be costing an order off it. */
+  async function handleOpsPush() {
+    if (opsPushing) return
+    const ok = await confirmDialog({
+      title: 'Push to the ops sheet?',
+      message: 'This replaces everything on the ops sheet with the products published today. '
+        + 'Anyone reading it while you push will see the new figures.',
+      confirmLabel: 'Push',
+    })
+    if (!ok) return
+    setOpsPushing(true)
+    try {
+      const res = await fetch(`${API}/ops-db/push-to-sheet`, { method: 'POST', headers: authHeaders() })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body?.detail || `Push failed (${res.status})`)
+      toast.success(`${Number(body.rows_written).toLocaleString()} products written to \u201c${body.tab}\u201d`)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not write to the ops sheet')
+    } finally {
+      setOpsPushing(false)
+    }
+  }
+
   async function handlePush() {
     if (pushing) return
     setPushing(true)
@@ -1225,6 +1254,7 @@ function InventoryView() {
             {mounted && can('product_edit') && <button className="btn" onClick={() => setShowBatch(true)}>Batch update</button>}
             {mounted && can('product_edit') && <button className="btn" onClick={handleFetchCompetitors} disabled={fetchingComp} title="Scrape all linked competitor prices">{fetchingComp ? 'Fetching…' : '🏷 Fetch competitor prices'}</button>}
             {mounted && can('sheet') && <button className="btn" onClick={handlePush} disabled={pushing}>{pushing ? 'Pushing…' : '⤴ Push to Sheet'}</button>}
+            {mounted && can('sheet') && <button className="btn" onClick={handleOpsPush} disabled={opsPushing} title="Write published catalogue rows — cost per unit, deals and channel margins — to the ops sheet">{opsPushing ? 'Pushing…' : '\u2197 Push to ops sheet'}</button>}
             {mounted && can('sheet') && <button className="btn" onClick={handleAlgoSync} disabled={algoSyncing} title="Pull real sales + inventory expiry from the algo-dashboard">{algoSyncing ? 'Syncing…' : '⟳ Sync live sales data'}</button>}
             {showBatch && <BatchUpdateModal onClose={() => setShowBatch(false)} onApplied={fetchData} />}
           </div>

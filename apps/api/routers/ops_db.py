@@ -25,7 +25,7 @@ class SheetPushResponse(BaseModel):
 @router.post("/push-to-sheet", response_model=SheetPushResponse)
 def push_to_sheet(
     db: Session = Depends(database.get_db),
-    user: models.User = Depends(require_capability("stock_import")),
+    user: models.User = Depends(require_capability("sheet")),
 ) -> SheetPushResponse:
     """Replace the ops sheet's contents with every published catalogue row.
 
