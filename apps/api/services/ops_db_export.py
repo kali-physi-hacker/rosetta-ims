@@ -319,6 +319,26 @@ def _unit_divisor(sellable_uom, purchase_uom, pack_count, basis_uom):
     return count if count and count > 0 else None
 
 
+def _is_base_spread_over_a_minimum(term, base_unit_cost) -> bool:
+    """Is this "deal" just the normal price divided by the minimum order?
+
+    Some hand-entered rows hold the base price spread across the minimum order
+    instead of a real per-unit deal price — the same defect as DEV-211, one
+    store over. Hill's 3392 is the case: you must buy 24 cans at $16.80 each,
+    and someone recorded $0.66, which is $16.80 spread over the 24.
+
+    It shows as price x min_qty landing back on the base cost, which a genuine
+    bulk price never does — a real deal is CHEAPER than the base, so its total
+    across the same quantity comes out well below.
+    """
+    if not term.get("unit_priced"):
+        return False
+    price, qty = term["price_amount"], term["min_qty"]
+    if price is None or not base_unit_cost or not qty or qty <= 1:
+        return False
+    return abs(price * qty - base_unit_cost) <= base_unit_cost * Decimal("0.2")
+
+
 def _deal_unit_cost(term, base_unit_cost, sellable_uom, purchase_uom, divisor):
     """What one unit costs under this deal, always per single unit."""
     kind = BENEFIT_LABEL.get(term["benefit_type"])
@@ -329,17 +349,6 @@ def _deal_unit_cost(term, base_unit_cost, sellable_uom, purchase_uom, divisor):
         if term.get("unit_priced"):
             # Recorded per sellable unit already; dividing again would restate
             # a unit price as a fraction of itself.
-            qty = term["min_qty"]
-            if base_unit_cost and qty and qty > 1:
-                # Some hand-entered rows hold the base price spread across the
-                # MINIMUM ORDER rather than a real per-unit deal price — the
-                # same defect as DEV-211, one store over. It shows as
-                # price x min_qty landing back on the base cost, which a
-                # genuine bulk price never does. Refuse rather than publish a
-                # 97% margin.
-                spread = price * qty
-                if abs(spread - base_unit_cost) <= base_unit_cost * Decimal("0.2"):
-                    return None
             return price
         if sellable_uom and basis.upper() == sellable_uom.upper():
             return price
@@ -539,6 +548,10 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
     code = str(sku or "").strip().upper()
     legacy = (legacy_terms or {})
     terms = list(terms) + list(legacy.get((supplier_id, code)) or legacy.get((None, code)) or [])
+    # Dropped outright, not just left uncosted: a term we cannot trust would
+    # otherwise still be counted in number_of_deals, printed in the offer
+    # summary and shown in a tier slot, stating a discount that does not exist.
+    terms = [t for t in terms if not _is_base_spread_over_a_minimum(t, per_unit_cost)]
     seen_terms, merged = set(), []
     for term in terms:
         # Both stores hold the same offer in different units — the pipeline
