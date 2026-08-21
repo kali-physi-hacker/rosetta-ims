@@ -329,6 +329,14 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
             # stated so the net margin can be computed at all.
             fee = _hktv_default_fee() if key == "hktvm" else Decimal(0)
         logistics = _logistics(key, product_id, delivery_inputs)
+        # A price quoted per millilitre cannot be weighed against a cost per
+        # bottle. Where the channel sells by a MEASURE and we do not cost by
+        # that same measure, the two numbers count different things and any
+        # margin drawn from them is arithmetic on unlike units. The price still
+        # shows — it is a fact — but no margin is asserted.
+        channel_uom = (entry.get("uom") or "").strip().upper()
+        comparable = not (channel_uom in MEASURE_CODES
+                          and channel_uom != (row.get("sellable_uom") or "").strip().upper())
         # A listing that states how many units it holds is divided down to one;
         # with nothing stated, one listing is one unit.
         unit_price = price / per_listing if price is not None and per_listing and per_listing > 0 else price
@@ -341,7 +349,7 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
         for prefix, cost_column in slots:
             cost = _dec(row.get(cost_column))
             gross = net = ""
-            if unit_price and unit_price > 0 and cost is not None:
+            if unit_price and unit_price > 0 and cost is not None and comparable:
                 gross = _pct((unit_price - cost) / unit_price)
                 # Net needs BOTH charges known. A blank one is not treated as
                 # zero — that would report a better margin than the product
