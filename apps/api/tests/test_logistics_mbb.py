@@ -57,6 +57,21 @@ def test_sf_spread_over_pack():
     assert round(P._pack_sell_unit_delivery(85, 24), 4) == round(P.shopify_logistics(2040) / 24, 4)
 
 
+def test_sf_spread_over_the_order_multiple_too():
+    """A can you can only buy in 24s never ships alone.
+
+    Hill's 3392 records units_per_pack 1 while the supplier sells it in 24s only. Charging one
+    can a whole parcel read as a 95% loss on a product the business sells profitably.
+    """
+    # 79g can, pack size 1, but sold in 24s -> parcel is 1896g, split 24 ways.
+    assert round(P._pack_sell_unit_delivery(79, 1, 24), 4) == round(P.shopify_logistics(79 * 24) / 24, 4)
+    assert P._pack_sell_unit_delivery(79, 1, 24) < P._pack_sell_unit_delivery(79, 1)
+    # Whichever floor is higher wins; neither above one leaves the old behaviour untouched.
+    assert P._pack_sell_unit_delivery(85, 12, 4) == P._pack_sell_unit_delivery(85, 12)
+    assert P._pack_sell_unit_delivery(500, 1, None) == 20.0
+    assert P._pack_sell_unit_delivery(500, 1, 1) == 20.0
+
+
 class _Term:
     """Minimal stand-in for an MBB term row (only the fields _cost_to_hit_mbb reads)."""
     def __init__(self, kind, min_qty=None, min_spend=None):

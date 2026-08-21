@@ -150,13 +150,20 @@ def _load_delivery_inputs(db):
     each pouch in a box of twelve is what used to show impossible losses.
     """
     inputs: dict = {}
-    for product_id, weight_g, units_per_pack in db.execute(sqlalchemy.text(
+    for product_id, weight_g, units_per_pack, increment, minimum, min_purchase in db.execute(sqlalchemy.text(
         "SELECT p.id, p.weight_g,"
-        " (SELECT ps.units_per_pack FROM product_suppliers ps"
-        "   WHERE ps.product_id = p.id ORDER BY ps.is_primary DESC, ps.id LIMIT 1)"
+        " (SELECT ps.units_per_pack     FROM product_suppliers ps"
+        "   WHERE ps.product_id = p.id ORDER BY ps.is_primary DESC, ps.id LIMIT 1),"
+        " (SELECT ps.order_increment_qty FROM product_suppliers ps"
+        "   WHERE ps.product_id = p.id ORDER BY ps.is_primary DESC, ps.id LIMIT 1),"
+        " (SELECT ps.minimum_order_qty   FROM product_suppliers ps"
+        "   WHERE ps.product_id = p.id ORDER BY ps.is_primary DESC, ps.id LIMIT 1),"
+        " p.min_purchase_qty"
         " FROM products p WHERE p.weight_g IS NOT NULL"
     )):
-        inputs[product_id] = (weight_g, units_per_pack)
+        # The floor is whichever of the three says you must buy more than one.
+        floors = [int(q) for q in (increment, minimum, min_purchase) if q and q > 1]
+        inputs[product_id] = (weight_g, units_per_pack, max(floors) if floors else None)
     return inputs
 
 
@@ -197,19 +204,21 @@ def _price_in_sellable_unit(price, channel_uom, row):
 def _logistics(channel_key, product_id, delivery_inputs):
     """Delivery attributed to one sellable unit, per the channel's own model.
 
-    Shopify pays SF Express by weight. HKTVmall and the clinic do not pay per
-    unit — that is a known zero, not a missing figure, so it is stated. A
+    Shopify pays SF Express by weight, charged once on the parcel and split
+    across everything that travels in it — the pack, or the order multiple
+    where the supplier will not sell fewer. HKTVmall and the clinic do not pay
+    per unit; that is a known zero, not a missing figure, so it is stated. A
     Shopify row with no weight on file stays blank: the courier rate cannot be
     read without one.
     """
     if channel_key != "shopify":
         return Decimal(0)
-    weight_g, units_per_pack = (delivery_inputs or {}).get(product_id, (None, None))
+    weight_g, units_per_pack, order_multiple = (delivery_inputs or {}).get(product_id, (None, None, None))
     if not weight_g:
         return None
     from services import pricing_service
 
-    return _dec(pricing_service._pack_sell_unit_delivery(float(weight_g), units_per_pack))
+    return _dec(pricing_service._pack_sell_unit_delivery(float(weight_g), units_per_pack, order_multiple))
 
 
 def _hktv_default_fee():

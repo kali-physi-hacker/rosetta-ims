@@ -213,7 +213,8 @@ def shopify_logistics(weight_g: float | None) -> float:
     return engine.lookup_table("sf_logistics", weight_g)
 
 
-def _pack_sell_unit_delivery(weight_g: float | None, units_per_pack: int | None) -> float:
+def _pack_sell_unit_delivery(weight_g: float | None, units_per_pack: int | None,
+                             order_multiple: int | None = None) -> float:
     """SF Express cost attributed to ONE sell-unit.
 
     A multi-unit pack (e.g. a box of 12 pouches, min. sold as a box) ships as a SINGLE parcel,
@@ -221,10 +222,30 @@ def _pack_sell_unit_delivery(weight_g: float | None, units_per_pack: int | None)
     across the units. Charging the full parcel rate to each single pouch was the per-unit bug
     that made pack-sold items show impossible losses (e.g. −115% on an $18 pouch).
 
-    A single-unit pack (units_per_pack ≤ 1) IS its own parcel, so this is unchanged from the old
-    per-unit charge — every upp=1 SKU keeps its exact prior delivery cost."""
-    upp = units_per_pack if (units_per_pack and units_per_pack > 1) else 1
-    return shopify_logistics((weight_g or 0) * upp) / upp
+    The same is true of an ORDER MULTIPLE. Hill's 3392 records units_per_pack 1 while the
+    supplier only sells it in 24s: you cannot buy one can, so one can never travels alone, and
+    charging it a whole $30 parcel against a $21 sale read as −95%. What ships together is the
+    smallest quantity you can actually buy, whichever of the two says so.
+
+    With neither above one the sell-unit IS its own parcel, unchanged from the old per-unit
+    charge."""
+    shipped_together = max(units_per_pack or 1, order_multiple or 1, 1)
+    return shopify_logistics((weight_g or 0) * shipped_together) / shipped_together
+
+
+def _order_multiple(ps: ProductSupplier | None, product: ProductVariant | None) -> int | None:
+    """The smallest quantity the supplier will actually sell.
+
+    Recorded in three places over the years — the supplier link's order increment and minimum,
+    and the product's own minimum purchase — so the largest of them is the real floor.
+    """
+    candidates = [
+        getattr(ps, "order_increment_qty", None),
+        getattr(ps, "minimum_order_qty", None),
+        getattr(product, "min_purchase_qty", None),
+    ]
+    found = [int(q) for q in candidates if q and q > 1]
+    return max(found) if found else None
 
 
 _DEFAULT_HKTV_FEE = 0.18   # standard HKTV Mall commission; used when a SKU has no explicit fee
@@ -239,7 +260,11 @@ def _fee_delivery(channel: ProductChannel, product: ProductVariant) -> tuple[flo
         return fee, 0.0
     if channel.channel == "shopify":
         ps = get_primary_supplier(product)
-        return 0.0, _pack_sell_unit_delivery(product.weight_g, ps.units_per_pack if ps else None)
+        return 0.0, _pack_sell_unit_delivery(
+            product.weight_g,
+            ps.units_per_pack if ps else None,
+            _order_multiple(ps, product),
+        )
     return 0.0, 0.0
 
 
