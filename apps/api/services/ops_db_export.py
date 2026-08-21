@@ -142,6 +142,58 @@ def _load_channels(db):
     return prices
 
 
+def _load_delivery_inputs(db):
+    """What the courier tier table needs: shipping weight and pack size.
+
+    A multi-unit pack ships as ONE parcel, so the fee is charged on the pack's
+    weight and split across the units in it — charging a full parcel rate to
+    each pouch in a box of twelve is what used to show impossible losses.
+    """
+    inputs: dict = {}
+    for product_id, weight_g, units_per_pack in db.execute(sqlalchemy.text(
+        "SELECT p.id, p.weight_g,"
+        " (SELECT ps.units_per_pack FROM product_suppliers ps"
+        "   WHERE ps.product_id = p.id ORDER BY ps.is_primary DESC, ps.id LIMIT 1)"
+        " FROM products p WHERE p.weight_g IS NOT NULL"
+    )):
+        inputs[product_id] = (weight_g, units_per_pack)
+    return inputs
+
+
+def _logistics(channel_key, product_id, delivery_inputs):
+    """Delivery attributed to one sellable unit, per the channel's own model.
+
+    Shopify pays SF Express by weight. HKTVmall and the clinic do not pay per
+    unit — that is a known zero, not a missing figure, so it is stated. A
+    Shopify row with no weight on file stays blank: the courier rate cannot be
+    read without one.
+    """
+    if channel_key != "shopify":
+        return Decimal(0)
+    weight_g, units_per_pack = (delivery_inputs or {}).get(product_id, (None, None))
+    if not weight_g:
+        return None
+    from services import pricing_service
+
+    return _dec(pricing_service._pack_sell_unit_delivery(float(weight_g), units_per_pack))
+
+
+def _hktv_default_fee():
+    """HKTVmall's standard commission, used where a listing states none.
+
+    The app already falls back to it when costing, so a sheet that left the fee
+    blank would quietly report a better net margin than the same product shows
+    in Rosetta.
+    """
+    from services import transform_engine
+
+    try:
+        fee = transform_engine.get_param("hktv_fee")
+    except Exception:
+        return None
+    return _dec(fee)
+
+
 def _load_legacy_terms(db):
     """Hand-entered deals, keyed the same way channels are.
 
@@ -264,19 +316,26 @@ def _sku_index(db):
     }
 
 
-def _fill_channels(row, product_id, channel_data):
+def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
     """Fill every channel column, and the margins the inputs actually support."""
     slots = [("", "cost_per_unit")] + [(f"mbb_tier_{n}_", f"mbb_tier_{n}_cost_per_unit") for n in range(1, SLOTS + 1)]
     for key in CHANNELS:
         entry = channel_data.get((product_id, CHANNEL_SOURCE[key])) or {}
         price, fee, per_listing = entry.get("price"), entry.get("fee"), entry.get("units_per_listing")
+        if fee is None:
+            # Each channel's charge follows its own model, the same one the app
+            # costs with: HKTVmall takes a commission (its own, else the
+            # standard one), Shopify and the clinic take none. A known zero is
+            # stated so the net margin can be computed at all.
+            fee = _hktv_default_fee() if key == "hktvm" else Decimal(0)
+        logistics = _logistics(key, product_id, delivery_inputs)
         # A listing that states how many units it holds is divided down to one;
         # with nothing stated, one listing is one unit.
         unit_price = price / per_listing if price is not None and per_listing and per_listing > 0 else price
 
         row[f"selling_price_{key}"] = _num(price) if price is not None else ""
         row[f"selling_price_{key}_uom"] = entry.get("uom") or ""
-        row[f"logistics_cost_per_unit_{key}"] = ""  # no source recorded yet
+        row[f"logistics_cost_per_unit_{key}"] = _num(logistics) if logistics is not None else ""
         row[f"platform_fee_percent_{key}"] = _pct(fee) if fee is not None else ""
 
         for prefix, cost_column in slots:
@@ -284,10 +343,11 @@ def _fill_channels(row, product_id, channel_data):
             gross = net = ""
             if unit_price and unit_price > 0 and cost is not None:
                 gross = _pct((unit_price - cost) / unit_price)
-                if fee is not None:
-                    # Blank inputs are not deducted — a missing logistics cost
-                    # is absent from this figure, not treated as zero cost.
-                    net = _pct((unit_price - cost - unit_price * fee) / unit_price)
+                # Net needs BOTH charges known. A blank one is not treated as
+                # zero — that would report a better margin than the product
+                # earns, which is the direction that costs money.
+                if fee is not None and logistics is not None:
+                    net = _pct((unit_price - cost - unit_price * fee - logistics) / unit_price)
             row[f"{prefix}{key}_gross_margin"] = gross
             row[f"{prefix}{key}_net_margin"] = net
     return row
@@ -517,7 +577,7 @@ def _term_from_json(payload):
 def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, pack, link,
          cost_amount, cost_currency, cost_basis, rrp_amount, rrp_currency, terms,
          product_id=None, channel_data=None, supplier_id=None, supplier_sku_index=None,
-         legacy_terms=None):
+         legacy_terms=None, delivery_inputs=None):
     weight_value, weight_unit, weight_grams = _weight_parts(variant)
     # The pack's own content count only. Order multiples live in
     # order_increment_amount and must not stand in for a pack size here.
@@ -617,7 +677,7 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
     # actually sells, not a record the pipeline happened to create.
     index = supplier_sku_index or {}
     linked = index.get((supplier_id, code)) or index.get((None, code))
-    return _fill_channels(row, linked or product_id, channel_data or {})
+    return _fill_channels(row, linked or product_id, channel_data or {}, delivery_inputs)
 
 
 def build_published_rows(db) -> list[dict]:
@@ -640,6 +700,7 @@ def build_published_rows(db) -> list[dict]:
     channel_data = _load_channels(db)
     supplier_sku_index = _supplier_sku_index(db)
     legacy_terms = _load_legacy_terms(db)
+    delivery_inputs = _load_delivery_inputs(db)
 
     rows = []
     for pub in publications:
@@ -669,6 +730,7 @@ def build_published_rows(db) -> list[dict]:
                 supplier_id=pub.supplier_id,
                 supplier_sku_index=supplier_sku_index,
                 legacy_terms=legacy_terms,
+                delivery_inputs=delivery_inputs,
             )
         )
     return rows
