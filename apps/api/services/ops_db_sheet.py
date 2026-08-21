@@ -110,13 +110,19 @@ def _formula(column: str, line: int, data: dict) -> str | None:
     for channel in CHANNELS:
         sell = at(f"selling_price_{channel}")
         fee, logistics = at(f"platform_fee_percent_{channel}"), at(f"logistics_cost_per_unit_{channel}")
+        # Each channel sells in its own unit. Where it prices by the measure our
+        # pack contains — per mL of a 30 mL bottle — the price is restated in
+        # the unit we cost in before any margin is taken, in the formula itself
+        # so the arithmetic stays visible to whoever opens the sheet.
+        priced = (f'IF(AND(UPPER({at(f"selling_price_{channel}_uom")})=UPPER({at("content_uom")}),'
+                  f'N({at("content_amount")})>0),{sell}*{at("content_amount")},{sell})')
 
-        def gross(cost: str) -> str:
-            return f'=IF(OR({cost}="",{sell}=""),"",ROUND(({sell}-{cost})/{sell}*100,2))'
+        def gross(cost: str, priced: str = priced) -> str:
+            return f'=IF(OR({cost}="",{sell}=""),"",ROUND(({priced}-{cost})/({priced})*100,2))'
 
-        def net(cost: str) -> str:
-            return (f'=IF(OR({cost}="",{sell}=""),"",ROUND(({sell}-{cost}-'
-                    f'({sell}*N({fee})/100)-N({logistics}))/{sell}*100,2))')
+        def net(cost: str, priced: str = priced) -> str:
+            return (f'=IF(OR({cost}="",{sell}=""),"",ROUND((({priced})-{cost}-'
+                    f'(({priced})*N({fee})/100)-N({logistics}))/({priced})*100,2))')
 
         if column == f"{channel}_gross_margin":
             return gross(at("cost_per_unit"))

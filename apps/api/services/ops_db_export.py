@@ -160,6 +160,40 @@ def _load_delivery_inputs(db):
     return inputs
 
 
+def _channel_uom(raw) -> str:
+    """The channel's own sell unit, or "" when it states none.
+
+    Each channel sells in its own unit — the same bottle is listed per mL on
+    Shopify and per bottle at the clinic — so this is read per channel, never
+    shared. Placeholder junk ("#N/A") means nothing was stated.
+    """
+    text = (raw or "").strip()
+    return "" if text.upper() in {"#N/A", "N/A", "NA", "-"} else text.upper()
+
+
+def _price_in_sellable_unit(price, channel_uom, row):
+    """The channel's price restated in the unit we cost in.
+
+    A listing priced per millilitre is comparable to a cost per bottle only
+    once you multiply by what the bottle holds: $120 per mL of a 30 mL bottle
+    is $3,600 for the bottle. Without a stated content measure to bridge them
+    the two remain unlike, and no margin is drawn.
+    """
+    if price is None or not channel_uom:
+        return price
+    if channel_uom == (row.get("sellable_uom") or "").strip().upper():
+        return price
+    content_uom = (row.get("content_uom") or "").strip().upper()
+    content_amount = _dec(row.get("content_amount"))
+    if channel_uom == content_uom and content_amount and content_amount > 0:
+        return price * content_amount
+    if channel_uom in MEASURE_CODES:
+        return None
+    # A countable noun we simply spell differently ("Can(s)" against UNIT) is
+    # the same unit; only a measure changes the arithmetic.
+    return price
+
+
 def _logistics(channel_key, product_id, delivery_inputs):
     """Delivery attributed to one sellable unit, per the channel's own model.
 
@@ -329,17 +363,12 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
             # stated so the net margin can be computed at all.
             fee = _hktv_default_fee() if key == "hktvm" else Decimal(0)
         logistics = _logistics(key, product_id, delivery_inputs)
-        # A price quoted per millilitre cannot be weighed against a cost per
-        # bottle. Where the channel sells by a MEASURE and we do not cost by
-        # that same measure, the two numbers count different things and any
-        # margin drawn from them is arithmetic on unlike units. The price still
-        # shows — it is a fact — but no margin is asserted.
-        channel_uom = (entry.get("uom") or "").strip().upper()
-        comparable = not (channel_uom in MEASURE_CODES
-                          and channel_uom != (row.get("sellable_uom") or "").strip().upper())
+        channel_uom = _channel_uom(entry.get("uom"))
         # A listing that states how many units it holds is divided down to one;
         # with nothing stated, one listing is one unit.
         unit_price = price / per_listing if price is not None and per_listing and per_listing > 0 else price
+        # Restated in the unit we cost in; None when the two cannot be bridged.
+        unit_price = _price_in_sellable_unit(unit_price, channel_uom, row)
 
         row[f"selling_price_{key}"] = _num(price) if price is not None else ""
         row[f"selling_price_{key}_uom"] = entry.get("uom") or ""
@@ -349,7 +378,7 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
         for prefix, cost_column in slots:
             cost = _dec(row.get(cost_column))
             gross = net = ""
-            if unit_price and unit_price > 0 and cost is not None and comparable:
+            if unit_price and unit_price > 0 and cost is not None:
                 gross = _pct((unit_price - cost) / unit_price)
                 # Net needs BOTH charges known. A blank one is not treated as
                 # zero — that would report a better margin than the product
