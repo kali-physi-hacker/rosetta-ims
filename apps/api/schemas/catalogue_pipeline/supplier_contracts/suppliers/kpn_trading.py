@@ -158,7 +158,7 @@ KPN_TRADING_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 source_column="產品名稱 / Product Description",
                 aliases=["產品名稱", "產品內容", "Product Description"],
                 description="Printed English/Chinese product description.",
@@ -502,7 +502,7 @@ KPN_TRADING_PACK_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 source_column="產品內容 / Product Description",
                 source_path="unlabeled_column",
                 aliases=["產品內容", "產品名稱", "Product Description"],
@@ -842,7 +842,7 @@ KPN_TRADING_CASE_ONLY_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 source_column="產品內容 Product Description",
                 aliases=["產品內容", "產品內容 Product Description", "Product Description"],
                 description="Printed English/Chinese product description.",

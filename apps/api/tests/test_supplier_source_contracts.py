@@ -33,10 +33,8 @@ EXPECTED_CONTRACT_IDS = [
     "kangaroo.earthz_pet_price_sheet.v1",
     "kangaroo.mixed_price_catalogue.v1",
     "kangaroo.purina_proplan_veterinary_diets.v1",
-    "kangaroo_pet_nutrition.case_only_price_list.v1",
     "kangaroo_pet_nutrition.catalogue_bundle.v1",
     "kangaroo_pet_nutrition.unit_price_list.v1",
-    "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
     "kpn_trading.case_only_price_list.v1",
     "kpn_trading.catalogue_bundle.v1",
     "kpn_trading.pack_price_list.v1",
@@ -192,9 +190,11 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # pack_price_list also carries the pack+case bulk column since
         # 2026-08-17, verified by the kpn_frozen_raw golden set.
         "kpn_trading.pack_price_list.v1",
-        "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
-        # Promoted 2026-08-17: verified against the six Ziwi pages of the
-        # per-page KPN_Kangaroo capture, pinned by kangaroo_ziwi.
+        # THE Kangaroo contract (merged 2026-08-25 per the one-document-
+        # one-contract ruling): unit layouts pinned by kangaroo_ziwi, case
+        # layout verified against run 1382e559's 24 wet-can observations,
+        # vet layout pinned by kangaroo_vet_clinic. Each price column
+        # declares its own basis.
         "kangaroo_pet_nutrition.unit_price_list.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:

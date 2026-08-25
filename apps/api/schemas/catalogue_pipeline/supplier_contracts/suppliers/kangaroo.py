@@ -134,7 +134,7 @@ KANGAROO_MIXED_PRICE_CATALOGUE_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 source_column="產品名稱 / Product Description",
                 aliases=["產品名稱", "產品內容", "Product Description"],
                 description="Printed product name or description.",
@@ -302,7 +302,7 @@ KANGAROO_PURINA_PROPLAN_VETERINARY_DIETS_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 source_path="product row text above SKU#",
                 description="English/Chinese product name preceding the SKU line.",
                 evidence=_KPN_PROPLAN_EVIDENCE,
@@ -439,7 +439,7 @@ KANGAROO_EARTHZ_PET_PRICE_SHEET_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 source_path="visual product heading",
                 description="Earthz product/flavour heading.",
                 evidence=_KPN_EARTHZ_EVIDENCE,

@@ -489,6 +489,12 @@
           "default": null,
           "description": "Unit basis that the supplier cost prices, when established."
         },
+        "price_basis_per_column": {
+          "default": false,
+          "description": "True when the document's layouts price on DIFFERENT bases and each SOURCE_PRICE field declares its own price_basis (Kangaroo: unit bags, case-only cans, per-pack vet rows in one document). The contract-level price_basis then stays null and the resolved column's basis rides with its amount. The contract-level validator enforces that every SOURCE_PRICE field actually declares one.",
+          "title": "Price Basis Per Column",
+          "type": "boolean"
+        },
         "price_basis_status": {
           "$ref": "#/$defs/SemanticResolutionStatus",
           "description": "Evidence status for the price basis."
@@ -602,6 +608,18 @@
           "description": "Take this field from the nearest row above when the source leaves it blank, because the printed cell is merged across those rows. Alfamedic lists size variants that way: 'ALOVEEN Shampoo 250ml/bot' names the product, and the 1L/bot line below carries its own order code, packing and price but no name — the name cell spans both. Those are separate SKUs and must be stocked as such, so the value is carried down and the field's evidence records that it was inherited rather than printed on that line. Only rows carrying their own identity inherit: a price-only line beneath a product is a quantity tier, not a variant, and must never acquire a name. Carrying stops at a page boundary.",
           "title": "Inherits From Row Above",
           "type": "boolean"
+        },
+        "price_basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitOfMeasure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "SOURCE_PRICE fields only: the basis the printed amount is on WHEN THIS COLUMN supplies the row's cost. Exists for documents whose layouts price differently by page — Kangaroo prints unit-basis bags, case-only cans, and per-pack vet rows in one document — so each price column declares its own printed basis and the first-resolved column's basis rides with its amount. Overrides pricing.price_basis; purchase-unit-follows still wins where declared."
         },
         "requirement": {
           "$ref": "#/$defs/SourceFieldRequirement",

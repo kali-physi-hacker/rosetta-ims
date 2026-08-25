@@ -50,19 +50,23 @@ def test_selects_only_supported_supplier_source_contracts():
     kpn_pack = runtime.load_contract(15)
     assert kpn_pack is not None
     assert kpn_pack.slug == "kpn_trading.pack_price_list.v1"
-    # Supplier 81 has TWO supported contracts since the Ziwi unit price list
-    # was verified (2026-08-17) — genuinely different documents, so supplier-
-    # only resolution must refuse to guess and demand an explicit contract.
-    with pytest.raises(runtime.SupplierContractAmbiguousError):
-        runtime.load_contract(81)
-    kangaroo_vet_clinic = runtime.resolve_supplier_contract(
-        supplier_id=81, contract_id="kangaroo_pet_nutrition.vet_clinic_price_list.v1", contract_version="v1",
-    )
-    assert kangaroo_vet_clinic.slug == "kangaroo_pet_nutrition.vet_clinic_price_list.v1"
-    kangaroo_ziwi = runtime.resolve_supplier_contract(
-        supplier_id=81, contract_id="kangaroo_pet_nutrition.unit_price_list.v1", contract_version="v1",
-    )
-    assert kangaroo_ziwi.slug == "kangaroo_pet_nutrition.unit_price_list.v1"
+    # Supplier 81 is back to ONE supported contract: the unit, case-only and
+    # vet-clinic layouts merged into unit_price_list per the one-document-
+    # one-contract ruling (2026-08-25), each price column carrying its own
+    # basis — so supplier-only resolution selects it again.
+    kangaroo = runtime.load_contract(81)
+    assert kangaroo is not None
+    assert kangaroo.slug == "kangaroo_pet_nutrition.unit_price_list.v1"
+    # The retired layout ids are gone from the registry outright (fresh-build
+    # policy): an explicit request for one refuses by name.
+    with pytest.raises(runtime.SupplierContractResolutionError):
+        runtime.resolve_supplier_contract(
+            supplier_id=81, contract_id="kangaroo_pet_nutrition.vet_clinic_price_list.v1", contract_version="v1",
+        )
+    with pytest.raises(runtime.SupplierContractResolutionError):
+        runtime.resolve_supplier_contract(
+            supplier_id=81, contract_id="kangaroo_pet_nutrition.case_only_price_list.v1", contract_version="v1",
+        )
     vetapet_vet = runtime.load_contract(91)
     assert vetapet_vet is not None
     assert vetapet_vet.slug == "vetapet.vet_price_list.v1"

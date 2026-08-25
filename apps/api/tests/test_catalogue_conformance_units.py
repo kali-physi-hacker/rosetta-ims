@@ -261,7 +261,7 @@ def test_canidae_transition_rows_conform_under_the_new_code():
 
 def test_kangaroo_case_only_reads_annotated_case_total_as_case_basis():
     item = _conform_one(
-        "kangaroo_pet_nutrition.case_only_price_list.v1",
+        "kangaroo_pet_nutrition.unit_price_list.v1",
         _observation(
             {
                 "產品編號": "CDL170",
@@ -277,6 +277,28 @@ def test_kangaroo_case_only_reads_annotated_case_total_as_case_basis():
     assert item.normalized_fields["rrp"]["amount"] == "44"
     # The raw layer keeps the printed compound cell untouched.
     assert item.raw_fields["cost"] == "$340\n(@28.3)"
+
+
+def test_kangaroo_case_only_reads_the_spaceless_heading_spelling_too():
+    """Vision captures the same headings WITHOUT spaces before the parens
+    ('批發價(HKD) 每箱(12罐)'), and heading folding keeps spaces next to
+    parens — so the spaceless spellings are aliased. This spelling stranded
+    all 24 wet-can rows of run 1382e559 as CONTRACT_REQUIRED_FIELD_MISSING."""
+    item = _conform_one(
+        "kangaroo_pet_nutrition.unit_price_list.v1",
+        _observation(
+            {
+                "產品編號": "CDL170",
+                "產品內容": "Wet Lamb Recipe for Dogs 羊肉配方",
+                "重量": "170g",
+                "批發價(HKD) 每箱(12罐)": "$340",
+                "建議零售價(HKD) 每罐": "$44",
+            }
+        ),
+    )
+    assert item.normalized_fields["cost"]["amount"] == "340"
+    assert item.normalized_fields["cost"]["price_basis"]["code"] == "CASE"
+    assert item.normalized_fields["rrp"]["amount"] == "44"
 
 
 def test_vetapet_vet_price_basis_follows_the_order_unit_column():
@@ -852,3 +874,70 @@ def test_diagnostics_regular_box_price_is_the_cost_and_the_badge_price_is_not():
         }),
     )
     assert offered.normalized_fields["cost"]["amount"] == "1056.0", "the regular price, never the badge"
+
+
+def test_vetapet_wholesale_retail_family_prices_per_unit():
+    """User ruling 2026-08-25, extending the earlier rrp-column ruling: on the
+    Wholesale/Retail tables (批發價 beside 建議零售價 — bare, letter-spaced, or
+    with the parenthesised English), the wholesale IS the per-unit price, even
+    when the product text names a case ('1箱6罐'). These rows sat held as
+    cost-missing because the family was deliberately undeclared until the
+    basis had a ruling."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation(
+            {
+                "編號 (Code)": "15201",
+                "產品 (Product)": "LACTOL 力圖犬奶粉 250g (1箱6罐)",
+                "批發價 (Wholesale)": "HKD$69",
+                "建議零售價 (Retail)": "HKD$127",
+            }
+        ),
+    )
+    assert item.normalized_fields["supplier_sku"]["value"] == "15201"
+    assert item.normalized_fields["cost"]["amount"] == "69"
+    assert item.normalized_fields["cost"]["price_basis"]["code"] == "UNIT"
+    assert item.normalized_fields["rrp"]["amount"] == "127"
+    assert not [i for i in item.issues if i.severity == "BLOCKING"]
+
+
+def test_vetapet_bilingual_treat_layout_conforms_prices_and_box_stays_evidence():
+    """The treat layout (Product Name (bilingual) / 重量 1 / 批發價 1 /
+    建議零售價 1 / 量 2 (Box) / 盒批發價 2): the numbered wholesale beside its
+    numbered retail is the per-piece price (2026-08-25 ruling), the box pair
+    is a purchase-format statement captured as evidence — NEVER a term (the
+    box total is exactly piece × count; no printed per-piece rate at box
+    quantity), and the page prints no code, so the row holds on supplier_sku
+    alone — which the desk offers as an addable column."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation(
+            {
+                "Product Name (bilingual)": "天然火雞筋打結骨 Natural Turkey Tendon Bone (variant 2)",
+                "重量 1 (Weight)": "1條",
+                "批發價 1": "$19.6",
+                "建議零售價 1": "$38",
+                "量 2 (Box)": "1盒20條",
+                "盒批發價 2": "批發價$392",
+            }
+        ),
+    )
+    assert item.normalized_fields["cost"]["amount"] == "19.6"
+    assert item.normalized_fields["cost"]["price_basis"]["code"] == "UNIT"
+    assert item.normalized_fields["rrp"]["amount"] == "38"
+    assert "Natural Turkey Tendon Bone" in item.normalized_fields["product_name"]["value"]
+    assert not item.normalized_fields.get("mbb_terms"), "a box total is never a deal"
+    extra = item.raw_fields["additional_fields"]
+    assert extra["box_quantity"] == "1盒20條"
+    assert extra["box_wholesale_price"] == "批發價$392"
+    missing = {i.field_key for i in item.issues if i.issue_code == "CONTRACT_REQUIRED_FIELD_MISSING"}
+    assert missing == {"supplier_sku"}, "the printed page has no code — the only honest hold"
+
+    from services.catalogue_conformance import addable_required_columns
+    from schemas.catalogue_pipeline.supplier_contracts import get_supplier_source_contract as _get
+    contract = runtime.SupplierSourceRuntimeContract(_get("vetapet.vet_price_list.v1", "v1").declaration)
+    cells = [{"column_name": name} for name in (
+        "Product Name (bilingual)", "重量 1 (Weight)", "批發價 1", "建議零售價 1", "量 2 (Box)", "盒批發價 2",
+    )]
+    offers = addable_required_columns(contract, cells)
+    assert [(o.field_key, o.column_name) for o in offers] == [("supplier_sku", "CODE NO / 編號")]

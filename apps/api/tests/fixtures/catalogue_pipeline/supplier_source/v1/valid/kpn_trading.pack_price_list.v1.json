@@ -179,7 +179,7 @@
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": "產品內容 / Product Description",
       "source_path": "unlabeled_column",
       "composed_from": [

@@ -214,6 +214,17 @@ class SupplierSourceRuntimeContract:
         """Adapt approved per-sellable-unit prices to the current flat runtime field."""
 
         basis = self.declaration.pricing.price_basis
+        if basis is None and self.declaration.pricing.price_basis_per_column:
+            # Per-column contracts: the basis belongs to whichever price
+            # column this item actually carried — first declared wins, the
+            # same order conformance fills the cost slot in.
+            for field in self.declaration.fields:
+                if field.role != SourceFieldRole.SOURCE_PRICE or field.price_basis is None:
+                    continue
+                value = item.get(field.field_key)
+                if value is not None and str(value).strip():
+                    basis = field.price_basis
+                    break
         if basis and basis.code in {UnitCode.PIECE, UnitCode.UNIT}:
             item["units_per_pack"] = 1
 

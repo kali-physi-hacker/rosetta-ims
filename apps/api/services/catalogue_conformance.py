@@ -632,12 +632,12 @@ def _normalization_issues(
                 message="The supplier marked the cost as unavailable; no numeric cost was proposed.",
             )
         )
-    elif _decimal_or_none(raw_cost) is not None and declaration.pricing.price_basis is None:
+    elif _decimal_or_none(raw_cost) is not None and _declared_cost_basis(runtime_contract, fields) is None:
         issues.append(
             ContractExecutionIssue(
                 issue_code="CONTRACT_PRICE_BASIS_UNRESOLVED",
                 severity="BLOCKING",
-                field_key=declaration.pricing.cost_source_field,
+                field_key=_cost_issue_field_key(runtime_contract, fields),
                 message="A supplier price was observed, but its price basis is unresolved.",
             )
         )
@@ -648,7 +648,7 @@ def _normalization_issues(
             ContractExecutionIssue(
                 issue_code="CONTRACT_COST_UNPARSEABLE",
                 severity="BLOCKING",
-                field_key=declaration.pricing.cost_source_field,
+                field_key=_cost_issue_field_key(runtime_contract, fields),
                 message=f"Supplier cost '{raw_cost}' could not be normalized as a monetary amount.",
             )
         )
@@ -1376,6 +1376,11 @@ def _is_ineligible_row(fields: dict[str, Any], runtime_contract) -> bool:
         return False
     if any(_text(fields.get(f"source:{key}")) is not None for key in identity_fields):
         return False
+    # "With a price" means with a price under ANY declared price column — a
+    # mixed-layout contract prices per layout, and a case-priced row without
+    # its code is still an item, not furniture.
+    if _source_price_fields(runtime_contract):
+        return _winning_price_field(runtime_contract, fields) is None
     price_field = runtime_contract.declaration.pricing.cost_source_field
     return price_field is None or _text(fields.get(f"source:{price_field}")) is None
 
@@ -1397,7 +1402,100 @@ def _required_field_issues(
                     message=f"Required contract field '{contract_field.field_key}' is missing from the source row.",
                 )
             )
+    # A mixed-layout contract declares one price column PER layout, each
+    # OPTIONAL — no single column can be REQUIRED when only one of them prints
+    # on any given row. The requirement is one-of: a row where NONE resolved
+    # has no printed price this contract can read, and holds under the primary
+    # column's name.
+    price_fields = _source_price_fields(runtime_contract)
+    if (
+        len(price_fields) > 1
+        and not any(f.requirement == SourceFieldRequirement.REQUIRED for f in price_fields)
+        and all(_text(fields.get(f"source:{f.field_key}")) is None for f in price_fields)
+    ):
+        primary = runtime_contract.declaration.pricing.cost_source_field or price_fields[0].field_key
+        issues.append(
+            ContractExecutionIssue(
+                issue_code="CONTRACT_REQUIRED_FIELD_MISSING",
+                severity="BLOCKING",
+                field_key=primary,
+                message=(
+                    f"Required contract field '{primary}' is missing from the source row — "
+                    "none of the declared price columns is present."
+                ),
+            )
+        )
     return tuple(issues)
+
+
+@dataclass(frozen=True)
+class AddableRequiredColumn:
+    """A column the contract REQUIRES that this observation has no cell for.
+
+    ``column_name`` is the heading a human-supplied cell must carry for
+    ``_fields_from_cells`` to resolve it — the field's declared source column,
+    falling back to its first alias. Fields read from page structure rather
+    than a named heading (section banners, page brand marks, the unlabeled
+    column) are never listed: a cell cannot stand in for those.
+    """
+
+    field_key: str
+    column_name: str
+
+
+def addable_required_columns(
+    runtime_contract, raw_cells: list[dict]
+) -> tuple[AddableRequiredColumn, ...]:
+    """REQUIRED fields no cell of this observation can resolve.
+
+    The HITL evidence panel offers exactly these for ADDING a value: a row
+    dead-lettered as CONTRACT_REQUIRED_FIELD_MISSING because the scan never
+    produced the cell is otherwise unfixable — corrections replace existing
+    cells by name, and here there is no cell to replace. Presence is judged
+    the way corrections match (any cell carrying the column name, whatever
+    its value): an existing empty cell is edited in place, never added twice.
+    """
+
+    observed: set[str] = set()
+    for cell in raw_cells or []:
+        name = cell.get("column_name") if isinstance(cell, dict) else None
+        if name:
+            observed.update(_column_keys(str(name)))
+
+    structural = {_SECTION_HEADER_SOURCE, _UNLABELED_COLUMN_SOURCE, _PAGE_BRAND_SOURCE}
+    price_fields = _source_price_fields(runtime_contract)
+    primary_price = runtime_contract.declaration.pricing.cost_source_field
+    # A mixed-layout contract requires its price as ONE-OF several optional
+    # columns. When no cell matches any of them, the primary column is the
+    # honest one to offer for adding — it carries the primary declared basis,
+    # and the audit trail names whoever typed the value.
+    price_group_missing = len(price_fields) > 1 and not any(
+        key in observed
+        for f in price_fields
+        for name in (f.source_column, f.source_path, *f.aliases)
+        if name and name not in structural
+        for key in _column_keys(name)
+    )
+    out: list[AddableRequiredColumn] = []
+    offered: set[str] = set()
+    for contract_field in runtime_contract.declaration.fields:
+        required = contract_field.requirement == SourceFieldRequirement.REQUIRED
+        if not required and not (price_group_missing and contract_field.field_key == primary_price):
+            continue
+        names = [
+            name
+            for name in (contract_field.source_column, contract_field.source_path, *contract_field.aliases)
+            if name and name not in structural
+        ]
+        if not names:
+            continue
+        if any(key in observed for name in names for key in _column_keys(name)):
+            continue
+        if names[0] in offered:
+            continue
+        offered.add(names[0])
+        out.append(AddableRequiredColumn(field_key=contract_field.field_key, column_name=names[0]))
+    return tuple(out)
 
 
 def _document_issues(
@@ -1674,12 +1772,45 @@ def _read_purchase_unit(fields: dict[str, Any], semantics) -> str | None:
     return None
 
 
+def _source_price_fields(runtime_contract) -> list:
+    return [
+        contract_field
+        for contract_field in getattr(runtime_contract.declaration, "fields", ()) or ()
+        if getattr(contract_field.role, "value", contract_field.role) == "SOURCE_PRICE"
+    ]
+
+
+def _winning_price_field(runtime_contract, fields: dict[str, Any] | None):
+    """The SOURCE_PRICE field whose value filled the cost slot.
+
+    Every SOURCE_PRICE field funnels into `cost_price` via setdefault in
+    declaration order, so the first declared field with a value IS the one
+    whose amount the row carries — and, for mixed-layout documents, the one
+    whose declared basis the amount is printed on.
+    """
+    if fields is None:
+        return None
+    for contract_field in _source_price_fields(runtime_contract):
+        if _text(fields.get(f"source:{contract_field.field_key}")) is not None:
+            return contract_field
+    return None
+
+
+def _declared_cost_basis(runtime_contract, fields: dict[str, Any] | None):
+    """The basis the row's cost amount is declared on: the winning price
+    column's own basis where it declares one, else the contract-level basis."""
+    winner = _winning_price_field(runtime_contract, fields)
+    if winner is not None and winner.price_basis is not None:
+        return winner.price_basis
+    return runtime_contract.declaration.pricing.price_basis
+
+
 def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any], fields: dict[str, Any] | None = None) -> dict[str, Any] | None:
     if _matches_null_marker(value, runtime_contract.declaration.pricing.null_cost_markers):
         return None
     amount = _decimal_or_none(value)
     pricing = runtime_contract.declaration.pricing
-    basis = pricing.price_basis
+    basis = _declared_cost_basis(runtime_contract, fields)
     packaging = runtime_contract.declaration.packaging
     if fields is not None and packaging.price_basis_follows_purchase_unit:
         # $1,390 is per BOTTLE, not per piece. Leaving it as a fixed basis
@@ -1696,6 +1827,15 @@ def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any], field
         "price_basis": basis.model_dump(mode="json"),
         "evidence": evidence,
     }
+
+
+def _cost_issue_field_key(runtime_contract, fields: dict[str, Any] | None) -> str | None:
+    """Name the price column the row actually carried, falling back to the
+    primary — so a held row's issue points at the cell a person would fix."""
+    winner = _winning_price_field(runtime_contract, fields)
+    if winner is not None:
+        return winner.field_key
+    return runtime_contract.declaration.pricing.cost_source_field
 
 
 def _matches_null_marker(value: Any, markers: list[str]) -> bool:

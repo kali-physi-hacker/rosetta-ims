@@ -65,13 +65,19 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
         SourceFieldContract(
             field_key="description",
             role=SourceFieldRole.PRODUCT_NAME,
-            requirement=SourceFieldRequirement.REQUIRED,
+            requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
             source_column="PRODUCT NAME / 產品名稱",
-            aliases=["PRODUCT NAME", "產品名稱", "產品"],
+            # "English Name" last: on pages that split the name by language
+            # ('Chinese Name' / 'English Name' columns), the ENGLISH name IS
+            # the name (user ruling 2026-08-25). The Chinese name stays on the
+            # evidence card, never in this field.
+            aliases=["PRODUCT NAME", "產品名稱", "產品", "產品 (Product)", "Product Name (bilingual)", "English Name"],
             description=(
                 "Printed product name. Retail sections print 產品 alone (letter-spaced "
-                "產 品 in the source; matched via CJK-space-insensitive folding). Variant "
-                "tables (e.g. Ferplast beds) name the product only in the banner above the "
+                "產 品 in the source; matched via CJK-space-insensitive folding), and the "
+                "dry-food retail layout splits the name into 'Chinese Name' / 'English "
+                "Name' columns — the English column is the name there. Variant tables "
+                "(e.g. Ferplast beds) name the product only in the banner above the "
                 "table and are expected to flag this field for review."
             ),
             evidence=evidence_items,
@@ -100,7 +106,7 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             requirement=SourceFieldRequirement.OPTIONAL,
             source_column="PACKING PER UNIT" if segment == "vet" else "重量 / SIZE",
             aliases=(
-                ["PACKING PER UNIT", "SIZE", "PACK", "重量", "包裝"]
+                ["PACKING PER UNIT", "SIZE", "PACK", "重量", "重量 1 (Weight)", "包裝"]
                 if segment == "vet"
                 else ["重量", "SIZE", "包裝"]
             ),
@@ -117,17 +123,23 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             requirement=SourceFieldRequirement.REQUIRED,
             source_column="WHOLESALE PRICE / 批發價" if segment == "vet" else "批發價 / WHOLESALE PRICE",
             aliases=(
-                # Deliberately NO bare 批發價 alias for the vet segment: only the
-                # retail sections print it alone, and matching it here would let
-                # this contract claim retail rows under a UNIT basis nobody has
-                # verified — the non_vet contract owns those rows.
+                # The Wholesale/Retail family (批發價 beside a 建議零售價 column,
+                # printed bare, letter-spaced, or as '批發價 (Wholesale)') is
+                # claimed since the 2026-08-25 ruling extended the earlier
+                # rrp-column ruling to it: a retail column beside the wholesale
+                # means the wholesale is the per-unit price. This retires the
+                # old deliberate exclusion of bare 批發價, whose reason was
+                # exactly that nobody had verified that basis yet.
                 # 'Unit Price (box)' is the REGULAR price on the diagnostics
                 # Special-Offer tables: the whole-doc capture split the struck
                 # render into '(single)'/'(box)' columns, and every '(single)'
                 # value is exactly 70% of '(box)' — the promo badge, never a
                 # per-test price (a box cannot cost less than two singles).
                 # Regular price = cost, per the struck-price ruling.
-                ["WHOLESALE PRICE", "UNIT PRICE", "PRICE", "UNIT PRICE PER TEST", "Unit Price (box)"]
+                [
+                    "WHOLESALE PRICE", "UNIT PRICE", "PRICE", "UNIT PRICE PER TEST",
+                    "Unit Price (box)", "批發價 (Wholesale)", "批發價", "批發價 1", "Wholesale",
+                ]
                 if segment == "vet"
                 else ["批發價", "WHOLESALE PRICE"]
             ),
@@ -135,8 +147,9 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
                 "Supplier cost. The vet sections price by UNIT PRICE / PRICE — verified on "
                 "the sample that UNIT PRICE is the price of one ORDER UNIT (a box/set/pc "
                 "named per row), not one test; see packaging.purchase_uom_source_field. "
-                "Retail sections print 批發價 (letter-spaced in print; matched via "
-                "CJK-space-insensitive folding)."
+                "Retail-style sections print 批發價 — bare, letter-spaced, or as "
+                "'批發價 (Wholesale)' — always with a retail column beside it, which is "
+                "what confirms the per-unit basis (ruling 2026-08-25)."
             ),
             evidence=evidence_items,
         ),
@@ -145,10 +158,39 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             role=SourceFieldRole.RRP,
             requirement=SourceFieldRequirement.OPTIONAL,
             source_column="SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價" if segment == "vet" else "零售價 / RETAIL PRICE",
-            aliases=["SUGGESTED RETAIL PRICE", "RETAIL PRICE", "SUGGESTED PRICE", "零售價", "建議零售價"],
+            aliases=[
+                "SUGGESTED RETAIL PRICE", "RETAIL PRICE", "SUGGESTED PRICE",
+                "零售價", "建議零售價", "建議零售價 (Retail)", "建議零售價 1",
+            ],
             description=(
-                "Suggested retail or retail price field; retail sections print 建議零售價, "
-                "and the vet catalogue's retail-style brand tables print 'Suggested Price'."
+                "Suggested retail or retail price field; retail sections print 建議零售價 "
+                "(sometimes as '建議零售價 (Retail)'), and the vet catalogue's retail-style "
+                "brand tables print 'Suggested Price'."
+            ),
+            evidence=evidence_items,
+        ),
+        SourceFieldContract(
+            field_key="box_quantity",
+            role=SourceFieldRole.OTHER,
+            requirement=SourceFieldRequirement.OPTIONAL,
+            source_column="量 2 (Box)",
+            description=(
+                "Treat-layout box configuration ('1盒20條' — one box of twenty pieces). "
+                "A purchase-format statement, never a deal: no term is emitted without a "
+                "printed per-piece rate at box quantity (case-total ruling), and on the "
+                "sample the box price is exactly the piece price times the count."
+            ),
+            evidence=evidence_items,
+        ),
+        SourceFieldContract(
+            field_key="box_wholesale_price",
+            role=SourceFieldRole.OTHER,
+            requirement=SourceFieldRequirement.OPTIONAL,
+            source_column="盒批發價 2",
+            description=(
+                "Treat-layout box wholesale total (prints as '批發價$392' — the heading "
+                "leaks into the cell). Evidence for reviewers beside box_quantity; the "
+                "per-piece 批發價 1 remains the row's cost."
             ),
             evidence=evidence_items,
         ),
@@ -311,6 +353,10 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                 "box/set/pc named per row), so the basis follows the order_unit field where "
                 "readable (packaging.price_basis_follows_purchase_unit) and falls back to "
                 "UNIT for the PRICE/Wholesale layouts that print no order-unit column. "
+                "The Wholesale/Retail family (批發價 beside 建議零售價) is claimed on the "
+                "same footing since the 2026-08-25 ruling: a retail column beside the "
+                "wholesale confirms the per-unit basis — even when the product text names "
+                "a case ('1箱6罐'), the printed prices are per unit, never per case. "
                 "Analyzers and instruments print 'By Quote' instead of a price. "
                 "VERIFIED against the golden sample sheet: BizOps hand-filled a per-row "
                 "price basis for every golden SKU, including rows from the bare-PRICE "
@@ -406,7 +452,7 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
             # an UNdeclared notation staying verbatim evidence is engine-wide
             # behavior, not a Vetapet ambiguity.
         ],
-        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category", "order_unit"),
+        pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category", "order_unit", "box_quantity", "box_wholesale_price"),
         created_at=DECLARATION_CREATED_AT,
         created_by=DECLARATION_CREATED_BY,
     )

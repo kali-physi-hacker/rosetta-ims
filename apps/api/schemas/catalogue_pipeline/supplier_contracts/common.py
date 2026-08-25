@@ -298,6 +298,27 @@ class SourceFieldContract(SupplierSourceModel):
         ),
     )
 
+    price_basis: UnitOfMeasure | None = Field(
+        None,
+        description=(
+            "SOURCE_PRICE fields only: the basis the printed amount is on WHEN THIS COLUMN "
+            "supplies the row's cost. Exists for documents whose layouts price differently by "
+            "page — Kangaroo prints unit-basis bags, case-only cans, and per-pack vet rows in "
+            "one document — so each price column declares its own printed basis and the "
+            "first-resolved column's basis rides with its amount. Overrides pricing.price_basis; "
+            "purchase-unit-follows still wins where declared."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _price_basis_belongs_to_price_columns(self):
+        if self.price_basis is not None and self.role != SourceFieldRole.SOURCE_PRICE:
+            raise ValueError(
+                "price_basis is only meaningful on SOURCE_PRICE fields — a non-price column "
+                "declaring a price basis is a category error"
+            )
+        return self
+
     @model_validator(mode="after")
     def _tier_rows_declare_both_halves(self):
         if self.role == SourceFieldRole.MBB_TIER_ROW and not (
@@ -360,14 +381,30 @@ class PricingSourceSemantics(SupplierSourceModel):
     price_basis_status: SemanticResolutionStatus = Field(..., description="Evidence status for the price basis.")
     autoswap_cost_rrp_allowed: bool = Field(False, description="Whether swapped cost/RRP may be deterministically corrected.")
     null_cost_markers: list[str] = Field(default_factory=list, description="Source values that mean cost is unavailable.")
+    price_basis_per_column: bool = Field(
+        False,
+        description=(
+            "True when the document's layouts price on DIFFERENT bases and each SOURCE_PRICE "
+            "field declares its own price_basis (Kangaroo: unit bags, case-only cans, per-pack "
+            "vet rows in one document). The contract-level price_basis then stays null and the "
+            "resolved column's basis rides with its amount. The contract-level validator "
+            "enforces that every SOURCE_PRICE field actually declares one."
+        ),
+    )
     notes: str | None = Field(None, description="Business-readable price semantics.")
 
     @model_validator(mode="after")
     def _validate_pricing_semantics(self):
         if self.price_basis_status == SemanticResolutionStatus.UNRESOLVED and self.price_basis is not None:
             raise ValueError("unresolved price basis must leave price_basis null")
-        if self.price_basis_status != SemanticResolutionStatus.UNRESOLVED and self.price_basis is None:
-            raise ValueError("resolved price basis requires price_basis")
+        if (
+            self.price_basis_status != SemanticResolutionStatus.UNRESOLVED
+            and self.price_basis is None
+            and not self.price_basis_per_column
+        ):
+            raise ValueError("resolved price basis requires price_basis (or price_basis_per_column)")
+        if self.price_basis_per_column and self.price_basis is not None:
+            raise ValueError("price_basis_per_column contracts must leave the contract-level price_basis null — the columns own it")
         if self.price_basis is not None:
             self.price_basis.require_known_code("pricing.price_basis")
         if self.autoswap_cost_rrp_allowed and not self.rrp_source_field:
@@ -643,6 +680,16 @@ class SupplierSourceContractV1(SupplierSourceModel):
             self._assert_field_ref(source_field, known_fields, "pipeline_mapping field reference")
 
         evidence_types = {item.evidence_type for item in self.evidence}
+        if self.pricing.price_basis_per_column:
+            price_fields = [f for f in self.fields if f.role == SourceFieldRole.SOURCE_PRICE]
+            if not price_fields:
+                raise ValueError("price_basis_per_column requires at least one SOURCE_PRICE field")
+            missing_basis = [f.field_key for f in price_fields if f.price_basis is None]
+            if missing_basis:
+                raise ValueError(
+                    "price_basis_per_column requires every SOURCE_PRICE field to declare its "
+                    f"price_basis — missing on: {missing_basis}"
+                )
         if self.support_status == SupplierContractSupportStatus.SUPPORTED:
             if self.supplier.supplier_id is None:
                 raise ValueError("SUPPORTED supplier contracts require a numeric supplier_id for runtime selection")

@@ -2,7 +2,7 @@
   "source": "KPN_Kangaroo-updated.pdf (57-page edition; 'Price List (Vet Clinics only)' section)",
   "recorded_from": "carved from the whole-catalogue chat-agent capture of the updated PDF (2026-08-13, 6 chunks consolidated)",
   "provider": "hand-captured",
-  "contract": "kangaroo_pet_nutrition.vet_clinic_price_list.v1",
+  "contract": "kangaroo_pet_nutrition.unit_price_list.v1",
   "supplier_id": 81,
   "pages": {
     "1": "Vet-clinic price list: NexGard Spectra sizes + Heartgard Plus, with 診所優惠 Clinic Offer column (10+2 / 10+3 terms)"

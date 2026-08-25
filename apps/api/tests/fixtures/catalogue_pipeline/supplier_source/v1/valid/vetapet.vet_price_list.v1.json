@@ -4,12 +4,15 @@
   "contract_version": "v1",
   "supplier": {
     "supplier_id": 91,
-    "supplier_name": "C.Vetapet & Company"
+    "supplier_name": "C.Vetapet & Company",
+    "supplier_code": null
   },
   "document_type": "PRICE_LIST",
   "format_name": "Vetapet Vet PDF price list",
   "source_format": "PDF_TABLE",
   "support_status": "SUPPORTED",
+  "effective_from": null,
+  "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -32,11 +35,13 @@
       {
         "name": "vet_clinic_unit_price_sections",
         "selector": "CODE NO / PRODUCT NAME / PACKING PER UNIT / UNIT PRICE / REMARKS or TERMS",
+        "header_row": null,
         "notes": "Observed in the supplied Vetapet.pdf early clinic sections."
       },
       {
         "name": "vet_wholesale_retail_sections",
         "selector": "CODE NO / PRODUCT NAME / WHOLESALE PRICE / RETAIL PRICE / TERMS",
+        "header_row": null,
         "notes": "Observed later in the supplied Vetapet.pdf; representative per-section row fixtures are still needed."
       }
     ],
@@ -72,7 +77,9 @@
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
       "source_column": "CODE NO / 編號",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "CODE NO",
         "編號",
@@ -86,20 +93,33 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": "PRODUCT NAME / 產品名稱",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "PRODUCT NAME",
         "產品名稱",
-        "產品"
+        "產品",
+        "產品 (Product)",
+        "Product Name (bilingual)",
+        "English Name"
       ],
-      "description": "Printed product name. Retail sections print 產品 alone (letter-spaced 產 品 in the source; matched via CJK-space-insensitive folding). Variant tables (e.g. Ferplast beds) name the product only in the banner above the table and are expected to flag this field for review.",
+      "description": "Printed product name. Retail sections print 產品 alone (letter-spaced 產 品 in the source; matched via CJK-space-insensitive folding), and the dry-food retail layout splits the name into 'Chinese Name' / 'English Name' columns — the English column is the name there. Variant tables (e.g. Ferplast beds) name the product only in the banner above the table and are expected to flag this field for review.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -107,14 +127,24 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "brand",
       "role": "BRAND",
       "requirement": "OPTIONAL",
+      "source_column": null,
       "source_path": "page_brand",
       "composed_from": [],
+      "constant_value": null,
       "aliases": [],
       "description": "Product brand, read from the brand mark heading the page (e.g. the zoetis or Dermoscent wordmark) — never from the table banner, which names a category.",
       "evidence": [
@@ -124,19 +154,30 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
       "source_column": "PACKING PER UNIT",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "PACKING PER UNIT",
         "SIZE",
         "PACK",
         "重量",
+        "重量 1 (Weight)",
         "包裝"
       ],
       "description": "Raw size/packaging text; may express content measure, pack description, or both. The vet sections print it as PACKING PER UNIT (verified on the sample's diagnostics pages); retail sections use 重量/SIZE.",
@@ -147,22 +188,36 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "cost",
       "role": "SOURCE_PRICE",
       "requirement": "REQUIRED",
       "source_column": "WHOLESALE PRICE / 批發價",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "WHOLESALE PRICE",
         "UNIT PRICE",
         "PRICE",
         "UNIT PRICE PER TEST",
-        "Unit Price (box)"
+        "Unit Price (box)",
+        "批發價 (Wholesale)",
+        "批發價",
+        "批發價 1",
+        "Wholesale"
       ],
-      "description": "Supplier cost. The vet sections price by UNIT PRICE / PRICE — verified on the sample that UNIT PRICE is the price of one ORDER UNIT (a box/set/pc named per row), not one test; see packaging.purchase_uom_source_field. Retail sections print 批發價 (letter-spaced in print; matched via CJK-space-insensitive folding).",
+      "description": "Supplier cost. The vet sections price by UNIT PRICE / PRICE — verified on the sample that UNIT PRICE is the price of one ORDER UNIT (a box/set/pc named per row), not one test; see packaging.purchase_uom_source_field. Retail-style sections print 批發價 — bare, letter-spaced, or as '批發價 (Wholesale)' — always with a retail column beside it, which is what confirms the per-unit basis (ruling 2026-08-25).",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -170,22 +225,34 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
       "source_column": "SUGGESTED RETAIL PRICE / RETAIL PRICE / 零售價",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "SUGGESTED RETAIL PRICE",
         "RETAIL PRICE",
         "SUGGESTED PRICE",
         "零售價",
-        "建議零售價"
+        "建議零售價",
+        "建議零售價 (Retail)",
+        "建議零售價 1"
       ],
-      "description": "Suggested retail or retail price field; retail sections print 建議零售價, and the vet catalogue's retail-style brand tables print 'Suggested Price'.",
+      "description": "Suggested retail or retail price field; retail sections print 建議零售價 (sometimes as '建議零售價 (Retail)'), and the vet catalogue's retail-style brand tables print 'Suggested Price'.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -193,14 +260,78 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
+    },
+    {
+      "field_key": "box_quantity",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "量 2 (Box)",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Treat-layout box configuration ('1盒20條' — one box of twenty pieces). A purchase-format statement, never a deal: no term is emitted without a printed per-piece rate at box quantity (case-total ruling), and on the sample the box price is exactly the piece price times the count.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
+    },
+    {
+      "field_key": "box_wholesale_price",
+      "role": "OTHER",
+      "requirement": "OPTIONAL",
+      "source_column": "盒批發價 2",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [],
+      "description": "Treat-layout box wholesale total (prints as '批發價$392' — the heading leaks into the cell). Evidence for reviewers beside box_quantity; the per-piece 批發價 1 remains the row's cost.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:Vetapet.pdf",
+          "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "promotion_text",
       "role": "MBB_TEXT",
       "requirement": "OPTIONAL",
       "source_column": "TERMS / REMARKS",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "TERMS",
         "REMARKS",
@@ -214,14 +345,24 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "species",
       "role": "SPECIES",
       "requirement": "OPTIONAL",
+      "source_column": null,
       "source_path": "product_name",
       "composed_from": [],
+      "constant_value": null,
       "aliases": [],
       "description": "Species cue from product name when present.",
       "evidence": [
@@ -231,12 +372,22 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "segment",
       "role": "SEGMENT",
       "requirement": "OPTIONAL",
+      "source_column": null,
+      "source_path": null,
       "composed_from": [],
       "constant_value": "vet",
       "aliases": [],
@@ -248,14 +399,24 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "category",
       "role": "CATEGORY",
       "requirement": "OPTIONAL",
+      "source_column": null,
       "source_path": "section_header",
       "composed_from": [],
+      "constant_value": null,
       "aliases": [],
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
@@ -265,14 +426,24 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "order_unit",
       "role": "OTHER",
       "requirement": "OPTIONAL",
       "source_column": "ORDER UNIT",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [],
       "description": "The unit one UNIT PRICE buys — '1 box', '1 set', '1 pc', printed per row. Verified on the sample: '10 tests / box · 1 box · HK$1958' prices the BOX, not the test. Declared as packaging.purchase_uom_source_field so the cost's price basis follows this value where it is readable.",
       "evidence": [
@@ -282,7 +453,15 @@
           "note": "I supplied a 177-page PDF sample confirming Vetapet catalogue sections and multiple table layouts, including CODE NO/Product Name/Packing Per Unit/Unit Price and later Wholesale/Retail/Terms tables."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     }
   ],
   "pricing": {
@@ -290,23 +469,33 @@
     "rrp_source_field": "rrp",
     "currency": "HKD",
     "price_basis": {
-      "code": "UNIT"
+      "code": "UNIT",
+      "label": null
     },
     "price_basis_status": "VERIFIED",
     "autoswap_cost_rrp_allowed": true,
     "null_cost_markers": [
       "By Quote"
     ],
-    "notes": "Verified on the sample: UNIT PRICE sections price one ORDER UNIT (a box/set/pc named per row), so the basis follows the order_unit field where readable (packaging.price_basis_follows_purchase_unit) and falls back to UNIT for the PRICE/Wholesale layouts that print no order-unit column. Analyzers and instruments print 'By Quote' instead of a price. VERIFIED against the golden sample sheet: BizOps hand-filled a per-row price basis for every golden SKU, including rows from the bare-PRICE layouts, and the golden set (tests/fixtures/catalogue_pipeline/golden/vetapet_vet) pins each resolved basis against those answers — residual disagreements are named in its expectations.json, not hidden."
+    "price_basis_per_column": false,
+    "notes": "Verified on the sample: UNIT PRICE sections price one ORDER UNIT (a box/set/pc named per row), so the basis follows the order_unit field where readable (packaging.price_basis_follows_purchase_unit) and falls back to UNIT for the PRICE/Wholesale layouts that print no order-unit column. The Wholesale/Retail family (批發價 beside 建議零售價) is claimed on the same footing since the 2026-08-25 ruling: a retail column beside the wholesale confirms the per-unit basis — even when the product text names a case ('1箱6罐'), the printed prices are per unit, never per case. Analyzers and instruments print 'By Quote' instead of a price. VERIFIED against the golden sample sheet: BizOps hand-filled a per-row price basis for every golden SKU, including rows from the bare-PRICE layouts, and the golden set (tests/fixtures/catalogue_pipeline/golden/vetapet_vet) pins each resolved basis against those answers — residual disagreements are named in its expectations.json, not hidden."
   },
   "packaging": {
     "packaging_source_field": "pack_size",
+    "purchase_uom": null,
     "price_basis": {
-      "code": "UNIT"
+      "code": "UNIT",
+      "label": null
     },
+    "sellable_unit_uom": null,
     "sellable_units_per_purchase_unit_source_field": "pack_size",
+    "content_measure_source_field": null,
+    "content_measure_uom": null,
     "purchase_uom_source_field": "order_unit",
     "price_basis_follows_purchase_unit": true,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
     "interpretation_rules": [
       "Treat kg/g/ml size text as content measure, not sellable-unit count.",
       "Pack descriptions such as tubes/pack are not proof of supplier order multiple without explicit terms.",
@@ -396,7 +585,9 @@
       "species",
       "segment",
       "category",
-      "order_unit"
+      "order_unit",
+      "box_quantity",
+      "box_wholesale_price"
     ],
     "staging_raw_field_keys": [
       "supplier_sku",
@@ -409,7 +600,9 @@
       "species",
       "segment",
       "category",
-      "order_unit"
+      "order_unit",
+      "box_quantity",
+      "box_wholesale_price"
     ],
     "staging_proposed_field_keys": [
       "supplier_sku",
@@ -422,10 +615,14 @@
       "species",
       "segment",
       "category",
-      "order_unit"
+      "order_unit",
+      "box_quantity",
+      "box_wholesale_price"
     ]
   },
   "created_at": "2026-07-22T00:00:00Z",
   "created_by": "cis-103b-catalogue-architecture",
+  "updated_at": null,
+  "updated_by": null,
   "metadata": {}
 }

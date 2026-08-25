@@ -97,7 +97,7 @@ ALFAMEDIC_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 # Where no Product Name is printed — the suture tables — the
                 # name is the banner plus what distinguishes this row from its
                 # neighbours under it: needle, gauge, thread length. Only used

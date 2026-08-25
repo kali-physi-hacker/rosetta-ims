@@ -96,7 +96,7 @@
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": null,
       "source_path": "visual product heading",
       "composed_from": [],

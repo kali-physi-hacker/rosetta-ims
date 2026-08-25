@@ -111,7 +111,7 @@ HILLS_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="description",
                 role=SourceFieldRole.PRODUCT_NAME,
-                requirement=SourceFieldRequirement.REQUIRED,
+                requirement=SourceFieldRequirement.OPTIONAL,  # name never blocks a row (user ruling 2026-08-25)
                 composed_from=[
                     "Product Range / 產品系列",
                     "Disease Category / 疾病種類",

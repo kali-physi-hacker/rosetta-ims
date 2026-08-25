@@ -8,9 +8,11 @@
     "supplier_code": "KANGAR"
   },
   "document_type": "CATALOGUE",
-  "format_name": "Kangaroo Pet Nutrition unit-basis price list",
+  "format_name": "Kangaroo Pet Nutrition price list",
   "source_format": "PDF_TABLE",
   "support_status": "SUPPORTED",
+  "effective_from": null,
+  "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -25,7 +27,17 @@
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
       "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-      "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+      "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+    },
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+      "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+    },
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+      "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
     }
   ],
   "source_structure": {
@@ -36,7 +48,20 @@
       {
         "name": "kangaroo_pn_unit_price_sections",
         "selector": "Kangaroo Pet Nutrition sections whose price columns print exactly one wholesale amount, with no case-level price column.",
+        "header_row": null,
         "notes": "Observed on ZIWI dry/treat pages and Ecuphar pages."
+      },
+      {
+        "name": "kangaroo_pn_case_only_sections",
+        "selector": "Kangaroo Pet Nutrition wet-food sections whose ONLY wholesale amount is case-level, with per-can RRP printed separately.",
+        "header_row": null,
+        "notes": "Observed on the ZIWI wet dog-can and cat-can pages."
+      },
+      {
+        "name": "kangaroo_pn_vet_clinic_tables",
+        "selector": "'Price List (Vet Clinics only)' tables with a 診所優惠 Clinic Offer column and no retail price column.",
+        "header_row": null,
+        "notes": "Observed for NexGard Spectra and Heartgard Plus rows."
       }
     ],
     "required_headers": [],
@@ -48,13 +73,24 @@
       "批發價 (HKD)",
       "建議零售價 (HKD)",
       "產品圖示",
+      "產品圖片",
       "批發價",
-      "零售價"
+      "零售價",
+      "批發價 (HKD) 每箱 (12罐)",
+      "批發價 (HKD) 每箱*",
+      "建議零售價 (HKD) 每箱 (12罐)",
+      "建議零售價 (HKD) 每箱",
+      "建議零售價 (HKD) 每罐",
+      "批發價(HKD) 每箱(12罐)",
+      "批發價(HKD) 每箱*",
+      "建議零售價(HKD) 每箱(12罐)",
+      "建議零售價(HKD) 每罐",
+      "批發價 W/S Price (HKD)",
+      "診所優惠"
     ],
     "row_eligibility_rules": [
       "The ingestion supplier must be ID 81, or the enclosing source section must explicitly identify Kangaroo Pet Nutrition / KANGAR.",
-      "Select this contract only when the row's table prints one wholesale amount and no case-level price column.",
-      "Rows require a product code, description, and printed wholesale price."
+      "Rows require a product code, a description, and a printed wholesale price under any of the declared price columns."
     ],
     "discontinued_markers": [],
     "row_identity_fields": [],
@@ -72,7 +108,9 @@
       "role": "SUPPLIER_SKU",
       "requirement": "REQUIRED",
       "source_column": "產品編號",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "Product Code"
       ],
@@ -91,17 +129,37 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "description",
       "role": "PRODUCT_NAME",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": "產品內容",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "產品名稱",
         "Product Description"
@@ -121,17 +179,37 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "brand",
       "role": "BRAND",
       "requirement": "OPTIONAL",
+      "source_column": null,
       "source_path": "page_brand",
       "composed_from": [],
+      "constant_value": null,
       "aliases": [],
       "description": "The brand wordmark heading the page, verbatim.",
       "evidence": [
@@ -148,22 +226,43 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "pack_size",
       "role": "PACKAGING",
       "requirement": "OPTIONAL",
       "source_column": "重量",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "包裝",
-        "Size"
+        "Size",
+        "Packing"
       ],
-      "description": "Printed content weight/size (e.g. '454g', '1kg').",
+      "description": "Printed content weight/size or packing notation — '454g' on unit pages, '170g' per can on wet pages, \"1x3's\" / '100ml' on vet rows.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -178,22 +277,42 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "wholesale_price",
       "role": "SOURCE_PRICE",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": "批發價 (HKD)",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "批發價",
         "Wholesale Price"
       ],
-      "description": "The single printed wholesale amount — one sellable unit.",
+      "description": "Unit layouts: the single printed wholesale amount — one sellable unit.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -208,22 +327,155 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": {
+        "code": "UNIT",
+        "label": null
+      }
+    },
+    {
+      "field_key": "case_wholesale_price",
+      "role": "SOURCE_PRICE",
+      "requirement": "OPTIONAL",
+      "source_column": "批發價 (HKD) 每箱 (12罐)",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "批發價 (HKD) 每箱*",
+        "批發價 每箱",
+        "批發價(HKD) 每箱(12罐)",
+        "批發價(HKD) 每箱*"
+      ],
+      "description": "Wet-can layouts: the only printed wholesale amount — always case-level. The printed '(@N)' beside it is the derived per-can average (case total divided by can count) and is stripped as annotation, never treated as a price.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": {
+        "code": "CASE",
+        "label": null
+      }
+    },
+    {
+      "field_key": "vet_wholesale_price",
+      "role": "SOURCE_PRICE",
+      "requirement": "OPTIONAL",
+      "source_column": "批發價 W/S Price (HKD)",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "W/S Price"
+      ],
+      "description": "Vet-clinic tables: bare HKD numeral (e.g. '260') — the per-pack wholesale amount, verified against the BizOps golden sheet (basis PACK/qty 1 for every covered SKU).",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": {
+        "code": "PACK",
+        "label": null
+      }
     },
     {
       "field_key": "rrp",
       "role": "RRP",
       "requirement": "OPTIONAL",
       "source_column": "建議零售價 (HKD)",
+      "source_path": null,
       "composed_from": [],
+      "constant_value": null,
       "aliases": [
         "零售價",
-        "建議零售價"
+        "建議零售價",
+        "建議零售價 (HKD) 每罐",
+        "每罐建議零售價",
+        "建議零售價(HKD) 每罐"
       ],
-      "description": "Recommended retail amount, same basis as wholesale_price.",
+      "description": "Recommended retail amount: same basis as the unit wholesale on unit pages, per CAN on wet pages. Vet tables print no retail column.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -238,17 +490,86 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
+    },
+    {
+      "field_key": "clinic_offer",
+      "role": "MBB_TEXT",
+      "requirement": "OPTIONAL",
+      "source_column": "診所優惠",
+      "source_path": null,
+      "composed_from": [],
+      "constant_value": null,
+      "aliases": [
+        "Clinic Offer"
+      ],
+      "description": "Vet-clinic tables: per-row free-goods terms, e.g. '10+2 OR 10+3 (單次購買50或以上) (50 or more per order)' — buy 10 get 2 free, or 10 get 3 free at 50+ per order.",
+      "evidence": [
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf",
+          "note": "The sample contains sections explicitly identified as Kangaroo Pet Nutrition with ZIWI Peak and Ecuphar catalogue tables."
+        },
+        {
+          "evidence_type": "BUSINESS_DOMAIN_DOCUMENTATION",
+          "reference": "docs/technical-debt/kpn-kangaroo-supplier-source-contracts.md",
+          "note": "The production supplier identity is supplier ID 81 with code KANGAR."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
+        }
+      ],
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "effective_date",
       "role": "EFFECTIVE_DATE",
       "requirement": "OPTIONAL",
+      "source_column": null,
       "source_path": "document or section effective-date label",
       "composed_from": [],
+      "constant_value": null,
       "aliases": [],
       "description": "'With effect from ...' / '生效日期' page labels.",
       "evidence": [
@@ -265,17 +586,37 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     },
     {
       "field_key": "promotion_text",
       "role": "MBB_TEXT",
       "requirement": "OPTIONAL",
+      "source_column": null,
       "source_path": "document, section, or row promotion notes",
       "composed_from": [],
+      "constant_value": null,
       "aliases": [],
       "description": "Printed promotion or spend-discount terms.",
       "evidence": [
@@ -292,30 +633,58 @@
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:KPN_Kangaroo.pdf#pages=5,7,9-10,36-38",
-          "note": "Every layout in this group prints exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+          "note": "The unit-basis layouts print exactly one wholesale amount per row ('批發價 (HKD)' on ZIWI dry/treat pages, bare '批發價' on Ecuphar pages) with no case-level price column anywhere."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo.pdf#pages=6,8",
+          "note": "Wet-can pages print wholesale ONLY at case level ('批發價 (HKD) 每箱 (12罐)' and '每箱*', the asterisk footnoted '85g貓罐 每箱24罐 / 185g貓罐 每箱12罐'), with a printed derived per-can average beside the amount ('$340 (@28.3)'; 28.3 = 340/12) and RRP printed at both case and per-can level. No per-can wholesale figure exists anywhere. Vision captures these headings without spaces before the parens ('批發價(HKD) 每箱(12罐)', run 1382e559)."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:KPN_Kangaroo-updated.pdf#section=Price List (Vet Clinics only)",
+          "note": "The vet-clinic tables print 產品編號 Product Code / 產品內容 Product Description / 包裝 Packing / 批發價 W/S Price (HKD) / 診所優惠 Clinic Offer. Amounts are bare numerals; no retail column exists; offers are free-goods terms per row."
         }
       ],
-      "inherits_from_row_above": false
+      "tier_minimum_spend": null,
+      "tier_order": null,
+      "source_column_occurrence": null,
+      "tier_quantity_field": null,
+      "tier_price_field": null,
+      "continues_row_above_when_matching": null,
+      "inherits_from_row_above": false,
+      "source_column_prefix": null,
+      "price_basis": null
     }
   ],
   "pricing": {
     "cost_source_field": "wholesale_price",
     "rrp_source_field": "rrp",
     "currency": "HKD",
-    "price_basis": {
-      "code": "UNIT"
-    },
+    "price_basis": null,
     "price_basis_status": "VERIFIED",
     "autoswap_cost_rrp_allowed": false,
     "null_cost_markers": [],
-    "notes": "Verified directly against every page in this group: exactly one wholesale amount is printed per row and no case-level column exists to compete with it. Safe to treat as the sellable-unit price."
+    "price_basis_per_column": true,
+    "notes": "Unit layouts verified 2026-08-17 (one amount per row, nothing to compete with it); case layout verified 2026-08-25 (the only printed wholesale is case-level; the '(@N)' per-can average is derived and never a price); vet layout verified 2026-08-13 against the BizOps golden sheet (per-PACK, qty 1). Deriving a per-unit cost from a case total remains forbidden."
   },
   "packaging": {
     "packaging_source_field": "pack_size",
+    "purchase_uom": null,
+    "price_basis": null,
+    "sellable_unit_uom": null,
+    "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
+    "content_measure_uom": null,
+    "purchase_uom_source_field": null,
     "price_basis_follows_purchase_unit": false,
+    "order_increment_source_field": null,
+    "minimum_order_source_field": null,
+    "break_pack_allowed": null,
     "interpretation_rules": [
-      "Treat content weight/size as a measure, not a sellable-unit count."
+      "Treat content weight/size as a measure, not a sellable-unit count.",
+      "Can-per-case count lives in the column HEADING ('每箱 (12罐)') or the page footnote, never in a row cell.",
+      "\"1x3's\" means one sellable pack containing three tablets/chewables."
     ],
     "unresolved_semantics": [
       "Order increment and break-pack rules are not stated by the source."
@@ -323,22 +692,27 @@
   },
   "mbb": {
     "source_fields": [
-      "promotion_text"
+      "promotion_text",
+      "clinic_offer"
     ],
     "supported_scopes": [],
     "condition_patterns": [
       "buy quantity",
-      "spend threshold"
+      "spend threshold",
+      "order-size threshold"
     ],
     "benefit_patterns": [
-      "percentage discount"
+      "percentage discount",
+      "free goods (N+M)"
     ],
     "page_promotion_shapes": [],
+    "quantity_band_source_field": null,
     "quantity_ladder_heading_prefixes": [],
+    "struck_price_offer_source_field": null,
     "requires_validation_issue_when": [
       "The qualifying products, threshold basis, or stacking rules are not explicit."
     ],
-    "notes": "The ZIWI pages print standing offers as page banners (4% off the air-dried/steam-dried ranges; 8% over $4,000 spend) — banner text lands in text_observations, which no contract field reaches today."
+    "notes": "The ZIWI pages print standing offers as page banners (4% off the air-dried/steam-dried ranges; 8% over $4,000 spend) — banner text lands in text_observations, which no contract field reaches today. Vet-clinic offers are free-goods tiers ('10+2', '10+3 at 50+ per order'), not price tiers — no structured recognizer parses N+M free goods, so that text routes to review verbatim."
   },
   "validation_rules": [],
   "known_ambiguities": [
@@ -353,6 +727,18 @@
       "condition": "Standing mix/spend promotions print as page banners. Extraction captures them verbatim as page_promotion_text, but this contract declares no mbb.page_promotion_shapes — no real Kangaroo page has proven a banner notation yet — so banners stay unparsed page evidence.",
       "review_guidance": "Reviewers must read the run's page evidence for banner promos. Once a real Kangaroo page proves a notation the engine knows (see MbbSourceSemantics.page_promotion_shapes), declare it and banners conform into ORDER-scoped terms as they do for Vetapet.",
       "blocks_supported_status": false
+    },
+    {
+      "issue_code": "KANGAROO_PN_CASE_COUNT_NOT_A_COLUMN",
+      "condition": "Cans-per-case is printed in the column HEADING ('每箱 (12罐)') on the wet dog-can page and in a FOOTNOTE on the cat-can page ('85g貓罐 每箱24罐 / 185g貓罐 每箱12罐', varying BY ROW weight) — never as a row cell, so no contract field can map it and per-unit cost cannot be derived deterministically.",
+      "review_guidance": "Case-basis costs publish as printed. BizOps must confirm can counts per SKU (heading/footnote values are the evidence) before per-can costs are computed downstream.",
+      "blocks_supported_status": false
+    },
+    {
+      "issue_code": "KANGAROO_PN_VET_CLINIC_FREE_GOODS_NOT_STRUCTURED",
+      "condition": "診所優惠 offers are N+M free-goods terms; no structured MBB recognizer handles free goods, so they surface as text-only terms.",
+      "review_guidance": "Reviewers must read the clinic-offer text and apply the free-goods terms manually until a free-goods recognizer exists.",
+      "blocks_supported_status": false
     }
   ],
   "pipeline_mapping": {
@@ -364,7 +750,10 @@
       "brand",
       "pack_size",
       "wholesale_price",
+      "case_wholesale_price",
+      "vet_wholesale_price",
       "rrp",
+      "clinic_offer",
       "effective_date",
       "promotion_text"
     ],
@@ -374,7 +763,10 @@
       "brand",
       "pack_size",
       "wholesale_price",
+      "case_wholesale_price",
+      "vet_wholesale_price",
       "rrp",
+      "clinic_offer",
       "effective_date",
       "promotion_text"
     ],
@@ -384,16 +776,23 @@
       "brand",
       "pack_size",
       "wholesale_price",
+      "case_wholesale_price",
+      "vet_wholesale_price",
       "rrp",
+      "clinic_offer",
       "effective_date",
       "promotion_text"
     ]
   },
   "created_at": "2026-07-30T00:00:00Z",
   "created_by": "catalogue-contract-integration",
+  "updated_at": null,
+  "updated_by": null,
   "metadata": {
     "routing_strategy": "supplier_identity_and_layout_markers",
     "sample_reference": "KPN_Kangaroo.pdf",
-    "price_basis_group": "UNIT"
+    "price_basis_group": "PER_COLUMN",
+    "golden_sheet": "golden_samples_by_supplier/kangaroo.csv",
+    "merged_from": "kangaroo_pet_nutrition.unit_price_list.v1, kangaroo_pet_nutrition.case_only_price_list.v1, kangaroo_pet_nutrition.vet_clinic_price_list.v1"
   }
 }

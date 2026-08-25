@@ -4,7 +4,7 @@
   "row_evidence_status": "CONFIRMED",
   "supplier_id": 81,
   "supplier_name": "Kangaroo Pet Nutrition",
-  "notes": "Split out of kangaroo_pet_nutrition.catalogue_bundle.v1 after a full read of its 9 pages found the bundle's mixed price basis was two separable situations. This one covers layouts printing exactly one wholesale amount per row (ZIWI dry/treat pages with '批發價 (HKD)', Ecuphar pages with bare '批發價') and no case-level column. CONFIRMED 2026-08-17: verified against the six Ziwi pages of the user's per-page KPN_Kangaroo capture — 46/70 rows conform with cost, page-mark brands and rrp (pinned by the kangaroo_ziwi golden set); the 24 per-case canned rows are refused per the case-total ruling and surface in the held lane by design.",
+  "notes": "THE Kangaroo Pet Nutrition contract (merged 2026-08-25 from unit_price_list + case_only_price_list + vet_clinic_price_list per the one-document-one-contract ruling). One example per layout, each pinning that layout's price column and basis: unit (ADL0.4, UNIT), wet-can case-only (CDL170, CASE — the '(@N)' per-can average is annotation, never a price; cans-per-case lives in heading/footnote and no per-can cost is ever derived), vet clinic (BI-NXS, PACK, free-goods offer text verbatim).",
   "examples": [
     {
       "example_id": "kangaroo-pn-unit-adl04",
@@ -48,6 +48,91 @@
         "rrp": "$385",
         "units_per_pack": 1,
         "weight_grams": 454.0
+      }
+    },
+    {
+      "example_id": "kangaroo-pn-case-cdl170",
+      "source": {
+        "sample_reference": "external-sample:KPN_Kangaroo.pdf",
+        "page_number": 6,
+        "supplier_identity_marker": "港澳總代理 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition Ltd. printed on the page",
+        "table_layout": "ZIWI_WET_CASE_12",
+        "text_excerpt": "CDL170 Wet Lamb Recipe for Dogs 羊肉配方 170g $340 (@28.3) $485 $44 (ZIWI wet dog-can pricelist; wholesale printed per case of 12 cans only)"
+      },
+      "printed_columns": [
+        "產品內容",
+        "產品編號",
+        "重量",
+        "批發價(HKD) 每箱(12罐)",
+        "建議零售價(HKD) 每箱(12罐)",
+        "建議零售價(HKD) 每罐"
+      ],
+      "raw_row": {
+        "產品內容": "Wet Lamb Recipe for Dogs 羊肉配方",
+        "產品編號": "CDL170",
+        "重量": "170g",
+        "批發價(HKD) 每箱(12罐)": "$340\n(@28.3)",
+        "建議零售價(HKD) 每箱(12罐)": "$485",
+        "建議零售價(HKD) 每罐": "$44"
+      },
+      "runtime_input": {
+        "supplier_sku": "CDL170",
+        "description": "Wet Lamb Recipe for Dogs\n羊肉配方",
+        "pack_size": "170g",
+        "case_wholesale_price": "$340\n(@28.3)",
+        "rrp": "$44"
+      },
+      "expected_semantics": {
+        "price_basis": "CASE",
+        "currency": "HKD",
+        "reason": "Only a case-level wholesale figure ($340 for a case of 12 cans) is printed; the '(@28.3)' beside it is the derived per-can average (340/12) stripped as annotation, and the preferred RRP is the more granular per-can figure ($44)."
+      },
+      "expected_runtime_item": {
+        "cost_price": "$340\n(@28.3)",
+        "rrp": "$44",
+        "weight_grams": 170.0
+      }
+    },
+    {
+      "example_id": "kangaroo-pn-vet-clinic-bi-nxs",
+      "source": {
+        "sample_reference": "external-sample:KPN_Kangaroo-updated.pdf",
+        "page_number": 1,
+        "supplier_identity_marker": "Kangaroo half of the combined document (pages print 港澳總代理 袋鼠寵物營養有限公司 Kangaroo Pet Nutrition Ltd.)",
+        "table_layout": "VET_CLINIC_OFFER (captured copy: tests/fixtures/catalogue_pipeline/golden/kangaroo_vet_clinic/page_1.json)",
+        "text_excerpt": "BI-NXS NexGard SPECTRA NexGard Spectra Chewables For Dogs XS (2-3.5kg) 1x3's 260 10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+      },
+      "printed_columns": [
+        "產品圖片 Product Image",
+        "產品編號 Product Code",
+        "產品內容 Product Description",
+        "包裝 Packing",
+        "批發價 W/S Price (HKD)",
+        "診所優惠 Clinic Offer"
+      ],
+      "raw_row": {
+        "產品圖片 Product Image": null,
+        "產品編號 Product Code": "BI-NXS",
+        "產品內容 Product Description": "NexGard SPECTRA NexGard Spectra Chewables For Dogs XS (2-3.5kg)",
+        "包裝 Packing": "1x3's",
+        "批發價 W/S Price (HKD)": "260",
+        "診所優惠 Clinic Offer": "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+      },
+      "runtime_input": {
+        "supplier_sku": "BI-NXS",
+        "description": "NexGard SPECTRA NexGard Spectra Chewables For Dogs XS (2-3.5kg)",
+        "pack_size": "1x3's",
+        "vet_wholesale_price": "260",
+        "clinic_offer": "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
+      },
+      "expected_semantics": {
+        "price_basis": "PACK",
+        "currency": "HKD",
+        "reason": "\"1x3's\" packing with one bare amount per row is per-pack pricing; 260 matches the golden sheet's per-PACK cost for BI-NXS."
+      },
+      "expected_runtime_item": {
+        "cost_price": "260",
+        "clinic_offer": "10+2 OR 10+3 (單次購買50或以上) (50 or more per order)"
       }
     }
   ],
