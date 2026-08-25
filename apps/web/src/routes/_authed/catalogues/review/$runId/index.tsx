@@ -30,6 +30,8 @@ import {
 
 export const Route = createFileRoute('/_authed/catalogues/review/$runId/')({ component: RunDeskPage })
 
+const runFor = (item: SummaryItem, anchor: string) => item.ingestion_run_id ?? anchor
+
 type LaneId = 'pick' | 'new' | 'check' | 'clean'
 const LANE_LABEL: Record<LaneId, string> = {
   pick: 'needs a pick', new: 'new to us', check: 'check by hand', clean: 'clean',
@@ -569,7 +571,7 @@ function RunDeskPage() {
   async function stageOne(item: SummaryItem) {
     setRowBusy(item.mastering_candidate_id)
     try {
-      await approveCandidate(runId, item.mastering_candidate_id, 'Matches the evidence — staged from the desk')
+      await approveCandidate(runFor(item, runId), item.mastering_candidate_id, 'Matches the evidence — staged from the desk')
       queryClient.setQueryData(['review-summary', runId], (old: any) => old && ({
         ...old,
         items: old.items.map((i: SummaryItem) =>
@@ -593,7 +595,7 @@ function RunDeskPage() {
     setSweepProgress(`0 / ${sweepable.length}`)
     const { failures } = await fanOut(
       sweepable,
-      item => approveCandidate(runId, item.mastering_candidate_id, 'Clean sweep after sampling gate'),
+      item => approveCandidate(runFor(item, runId), item.mastering_candidate_id, 'Clean sweep after sampling gate'),
       (done, totalN) => setSweepProgress(`${done} / ${totalN}`),
     )
     setSweepProgress(null)
@@ -1290,7 +1292,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
     })
     if (!reason?.trim()) return
     try {
-      await unstageCandidate(runId, item.mastering_candidate_id, reason.trim())
+      await unstageCandidate(runFor(item, runId), item.mastering_candidate_id, reason.trim())
       onPublished()
       toast.success(`${label} removed — it will not publish`)
     } catch (error) {
@@ -1310,8 +1312,8 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
     const result = await fanOut(
       staged,
       async item => {
-        await applyCandidate(runId, item.mastering_candidate_id)
-        await publishCandidate(runId, item.mastering_candidate_id, version)
+        await applyCandidate(runFor(item, runId), item.mastering_candidate_id)
+        await publishCandidate(runFor(item, runId), item.mastering_candidate_id, version)
       },
       (done, total) => setProgress(`${done} / ${total}`),
     )
@@ -1473,15 +1475,15 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
   const nextPending = queue.find((i, index) => index > position && !isDecided(i)) ?? queue.find(i => !isDecided(i) && i !== current)
 
   const detail = useQuery({
-    queryKey: ['review-detail', runId, current?.mastering_candidate_id],
-    queryFn: () => fetchDetail(runId, current!.mastering_candidate_id),
+    queryKey: ['review-detail', current ? runFor(current, runId) : runId, current?.mastering_candidate_id],
+    queryFn: () => fetchDetail(runFor(current!, runId), current!.mastering_candidate_id),
     enabled: !!current,
   })
   useEffect(() => {
     if (nextPending) {
       queryClient.prefetchQuery({
-        queryKey: ['review-detail', runId, nextPending.mastering_candidate_id],
-        queryFn: () => fetchDetail(runId, nextPending.mastering_candidate_id),
+        queryKey: ['review-detail', runFor(nextPending, runId), nextPending.mastering_candidate_id],
+        queryFn: () => fetchDetail(runFor(nextPending, runId), nextPending.mastering_candidate_id),
       })
     }
   }, [runId, nextPending?.mastering_candidate_id, queryClient])
@@ -1532,7 +1534,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
   async function decide(statusValue: SummaryItem['review_status']) {
     if (!current) return
     try {
-      await decideCandidate(runId, current.mastering_candidate_id, statusValue, reason)
+      await decideCandidate(runFor(current, runId), current.mastering_candidate_id, statusValue, reason)
       queryClient.setQueryData(['review-summary', runId], (old: any) => old && ({
         ...old,
         items: old.items.map((i: SummaryItem) =>
@@ -1630,7 +1632,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
               Supplier said — verbatim{evidence?.page ? ` · page ${evidence.page}` : ''}
               {sourceFile && <> · <button className="srcfile" style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}
                 title={`Open ${sourceFile}${evidence?.page ? `, page ${evidence.page}` : ''}`}
-                onClick={() => openSourceFile(runId, sourceFile).catch(e => toast.error(String(e?.message ?? e)))}>
+                onClick={() => openSourceFile(runFor(current, runId), sourceFile).catch(e => toast.error(String(e?.message ?? e)))}>
                 {sourceFile}
               </button></>}
             </div>
@@ -1680,7 +1682,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
               reviewer is doing one thing at a time */}
           {drafting ? (
             <CreateDraftPanel
-              runId={runId}
+              runId={runFor(current, runId)}
               item={current}
               onCancel={() => setDrafting(false)}
               onCreated={async revision => {
@@ -1694,7 +1696,7 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
             />
           ) : fixing && detail.data ? (
             <FixDetailsPanel
-              runId={runId}
+              runId={runFor(current, runId)}
               item={current}
               candidate={detail.data.candidate}
               onCancel={() => setFixing(false)}
@@ -1708,14 +1710,14 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
             />
           ) : fixingEvidence && evidence ? (
             <FixEvidencePanel
-              runId={runId}
+              runId={runFor(current, runId)}
               evidence={evidence}
               onCancel={() => setFixingEvidence(false)}
               onSaved={async () => {
                 setFixingEvidence(false)
                 // The candidate is untouched — only the verbatim card changes,
                 // so refetch the detail and stay on this row.
-                await queryClient.invalidateQueries({ queryKey: ['review-detail', runId, current.mastering_candidate_id] })
+                await queryClient.invalidateQueries({ queryKey: ['review-detail', runFor(current, runId), current.mastering_candidate_id] })
               }}
             />
           ) : (
@@ -1862,7 +1864,7 @@ function ClusterBlock({ runId, anchor, rows }: { runId: string; anchor: SummaryI
     const { failures } = await fanOut(
       selected,
       row => correctVariantMatch(
-        runId, row.mastering_candidate_id, 'Family-pattern correction (reviewer-confirmed list)',
+        runFor(row, runId), row.mastering_candidate_id, 'Family-pattern correction (reviewer-confirmed list)',
         { sku_code: proposals![row.mastering_candidate_id]!.sku_code, name: proposals![row.mastering_candidate_id]!.name },
         row.name,
       ),

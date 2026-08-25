@@ -16,6 +16,7 @@ import database
 import models
 from permissions import has_capability, require_capability
 from services import audit_log
+from services import catalogue_conformance as conformance
 from services import catalogue_dead_letters as dead_letters
 from services import catalogue_evidence_corrections as evidence_corrections
 from services import catalogue_pipeline_persistence as persistence
@@ -24,6 +25,7 @@ from services import catalogue_review_summary as review_summary
 from services import variant_similarity
 from services import catalogue_golden_export
 from orchestration import catalogue_reparse
+from orchestration.catalogue_contract_resolution import resolve_recorded_supplier_contract
 from orchestration.catalogue_source_loader import load_and_verify_source_asset
 from orchestration.catalogue_types import RunNotFound, SourceVerificationError
 from schemas.catalogue_pipeline.enums import IssueResolutionStatus, ReviewStatus
@@ -86,6 +88,8 @@ class CatalogueIngestionStatusResponse(BaseModel):
     # items_extracted counts raw observations, which include page-level text
     # lines (banners, effective dates) — extraction accounting, not products.
     product_rows: int | None = None
+    # Live mastering candidates on this run — what its desk has to review.
+    review_candidates: int | None = None
     metrics: dict[str, Any] | None = None
     error_summary: dict[str, Any] | str | None = None
     retry_of: str | None = None
@@ -283,8 +287,60 @@ def get_catalogue_ingestions_run_ids(
 ):
     service = CatalogueSubmissionService(db)
     runs = service.list()
-    counts = _product_row_counts(db, [str(run.ingestion_run_id) for run in runs])
-    return [_status_response(run, product_rows=counts.get(str(run.ingestion_run_id))) for run in runs]
+    run_uuids = [str(run.ingestion_run_id) for run in runs]
+    counts = _product_row_counts(db, run_uuids)
+    candidates = _candidate_counts(db, run_uuids)
+    return [
+        _status_response(
+            run,
+            product_rows=counts.get(str(run.ingestion_run_id)),
+            review_candidates=candidates.get(str(run.ingestion_run_id), 0),
+        )
+        for run in runs
+    ]
+
+
+@router.get("/ingestions/held-overview")
+def get_held_overview(
+    db: Session = Depends(database.get_db),
+    _user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Held rows across suppliers and documents — the operated-system view.
+
+    One entry per supplier, one row per CURRENT document reading (a re-upload
+    replaces its predecessor; the counts are the FOLLOWED queues, so rescued
+    rows are not double-reported as stuck). Answers "what is held, how long,
+    and is it getting worse?" without opening runs one by one — the flag rule
+    is stated, never a black box.
+    """
+    return {
+        "suppliers": [
+            {
+                "supplier_id": summary.supplier_id,
+                "supplier_name": summary.supplier_name,
+                "held_total": summary.held_total,
+                "oldest_age_days": summary.oldest_age_days,
+                "baseline_share": summary.baseline_share,
+                "latest_share": summary.latest_share,
+                "worse_than_usual": summary.worse_than_usual,
+                "documents": [
+                    {
+                        "ingestion_run_id": doc.ingestion_run_uuid,
+                        "filename": doc.filename,
+                        "submitted_at": doc.submitted_at,
+                        "rows": doc.rows,
+                        "held": doc.held,
+                        "held_share": doc.held_share,
+                        "oldest_age_days": doc.oldest_age_days,
+                        "top_issue_code": doc.top_issue_code,
+                        "top_issue_rows": doc.top_issue_rows,
+                    }
+                    for doc in summary.documents
+                ],
+            }
+            for summary in dead_letters.held_overview(db)
+        ],
+    }
 
 
 @router.get(
@@ -734,11 +790,25 @@ def get_catalogue_evidence(
         cells = _json.loads(row.raw_cells_json or "[]")
     except ValueError:
         cells = []
+    # Columns the contract REQUIRES that this observation has no cell for —
+    # what the fix-the-evidence panel offers for ADDING. Empty when the run
+    # has no resolvable contract: then nothing justifies inventing a column.
+    missing_required: list[dict[str, str]] = []
+    if cells:
+        try:
+            runtime_contract = resolve_recorded_supplier_contract(db, ingestion_run_id=run_uuid)
+            missing_required = [
+                {"field_key": col.field_key, "column_name": col.column_name}
+                for col in conformance.addable_required_columns(runtime_contract, cells)
+            ]
+        except Exception:
+            missing_required = []
     return {
         "raw_observation_id": row.raw_observation_uuid,
         "page": row.page_number,
         "raw_text": row.raw_text,
         "cells": [{"column_name": cell.get("column_name"), "value": cell.get("raw_value")} for cell in cells],
+        "missing_required_columns": missing_required,
         "page_brand_text": metadata.get("page_brand_text"),
         "supplier_identity_text": metadata.get("supplier_identity_text"),
         "page_promotion_text": metadata.get("page_promotion_text"),
@@ -770,7 +840,7 @@ def get_dead_letters(
     ALONE. A row held by two codes is freed by neither on its own, so the
     larger `rows_blocked` overstates what a single fix buys.
     """
-    _load_run_or_404(db, run_uuid)
+    run_row = _load_run_or_404(db, run_uuid)
     run = str(run_uuid)
     entries = dead_letters.dead_letters(db, run_uuid=run, issue_code=issue_code, stage=stage)
     reconciliation = dead_letters.reconcile(db, run)
@@ -795,6 +865,37 @@ def get_dead_letters(
                 "rows_cleared_if_fixed": tally.rows_cleared_if_fixed,
             }
             for tally in dead_letters.tallies_by_issue_code(db, run_uuid=run)
+        ],
+        # Set when THIS run is itself a retrigger child: the run whose queue
+        # its outcome folds into. The desk points there instead of offering
+        # Re-run buttons the service would refuse.
+        "retrigger_of": catalogue_reparse.retrigger_source(run_row),
+        # Completed RE-READS of this run's evidence — a sibling-format
+        # re-parse, or a plain re-parse after the contract learned something.
+        # The queue above already followed their successes; this is the
+        # pointer that says where the cleared rows went.
+        "rereads": [
+            {
+                "ingestion_run_id": read.run_uuid,
+                "contract_id": read.contract_id,
+                "format_name": read.format_name,
+                "status": read.status,
+                "candidates": read.candidates,
+            }
+            for read in dead_letters.rereads(db, run)
+        ],
+        # Every retrigger fired at this queue, with status. A queued or
+        # running attempt is why the queue has not moved YET — the desk shows
+        # it and polls instead of letting a re-run look like a no-op.
+        "retriggers": [
+            {
+                "ingestion_run_id": attempt.run_uuid,
+                "status": attempt.status,
+                "attempt": attempt.attempt,
+                "observations": attempt.observations,
+                "created_at": attempt.created_at,
+            }
+            for attempt in dead_letters.retrigger_attempts(db, run)
         ],
         "count": len(entries),
         "dead_letters": [
@@ -914,6 +1015,14 @@ def _extraction_attempt_summary(
 def get_intermediate_layer(
     run_uuid: UUID,
     view: str | None = Query(None, description="'summary' returns the compact reviewer view instead of full contracts."),
+    scope: str | None = Query(
+        None,
+        description=(
+            "summary only: 'document' folds the whole supplier family into ONE desk — "
+            "every printed row once, as its newest live candidate, tagged with the run "
+            "that owns it. Default is this run alone."
+        ),
+    ),
     db: Session = Depends(database.get_db),
     _user: models.User = Depends(require_capability("catalogue_onboard")),
 ) -> dict[str, Any]:
@@ -926,7 +1035,11 @@ def get_intermediate_layer(
     paint. Full contracts remain the default and load per candidate on open.
     """
     _load_run_or_404(db, run_uuid)
+    if scope not in (None, "run", "document"):
+        raise HTTPException(status_code=422, detail=_detail("INVALID_SCOPE", f"Unknown scope {scope!r} — use 'run' or 'document'"))
     if view == "summary":
+        if scope == "document":
+            return review_summary.document_review_summary(db, run_uuid)
         return review_summary.run_review_summary(db, run_uuid)
     run_filter = {"ingestion_run_uuid": str(run_uuid)}
     normalized_rows = [
@@ -972,9 +1085,17 @@ def search_catalogue_product_variants(
 
 
 class ReparseRequest(BaseModel):
-    """Where to pick the flow back up. Only conformance today — see ReparseStage."""
+    """Where to pick the flow back up. Only conformance today — see ReparseStage.
+
+    ``contract_id`` re-reads the same stored evidence under a SIBLING supported
+    format of the run's supplier — the escape hatch for mixed-layout documents,
+    whose other-layout pages dead-letter under the recorded format no matter
+    how often they are re-driven.
+    """
 
     from_stage: str = "conformance"
+    contract_id: str | None = None
+    contract_version: str | None = None
 
 
 @router.post("/ingestions/{run_uuid}/reparse", response_model=CatalogueSubmissionResponse, status_code=202)
@@ -1002,6 +1123,8 @@ def reparse_catalogue_ingestion(
             run_uuid,
             from_stage=stage,
             submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+            contract_id=body.contract_id if body else None,
+            contract_version=body.contract_version if body else None,
         )
     except Exception as exc:
         raise _http_error(exc) from exc
@@ -1013,7 +1136,12 @@ def reparse_catalogue_ingestion(
             entity_type="ingestion_run",
             entity_id=str(result.ingestion_run_id),
             entity_label=result.contract_id,
-            details={"reparse_of": str(run_uuid), "from_stage": stage, "supplier_id": result.supplier_id},
+            details={
+                "reparse_of": str(run_uuid),
+                "from_stage": stage,
+                "supplier_id": result.supplier_id,
+                "contract_override": body.contract_id if body else None,
+            },
             request=request,
             commit=True,
         )
@@ -1404,10 +1532,37 @@ def _product_row_counts(db: Session, run_uuids: list[str]) -> dict[str, int]:
     return {run_uuid: count for run_uuid, count in rows}
 
 
+def _candidate_counts(db: Session, run_uuids: list[str]) -> dict[str, int]:
+    """Live mastering candidates per run — what a desk actually has to review.
+
+    Exists so the runs list can hand the "Open desk" slot to the newest run
+    with something reviewable: a retrigger child whose selection all failed
+    again has rows but ZERO candidates, and letting it shadow the run holding
+    hundreds of pending decisions made every desk look empty."""
+    if not run_uuids:
+        return {}
+    rows = (
+        db.query(
+            models.CatalogueMasteringCandidate.ingestion_run_uuid,
+            func.count(models.CatalogueMasteringCandidate.id),
+        )
+        .filter(
+            models.CatalogueMasteringCandidate.ingestion_run_uuid.in_(run_uuids),
+            models.CatalogueMasteringCandidate.superseded_by_uuid.is_(None),
+        )
+        .group_by(models.CatalogueMasteringCandidate.ingestion_run_uuid)
+        .all()
+    )
+    return {run_uuid: count for run_uuid, count in rows}
+
+
 def _status_response(
-    result: CatalogueIngestionStatus, *, product_rows: int | None = None
+    result: CatalogueIngestionStatus, *, product_rows: int | None = None,
+    review_candidates: int | None = None,
 ) -> CatalogueIngestionStatusResponse:
-    return CatalogueIngestionStatusResponse(**result.__dict__, product_rows=product_rows)
+    return CatalogueIngestionStatusResponse(
+        **result.__dict__, product_rows=product_rows, review_candidates=review_candidates
+    )
 
 
 def _http_error(exc: Exception) -> HTTPException:

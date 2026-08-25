@@ -1,6 +1,9 @@
-// Catalogue review — a queue, not a log. Runs grouped by supplier contract,
-// latest first; the newest run per contract shows its live review progress,
-// older runs collapse to their receipts, failures explain themselves.
+// Catalogue review — a queue, not a log. Runs grouped by SUPPLIER, latest
+// first; the newest run per supplier shows its live review progress, older
+// runs collapse to their receipts, failures explain themselves. One group per
+// supplier, not per contract: re-reads under a sibling or merged format are
+// the same catalogue's story, and retired layout ids must not pin dead
+// buckets in the list forever.
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
@@ -32,7 +35,7 @@ function ReviewRunsPage() {
     const sorted = [...(runs.data ?? [])].sort((a, b) => (b.submitted_at ?? '').localeCompare(a.submitted_at ?? ''))
     const map = new Map<string, RunRow[]>()
     for (const run of sorted) {
-      const key = run.contract_id ?? 'unknown contract'
+      const key = run.supplier_id != null ? `supplier:${run.supplier_id}` : (run.contract_id ?? 'unknown supplier')
       map.set(key, [...(map.get(key) ?? []), run])
     }
     // groups whose latest run is newest come first
@@ -42,7 +45,12 @@ function ReviewRunsPage() {
   return (
     <div className="rdesk" style={{ padding: '18px 24px 40px', maxWidth: 980, margin: '0 auto' }}>
       <style>{DESK_CSS}</style>
-      <h1>Catalogue review</h1>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <h1 style={{ margin: 0 }}>Catalogue review</h1>
+        <Link className="btn sm" style={{ marginLeft: 'auto' }} to="/catalogues/review/held">
+          Held across suppliers →
+        </Link>
+      </div>
       <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4 }}>
         Each run opens its desk — decide, stage, publish, receipt, all in one place.
       </div>
@@ -50,8 +58,8 @@ function ReviewRunsPage() {
       {runs.isLoading && <div style={{ marginTop: 16 }}><Spinner /></div>}
       {runs.isError && <div style={{ marginTop: 16, color: 'var(--red)', fontSize: 13 }}>{String((runs.error as Error)?.message ?? runs.error)}</div>}
 
-      {groups.map(([contract, rows]) => (
-        <ContractGroup key={contract} contract={contract} rows={rows} />
+      {groups.map(([key, rows]) => (
+        <SupplierGroup key={key} label={groupLabel(rows)} rows={rows} />
       ))}
       {runs.data && groups.length === 0 && (
         <div className="panel" style={{ marginTop: 14, padding: 22, textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
@@ -62,16 +70,27 @@ function ReviewRunsPage() {
   )
 }
 
-function ContractGroup({ contract, rows }: { contract: string; rows: RunRow[] }) {
+/** The supplier's family name, read off its contracts: "kangaroo_pet_nutrition",
+ * never "kangaroo_pet_nutrition.unit_price_list.v1". */
+function groupLabel(rows: RunRow[]): string {
+  const contract = rows.find(r => r.contract_id)?.contract_id
+  return contract ? contract.split('.')[0] : 'unknown supplier'
+}
+
+function SupplierGroup({ label, rows }: { label: string; rows: RunRow[] }) {
   const usable = rows.filter(r => !FAILED.has(r.status))
   const failures = rows.filter(r => FAILED.has(r.status))
   const [showFailures, setShowFailures] = useState(false)
-  const newest = usable[0]
+  // The desk slot goes to the newest run with something TO REVIEW — a
+  // re-drive whose rows all failed again has rows but zero candidates, and
+  // letting it shadow the run holding the pending decisions made every desk
+  // look empty. Falls back to the newest run when nothing has candidates.
+  const primary = usable.find(r => (r.review_candidates ?? 0) > 0) ?? usable[0]
 
   return (
     <div className="panel" style={{ marginTop: 14 }}>
       <div className="laneh">
-        <span className="ln">{contract}</span>
+        <span className="ln">{label}</span>
         <span className="lc">{rows.length} run{rows.length === 1 ? '' : 's'}</span>
         {failures.length > 0 && (
           <span className="lnk" style={{ marginLeft: 'auto', fontSize: 11 }} onClick={() => setShowFailures(open => !open)}>
@@ -80,20 +99,31 @@ function ContractGroup({ contract, rows }: { contract: string; rows: RunRow[] })
         )}
       </div>
 
-      {usable.map((run, index) => (
-        <div key={run.ingestion_run_id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '9px 14px', borderTop: index ? '1px solid var(--line2)' : 'none', opacity: index === 0 ? 1 : 0.65, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11.5, color: 'var(--faint)', width: 110, flex: 'none' }}>{fmtWhen(run.submitted_at)}</span>
-          {/* product_rows, never items_extracted: BOs count products, and the
-              raw figure includes page banners and date lines. */}
-          <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{(run.product_rows ?? run.items_extracted) != null ? `${run.product_rows ?? run.items_extracted} rows` : WORKING.has(run.status) ? 'processing…' : '—'}</span>
-          {index === 0 && !WORKING.has(run.status) ? <RunProgress runId={run.ingestion_run_id} /> : <span style={{ flex: 1 }} />}
-          {index === 0 ? (
-            <Link className="btn pri sm" to="/catalogues/review/$runId" params={{ runId: run.ingestion_run_id }}>Open desk →</Link>
-          ) : (
-            <Link className="lnk" style={{ fontSize: 11.5 }} to="/catalogues/review/$runId/commit" params={{ runId: run.ingestion_run_id }}>receipt →</Link>
-          )}
-        </div>
-      ))}
+      {usable.map((run, index) => {
+        const isPrimary = run.ingestion_run_id === primary?.ingestion_run_id
+        const candidates = run.review_candidates ?? 0
+        return (
+          <div key={run.ingestion_run_id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '9px 14px', borderTop: index ? '1px solid var(--line2)' : 'none', opacity: isPrimary ? 1 : 0.65, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--faint)', width: 110, flex: 'none' }}>{fmtWhen(run.submitted_at)}</span>
+            {/* product_rows, never items_extracted: BOs count products, and the
+                raw figure includes page banners and date lines. */}
+            <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{(run.product_rows ?? run.items_extracted) != null ? `${run.product_rows ?? run.items_extracted} rows` : WORKING.has(run.status) ? 'processing…' : '—'}</span>
+            {isPrimary && !WORKING.has(run.status) ? <RunProgress runId={run.ingestion_run_id} /> : <span style={{ flex: 1 }} />}
+            {isPrimary ? (
+              // The ONE desk: document-scoped, so it already holds every
+              // pending SKU of the family — including these older runs'.
+              <Link className="btn pri sm" to="/catalogues/review/$runId" params={{ runId: run.ingestion_run_id }}>Open desk →</Link>
+            ) : (
+              // Older runs are history: a summary line and the receipt, never
+              // a second desk (user directive 2026-08-25).
+              <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>
+                {candidates > 0 && <>{candidates} of its rows in the desk above · </>}
+                <Link className="lnk" to="/catalogues/review/$runId/commit" params={{ runId: run.ingestion_run_id }}>receipt →</Link>
+              </span>
+            )}
+          </div>
+        )
+      })}
       {usable.length === 0 && (
         <div style={{ padding: '12px 14px', fontSize: 12, color: 'var(--faint)' }}>Every submission of this catalogue failed so far.</div>
       )}

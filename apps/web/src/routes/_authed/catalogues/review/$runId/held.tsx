@@ -17,12 +17,31 @@ import {
 
 export const Route = createFileRoute('/_authed/catalogues/review/$runId/held')({ component: HeldRowsPage })
 
+const IN_FLIGHT = new Set(['queued', 'running'])
+
 function HeldRowsPage() {
   const { runId } = Route.useParams()
   const queryClient = useQueryClient()
-  const held = useQuery({ queryKey: ['dead-letters', runId], queryFn: () => fetchDeadLetters(runId) })
+  const held = useQuery({
+    queryKey: ['dead-letters', runId],
+    queryFn: () => fetchDeadLetters(runId),
+    // A fired re-run only moves the queue when its child run COMPLETES —
+    // poll while one is in flight so cleared rows visibly leave, instead of
+    // the re-run looking like it did nothing.
+    refetchInterval: query =>
+      (query.state.data?.retriggers ?? []).some(r => IN_FLIGHT.has(r.status)) ? 4000 : false,
+  })
   const status = useQuery({ queryKey: ['run-status', runId], queryFn: () => fetchRunStatus(runId) })
   const [rerunning, setRerunning] = useState(false)
+  const retriggers = held.data?.retriggers ?? []
+  const inFlight = retriggers.find(r => IN_FLIGHT.has(r.status)) ?? null
+  const latest = retriggers.length ? retriggers[retriggers.length - 1] : null
+  const latestFailed = !inFlight && latest?.status === 'failed' ? latest : null
+  // This run IS a fresh attempt for another run's queue — re-running it is
+  // refused by design, so the desk points at the owning run instead of
+  // offering buttons that always error.
+  const retriggerOf = held.data?.retrigger_of ?? null
+  const canRerun = !retriggerOf
 
   // Grouped by the row's primary hold reason; groups ordered by what one fix
   // would actually clear, so the most valuable fix reads first.
@@ -41,9 +60,10 @@ function HeldRowsPage() {
     setRerunning(true)
     try {
       const result = await retriggerHeldRows(runId, scope)
-      toast.success(`Re-running ${result.rows_selected} ${result.rows_selected === 1 ? 'row' : 'rows'} — ${label}. The fresh attempt appears in the runs list shortly.`)
-      // The queue follows re-runs: rows the fresh attempt clears leave this
-      // page on the next fetch, and survivors come back carrying one more try.
+      toast.success(`Re-running ${result.rows_selected} ${result.rows_selected === 1 ? 'row' : 'rows'} — ${label}. Watch this page: rows leave the list when the attempt finishes.`)
+      // The queue follows re-runs only once the child run COMPLETES. The
+      // refetch below picks up the queued attempt, and the query then polls
+      // until it finishes — cleared rows leave, survivors count one more try.
       await queryClient.invalidateQueries({ queryKey: ['dead-letters', runId] })
       await queryClient.invalidateQueries({ queryKey: ['review-runs'] })
     } catch (e: any) {
@@ -65,19 +85,57 @@ function HeldRowsPage() {
         {status.data?.source_filename && (
           <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{status.data.source_filename}</span>
         )}
-        {count > 0 && (
-          <button className="btn pri sm" style={{ marginLeft: 'auto' }} disabled={rerunning}
+        {count > 0 && canRerun && (
+          <button className="btn pri sm" style={{ marginLeft: 'auto' }} disabled={rerunning || !!inFlight}
             onClick={() => rerun({}, 'every held row gets a fresh attempt')}>
-            {rerunning ? 'Re-running…' : `Re-run all ${count} held rows`}
+            {inFlight ? 'Attempt in progress…' : rerunning ? 'Re-running…' : `Re-run all ${count} held rows`}
           </button>
         )}
       </div>
+
+      {(held.data?.rereads ?? []).filter(read => read.candidates > 0).map(read => (
+        <div key={read.ingestion_run_id} className="panel" style={{ padding: '10px 14px', margin: '10px 0 0', fontSize: 12.5, color: 'var(--accent-ink)', background: 'var(--accent-soft)' }}>
+          This run&apos;s pages were re-read as <b>{read.format_name}</b> — {read.candidates}{' '}
+          {read.candidates === 1 ? 'row' : 'rows'} became reviewable there, and any of them that were held
+          here have left this list.{' '}
+          <Link className="lnk" to="/catalogues/review/$runId" params={{ runId: read.ingestion_run_id }}>
+            Review them on that run →
+          </Link>
+        </div>
+      ))}
+
+      {retriggerOf && (
+        <div className="panel" style={{ padding: '10px 14px', margin: '10px 0 0', fontSize: 12.5, color: 'var(--accent-ink)', background: 'var(--accent-soft)' }}>
+          This run is itself a fresh attempt for another run&apos;s held rows — what you see here is this
+          attempt&apos;s own history. The live queue, evidence fixing, and Re-run all live on{' '}
+          <Link className="lnk" to="/catalogues/review/$runId/held" params={{ runId: retriggerOf }}>
+            the original run&apos;s held page →
+          </Link>
+        </div>
+      )}
       <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '6px 0 16px', maxWidth: 720 }}>
         These rows are printed in the catalogue but could not be read into items you can review —
         usually because a price or layout needs a person&apos;s eyes. Fix the evidence where the scan
         misread the page, then re-run: the fixed rows get a fresh attempt from the stored pages,
         without re-scanning or extra cost.
       </p>
+
+      {inFlight && (
+        <div className="panel" style={{ padding: '10px 14px', marginBottom: 14, fontSize: 12.5, color: 'var(--accent-ink)', background: 'var(--accent-soft)', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Spinner />
+          <span>
+            A fresh attempt is running — attempt {inFlight.attempt}, {inFlight.observations}{' '}
+            {inFlight.observations === 1 ? 'row' : 'rows'} re-read from stored evidence. This page follows it:
+            cleared rows leave the list when it finishes, survivors come back counting one more try.
+          </span>
+        </div>
+      )}
+      {latestFailed && (
+        <div className="panel" style={{ padding: '10px 14px', marginBottom: 14, fontSize: 12.5, color: '#C0362C' }}>
+          The last attempt (attempt {latestFailed.attempt}) failed before processing its rows — the held
+          rows are unchanged. Re-run to try again; if it keeps failing, the run itself needs an engineer&apos;s eyes.
+        </div>
+      )}
 
       {held.isLoading && <div style={{ padding: 24 }}><Spinner /></div>}
       {held.isError && <div style={{ padding: 24, color: '#C0362C', fontSize: 13 }}>{String((held.error as Error)?.message)}</div>}
@@ -90,16 +148,16 @@ function HeldRowsPage() {
       {groups.map(([code, entries]) => (
         <HeldGroup key={code} runId={runId} code={code} entries={entries}
           clearedIfFixed={(held.data?.by_issue_code ?? []).find(t => t.issue_code === code)?.rows_cleared_if_fixed ?? null}
-          rerunning={rerunning}
+          rerunning={rerunning || !!inFlight} canRerun={canRerun}
           onRerun={() => rerun({ issue_code: code }, 'the rows this fix clears get a fresh attempt')} />
       ))}
     </div>
   )
 }
 
-function HeldGroup({ runId, code, entries, clearedIfFixed, rerunning, onRerun }: {
+function HeldGroup({ runId, code, entries, clearedIfFixed, rerunning, canRerun, onRerun }: {
   runId: string; code: string; entries: DeadLetterEntry[]
-  clearedIfFixed: number | null; rerunning: boolean; onRerun: () => void
+  clearedIfFixed: number | null; rerunning: boolean; canRerun: boolean; onRerun: () => void
 }) {
   // The guidance is written for the reviewer, so it leads; the code is the
   // pipeline's name for the condition and stays small for support handoffs.
@@ -116,9 +174,11 @@ function HeldGroup({ runId, code, entries, clearedIfFixed, rerunning, onRerun }:
           </span>
         )}
         <span className="mono" style={{ fontSize: 10, color: 'var(--faint)' }}>{code}</span>
-        <button className="btn sm" style={{ marginLeft: 'auto' }} disabled={rerunning} onClick={onRerun}>
-          Re-run these rows
-        </button>
+        {canRerun && (
+          <button className="btn sm" style={{ marginLeft: 'auto' }} disabled={rerunning} onClick={onRerun}>
+            Re-run these rows
+          </button>
+        )}
       </div>
       {guidance && (
         <div style={{ padding: '8px 14px', fontSize: 12, color: 'var(--accent-ink)', background: 'var(--accent-soft)', borderBottom: '1px solid var(--line2)' }}>

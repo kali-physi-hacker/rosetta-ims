@@ -4,7 +4,12 @@ import { correctEvidence } from '@/lib/review'
 
 export function FixEvidencePanel({ runId, evidence, onCancel, onSaved, savedHint }: {
   runId: string
-  evidence: { raw_observation_id: string; page?: number | null; cells: Array<{ column_name?: string | null; value?: any }> }
+  evidence: {
+    raw_observation_id: string
+    page?: number | null
+    cells: Array<{ column_name?: string | null; value?: any }>
+    missing_required_columns?: Array<{ field_key: string; column_name: string }>
+  }
   onCancel: () => void
   onSaved: () => void | Promise<void>
   /** What happens next, in the surface's own words — the desk re-parses the
@@ -14,8 +19,12 @@ export function FixEvidencePanel({ runId, evidence, onCancel, onSaved, savedHint
   // This panel edits what the machine READ, not what it made of it. Values
   // are keyed by the observation's own column names and REPLACE the misread
   // cells; the originals stay stamped on the observation's audit trail.
-  // Nothing re-runs on save — re-driving is its own visible action.
+  // Columns the contract REQUIRES but the scan never read are offered too —
+  // those ADD a cell, because there is nothing to replace. Nothing re-runs
+  // on save — re-driving is its own visible action.
   const named = (evidence.cells ?? []).filter(c => c.column_name) as Array<{ column_name: string; value: any }>
+  const missing = (evidence.missing_required_columns ?? [])
+    .filter(col => !named.some(cell => cell.column_name === col.column_name))
   const initial = useRef<Record<string, string>>(
     Object.fromEntries(named.map(c => [c.column_name, c.value == null ? '' : String(c.value)]))).current
   const [values, setValues] = useState<Record<string, string>>({ ...initial })
@@ -50,6 +59,13 @@ export function FixEvidencePanel({ runId, evidence, onCancel, onSaved, savedHint
           <label key={cell.column_name} className="cdf"><span>{cell.column_name}</span>
             <input className="fin mono" value={values[cell.column_name] ?? ''}
               onChange={e => setValues(v => ({ ...v, [cell.column_name]: e.target.value }))} /></label>
+        ))}
+        {missing.map(col => (
+          <label key={col.column_name} className="cdf">
+            <span>{col.column_name} — <b>required</b>, the scan read nothing here</span>
+            <input className="fin mono" value={values[col.column_name] ?? ''}
+              placeholder="type what the page prints"
+              onChange={e => setValues(v => ({ ...v, [col.column_name]: e.target.value }))} /></label>
         ))}
         <label className="cdf"><span>What does the page actually say? — required, this is the audit trail</span>
           <input className="fin" value={why} onChange={e => setWhy(e.target.value)}

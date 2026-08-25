@@ -636,3 +636,75 @@ def _delta_pct(current: float | None, incoming: float | None) -> float | None:
     if current is None or incoming is None or current == 0:
         return None
     return round((incoming - current) / current * 100, 1)
+
+
+def document_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
+    """ONE desk for the whole catalogue (user directive 2026-08-25): every
+    pending SKU across the anchor run's supplier family, folded to the newest
+    live reading of each printed row.
+
+    Reuses ``run_review_summary`` per completed run of the supplier (newest
+    submission first) and dedupes on ``source_object_key`` — the one name a
+    printed row keeps across runs — so a row read five times appears ONCE,
+    as its newest candidate, tagged with the run that owns it. A fruitless
+    re-drive contributes nothing; an older run's rescued rows are not lost.
+    Envelope fields (lanes, run_issues, dead_lettered) stay the ANCHOR run's:
+    banners describe the current contract state, and the held story is the
+    followed queue the desk already fetches separately.
+    """
+    from services import catalogue_dead_letters as dead_letters
+
+    anchor = db.query(models.IngestionRun).filter_by(run_uuid=str(run_uuid)).first()
+    if anchor is None or anchor.supplier_id is None:
+        return run_review_summary(db, run_uuid)
+
+    completed = ("completed", "completed_with_warnings")
+    family = (
+        db.query(models.IngestionRun)
+        .filter(
+            models.IngestionRun.supplier_id == anchor.supplier_id,
+            models.IngestionRun.status.in_(completed),
+        )
+        .all()
+    )
+    family.sort(key=lambda r: (str(r.created_at or ""), r.id), reverse=True)
+
+    envelope: dict[str, Any] | None = None
+    items: list[dict[str, Any]] = []
+    seen_keys: set[str] = set()
+    for run in family:
+        summary = run_review_summary(db, UUID(run.run_uuid))
+        if run.run_uuid == str(run_uuid):
+            envelope = summary
+        # Live candidates only: a corrected candidate and the revision that
+        # superseded it share a row key, and keeping both lets the dead copy
+        # win the fold by id order.
+        run_items = [item for item in (summary.get("items") or []) if not item.get("superseded_by")]
+        if not run_items:
+            continue
+        links = dead_letters.evidence_links(db, run.run_uuid)
+        keys = dead_letters.observation_keys(
+            db, run.run_uuid, (obs for obs_list in links.values() for obs in obs_list)
+        )
+        for item in run_items:
+            observations = links.get(item.get("catalogue_item_id")) or ()
+            key = next((keys[obs] for obs in observations if obs in keys), None)
+            key = key or f"item:{item.get('catalogue_item_id')}"
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            items.append({**item, "ingestion_run_id": run.run_uuid})
+
+    if envelope is None:
+        envelope = run_review_summary(db, run_uuid)
+
+    by_status: dict[str, int] = {}
+    for item in items:
+        status = item.get("review_status") or "PENDING_REVIEW"
+        by_status[status] = by_status.get(status, 0) + 1
+    return {
+        **envelope,
+        "scope": "document",
+        "items": items,
+        "counts": {"total": len(items), "by_review_status": by_status},
+    }

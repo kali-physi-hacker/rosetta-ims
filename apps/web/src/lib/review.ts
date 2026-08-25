@@ -27,6 +27,9 @@ export async function reviewApi<T = any>(path: string, init?: RequestInit): Prom
 export interface SummaryItem {
   mastering_candidate_id: string
   catalogue_item_id: string
+  /** The run this candidate belongs to — set on document-scoped summaries,
+   * where items fold across the family. Every action must use it. */
+  ingestion_run_id?: string
   created_at: string
   review_status: 'PENDING_REVIEW' | 'APPROVED' | 'APPROVED_WITH_OVERRIDE' | 'REJECTED' | 'NEEDS_CLARIFICATION'
   superseded_by: string | null
@@ -142,6 +145,11 @@ export interface CandidateEvidence {
   page_brand_text?: string | null
   supplier_identity_text?: string | null
   page_promotion_text?: string | null
+  // Columns the contract REQUIRES that this observation has no cell for —
+  // the fix panel offers these for ADDING a value (the scan read nothing
+  // there, so there is no cell to replace). Present on the evidence
+  // endpoint; candidate-detail evidence entries do not carry it.
+  missing_required_columns?: { field_key: string; column_name: string }[]
 }
 export interface CandidateDetail {
   candidate: Record<string, any>
@@ -149,7 +157,12 @@ export interface CandidateDetail {
   decisions: { review_decision_id: string; decision_type: string; review_status: string | null; actor_id: string; decided_at: string; reason: string | null }[]
 }
 
-export const fetchSummary = (runId: string) => reviewApi<RunSummary>(`/catalogues/ingestions/${runId}/intermediate?view=summary`)
+/** The desk is DOCUMENT-scoped (user directive 2026-08-25): one desk holds
+ * every pending SKU of the whole supplier family — each printed row once, as
+ * its newest live candidate, tagged with the run that owns it. Actions must
+ * route to `item.ingestion_run_id`, not the anchor run in the URL. */
+export const fetchSummary = (runId: string) =>
+  reviewApi<RunSummary>(`/catalogues/ingestions/${runId}/intermediate?view=summary&scope=document`)
 export const fetchDetail = (runId: string, candidateId: string) => reviewApi<CandidateDetail>(`/catalogues/ingestions/${runId}/mastering-candidates/${candidateId}`)
 export const searchVariants = (runId: string, q: string, limit = 8) =>
   reviewApi<{ results: VariantHit[] }>(`/catalogues/ingestions/${runId}/variant-search?q=${encodeURIComponent(q)}&limit=${limit}`)
@@ -347,15 +360,60 @@ export interface DeadLetterEntry {
   raw_observation_id?: string | null
   observation_ids?: string[]
 }
+/** One retrigger fired at this run's queue. `queued`/`running` means a fresh
+ * attempt is in flight — the queue will not move until it completes. */
+export interface RetriggerAttemptInfo {
+  ingestion_run_id: string
+  status: string
+  attempt: number
+  observations: number
+  created_at?: string | null
+}
 export interface DeadLettersResponse {
   ingestion_run_id: string
   lanes: Record<string, number>
   by_issue_code: { issue_code: string; rows_blocked: number; rows_cleared_if_fixed: number }[]
+  /** Set when THIS run is itself a retrigger child: the run whose queue its
+   * outcome folds into. Re-running here is refused — go there instead. */
+  retrigger_of?: string | null
+  /** Completed re-reads of this run's evidence — a sibling-format re-parse,
+   * or a plain re-parse after the contract learned something. The queue
+   * already followed their successes; these say where the cleared rows went. */
+  rereads?: { ingestion_run_id: string; contract_id: string | null; format_name: string; status: string; candidates: number }[]
+  retriggers?: RetriggerAttemptInfo[]
   count: number
   dead_letters: DeadLetterEntry[]
 }
 export const fetchDeadLetters = (runId: string) =>
   reviewApi<DeadLettersResponse>(`/catalogues/ingestions/${runId}/dead-letters`)
+
+/** One supplier's held picture across its CURRENT document readings. */
+export interface HeldOverviewDocument {
+  ingestion_run_id: string
+  filename: string | null
+  submitted_at: string | null
+  rows: number
+  held: number
+  held_share: number
+  oldest_age_days: number | null
+  top_issue_code: string | null
+  top_issue_rows: number
+}
+export interface HeldOverviewSupplier {
+  supplier_id: number
+  supplier_name: string | null
+  held_total: number
+  oldest_age_days: number | null
+  baseline_share: number | null
+  latest_share: number | null
+  worse_than_usual: boolean
+  documents: HeldOverviewDocument[]
+}
+/** Held rows across suppliers — "what is held, how long, is it getting worse?"
+ * Counts are the followed queues of each document's newest reading, so rescued
+ * rows and re-uploads are never double-reported. */
+export const fetchHeldOverview = () =>
+  reviewApi<{ suppliers: HeldOverviewSupplier[] }>('/catalogues/ingestions/held-overview')
 
 /** One observation's verbatim evidence — same shape the review room renders. */
 export const fetchObservationEvidence = (runId: string, observationId: string) =>
@@ -552,6 +610,9 @@ export interface RunStatus {
   /** Catalogue PRODUCT rows — what a business user means by "rows".
    * items_extracted counts raw observations incl. page text lines. */
   product_rows?: number | null
+  /** Live mastering candidates — what this run's desk has to review. A
+   * retrigger child whose rows all failed again has rows but zero of these. */
+  review_candidates?: number | null
   error_summary?: Record<string, any> | string | null
   retry_of?: string | null
   superseded_by_run?: string | null
