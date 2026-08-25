@@ -15,6 +15,13 @@ immediately AND every future re-drive reads it. When the twin cannot be
 resolved unambiguously, the whole correction refuses with the source run named
 rather than saving a fix a re-parse would silently resurrect over.
 
+Corrections REPLACE cells by name — with one deliberate opening: a column the
+contract REQUIRES that the scan never produced may be ADDED. Without it, a row
+dead-lettered as CONTRACT_REQUIRED_FIELD_MISSING is unfixable from the desk —
+the one value it needs has no cell to type it into. The allowed additions are
+computed from the run's recorded contract, never taken from the caller, and an
+added cell is stamped like any replacement (original recorded as absent).
+
 Nothing re-runs here. Fixing evidence and re-driving rows are separate
 decisions: re-parse (whole run) or retrigger (dead-lettered rows) pick the
 corrected cells up from the RAW layer.
@@ -30,7 +37,8 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 import models
-from orchestration import catalogue_reparse
+from orchestration import catalogue_contract_resolution, catalogue_reparse
+from services import catalogue_conformance
 
 
 class EvidenceCorrectionError(ValueError):
@@ -77,7 +85,8 @@ def correct_evidence(
     if row is None:
         raise EvidenceNotFound(f"Observation {raw_observation_uuid} is not part of run {run_uuid}")
 
-    changes = _apply_cells(row, cells)
+    runtime_contract = _resolve_runtime_contract(db, run)
+    changes = _apply_cells(row, cells, addable_columns=_addable_map(runtime_contract, row))
     if not changes:
         raise EvidenceCorrectionError("no cell changed — the values given match what was already read")
 
@@ -88,7 +97,7 @@ def correct_evidence(
     source_observation_uuid: str | None = None
     if source_run.id != run.id:
         twin = _source_twin(db, row, source_run)
-        twin_changes = _apply_cells(twin, cells)
+        twin_changes = _apply_cells(twin, cells, addable_columns=_addable_map(runtime_contract, twin))
         if twin_changes:
             _stamp(twin, corrected_at=corrected_at, corrected_by=corrected_by, reason=reason, changes=twin_changes)
         source_observation_uuid = twin.raw_observation_uuid
@@ -102,15 +111,49 @@ def correct_evidence(
     )
 
 
+def _resolve_runtime_contract(db: Session, run: models.IngestionRun):
+    """The run's recorded contract, or None when resolution has nothing to say.
+
+    Additions are gated on what the contract REQUIRES, so a run without a
+    resolvable contract (generic extraction, a retired registry entry) simply
+    offers none — replacements never fail on the registry's account.
+    """
+    try:
+        return catalogue_contract_resolution.resolve_recorded_supplier_contract(
+            db, ingestion_run_id=UUID(run.run_uuid)
+        )
+    except Exception:
+        return None
+
+
+def _addable_map(runtime_contract, row: models.CatalogueExtractedEvidence) -> dict[str, str]:
+    """{column_name: field_key} this observation may gain — computed per row,
+    because the addressed observation and its twin each carry their own cells."""
+    if runtime_contract is None:
+        return {}
+    try:
+        raw_cells = json.loads(row.raw_cells_json or "[]")
+    except ValueError:
+        return {}
+    return {
+        col.column_name: col.field_key
+        for col in catalogue_conformance.addable_required_columns(runtime_contract, raw_cells)
+    }
+
+
 def _apply_cells(
     row: models.CatalogueExtractedEvidence,
     cells: dict[str, str | None],
+    *,
+    addable_columns: dict[str, str] | None = None,
 ) -> dict[str, dict[str, object]]:
     """Replace values on named columns, returning {column: {from, to}}.
 
-    Corrections replace what was read, never invent structure: a column the
-    observation does not carry refuses by name, and a column the extraction
-    read twice is ambiguous and refuses rather than guessing which cell.
+    Corrections replace what was read: a column the extraction read twice is
+    ambiguous and refuses rather than guessing which cell, and an unknown
+    column refuses by name — except a column in ``addable_columns``, the
+    contract-REQUIRED columns this observation has no cell for, which is
+    APPENDED as a new cell and stamped with the field it satisfies.
     """
 
     raw_cells = json.loads(row.raw_cells_json or "[]")
@@ -118,21 +161,38 @@ def _apply_cells(
         raise EvidenceCorrectionError(
             "this observation has no cells to correct — it is text evidence, not a table row"
         )
+    allowed_additions = addable_columns or {}
     changes: dict[str, dict[str, object]] = {}
     for column, new_value in cells.items():
+        cleaned = new_value.strip() if isinstance(new_value, str) else new_value
+        cleaned = cleaned if cleaned != "" else None
         matches = [cell for cell in raw_cells if (cell.get("column_name") or "") == column]
         if not matches:
+            if column in allowed_additions:
+                if cleaned is None:
+                    continue  # adding an empty value is not an addition
+                changes[column] = {
+                    "from": None,
+                    "to": cleaned,
+                    "added_required_field": allowed_additions[column],
+                }
+                raw_cells.append({"column_name": column, "raw_value": cleaned})
+                continue
             known = ", ".join(sorted({str(c.get("column_name")) for c in raw_cells if c.get("column_name")}))
-            raise EvidenceCorrectionError(
+            message = (
                 f"column {column!r} is not on this observation (it carries: {known}) — "
                 "corrections replace what was read, never invent columns"
             )
+            if allowed_additions:
+                message += (
+                    "; the only columns that may be ADDED are the contract-required ones "
+                    f"the scan never read: {', '.join(sorted(allowed_additions))}"
+                )
+            raise EvidenceCorrectionError(message)
         if len(matches) > 1:
             raise EvidenceCorrectionError(
                 f"column {column!r} appears {len(matches)} times on this observation — ambiguous, refusing to guess"
             )
-        cleaned = new_value.strip() if isinstance(new_value, str) else new_value
-        cleaned = cleaned if cleaned != "" else None
         old = matches[0].get("raw_value")
         if old == cleaned:
             continue

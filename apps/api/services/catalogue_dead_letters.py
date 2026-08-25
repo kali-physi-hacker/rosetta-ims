@@ -544,20 +544,132 @@ def retrigger_children(db: Session, run_uuid: str) -> list[models.IngestionRun]:
     return out
 
 
+_COMPLETED_STATUSES = (
+    models.IngestionRunStatus.COMPLETED.value,
+    models.IngestionRunStatus.COMPLETED_WITH_WARNINGS.value,
+)
+
+
+def reread_children(db: Session, run_uuid: str) -> list[models.IngestionRun]:
+    """Completed children that RE-READ this run's evidence, whatever the reason.
+
+    Two shapes qualify: a re-parse under a SIBLING contract (a mixed-layout
+    document's other format), and a plain re-parse under the run's own
+    recorded contract after that contract learned something — new aliases, a
+    merged layout. Both make rows reviewable that this run could not read,
+    and the queue follows their SUCCESSES the same way. Retrigger children
+    never appear here: they carry their own attempts accounting.
+    """
+    parent = db.query(models.IngestionRun).filter_by(run_uuid=run_uuid).first()
+    if parent is None:
+        return []
+    children = (
+        db.query(models.IngestionRun)
+        .filter(models.IngestionRun.parent_run_id == parent.id)
+        .order_by(models.IngestionRun.id)
+        .all()
+    )
+    out: list[models.IngestionRun] = []
+    for child in children:
+        if child.status not in _COMPLETED_STATUSES:
+            continue
+        try:
+            metrics = json.loads(child.metrics or "{}") or {}
+        except ValueError:
+            metrics = {}
+        if metrics.get("retrigger_observations"):
+            continue
+        out.append(child)
+    return out
+
+
+@dataclass(frozen=True)
+class Reread:
+    """One completed re-read of this run's evidence, as the desk shows it."""
+
+    run_uuid: str
+    contract_id: str | None
+    format_name: str
+    status: str
+    candidates: int
+
+
+def rereads(db: Session, run_uuid: str) -> tuple[Reread, ...]:
+    """Every completed re-read, with what it made reviewable."""
+    out: list[Reread] = []
+    for child in reread_children(db, run_uuid):
+        format_name = child.supplier_source_contract_id or "generic extraction"
+        try:
+            from schemas.catalogue_pipeline.supplier_contracts import get_supplier_source_contract
+
+            format_name = get_supplier_source_contract(
+                child.supplier_source_contract_id, child.supplier_source_contract_version or "v1"
+            ).declaration.format_name
+        except Exception:
+            pass
+        out.append(
+            Reread(
+                run_uuid=child.run_uuid,
+                contract_id=child.supplier_source_contract_id,
+                format_name=format_name,
+                status=child.status,
+                candidates=len(set(_candidates_by_item(db, child.run_uuid))),
+            )
+        )
+    return tuple(out)
+
+
+@dataclass(frozen=True)
+class RetriggerAttempt:
+    """One retrigger child of a run, as the desk needs to see it.
+
+    The queue deliberately ignores a child that has not finished — but a
+    PERSON watching the held lane must not: a queued or running attempt is
+    why "nothing changed yet", and a failed one is why nothing ever will
+    until it is re-fired. This is that visibility, nothing more.
+    """
+
+    run_uuid: str
+    status: str
+    attempt: int
+    observations: int
+    created_at: str | None
+
+
+def retrigger_attempts(db: Session, run_uuid: str) -> tuple[RetriggerAttempt, ...]:
+    """Every retrigger fired at this run's queue, oldest first, with status."""
+    out: list[RetriggerAttempt] = []
+    for child in retrigger_children(db, run_uuid):
+        metrics = json.loads(child.metrics or "{}") or {}
+        out.append(
+            RetriggerAttempt(
+                run_uuid=child.run_uuid,
+                status=child.status,
+                attempt=int(metrics.get("retrigger_attempt") or 0),
+                observations=len(metrics.get("retrigger_observations") or ()),
+                created_at=str(child.created_at) if child.created_at is not None else None,
+            )
+        )
+    return tuple(out)
+
+
 def _follow_retriggers(db: Session, run_uuid: str, entries: list[DeadLetter]) -> list[DeadLetter]:
-    """The queue after retriggers: cleared rows leave, survivors carry attempts.
+    """The queue after re-drives: cleared rows leave, survivors carry attempts.
 
     Lanes stay per-run history — a row the parent could not read is still a
     fact about the parent. The QUEUE is the actionable view, so it follows the
     chain: an observation whose latest retrigger produced a candidate is no
     longer stuck anywhere a person needs to act, and an observation that failed
-    again is one entry with a count, not one entry per attempt.
+    again is one entry with a count, not one entry per attempt. Completed
+    RE-READS (a re-parse under a sibling contract, or a plain re-parse after
+    the contract learned something) clear the same way: a row that became a
+    candidate THERE has its work on that run's desk.
 
     All matching crosses runs on source_object_key, because observation UUIDs
     are re-minted per run — a child's links never carry the source's UUIDs.
     """
     children = retrigger_children(db, run_uuid)
-    if not children or not entries:
+    if not entries or (not children and not reread_children(db, run_uuid)):
         return entries
 
     from dataclasses import replace
@@ -621,6 +733,28 @@ def _follow_retriggers(db: Session, run_uuid: str, entries: list[DeadLetter]) ->
             attempts_by_key[key] = attempts_by_key.get(key, 1) + 1
             cleared_keys.add(key)
 
+    # Re-reads clear too — a sibling-format re-parse OR a plain re-parse
+    # after the contract learned something. When a completed re-read produced
+    # a candidate for a row's key, that row is no longer stuck anywhere a
+    # person needs to act: its work moved to that run's review queue. Only
+    # candidates count, and they win over earlier re-blocks. Re-read FAILURES
+    # change nothing here — a full re-parse re-reads everything, so its
+    # failures are its own run's story.
+    for child in reread_children(db, run_uuid):
+        child_links = evidence_links(db, child.run_uuid)
+        child_uuid_to_key = observation_keys(
+            db, child.run_uuid, (obs for obs_list in child_links.values() for obs in obs_list)
+        )
+        child_candidates = set(_candidates_by_item(db, child.run_uuid))
+        for item_uuid, obs_uuids in child_links.items():
+            if item_uuid not in child_candidates:
+                continue
+            for obs in obs_uuids:
+                key = child_uuid_to_key.get(obs)
+                if key is not None:
+                    cleared_keys.add(key)
+                    latest_codes_by_key.pop(key, None)
+
     out: list[DeadLetter] = []
     for entry in entries:
         keys = [entry_uuid_to_key[obs] for obs in entry.observation_uuids if obs in entry_uuid_to_key]
@@ -671,3 +805,156 @@ def _supplier_skus(db: Session, item_uuids: set[str]) -> dict[str, str]:
             if value:
                 out[item_uuid] = value
     return out
+
+
+# ── Cross-run visibility: the "what is rotting" view (DEV-303) ───────────────
+
+
+@dataclass(frozen=True)
+class HeldDocument:
+    """The CURRENT reading of one uploaded document, with what is still stuck.
+
+    Current = the newest completed ROOT run per (supplier, document checksum),
+    so a re-upload replaces its predecessor here instead of double-counting the
+    same printed rows. The held count is the FOLLOWED queue — rows a re-drive
+    or re-read already rescued are not "stuck" anywhere.
+    """
+
+    ingestion_run_uuid: str
+    filename: str | None
+    submitted_at: str | None
+    rows: int
+    held: int
+    held_share: float
+    oldest_age_days: int | None
+    top_issue_code: str | None
+    top_issue_rows: int
+
+
+@dataclass(frozen=True)
+class SupplierHeldSummary:
+    """One supplier's held picture across every current document."""
+
+    supplier_id: int
+    supplier_name: str | None
+    documents: tuple[HeldDocument, ...]
+    held_total: int
+    oldest_age_days: int | None
+    #: Median held share of this supplier's OLDER completed roots (superseded
+    #: uploads included) — "the usual pattern". None until one exists.
+    baseline_share: float | None
+    latest_share: float | None
+    #: True when the latest reading is notably worse than the baseline —
+    #: the stated rule, not a black box: share exceeds BOTH 1.5× the baseline
+    #: and baseline + 10 points, with something actually held.
+    worse_than_usual: bool
+
+
+def held_overview(db: Session) -> tuple[SupplierHeldSummary, ...]:
+    """Held rows across suppliers and documents — the queue as an operated
+    system, answering "what is held, how long, and is it getting worse?"
+    without opening runs one by one."""
+
+    roots = (
+        db.query(models.IngestionRun)
+        .filter(
+            models.IngestionRun.parent_run_id.is_(None),
+            models.IngestionRun.status.in_(_COMPLETED_STATUSES),
+            models.IngestionRun.supplier_id.isnot(None),
+        )
+        .all()
+    )
+    # Newest SUBMISSION first — the first run seen per document is "current".
+    roots.sort(key=lambda run: (str(run.created_at or ""), run.id), reverse=True)
+
+    def _doc_key(run: models.IngestionRun) -> str:
+        source = None
+        if run.catalogue_source_document_id:
+            source = db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
+        if source is not None and source.source_checksum:
+            return f"checksum:{source.source_checksum}"
+        return f"run:{run.run_uuid}"
+
+    def _rows(run_uuid: str) -> int:
+        return (
+            db.query(models.CatalogueNormalizedRow)
+            .filter_by(ingestion_run_uuid=run_uuid)
+            .count()
+        )
+
+    current: dict[tuple[int, str], models.IngestionRun] = {}
+    older_shares: dict[int, list[float]] = {}
+    for run in roots:  # newest first — the first run per document wins
+        key = (run.supplier_id, _doc_key(run))
+        if key not in current:
+            current[key] = run
+        else:
+            rows = _rows(run.run_uuid)
+            if rows:
+                held = len(dead_letters(db, run_uuid=run.run_uuid))
+                older_shares.setdefault(run.supplier_id, []).append(held / rows)
+
+    by_supplier: dict[int, list[HeldDocument]] = {}
+    for (supplier_id, _), run in current.items():
+        rows = _rows(run.run_uuid)
+        if not rows:
+            continue
+        entries = dead_letters(db, run_uuid=run.run_uuid)
+        code_counts: dict[str, int] = {}
+        oldest: int | None = None
+        for entry in entries:
+            code_counts[entry.issue_code] = code_counts.get(entry.issue_code, 0) + 1
+            if entry.age_days is not None and (oldest is None or entry.age_days > oldest):
+                oldest = entry.age_days
+        top_code = max(code_counts, key=code_counts.get) if code_counts else None
+        filename = None
+        if run.catalogue_source_document_id:
+            source = db.get(models.CatalogueSourceDocument, run.catalogue_source_document_id)
+            filename = source.filename if source is not None else None
+        by_supplier.setdefault(supplier_id, []).append(
+            HeldDocument(
+                ingestion_run_uuid=run.run_uuid,
+                filename=filename,
+                submitted_at=str(run.created_at) if run.created_at is not None else None,
+                rows=rows,
+                held=len(entries),
+                held_share=round(len(entries) / rows, 4),
+                oldest_age_days=oldest,
+                top_issue_code=top_code,
+                top_issue_rows=code_counts.get(top_code, 0) if top_code else 0,
+            )
+        )
+
+    supplier_names: dict[int, str] = {
+        supplier.id: supplier.name
+        for supplier in db.query(models.Supplier).filter(models.Supplier.id.in_(list(by_supplier))).all()
+    } if by_supplier else {}
+
+    out: list[SupplierHeldSummary] = []
+    for supplier_id, documents in by_supplier.items():
+        documents = sorted(documents, key=lambda d: d.submitted_at or "", reverse=True)
+        held_total = sum(d.held for d in documents)
+        ages = [d.oldest_age_days for d in documents if d.oldest_age_days is not None]
+        shares = sorted(older_shares.get(supplier_id, []))
+        baseline = shares[len(shares) // 2] if shares else None
+        latest = documents[0].held_share if documents else None
+        worse = (
+            baseline is not None
+            and latest is not None
+            and held_total > 0
+            and latest > max(baseline * 1.5, baseline + 0.10)
+        )
+        out.append(
+            SupplierHeldSummary(
+                supplier_id=supplier_id,
+                supplier_name=supplier_names.get(supplier_id),
+                documents=tuple(documents),
+                held_total=held_total,
+                oldest_age_days=max(ages) if ages else None,
+                baseline_share=round(baseline, 4) if baseline is not None else None,
+                latest_share=round(latest, 4) if latest is not None else None,
+                worse_than_usual=worse,
+            )
+        )
+    # Most stuck first — the screen is for finding trouble.
+    return tuple(sorted(out, key=lambda s: s.held_total, reverse=True))

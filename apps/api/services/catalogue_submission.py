@@ -389,6 +389,8 @@ class CatalogueSubmissionService:
         *,
         from_stage: str = "conformance",
         submitted_by: str | None = None,
+        contract_id: str | None = None,
+        contract_version: str | None = None,
         _retrigger_of: str | None = None,
         _retrigger_observations: list[str] | None = None,
         _retrigger_attempt: int | None = None,
@@ -400,6 +402,15 @@ class CatalogueSubmissionService:
         not the pages re-scanned. Unlike `retry`, this works on a COMPLETED run
         (that is the point: you changed the contract and want to see the
         result), can be repeated, and costs nothing at the provider.
+
+        ``contract_id`` re-reads the SAME stored evidence under a SIBLING
+        format of the same supplier. This exists for mixed-layout documents:
+        one submission carries one contract, so the pages printed in the other
+        layout dead-letter no matter how often they are re-driven — the fix is
+        a different interpretation, not another attempt. The override must be
+        a SUPPORTED contract of the run's supplier matching the document type
+        and stored format; it is recorded on the child run itself, because
+        everything downstream reads the run's recorded contract.
 
         A NEW run is created either way. The parent may already carry approved
         and published decisions, and those are append-only.
@@ -452,8 +463,59 @@ class CatalogueSubmissionService:
         if source is None:
             raise SourceFileMissingError("This run has no source document to link the re-parse to")
 
+        override = None
+        if contract_id:
+            if _retrigger_observations:
+                raise RetryNotAllowedError(
+                    "A retrigger re-drives rows under the run's recorded format — "
+                    "re-parse the run under the other format instead"
+                )
+            from orchestration.catalogue_contract_resolution import source_format_matches
+            from services import supplier_source_contract_runtime as contract_runtime
+
+            try:
+                override = contract_runtime.resolve_supplier_contract(
+                    supplier_id=run.supplier_id,
+                    contract_id=contract_id,
+                    contract_version=contract_version,
+                )
+            except contract_runtime.SupplierContractResolutionError as exc:
+                raise RetryNotAllowedError(f"Cannot re-parse under {contract_id!r}: {exc}") from exc
+            declaration = override.declaration
+            if run.document_type and declaration.document_type.value != run.document_type:
+                raise RetryNotAllowedError(
+                    f"Cannot re-parse under {contract_id!r}: it reads "
+                    f"{declaration.document_type.value} documents and this run is {run.document_type}"
+                )
+            if not source_format_matches((source.source_format or "").upper(), declaration.source_structure.source_format.value):
+                raise RetryNotAllowedError(
+                    f"Cannot re-parse under {contract_id!r}: it reads "
+                    f"{declaration.source_structure.source_format.value} sources and this document "
+                    f"is stored as {source.source_format}"
+                )
+
         new_run = self._queue_reparse_run(run, source, submitted_by=submitted_by)
-        mark_reparse(new_run, source_run_uuid=origin.run_uuid, from_stage=stage)
+        if override is not None:
+            # Recorded on the run, not passed as a parameter: the conformance
+            # task, the desk, and any later re-parse all read the run's
+            # recorded contract — so the override must BE the record.
+            new_run.supplier_source_contract_id = override.slug
+            new_run.supplier_source_contract_version = override.version
+        # The override marker is stamped whenever the child's contract differs
+        # from what the DOCUMENT was uploaded under — explicitly overridden
+        # now, or inherited by re-parsing a child that was. It is what lets
+        # the capture guard tell sanctioned divergence from accidental drift.
+        diverges = (
+            source.supplier_source_contract_id
+            and new_run.supplier_source_contract_id
+            and new_run.supplier_source_contract_id != source.supplier_source_contract_id
+        )
+        mark_reparse(
+            new_run,
+            source_run_uuid=origin.run_uuid,
+            from_stage=stage,
+            contract_override=new_run.supplier_source_contract_id if diverges else None,
+        )
         if _retrigger_observations:
             # Stamped INSIDE the queueing transaction. A retrigger that commits
             # as a plain re-parse first and gains its selection in a second

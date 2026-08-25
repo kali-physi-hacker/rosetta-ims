@@ -59,7 +59,15 @@ def recorded_contract_summary(db: Session, *, ingestion_run_id: UUID) -> Recorde
     )
 
 
-def _source_format_matches(recorded: str, contract_format: str) -> bool:
+def source_format_matches(recorded: str, contract_format: str) -> bool:
+    """Whether a stored source's format can satisfy a contract's declared one.
+
+    Public because reparse-with-a-contract-override must ask the same question
+    at request time that this module asks at flow time.
+    """
     if contract_format in {"PDF", "PDF_TABLE"}:
         return recorded == "PDF"
     return recorded == contract_format
+
+
+_source_format_matches = source_format_matches

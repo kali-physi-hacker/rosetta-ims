@@ -24,6 +24,9 @@ from uuid import UUID, uuid4  # noqa: E402
 import pytest  # noqa: E402
 
 import models  # noqa: E402
+from orchestration.catalogue_contract_resolution import resolve_recorded_supplier_contract  # noqa: E402
+from schemas.catalogue_pipeline.supplier_contracts.common import SourceFieldRequirement  # noqa: E402
+from services import catalogue_conformance as conformance  # noqa: E402
 from services import catalogue_evidence_corrections as corrections  # noqa: E402
 from tests.test_catalogue_golden_suppliers import (  # noqa: E402, F401 — db fixture
     _load_expected,
@@ -116,6 +119,116 @@ def test_unknown_column_no_change_and_bad_reason_refuse(db, monkeypatch):
         .raw_cells_json
         == before
     ), "a refused correction must change nothing"
+
+
+def _required_cell_backed_field(contract, row):
+    """A REQUIRED field this observation's cells resolve, or None.
+
+    Returns (field, canonical_addable_name, matched_cell_names) — the shape
+    the strip-then-add test needs: which cells to delete to simulate "the scan
+    never read it", and the column name the panel would then offer.
+    """
+    structural = {"section_header", "unlabeled_column", "page_brand"}
+    cells = json.loads(row.raw_cells_json or "[]")
+    for contract_field in contract.declaration.fields:
+        if contract_field.requirement != SourceFieldRequirement.REQUIRED:
+            continue
+        names = [
+            n
+            for n in (contract_field.source_column, contract_field.source_path, *contract_field.aliases)
+            if n and n not in structural
+        ]
+        if not names:
+            continue
+        name_keys = {key for n in names for key in conformance._column_keys(n)}
+        matched = {
+            c["column_name"]
+            for c in cells
+            if c.get("column_name") and set(conformance._column_keys(c["column_name"])) & name_keys
+        }
+        if matched:
+            return contract_field, names[0], matched
+    return None
+
+
+def test_a_required_but_unread_column_can_be_added(db, monkeypatch):
+    """The bug 2 fix: a contract-REQUIRED column the scan never produced is
+    offered for adding, the addition is stamped, and non-required unknown
+    columns keep refusing."""
+    run = _replayed_run(db, monkeypatch)
+    contract = resolve_recorded_supplier_contract(db, ingestion_run_id=UUID(run.run_uuid))
+
+    picked = None
+    for row in (
+        db.query(models.CatalogueExtractedEvidence)
+        .filter_by(ingestion_run_uuid=run.run_uuid)
+        .filter(models.CatalogueExtractedEvidence.raw_cells_json.isnot(None))
+        .filter(models.CatalogueExtractedEvidence.raw_cells_json != "[]")
+        .all()
+    ):
+        found = _required_cell_backed_field(contract, row)
+        if found:
+            picked = (row, *found)
+            break
+    assert picked, "the replay must persist an observation resolving a required field from cells"
+    row, contract_field, canonical, matched_names = picked
+
+    # The scan "never read" the field: strip every cell that resolves it.
+    stripped = [
+        c
+        for c in json.loads(row.raw_cells_json)
+        if (c.get("column_name") or "") not in matched_names
+    ]
+    assert stripped != json.loads(row.raw_cells_json)
+    row.raw_cells_json = json.dumps(stripped, ensure_ascii=False)
+    db.commit()
+
+    offered = conformance.addable_required_columns(contract, stripped)
+    assert any(
+        col.field_key == contract_field.field_key and col.column_name == canonical for col in offered
+    ), "the missing required field must be offered under its canonical column name"
+
+    # An unknown, non-required column still refuses — and the refusal now
+    # names what CAN be added, so the caller learns the door that is open.
+    with pytest.raises(corrections.EvidenceCorrectionError, match="may be ADDED"):
+        corrections.correct_evidence(
+            db, run_uuid=UUID(run.run_uuid), raw_observation_uuid=UUID(row.raw_observation_uuid),
+            cells={"NO SUCH COLUMN": "x"}, reason="a fine reason", corrected_by="tester",
+        )
+    db.rollback()
+
+    result = corrections.correct_evidence(
+        db,
+        run_uuid=UUID(run.run_uuid),
+        raw_observation_uuid=UUID(row.raw_observation_uuid),
+        cells={canonical: "supplied from the page"},
+        reason="the page prints it plainly — the scan dropped the cell",
+        corrected_by="tester",
+    )
+    assert result.corrected_columns == (canonical,)
+
+    stored = (
+        db.query(models.CatalogueExtractedEvidence)
+        .filter_by(raw_observation_uuid=row.raw_observation_uuid)
+        .one()
+    )
+    added = [c for c in json.loads(stored.raw_cells_json) if c.get("column_name") == canonical]
+    assert added and added[-1]["raw_value"] == "supplied from the page"
+    stamp = json.loads(stored.source_metadata_json)["human_corrections"][-1]
+    assert stamp["changes"][canonical] == {
+        "from": None,
+        "to": "supplied from the page",
+        "added_required_field": contract_field.field_key,
+    }
+
+    # The added cell is now a cell like any other: re-adding the same value is
+    # not a change, and a different value goes through the REPLACE path.
+    with pytest.raises(corrections.EvidenceCorrectionError, match="no cell changed"):
+        corrections.correct_evidence(
+            db, run_uuid=UUID(run.run_uuid), raw_observation_uuid=UUID(row.raw_observation_uuid),
+            cells={canonical: "supplied from the page"}, reason="a fine reason", corrected_by="tester",
+        )
+    db.rollback()
 
 
 def test_a_correction_on_a_reparse_child_lands_on_the_source_too(db, monkeypatch):

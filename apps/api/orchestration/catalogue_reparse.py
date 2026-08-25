@@ -141,16 +141,28 @@ def is_reparse(db: Session, ingestion_run_id: UUID) -> bool:
     return bool(run is not None and _metrics(run).get("reparse_of"))
 
 
-def mark_reparse(run: models.IngestionRun, *, source_run_uuid: str, from_stage: ReparseStage) -> None:
+def mark_reparse(
+    run: models.IngestionRun,
+    *,
+    source_run_uuid: str,
+    from_stage: ReparseStage,
+    contract_override: str | None = None,
+) -> None:
     """Record the lineage on the new run before the flow claims it.
 
     Lives in `metrics` rather than a new column: it is provenance about how the
     run was produced, which is what that JSON already holds, and the pipeline
     tables are built fresh rather than migrated.
+
+    ``contract_override`` marks a re-parse that interprets the SAME stored
+    evidence under a DIFFERENT contract than its source run recorded — kept so
+    nobody reads the child's outcome as a verdict on the source run's format.
     """
     metrics = _metrics(run)
     metrics["reparse_of"] = source_run_uuid
     metrics["reparse_from_stage"] = from_stage.value
+    if contract_override:
+        metrics["reparse_contract_override"] = contract_override
     run.metrics = json.dumps(metrics)
 
 
@@ -180,6 +192,20 @@ def retrigger_selection(run: models.IngestionRun) -> set[str] | None:
     """The observation UUIDs this run is limited to, or None for a full re-parse."""
     raw = _metrics(run).get("retrigger_observations")
     return set(raw) if raw else None
+
+
+def retrigger_source(run: models.IngestionRun) -> str | None:
+    """The run whose queue this retrigger child belongs to, or None.
+
+    A retrigger child is not itself a retrigger target — its outcome already
+    folds into that run's followed queue, and the service refuses it with a
+    pointer. Surfaced so the desk can SAY that up front instead of letting a
+    Re-run click discover the refusal.
+    """
+    metrics = _metrics(run)
+    if not metrics.get("retrigger_observations"):
+        return None
+    return metrics.get("retrigger_of") or metrics.get("reparse_of")
 
 
 def reparse_raw_stage(db: Session, *, ingestion_run_id: UUID) -> RawStageResult:

@@ -222,3 +222,174 @@ def test_a_completed_run_can_be_reparsed_repeatedly(db):
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+# ── Re-parse under a sibling format (mixed-layout documents) ─────────────────
+#
+# One submission carries one contract, so a mixed-layout document's other
+# pages dead-letter under the recorded format no matter how often they are
+# re-driven (proven live: run 1382e559's 24 wet-can rows survived three
+# attempts untouched). The override re-reads the SAME stored evidence under a
+# sibling SUPPORTED contract of the same supplier — recorded on the child run,
+# because everything downstream reads the run's record, never a parameter.
+
+from schemas.catalogue_pipeline.supplier_contracts.suppliers.kangaroo_pet_nutrition import (  # noqa: E402
+    KANGAROO_PET_NUTRITION_UNIT_PRICE_LIST_V1 as _UNIT,
+)
+from services import supplier_source_contract_runtime as _contract_runtime  # noqa: E402
+
+# Since the Kangaroo merge (2026-08-25) no supplier carries TWO supported
+# contracts in the registry, so the positive override path is exercised with a
+# registry stub: the real merged declaration wearing a sibling id. The refusal
+# paths below still hit the real registry.
+_SIBLING_ID = "kangaroo_pet_nutrition.sibling_layout.v1"
+
+
+def _fake_sibling_runtime():
+    sibling = _UNIT.model_copy(update={
+        "contract_id": _SIBLING_ID,
+        "format_name": "Kangaroo sibling layout (test double)",
+    })
+    return _contract_runtime.SupplierSourceRuntimeContract(sibling)
+
+
+def _stub_sibling_resolution(monkeypatch):
+    sibling = _fake_sibling_runtime()
+    real_resolve = _contract_runtime.resolve_supplier_contract
+
+    def fake_resolve(*, supplier_id, contract_id=None, contract_version=None):
+        if contract_id == _SIBLING_ID:
+            assert int(supplier_id) == 81
+            return sibling
+        return real_resolve(
+            supplier_id=supplier_id, contract_id=contract_id, contract_version=contract_version
+        )
+
+    monkeypatch.setattr(_contract_runtime, "resolve_supplier_contract", fake_resolve)
+    return sibling
+
+
+def _seed_kangaroo_run(db, *, observations=2):
+    """A supplier-81 run recorded under the unit contract, matching the
+    registry's declared document type and a stored PDF source."""
+    supplier = models.Supplier(id=81, code="KANGAR", name="Kangaroo Pet Nutrition", created_at="2026-01-01T00:00:00")
+    db.add(supplier)
+    db.flush()
+    imp = models.CatalogueImport(supplier_id=supplier.id, filename="kpn.pdf", imported_at="2026-01-01T00:00:00")
+    db.add(imp)
+    db.flush()
+    document_type = _UNIT.document_type.value
+    source = models.CatalogueSourceDocument(
+        legacy_import_id=imp.id, supplier_id=supplier.id, filename="kpn.pdf",
+        source_format="PDF", source_ref="stored/kpn.pdf", source_checksum="abc",
+        received_at="2026-01-01T00:00:00",
+        supplier_source_contract_id=_UNIT.contract_id,
+        supplier_source_contract_version=_UNIT.contract_version,
+        document_type=document_type, byte_size=1024, page_count=2, created_at="2026-01-01T00:00:00",
+    )
+    db.add(source)
+    db.flush()
+    run = models.IngestionRun(
+        run_uuid=str(uuid4()), source_document_id=imp.id, catalogue_source_document_id=source.id,
+        supplier_id=supplier.id, contract_version="catalogue.extraction_profile.v1",
+        supplier_source_contract_id=_UNIT.contract_id,
+        supplier_source_contract_version=_UNIT.contract_version,
+        document_type=document_type, extractor_name="queued-submission", extractor_version="v1",
+        status="completed_with_warnings", created_at="2026-01-01T00:00:00",
+        completed_at="2026-01-01T00:05:00",
+    )
+    db.add(run)
+    db.flush()
+    for index in range(observations):
+        db.add(models.CatalogueExtractedEvidence(
+            raw_observation_uuid=str(uuid4()), ingestion_run_uuid=run.run_uuid,
+            supplier_catalogue_uuid=source.supplier_catalogue_uuid,
+            source_file_uuid=source.source_file_uuid,
+            extraction_profile_id="p", extraction_profile_version="v1",
+            contract_version="catalogue.extracted_evidence.v1",
+            source_location_json=json.dumps({"page_number": 1, "source_object_key": f"page:1:row:{index}"}),
+            source_object_key=f"page:1:row:{index}", page_number=1,
+            raw_text=f"row {index}", raw_cells_json="[]",
+            extraction_method="MODEL_VISION", captured_at="2026-01-01T00:01:00+00:00",
+            source_metadata_json=json.dumps({"observation_key": f"page:1:row:{index}"}),
+            created_at="2026-01-01T00:01:00",
+        ))
+    db.flush()
+    return run
+
+
+def test_a_reparse_can_override_to_a_sibling_supported_contract(db, monkeypatch):
+    _stub_sibling_resolution(monkeypatch)
+    run = _seed_kangaroo_run(db)
+    result = CatalogueSubmissionService(db).reparse(
+        UUID(run.run_uuid), submitted_by="reviewer", contract_id=_SIBLING_ID
+    )
+    db.commit()
+
+    child = db.query(models.IngestionRun).filter_by(run_uuid=str(result.ingestion_run_id)).one()
+    assert child.supplier_source_contract_id == _SIBLING_ID
+    assert child.supplier_source_contract_version == "v1"
+    metrics = json.loads(child.metrics)
+    assert metrics["reparse_of"] == run.run_uuid
+    assert metrics["reparse_contract_override"] == _SIBLING_ID
+
+    # The raw stage rebuilds identity from the child's own record — so the
+    # override IS what the whole downstream flow interprets under.
+    outcome = reparse.reparse_raw_stage(db, ingestion_run_id=result.ingestion_run_id)
+    assert outcome.run_identity.contract_id == _SIBLING_ID
+
+
+def test_a_contract_override_refuses_what_the_registry_refuses(db):
+    run = _seed_kangaroo_run(db)
+    service = CatalogueSubmissionService(db)
+
+    with pytest.raises(RetryNotAllowedError, match="no-such-contract"):
+        service.reparse(UUID(run.run_uuid), contract_id="no-such-contract.v1")
+
+    # A gated sibling is not selectable — same rule as at upload time.
+    with pytest.raises(RetryNotAllowedError, match="not SUPPORTED"):
+        service.reparse(UUID(run.run_uuid), contract_id="kangaroo_pet_nutrition.catalogue_bundle.v1")
+
+    # Another supplier's contract never interprets this supplier's pages.
+    with pytest.raises(RetryNotAllowedError):
+        service.reparse(UUID(run.run_uuid), contract_id="alfamedic.price_list.v1")
+
+    # Nothing was queued by any refusal.
+    children = db.query(models.IngestionRun).filter(models.IngestionRun.parent_run_id == run.id).count()
+    assert children == 0
+
+
+def test_the_capture_guard_tolerates_a_recorded_contract_override(db, monkeypatch):
+    """The source document records what it was UPLOADED under; an override
+    child records what IT interprets under. The capture guard accepts that
+    sanctioned divergence — and still refuses the same divergence when the
+    run does not carry the override marker, which is accidental drift."""
+    from services import catalogue_pipeline_stages as stages
+
+    _stub_sibling_resolution(monkeypatch)
+    run = _seed_kangaroo_run(db)
+    result = CatalogueSubmissionService(db).reparse(
+        UUID(run.run_uuid), contract_id=_SIBLING_ID
+    )
+    db.commit()
+
+    child = db.query(models.IngestionRun).filter_by(run_uuid=str(result.ingestion_run_id)).one()
+    source = db.query(models.CatalogueSourceDocument).one()
+    command = stages.CaptureExtractedEvidenceCommand(
+        ingestion_run_id=UUID(child.run_uuid),
+        supplier_catalogue_id=UUID(source.supplier_catalogue_uuid),
+        source_file_id=UUID(source.source_file_uuid),
+        supplier_id=81,
+        observations=(),
+        contract_id=child.supplier_source_contract_id,
+        contract_version=child.supplier_source_contract_version,
+    )
+    _, _, resolved = stages._resolve_run_source_contract(db, command)
+    assert resolved.slug == _SIBLING_ID
+
+    metrics = json.loads(child.metrics)
+    del metrics["reparse_contract_override"]
+    child.metrics = json.dumps(metrics)
+    db.flush()
+    with pytest.raises(stages.SupplierContractMismatch, match="Source Document"):
+        stages._resolve_run_source_contract(db, command)

@@ -315,3 +315,151 @@ def test_observation_identities_do_not_repeat_across_runs(db, monkeypatch):
         f"{len(shared)} observation UUIDs are shared between two runs of the same file — "
         f"reconcile() matches links on UUID alone and would now over-count them"
     )
+
+
+# ── Sibling-format reads (mixed-layout documents) ────────────────────────────
+
+
+def _clone(instance, **overrides):
+    """A column-copy of one ORM row with overrides — the surgical way to give
+    a REAL replayed parent a synthetic sibling child without re-deriving the
+    dozens of NOT NULL fields a normalized row carries."""
+    data = {
+        column.name: getattr(instance, column.name)
+        for column in instance.__table__.columns
+        if column.name != "id"
+    }
+    data.update(overrides)
+    return type(instance)(**data)
+
+
+def test_a_completed_reread_clears_the_rows_it_made_reviewable(db, monkeypatch):
+    """Rows a re-read made reviewable leave the queue — whether the re-read
+    ran under a SIBLING contract (a mixed-layout document's other format) or
+    under the run's OWN contract after it learned something (proven live: 24
+    wet-can rows survived four retriggers, then cleared the moment a re-read
+    produced candidates). Re-reads that fail, or have not finished, change
+    nothing."""
+    from uuid import uuid4
+
+    run_uuid = _run_alfamedic(db, monkeypatch)
+    parent = db.query(models.IngestionRun).filter_by(run_uuid=run_uuid).one()
+    before = dl.dead_letters(db, run_uuid=run_uuid)
+    target = next(e for e in before if e.observation_uuids)
+
+    child = _clone(
+        parent,
+        run_uuid=str(uuid4()),
+        parent_run_id=parent.id,
+        supplier_source_contract_id="alfamedic.other_layout.v1",
+        status="completed_with_warnings",
+        metrics=json.dumps({
+            "reparse_of": run_uuid,
+            "reparse_contract_override": "alfamedic.other_layout.v1",
+        }),
+    )
+    db.add(child)
+    db.flush()
+
+    source_observation = (
+        db.query(models.CatalogueExtractedEvidence)
+        .filter_by(ingestion_run_uuid=run_uuid, raw_observation_uuid=target.observation_uuids[0])
+        .one()
+    )
+    child_observation = _clone(
+        source_observation, raw_observation_uuid=str(uuid4()), ingestion_run_uuid=child.run_uuid
+    )
+    db.add(child_observation)
+    source_row = (
+        db.query(models.CatalogueNormalizedRow)
+        .filter_by(catalogue_item_uuid=target.catalogue_item_uuid)
+        .one()
+    )
+    child_row = _clone(
+        source_row, catalogue_item_uuid=str(uuid4()), ingestion_run_uuid=child.run_uuid
+    )
+    db.add(child_row)
+    db.flush()
+    db.add(models.CatalogueNormalizedRowEvidence(
+        staging_item_id=child_row.id,
+        raw_observation_id=child_observation.id,
+        raw_observation_uuid=child_observation.raw_observation_uuid,
+        sort_order=0,
+    ))
+    any_candidate = (
+        db.query(models.CatalogueMasteringCandidate)
+        .filter_by(ingestion_run_uuid=run_uuid)
+        .first()
+    )
+    assert any_candidate is not None, "the replay must produce at least one candidate to clone"
+    db.add(_clone(
+        any_candidate,
+        mastering_candidate_uuid=str(uuid4()),
+        catalogue_item_uuid=child_row.catalogue_item_uuid,
+        ingestion_run_uuid=child.run_uuid,
+        superseded_by_uuid=None,
+    ))
+    db.commit()
+
+    after = dl.dead_letters(db, run_uuid=run_uuid)
+    assert target.catalogue_item_uuid not in {e.catalogue_item_uuid for e in after}, (
+        "a row the sibling read made reviewable must leave this queue"
+    )
+    assert len(after) == len(before) - 1, "only the row with a sibling candidate clears"
+
+    (read,) = dl.rereads(db, run_uuid)
+    assert read.contract_id == "alfamedic.other_layout.v1"
+    assert read.candidates == 1
+    assert read.run_uuid == child.run_uuid
+
+    # The same clearing under the run's OWN contract: a plain re-parse after
+    # the contract learned something follows identically.
+    child.supplier_source_contract_id = parent.supplier_source_contract_id
+    db.commit()
+    assert len(dl.dead_letters(db, run_uuid=run_uuid)) == len(before) - 1
+    (read,) = dl.rereads(db, run_uuid)
+    assert read.contract_id == parent.supplier_source_contract_id
+
+    # A re-read that FAILED processed nothing — the queue must not treat its
+    # silence as success.
+    child.status = "failed"
+    db.commit()
+    assert len(dl.dead_letters(db, run_uuid=run_uuid)) == len(before)
+    assert dl.rereads(db, run_uuid) == ()
+
+
+def test_held_overview_reports_current_documents_without_double_counting(db, monkeypatch):
+    """The operated-system view (DEV-303): one entry per supplier, one row per
+    CURRENT document reading, counts from the FOLLOWED queue. An older root of
+    the same document is baseline material, never a second count — and a root
+    with no rows is nobody's document."""
+    from uuid import uuid4
+
+    run_uuid = _run_alfamedic(db, monkeypatch)
+    parent = db.query(models.IngestionRun).filter_by(run_uuid=run_uuid).one()
+    queue = dl.dead_letters(db, run_uuid=run_uuid)
+
+    # An OLDER completed root of the same stored document (same checksum),
+    # carrying no rows of its own — it must neither appear as a document nor
+    # poison the baseline with a rowless share.
+    db.add(_clone(
+        parent,
+        run_uuid=str(uuid4()),
+        created_at="2020-01-01T00:00:00+00:00",
+        completed_at="2020-01-01T00:05:00+00:00",
+    ))
+    db.commit()
+
+    overview = dl.held_overview(db)
+    supplier = next(s for s in overview if s.supplier_id == parent.supplier_id)
+
+    assert len(supplier.documents) == 1, "a re-upload replaces its predecessor — never two counts"
+    (document,) = supplier.documents
+    assert document.ingestion_run_uuid == run_uuid
+    assert document.held == len(queue)
+    assert supplier.held_total == len(queue)
+    assert document.rows > 0
+    assert 0 < document.held_share <= 1
+    assert document.top_issue_code is not None and document.top_issue_rows > 0
+    assert supplier.baseline_share is None, "a rowless older root is no baseline"
+    assert supplier.worse_than_usual is False

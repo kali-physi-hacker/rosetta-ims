@@ -1549,13 +1549,28 @@ def _resolve_run_source_contract(
         raise UnsupportedSupplierContract(str(exc)) from exc
 
     _assert_recorded_contract("Ingestion Run", run.supplier_source_contract_id, run.supplier_source_contract_version, runtime_contract)
-    _assert_recorded_contract(
-        "Source Document",
-        source_document.supplier_source_contract_id,
-        source_document.supplier_source_contract_version,
-        runtime_contract,
-    )
+    # A re-parse may interpret this document under a SIBLING contract of the
+    # same supplier (mixed-layout documents). The override is validated at
+    # request time and recorded on the run itself, while the source document
+    # keeps recording what it was UPLOADED under — so the two records
+    # legitimately differ exactly when the run says so. Anything else is the
+    # accidental drift this assert exists to catch.
+    if _reparse_contract_override(run) != runtime_contract.slug:
+        _assert_recorded_contract(
+            "Source Document",
+            source_document.supplier_source_contract_id,
+            source_document.supplier_source_contract_version,
+            runtime_contract,
+        )
     return run, source_document, runtime_contract
+
+
+def _reparse_contract_override(run: models.IngestionRun) -> str | None:
+    try:
+        metrics = json.loads(run.metrics or "{}") or {}
+    except ValueError:
+        return None
+    return metrics.get("reparse_contract_override")
 
 
 def _assert_recorded_contract(label: str, contract_id: str | None, version: str | None, runtime_contract) -> None:

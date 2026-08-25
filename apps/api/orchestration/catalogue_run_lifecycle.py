@@ -273,6 +273,7 @@ def _run(db: Session, ingestion_run_id: UUID) -> models.IngestionRun:
 _PRESERVED_METRIC_KEYS = (
     "reparse_of",
     "reparse_from_stage",
+    "reparse_contract_override",
     "retrigger_of",
     "retrigger_observations",
     "retrigger_attempt",
