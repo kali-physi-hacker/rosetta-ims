@@ -679,7 +679,11 @@ function RunDeskPage() {
 
   // lifecycle
   // product_rows, never items_extracted: BOs count products, not page text.
-  const rows = status.data?.product_rows ?? status.data?.items_extracted ?? items.length
+  // The desk is document-scoped, so its row universe is the FOLD's: every
+  // printed row currently reviewable plus every row still held. The anchor
+  // run's own product_rows (e.g. a 308-row re-drive) would sit beside
+  // family-wide decision counts and read as nonsense arithmetic.
+  const rows = items.length + heldCount
   const decisionsDone = needsYou === 0 && cleanPending === 0
   const liveStage = published.length > 0
 

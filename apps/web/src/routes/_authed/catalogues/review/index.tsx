@@ -105,9 +105,17 @@ function SupplierGroup({ label, rows }: { label: string; rows: RunRow[] }) {
         return (
           <div key={run.ingestion_run_id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '9px 14px', borderTop: index ? '1px solid var(--line2)' : 'none', opacity: isPrimary ? 1 : 0.65, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 11.5, color: 'var(--faint)', width: 110, flex: 'none' }}>{fmtWhen(run.submitted_at)}</span>
-            {/* product_rows, never items_extracted: BOs count products, and the
-                raw figure includes page banners and date lines. */}
-            <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{(run.product_rows ?? run.items_extracted) != null ? `${run.product_rows ?? run.items_extracted} rows` : WORKING.has(run.status) ? 'processing…' : '—'}</span>
+            {/* The primary line speaks for the DESK, whose universe is the
+                folded family — RunProgress renders that rows figure so it
+                always agrees with "to decide". Non-primary lines report their
+                own run's product_rows (never items_extracted: BOs count
+                products, and the raw figure includes page banners). */}
+            {!isPrimary && (
+              <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{(run.product_rows ?? run.items_extracted) != null ? `${run.product_rows ?? run.items_extracted} rows` : WORKING.has(run.status) ? 'processing…' : '—'}</span>
+            )}
+            {isPrimary && WORKING.has(run.status) && (
+              <span style={{ fontSize: 12, color: 'var(--ink2)' }}>processing…</span>
+            )}
             {isPrimary && !WORKING.has(run.status) ? <RunProgress runId={run.ingestion_run_id} /> : <span style={{ flex: 1 }} />}
             {isPrimary ? (
               // The ONE desk: document-scoped, so it already holds every
@@ -147,7 +155,10 @@ function RunProgress({ runId }: { runId: string }) {
   const live = items.filter(i => i.published).length
   const done = items.length > 0 && needsYou === 0 && staged === 0
   return (
-    <span style={{ flex: 1, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+    <span style={{ flex: 1, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* The desk's OWN universe (folded candidates + held), so the rows
+          figure and the decision counts always agree. */}
+      <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{items.length + heldCount} rows</span>
       {needsYou > 0 && <span className="bdg warn">{needsYou} to decide</span>}
       {heldCount > 0 && (
         <Link className="bdg neu" style={{ textDecoration: 'none', cursor: 'pointer' }}
