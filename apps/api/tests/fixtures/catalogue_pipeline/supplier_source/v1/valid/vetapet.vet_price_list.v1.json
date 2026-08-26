@@ -45,10 +45,7 @@
         "notes": "Observed later in the supplied Vetapet.pdf; representative per-section row fixtures are still needed."
       }
     ],
-    "required_headers": [
-      "CODE NO",
-      "PRODUCT NAME"
-    ],
+    "required_headers": [],
     "optional_headers": [
       "PACKING PER UNIT",
       "UNIT PRICE",
@@ -75,7 +72,7 @@
     {
       "field_key": "supplier_sku",
       "role": "SUPPLIER_SKU",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": "CODE NO / 編號",
       "source_path": null,
       "composed_from": [],

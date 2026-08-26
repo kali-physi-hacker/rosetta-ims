@@ -60,7 +60,7 @@
     {
       "field_key": "supplier_sku",
       "role": "SUPPLIER_SKU",
-      "requirement": "REQUIRED",
+      "requirement": "OPTIONAL",
       "source_column": "CODE NO / 編號",
       "source_path": null,
       "composed_from": [],

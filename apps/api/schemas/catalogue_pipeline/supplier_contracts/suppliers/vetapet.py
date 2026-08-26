@@ -50,7 +50,13 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
         SourceFieldContract(
             field_key="supplier_sku",
             role=SourceFieldRole.SUPPLIER_SKU,
-            requirement=SourceFieldRequirement.REQUIRED,
+            # OPTIONAL since the codeless-products ruling (2026-08-26): pages
+            # that print no code (the treat family) are still considered —
+            # their rows conform without identity, matching is MANUAL, and
+            # once matched to (or creating) a product entity the offering is
+            # identified by Rosetta's internal SKU, adopted at apply. Rows
+            # that DO print codes still map them through these columns.
+            requirement=SourceFieldRequirement.OPTIONAL,
             source_column="CODE NO / 編號",
             aliases=["CODE NO", "編號", "CODE", "貨品編號", "貨品編號 (Code no.)"],
             description=(
@@ -332,7 +338,12 @@ VETAPET_VET_PRICE_LIST_V1 = register_supplier_source_contract(
                     notes="Observed later in the supplied Vetapet.pdf; representative per-section row fixtures are still needed.",
                 )
             ],
-            required_headers=["CODE NO", "PRODUCT NAME"],
+            # Empty since the codeless-products ruling (2026-08-26): the treat
+            # pages print neither a code column nor a PRODUCT NAME heading,
+            # and both fields are OPTIONAL now — a document (or a re-drive
+            # selection) made only of such pages must not blanket-block on
+            # headers its rows are allowed to lack.
+            required_headers=[],
             optional_headers=[
                 "PACKING PER UNIT",
                 "UNIT PRICE",

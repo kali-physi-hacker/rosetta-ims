@@ -930,17 +930,13 @@ def test_vetapet_bilingual_treat_layout_conforms_prices_and_box_stays_evidence()
     extra = item.raw_fields["additional_fields"]
     assert extra["box_quantity"] == "1盒20條"
     assert extra["box_wholesale_price"] == "批發價$392"
-    missing = {i.field_key for i in item.issues if i.issue_code == "CONTRACT_REQUIRED_FIELD_MISSING"}
-    assert missing == {"supplier_sku"}, "the printed page has no code — the only honest hold"
-
-    from services.catalogue_conformance import addable_required_columns
-    from schemas.catalogue_pipeline.supplier_contracts import get_supplier_source_contract as _get
-    contract = runtime.SupplierSourceRuntimeContract(_get("vetapet.vet_price_list.v1", "v1").declaration)
-    cells = [{"column_name": name} for name in (
-        "Product Name (bilingual)", "重量 1 (Weight)", "批發價 1", "建議零售價 1", "量 2 (Box)", "盒批發價 2",
-    )]
-    offers = addable_required_columns(contract, cells)
-    assert [(o.field_key, o.column_name) for o in offers] == [("supplier_sku", "CODE NO / 編號")]
+    # Codeless-products ruling (2026-08-26): the row CONFORMS without a code —
+    # it becomes a manual-match candidate, and its offering identity is the
+    # internal SKU adopted when the reviewer confirms the product entity.
+    assert not [i for i in item.issues if i.severity == "BLOCKING"], (
+        "a codeless row is considered, not held — identity arrives at manual match"
+    )
+    assert item.normalized_fields.get("supplier_sku") is None
 
 
 def test_vetapet_goods_accessory_layout_conforms():

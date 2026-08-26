@@ -997,6 +997,17 @@ class ApprovedCommercialStateService(_TransactionalService):
         _assert_candidate_applicable(self.db, candidate)
         applied_at = command.applied_at or _now()
 
+        # Codeless rows (ruling 2026-08-26): identity comes from the entity.
+        created_variant_early = None
+        self._adopt_internal_identity(candidate, candidate_row)
+        if _supplier_identity_missing(candidate):
+            # Only a CONFIRMED_CREATE awaiting its mint reaches here — the
+            # applicability gate refused everything else — so mint first and
+            # let the new product's SKU be the identity the offering is keyed
+            # by.
+            created_variant_early = self._create_variant_if_drafted(candidate, candidate_row, None)
+            self._adopt_internal_identity(candidate, candidate_row)
+
         supplier_product_key = _candidate_supplier_product_key(candidate)
         existing_supplier_product = _find_candidate_offering(
             self.db, candidate, key=supplier_product_key
@@ -1030,7 +1041,7 @@ class ApprovedCommercialStateService(_TransactionalService):
         # it. This sits AFTER the replay short-circuits above on purpose: a
         # replayed apply must not create a second product. It is inside the
         # apply transaction, so any later failure rolls the product back too.
-        created_variant = self._create_variant_if_drafted(candidate, candidate_row, existing_supplier_product)
+        created_variant = created_variant_early or self._create_variant_if_drafted(candidate, candidate_row, existing_supplier_product)
 
         supplier_product = existing_supplier_product or self._create_supplier_product(candidate, supplier_product_key, applied_at)
         if existing_supplier_product is not None:
@@ -1176,6 +1187,38 @@ class ApprovedCommercialStateService(_TransactionalService):
         self.db.add(row)
         self.db.flush()
         return row
+
+    def _adopt_internal_identity(
+        self,
+        candidate: MasteringCandidateV1,
+        candidate_row: models.CatalogueMasteringCandidate,
+    ) -> bool:
+        """Give a codeless candidate its offering identity from the matched
+        product entity (ruling 2026-08-26), back-written onto the persisted
+        candidate the same way a minted SKU is — replays and publish then read
+        it like any printed code, and the supplier_sku equalling a Rosetta
+        canonical SKU is itself the record of where the identity came from."""
+        if not _supplier_identity_missing(candidate):
+            return False
+        internal_sku = _internal_identity_sku(self.db, candidate)
+        if not internal_sku:
+            return False
+        resolution = candidate.supplier_product_resolution
+        supplier_id = resolution.supplier_id or _supplier_id_from_source(self.db, candidate.trace.supplier_catalogue_id)
+        if supplier_id is None:
+            return False
+        resolution.supplier_id = supplier_id
+        resolution.supplier_sku = internal_sku
+        # A NEW offering keyed by the internal SKU — never a match claim.
+        resolution.state = ResolutionState.PROPOSED_CREATE
+        payload = json.loads(candidate_row.supplier_product_resolution_json)
+        payload.update({
+            "state": ResolutionState.PROPOSED_CREATE.value,
+            "supplier_id": supplier_id,
+            "supplier_sku": internal_sku,
+        })
+        candidate_row.supplier_product_resolution_json = json.dumps(payload)
+        return True
 
     def _create_variant_if_drafted(
         self,
@@ -1997,6 +2040,29 @@ def _proposal_text(value) -> str | None:
     return value.value if value is not None else None
 
 
+def _supplier_identity_missing(candidate: MasteringCandidateV1) -> bool:
+    resolution = candidate.supplier_product_resolution
+    return not (resolution.supplier_product_id or resolution.supplier_sku or resolution.barcode)
+
+
+def _internal_identity_sku(db: Session, candidate: MasteringCandidateV1) -> str | None:
+    """The Rosetta-internal SKU a codeless row is identified by, or None.
+
+    Ruling 2026-08-26: pages that print no supplier code are still considered.
+    Matching is MANUAL for those rows, and once the reviewer has matched the
+    row to (or created) a product entity, the entity's internal SKU IS the
+    offering identity. Only a CONFIRMED entity qualifies — a proposal is not
+    an identity.
+    """
+    variant = candidate.product_variant_resolution
+    if variant.state not in (ResolutionState.CONFIRMED_MATCH, ResolutionState.CONFIRMED_CREATE):
+        return None
+    product = _resolved_product(db, variant)
+    if product is not None:
+        return product.sku_code
+    return variant.canonical_sku
+
+
 def _candidate_supplier_product_key(candidate: MasteringCandidateV1) -> str:
     resolution = candidate.supplier_product_resolution
     supplier_id = resolution.supplier_id
@@ -2038,11 +2104,26 @@ def _assert_draft_creatable(db: Session, draft) -> None:
 def _assert_candidate_applicable(db: Session, candidate: MasteringCandidateV1) -> None:
     supplier = candidate.supplier_product_resolution
     expected_supplier_id = _supplier_id_from_source(db, candidate.trace.supplier_catalogue_id)
-    if supplier.state in {ResolutionState.UNRESOLVED, ResolutionState.AMBIGUOUS} or supplier.supplier_id is None:
-        raise AmbiguousSupplierOffer("Candidate requires a resolved supplier identity before approval")
-    if expected_supplier_id is not None and supplier.supplier_id != expected_supplier_id:
+    # A codeless row (the page prints no supplier code) is ADOPTABLE once the
+    # reviewer has confirmed its product entity: the entity's internal SKU
+    # becomes the offering identity at apply (ruling 2026-08-26). AMBIGUOUS
+    # supplier evidence still refuses — conflict is not absence.
+    adoptable = (
+        _supplier_identity_missing(candidate)
+        and supplier.state is not ResolutionState.AMBIGUOUS
+        and candidate.product_variant_resolution.state
+        in (ResolutionState.CONFIRMED_MATCH, ResolutionState.CONFIRMED_CREATE)
+        and (supplier.supplier_id is not None or expected_supplier_id is not None)
+    )
+    if (supplier.state in {ResolutionState.UNRESOLVED, ResolutionState.AMBIGUOUS} or supplier.supplier_id is None) and not adoptable:
+        raise AmbiguousSupplierOffer(
+            "Candidate requires a resolved supplier identity before approval — a codeless row "
+            "qualifies only once its product entity is confirmed (matched or created), whose "
+            "internal SKU then identifies the offering"
+        )
+    if supplier.supplier_id is not None and expected_supplier_id is not None and supplier.supplier_id != expected_supplier_id:
         raise SupplierContractMismatch("Candidate supplier resolution does not match its source catalogue")
-    if not (supplier.supplier_sku or supplier.barcode or supplier.supplier_product_id):
+    if not (supplier.supplier_sku or supplier.barcode or supplier.supplier_product_id) and not adoptable:
         raise AmbiguousSupplierOffer("Candidate requires a supplier SKU, barcode, or supplier-product identity")
     if supplier.state in {ResolutionState.PROPOSED_MATCH, ResolutionState.CONFIRMED_MATCH}:
         matches = _supplier_product_matches(
