@@ -52,13 +52,17 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             role=SourceFieldRole.SUPPLIER_SKU,
             requirement=SourceFieldRequirement.REQUIRED,
             source_column="CODE NO / 編號",
-            aliases=["CODE NO", "編號", "CODE"],
+            aliases=["CODE NO", "編號", "CODE", "貨品編號", "貨品編號 (Code no.)"],
             description=(
                 "Vetapet code number. Bare aliases cover the retail sections that print "
                 "編號 alone (letter-spaced 編 號 matches via CJK-space-insensitive folding) "
-                "and the variant tables that print CODE. 'Code No.' (with the period) is "
-                "deliberately NOT an alias: that heading belongs to the code→category "
-                "legend sidebars, which are reference boxes, not product rows."
+                "and the variant tables that print CODE. The accessories pages print "
+                "貨品編號 (Code no.) — aliased in full (2026-08-26; 32 held rows). Bare "
+                "'Code No.' (with the period) is still deliberately NOT an alias of its "
+                "own: that heading belongs to the code→category legend sidebars, which "
+                "are reference boxes, not product rows — the current captures emit no "
+                "such rows, and if one ever appears it would surface as held, never "
+                "published, since legends print no price."
             ),
             evidence=evidence_items,
         ),
@@ -71,7 +75,7 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             # ('Chinese Name' / 'English Name' columns), the ENGLISH name IS
             # the name (user ruling 2026-08-25). The Chinese name stays on the
             # evidence card, never in this field.
-            aliases=["PRODUCT NAME", "產品名稱", "產品", "產品 (Product)", "Product Name (bilingual)", "English Name"],
+            aliases=["PRODUCT NAME", "產品名稱", "產品", "產品 (Product)", "Product Name (bilingual)", "貨品名稱", "貨品名稱 (Name)", "English Name"],
             description=(
                 "Printed product name. Retail sections print 產品 alone (letter-spaced "
                 "產 品 in the source; matched via CJK-space-insensitive folding), and the "
@@ -161,6 +165,7 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             aliases=[
                 "SUGGESTED RETAIL PRICE", "RETAIL PRICE", "SUGGESTED PRICE",
                 "零售價", "建議零售價", "建議零售價 (Retail)", "建議零售價 1",
+                "建議零售價 (Recommended Retail price)",
             ],
             description=(
                 "Suggested retail or retail price field; retail sections print 建議零售價 "

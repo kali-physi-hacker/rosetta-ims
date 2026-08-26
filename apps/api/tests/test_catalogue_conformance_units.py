@@ -941,3 +941,28 @@ def test_vetapet_bilingual_treat_layout_conforms_prices_and_box_stays_evidence()
     )]
     offers = addable_required_columns(contract, cells)
     assert [(o.field_key, o.column_name) for o in offers] == [("supplier_sku", "CODE NO / 編號")]
+
+
+def test_vetapet_goods_accessory_layout_conforms():
+    """The accessories pages (貨品編號 (Code no.) / 貨品名稱 (Name) / 批發價
+    (Wholesale price) / 建議零售價 (Recommended Retail price)) — 32 held rows
+    whose only blocker was the unaliased code heading. Same per-unit ruling:
+    retail beside wholesale. The full code heading is aliased; bare 'Code No.'
+    (the legend sidebars') is still not an alias of its own."""
+    item = _conform_one(
+        "vetapet.vet_price_list.v1",
+        _observation(
+            {
+                "貨品編號 (Code no.)": "75732017",
+                "貨品名稱 (Name)": "伸縮扁拖 AMIGO TAPE 黑色 - L (INNER 1-5 m - Max 50kg)",
+                "批發價 (Wholesale price)": "$186.0",
+                "建議零售價 (Recommended Retail price)": "$298",
+            }
+        ),
+    )
+    assert item.normalized_fields["supplier_sku"]["value"] == "75732017"
+    assert item.normalized_fields["cost"]["amount"] == "186.0"
+    assert item.normalized_fields["cost"]["price_basis"]["code"] == "UNIT"
+    assert item.normalized_fields["rrp"]["amount"] == "298"
+    assert "AMIGO TAPE" in item.normalized_fields["product_name"]["value"]
+    assert not [i for i in item.issues if i.severity == "BLOCKING"]
