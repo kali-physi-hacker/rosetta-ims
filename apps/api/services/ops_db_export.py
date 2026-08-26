@@ -62,7 +62,7 @@ CHANNEL_INPUT_COLUMNS = tuple(
     for prefix in ("selling_price", "selling_price_uom_SPLIT", "logistics_cost_per_unit", "platform_fee_percent")
 )
 BASE_COLUMNS = (
-    "supplier", "supplier_product_code", "barcode", "product_name_supplier", "product_name_rosetta",
+    "supplier", "supplier_product_code", "barcode", "ims_sku", "product_name_supplier", "product_name_rosetta",
     "brand", "weight_value", "weight_unit", "weight_grams", "purchase_uom", "sellable_uom",
     "sellable_units_per_purchase_unit", "content_amount", "content_uom",
     "packaging_text", "order_increment_amount", "order_increment_uom", "minimum_order_amount",
@@ -380,7 +380,10 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
         unit_price = _price_in_sellable_unit(unit_price, channel_uom, row)
 
         row[f"selling_price_{key}"] = _num(price) if price is not None else ""
-        row[f"selling_price_{key}_uom"] = entry.get("uom") or ""
+        # The printed unit is the one the arithmetic used: placeholder junk
+        # ("#N/A") states no unit, and writing it would land in the sheet as a
+        # live error value that poisons every margin formula referencing it.
+        row[f"selling_price_{key}_uom"] = (entry.get("uom") or "").strip() if channel_uom else ""
         row[f"logistics_cost_per_unit_{key}"] = _num(logistics) if logistics is not None else ""
         row[f"platform_fee_percent_{key}"] = _pct(fee) if fee is not None else ""
 
@@ -623,7 +626,7 @@ def _term_from_json(payload):
 def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, pack, link,
          cost_amount, cost_currency, cost_basis, rrp_amount, rrp_currency, terms,
          product_id=None, channel_data=None, supplier_id=None, supplier_sku_index=None,
-         legacy_terms=None, delivery_inputs=None):
+         legacy_terms=None, delivery_inputs=None, product_skus=None):
     weight_value, weight_unit, weight_grams = _weight_parts(variant)
     # The pack's own content count only. Order multiples live in
     # order_increment_amount and must not stand in for a pack size here.
@@ -635,8 +638,12 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
             per_purchase = _num(link.units_per_pack)
 
     purchase_uom = _uom(getattr(pack, "purchase_uom_code", None), getattr(pack, "purchase_uom_label", None)) or (cost_basis or "")
+    # Legacy product records hold placeholder units ("#N/A"); a placeholder is
+    # not a unit, so it must not survive into sellable_uom — blank falls
+    # through to the purchase-unit default below instead.
+    variant_uom = (getattr(variant, "uom", "") or "").strip()
     sellable_uom = _uom(getattr(pack, "sellable_unit_uom_code", None), getattr(pack, "sellable_unit_uom_label", None)) or (
-        (variant.uom if variant else "") or ""
+        variant_uom if _channel_uom(variant_uom) else ""
     )
     if not sellable_uom or sellable_uom.upper() in MEASURE_CODES:
         # Nothing named a unit, or the only noun is a measure ("30 ML / BOTTLE").
@@ -652,6 +659,13 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
     per_unit = _num(per_unit_cost) if per_unit_cost is not None else ""
 
     code = str(sku or "").strip().upper()
+    # Prefer the supplier's own code: it reaches the product the business
+    # actually sells, not a record the pipeline happened to create. The IMS
+    # SKU printed on the row and the channel prices beside it must name the
+    # SAME product, so the resolution happens once, here.
+    index = supplier_sku_index or {}
+    resolved_product_id = index.get((supplier_id, code)) or index.get((None, code)) or product_id
+    ims_sku = (product_skus or {}).get(resolved_product_id) or (getattr(variant, "sku_code", None) or "")
     legacy = (legacy_terms or {})
     terms = list(terms) + list(legacy.get((supplier_id, code)) or legacy.get((None, code)) or [])
     # Dropped outright, not just left uncosted: a term we cannot trust would
@@ -679,6 +693,7 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
         "supplier": supplier_name or "",
         "supplier_product_code": sku or "",
         "barcode": barcode or "",
+        "ims_sku": str(ims_sku or ""),
         "product_name_supplier": name_supplier or "",
         "product_name_rosetta": name_rosetta or "",
         "brand": (variant.brand if variant else "") or "",
@@ -719,11 +734,7 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
         slot = {field: slot.get(field, "") for field in SLOT_FIELDS}
         for field, value in slot.items():
             row[f"mbb_tier_{index + 1}_{field}"] = value
-    # Prefer the supplier's own code: it reaches the product the business
-    # actually sells, not a record the pipeline happened to create.
-    index = supplier_sku_index or {}
-    linked = index.get((supplier_id, code)) or index.get((None, code))
-    return _fill_channels(row, linked or product_id, channel_data or {}, delivery_inputs)
+    return _fill_channels(row, resolved_product_id, channel_data or {}, delivery_inputs)
 
 
 def build_published_rows(db) -> list[dict]:
@@ -741,6 +752,7 @@ def build_published_rows(db) -> list[dict]:
         terms.setdefault(term.supplier_product_id, []).append(_term_from_model(term))
     suppliers = {s.id: s for s in db.query(models.Supplier).all()}
     variants = {v.id: v for v in db.query(models.ProductVariant).all()}
+    product_skus = {v.id: v.sku_code for v in variants.values() if v.sku_code}
     offerings = {o.id: o for o in db.query(models.SupplierOffering).filter(models.SupplierOffering.id.in_(offering_ids)).all()} if offering_ids else {}
     links = {(l.supplier_id, l.product_id): l for l in db.query(models.ProductSupplier).all()}
     channel_data = _load_channels(db)
@@ -777,6 +789,7 @@ def build_published_rows(db) -> list[dict]:
                 supplier_sku_index=supplier_sku_index,
                 legacy_terms=legacy_terms,
                 delivery_inputs=delivery_inputs,
+                product_skus=product_skus,
             )
         )
     return rows

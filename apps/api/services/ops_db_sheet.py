@@ -61,11 +61,19 @@ def _client(credentials_file: str | None = None):
     return gspread.authorize(creds)
 
 
+#: Strings USER_ENTERED would parse into live error values. A cell holding the
+#: TEXT "#N/A" must stay text — as an error value it poisons every formula
+#: that references the cell.
+_ERROR_LITERALS = {"#N/A", "#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#NULL!", "#NUM!", "#ERROR!"}
+
+
 def _cell(value):
     """Sheets wants a bare value; the exporter hands out formatted strings."""
     if value in (None, ""):
         return ""
     text = str(value)
+    if text.strip().upper() in _ERROR_LITERALS:
+        return "'" + text
     # Keep numbers numeric so the sheet can compute with them, but never coerce
     # a code like "0330480090" that only looks numeric.
     try:
@@ -104,7 +112,11 @@ def _formula(column: str, line: int, data: dict) -> str | None:
         price, basis = at("cost_price_amount"), at("cost_price_basis_uom")
         buy, sell = at("purchase_uom"), at("sellable_uom")
         per = at("sellable_units_per_purchase_unit")
-        return (f'=IF({price}="","",IF(OR(UPPER({basis})="UNIT",{buy}="",UPPER({buy})=UPPER({sell})),'
+        # IFERROR: a hand-typed error value in a unit cell reads as "units
+        # differ", the same as blank — it must not turn the cost itself into
+        # an error that then poisons every margin built on it.
+        return (f'=IF({price}="","",IF(OR(IFERROR(UPPER({basis})="UNIT",FALSE),{buy}="",'
+                f'IFERROR(UPPER({buy})=UPPER({sell}),FALSE)),'
                 f'{price},IF(N({per})>0,{price}/{per},"")))')
 
     for channel in CHANNELS:
@@ -114,8 +126,11 @@ def _formula(column: str, line: int, data: dict) -> str | None:
         # pack contains — per mL of a 30 mL bottle — the price is restated in
         # the unit we cost in before any margin is taken, in the formula itself
         # so the arithmetic stays visible to whoever opens the sheet.
-        priced = (f'IF(AND(UPPER({at(f"selling_price_{channel}_uom")})=UPPER({at("content_uom")}),'
-                  f'N({at("content_amount")})>0),{sell}*{at("content_amount")},{sell})')
+        # IFERROR: an error value in the uom cell states no unit, so no
+        # restatement happens — the margin still computes from the raw price
+        # instead of collapsing to #N/A.
+        priced = (f'IF(IFERROR(AND(UPPER({at(f"selling_price_{channel}_uom")})=UPPER({at("content_uom")}),'
+                  f'N({at("content_amount")})>0),FALSE),{sell}*{at("content_amount")},{sell})')
 
         def gross(cost: str, priced: str = priced) -> str:
             return f'=IF(OR({cost}="",{sell}=""),"",ROUND(({priced}-{cost})/({priced})*100,2))'
