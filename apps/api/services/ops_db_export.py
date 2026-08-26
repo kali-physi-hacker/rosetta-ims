@@ -62,7 +62,7 @@ CHANNEL_INPUT_COLUMNS = tuple(
     for prefix in ("selling_price", "selling_price_uom_SPLIT", "logistics_cost_per_unit", "platform_fee_percent")
 )
 BASE_COLUMNS = (
-    "supplier", "supplier_product_code", "barcode", "ims_sku", "product_name_supplier", "product_name_rosetta",
+    "supplier", "supplier_product_code", "barcode", "ims_sku", "product_name",
     "brand", "weight_value", "weight_unit", "weight_grams", "purchase_uom", "sellable_uom",
     "sellable_units_per_purchase_unit", "content_amount", "content_uom",
     "packaging_text", "order_increment_amount", "order_increment_uom", "minimum_order_amount",
@@ -626,7 +626,7 @@ def _term_from_json(payload):
 def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, pack, link,
          cost_amount, cost_currency, cost_basis, rrp_amount, rrp_currency, terms,
          product_id=None, channel_data=None, supplier_id=None, supplier_sku_index=None,
-         legacy_terms=None, delivery_inputs=None, product_skus=None):
+         legacy_terms=None, delivery_inputs=None, products_by_id=None):
     weight_value, weight_unit, weight_grams = _weight_parts(variant)
     # The pack's own content count only. Order multiples live in
     # order_increment_amount and must not stand in for a pack size here.
@@ -665,7 +665,8 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
     # SAME product, so the resolution happens once, here.
     index = supplier_sku_index or {}
     resolved_product_id = index.get((supplier_id, code)) or index.get((None, code)) or product_id
-    ims_sku = (product_skus or {}).get(resolved_product_id) or (getattr(variant, "sku_code", None) or "")
+    resolved_product = (products_by_id or {}).get(resolved_product_id)
+    ims_sku = getattr(resolved_product, "sku_code", None) or getattr(variant, "sku_code", None) or ""
     legacy = (legacy_terms or {})
     terms = list(terms) + list(legacy.get((supplier_id, code)) or legacy.get((None, code)) or [])
     # Dropped outright, not just left uncosted: a term we cannot trust would
@@ -694,8 +695,11 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
         "supplier_product_code": sku or "",
         "barcode": barcode or "",
         "ims_sku": str(ims_sku or ""),
-        "product_name_supplier": name_supplier or "",
-        "product_name_rosetta": name_rosetta or "",
+        # One name column (user ruling 2026-08-26): ours — from the SAME
+        # resolved product the ims_sku and channel prices speak about. The
+        # supplier's own wording stands in only while the row is not yet
+        # matched to a product of ours; a nameless row helps nobody.
+        "product_name": getattr(resolved_product, "name", None) or (name_rosetta or "") or (name_supplier or ""),
         "brand": (variant.brand if variant else "") or "",
         "weight_value": weight_value,
         "weight_unit": weight_unit,
@@ -752,7 +756,6 @@ def build_published_rows(db) -> list[dict]:
         terms.setdefault(term.supplier_product_id, []).append(_term_from_model(term))
     suppliers = {s.id: s for s in db.query(models.Supplier).all()}
     variants = {v.id: v for v in db.query(models.ProductVariant).all()}
-    product_skus = {v.id: v.sku_code for v in variants.values() if v.sku_code}
     offerings = {o.id: o for o in db.query(models.SupplierOffering).filter(models.SupplierOffering.id.in_(offering_ids)).all()} if offering_ids else {}
     links = {(l.supplier_id, l.product_id): l for l in db.query(models.ProductSupplier).all()}
     channel_data = _load_channels(db)
@@ -789,7 +792,7 @@ def build_published_rows(db) -> list[dict]:
                 supplier_sku_index=supplier_sku_index,
                 legacy_terms=legacy_terms,
                 delivery_inputs=delivery_inputs,
-                product_skus=product_skus,
+                products_by_id=variants,
             )
         )
     return rows
