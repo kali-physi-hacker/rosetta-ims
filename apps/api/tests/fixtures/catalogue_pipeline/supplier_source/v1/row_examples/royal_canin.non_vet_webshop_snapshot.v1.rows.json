@@ -1,0 +1,100 @@
+{
+  "contract_id": "royal_canin.non_vet_webshop_snapshot.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "CONFIRMED",
+  "supplier_id": 39,
+  "supplier_name": "Royal Canin (Non Vet)",
+  "notes": "Royal Canin publishes no price list, so the sample is the connector's own snapshot of their HK webshop, read under the clinic's account on 2026-08-28 and split by the channel Royal Canin files each product under. This half is the RETAIL range (292 products: SHN, FHN, FCN, BHN, FBN, CCN), which invoices on the non-vet account with its own rebate ladder and credit terms. A delimited row has no page of its own — page_number 1 is the single snapshot unit.",
+  "examples": [
+    {
+      "example_id": "royal-canin-1002005010-retail-unit-priced-bag",
+      "source": {
+        "sample_reference": "external-sample:royal-canin-hk-non-vet-2026-08-28.csv",
+        "page_number": 1,
+        "extraction_method": "connector snapshot (Algolia product index, customer group 879, retail channels)",
+        "text_excerpt": "1002005010,HK_1002005010,SHN DOG XSMALL PUPPY 500G,3182550793568,50,UNIT,0.5"
+      },
+      "raw_row": {
+        "original_sku": "1002005010",
+        "sku": "HK_1002005010",
+        "name": "SHN DOG XSMALL PUPPY 500G",
+        "ean_code": "3182550793568",
+        "price_hkd": "50",
+        "nav_uom": "UNIT",
+        "navision_weight": "0.5",
+        "min_sale_qty": "1",
+        "qty_increments": "0"
+      },
+      "runtime_input": {
+        "supplier_sku": "1002005010",
+        "description": "SHN DOG XSMALL PUPPY 500G",
+        "barcode": "3182550793568",
+        "cost_price": "50",
+        "purchase_unit": "UNIT",
+        "pack_weight_kg": "0.5",
+        "rrp": null,
+        "brand": null,
+        "category": null
+      },
+      "expected_runtime_item": {
+        "supplier_sku": "1002005010",
+        "cost_price": "50",
+        "rrp": null,
+        "units_per_pack": 1
+      },
+      "expected_semantics": {
+        "price_basis": "UNIT",
+        "currency": "HKD",
+        "content_amount": "0.5",
+        "content_uom": "KG",
+        "purchase_uom": "UNIT",
+        "break_pack_allowed": null,
+        "reason": "A retail Size Health Nutrition bag: nav_uom says UNIT, so HK$50 buys the one 500 g bag."
+      }
+    },
+    {
+      "example_id": "royal-canin-2241400-retail-inner-box-priced-case",
+      "source": {
+        "sample_reference": "external-sample:royal-canin-hk-non-vet-2026-08-28.csv",
+        "page_number": 1,
+        "extraction_method": "connector snapshot (Algolia product index, customer group 879, retail channels)",
+        "text_excerpt": "2241400,HK_2241400,FBN CAT PERSIAN AD P 85GX12,,105,INNER BOX,1.02"
+      },
+      "raw_row": {
+        "original_sku": "2241400",
+        "sku": "HK_2241400",
+        "name": "FBN CAT PERSIAN AD P 85GX12",
+        "price_hkd": "105",
+        "nav_uom": "INNER BOX",
+        "navision_weight": "1.02",
+        "min_sale_qty": "1",
+        "qty_increments": "0"
+      },
+      "runtime_input": {
+        "supplier_sku": "2241400",
+        "description": "FBN CAT PERSIAN AD P 85GX12",
+        "cost_price": "105",
+        "purchase_unit": "INNER BOX",
+        "pack_weight_kg": "1.02",
+        "rrp": null,
+        "brand": null,
+        "category": null
+      },
+      "expected_runtime_item": {
+        "supplier_sku": "2241400",
+        "cost_price": "105",
+        "rrp": null
+      },
+      "expected_semantics": {
+        "price_basis": "CASE",
+        "currency": "HKD",
+        "content_amount": "1.02",
+        "content_uom": "KG",
+        "purchase_uom": "INNER BOX",
+        "break_pack_allowed": null,
+        "reason": "The retail range prices cases too: nav_uom says INNER BOX, so HK$105 buys twelve 85 g pouches, not one. The name prints the pack (85G X 12) and navision_weight agrees (12 x 85 g = 1.02 kg), so twelve is evidenced rather than assumed, and units_per_pack is deliberately NOT forced to 1."
+      }
+    }
+  ],
+  "technical_debt": []
+}

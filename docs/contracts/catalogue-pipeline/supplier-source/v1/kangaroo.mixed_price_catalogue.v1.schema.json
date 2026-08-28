@@ -495,9 +495,30 @@
           "title": "Price Basis Per Column",
           "type": "boolean"
         },
+        "price_basis_source_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field key whose VALUE names the price basis for that ROW, when the source states it per row rather than per column (Royal Canin's webshop prints one price column beside a unit column saying UNIT or INNER BOX). The contract-level price_basis stays null and each row's basis is read from this field through price_basis_value_map; a row whose value is missing or unmapped resolves to no basis and is held, never guessed.",
+          "title": "Price Basis Source Field"
+        },
         "price_basis_status": {
           "$ref": "#/$defs/SemanticResolutionStatus",
           "description": "Evidence status for the price basis."
+        },
+        "price_basis_value_map": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Source spelling → unit code, for price_basis_source_field. Matched case-insensitively on the trimmed value. Declared, never inferred: a unit the supplier invents is a decision for a person, not a default.",
+          "title": "Price Basis Value Map",
+          "type": "object"
         },
         "rrp_source_field": {
           "anyOf": [

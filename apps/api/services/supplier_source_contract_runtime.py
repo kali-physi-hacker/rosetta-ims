@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import UnitCode
 from schemas.catalogue_pipeline.supplier_contracts import (
     SupplierContractSupportStatus,
@@ -213,8 +214,18 @@ class SupplierSourceRuntimeContract:
     def _apply_price_basis_compatibility(self, item: dict) -> None:
         """Adapt approved per-sellable-unit prices to the current flat runtime field."""
 
-        basis = self.declaration.pricing.price_basis
-        if basis is None and self.declaration.pricing.price_basis_per_column:
+        pricing = self.declaration.pricing
+        basis = pricing.price_basis
+        if basis is None and pricing.price_basis_source_field:
+            # Per-ROW contracts: the row itself names what its price buys, so
+            # the item's own value decides — the same lookup conformance makes.
+            stated = item.get(pricing.price_basis_source_field)
+            needle = str(stated).strip().casefold() if stated is not None else ""
+            for spelling, code in (pricing.price_basis_value_map or {}).items():
+                if str(spelling).strip().casefold() == needle:
+                    basis = UnitOfMeasure(code=code)
+                    break
+        if basis is None and pricing.price_basis_per_column:
             # Per-column contracts: the basis belongs to whichever price
             # column this item actually carried — first declared wins, the
             # same order conformance fills the cost slot in.

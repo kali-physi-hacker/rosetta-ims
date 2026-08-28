@@ -391,18 +391,55 @@ class PricingSourceSemantics(SupplierSourceModel):
             "enforces that every SOURCE_PRICE field actually declares one."
         ),
     )
+    price_basis_source_field: str | None = Field(
+        None,
+        description=(
+            "Field key whose VALUE names the price basis for that ROW, when the source states "
+            "it per row rather than per column (Royal Canin's webshop prints one price column "
+            "beside a unit column saying UNIT or INNER BOX). The contract-level price_basis "
+            "stays null and each row's basis is read from this field through "
+            "price_basis_value_map; a row whose value is missing or unmapped resolves to no "
+            "basis and is held, never guessed."
+        ),
+    )
+    price_basis_value_map: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Source spelling → unit code, for price_basis_source_field. Matched "
+            "case-insensitively on the trimmed value. Declared, never inferred: a unit the "
+            "supplier invents is a decision for a person, not a default."
+        ),
+    )
     notes: str | None = Field(None, description="Business-readable price semantics.")
 
     @model_validator(mode="after")
     def _validate_pricing_semantics(self):
+        if self.price_basis_source_field:
+            if self.price_basis is not None:
+                raise ValueError(
+                    "price_basis_source_field contracts must leave the contract-level "
+                    "price_basis null — the row states it"
+                )
+            if not self.price_basis_value_map:
+                raise ValueError(
+                    "price_basis_source_field requires price_basis_value_map: the source's "
+                    "own spellings must be declared, not guessed"
+                )
+            for spelling, code in self.price_basis_value_map.items():
+                if not str(spelling).strip() or not str(code).strip():
+                    raise ValueError("price_basis_value_map entries must both be non-empty")
         if self.price_basis_status == SemanticResolutionStatus.UNRESOLVED and self.price_basis is not None:
             raise ValueError("unresolved price basis must leave price_basis null")
         if (
             self.price_basis_status != SemanticResolutionStatus.UNRESOLVED
             and self.price_basis is None
             and not self.price_basis_per_column
+            and not self.price_basis_source_field
         ):
-            raise ValueError("resolved price basis requires price_basis (or price_basis_per_column)")
+            raise ValueError(
+                "resolved price basis requires price_basis "
+                "(or price_basis_per_column, or price_basis_source_field)"
+            )
         if self.price_basis_per_column and self.price_basis is not None:
             raise ValueError("price_basis_per_column contracts must leave the contract-level price_basis null — the columns own it")
         if self.price_basis is not None:

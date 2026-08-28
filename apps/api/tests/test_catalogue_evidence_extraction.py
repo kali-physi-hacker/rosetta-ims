@@ -56,12 +56,24 @@ def test_spreadsheet_preserves_all_sheets_rows_cells_formulas_and_duplicates():
 
     assert result.status == ExtractionStatus.COMPLETE
     assert result.units_attempted == result.units_completed == 2
-    assert [item.observation_key for item in result.observations] == [
-        "sheet:Price List:row:1",
-        "sheet:Price List:row:2",
-        "sheet:Price List:row:3",
-        "sheet:Terms:row:1",
+    # A row is named by WHAT IT SAYS, not where it sits — the same identity
+    # rule the page reader uses. A re-exported sheet where one inserted product
+    # shifts everything below it must not rename every row beneath, or the
+    # document desk (which folds a supplier's captures on this key) would treat
+    # two different products as one.
+    keys = [item.observation_key for item in result.observations]
+    assert [key.split(":obs:")[0] for key in keys] == [
+        "sheet:Price List",
+        "sheet:Price List",
+        "sheet:Price List",
+        "sheet:Terms",
     ]
+    assert len(set(keys)) == 4, "every observation keeps a distinct identity"
+    # The two byte-identical product rows share a digest and are told apart by
+    # their occurrence ordinal, so a genuine duplicate is preserved, not merged.
+    duplicate_digests = [keys[1].split(":obs:")[1], keys[2].split(":obs:")[1]]
+    assert duplicate_digests[0].split(":")[0] == duplicate_digests[1].split(":")[0]
+    assert duplicate_digests[0].endswith(":1") and duplicate_digests[1].endswith(":2")
     assert result.observations[1].source_location.cell_range == "A2:C2"
     assert result.observations[1].raw_cells[2].cell_reference == "C2"
     # Formula cells preserve the formula; raw_value carries the workbook's

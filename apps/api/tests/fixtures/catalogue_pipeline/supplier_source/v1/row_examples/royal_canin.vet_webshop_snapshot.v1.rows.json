@@ -1,0 +1,57 @@
+{
+  "contract_id": "royal_canin.vet_webshop_snapshot.v1",
+  "contract_version": "v1",
+  "row_evidence_status": "CONFIRMED",
+  "supplier_id": 40,
+  "supplier_name": "Royal Canin (Vet)",
+  "notes": "Royal Canin publishes no price list, so the sample is the connector's own snapshot of their HK webshop, read under the clinic's account on 2026-08-27 and split by the channel Royal Canin files each product under. This half is the veterinary range (162 products, VHN/VD). The two rows below are the pair that matters commercially: the same price column means one bag on one row and a twelve-pouch case on the next, and only the row's own nav_uom says which. A delimited row has no page of its own — page_number 1 is the single snapshot unit.",
+  "examples": [
+    {
+      "example_id": "royal-canin-4200600-inner-box-priced-case",
+      "source": {
+        "sample_reference": "external-sample:royal-canin-hk-2026-08-27.csv",
+        "page_number": 1,
+        "extraction_method": "connector snapshot (Algolia product index, customer group 879)",
+        "text_excerpt": "4200600,HK_4200600,FHN CAT AGEING 15+ P 85GX12,9003579050163,105,INNER BOX,1.02"
+      },
+      "raw_row": {
+        "original_sku": "4200600",
+        "sku": "HK_4200600",
+        "name": "FHN CAT AGEING 15+ P 85GX12",
+        "ean_code": "9003579050163",
+        "price_hkd": "105",
+        "nav_uom": "INNER BOX",
+        "navision_weight": "1.02",
+        "in_stock": "FALSE",
+        "min_sale_qty": "1",
+        "qty_increments": "0"
+      },
+      "runtime_input": {
+        "supplier_sku": "4200600",
+        "description": "FHN CAT AGEING 15+ P 85GX12",
+        "barcode": "9003579050163",
+        "cost_price": "105",
+        "purchase_unit": "INNER BOX",
+        "pack_weight_kg": "1.02",
+        "rrp": null,
+        "brand": null,
+        "category": null
+      },
+      "expected_runtime_item": {
+        "supplier_sku": "4200600",
+        "cost_price": "105",
+        "rrp": null
+      },
+      "expected_semantics": {
+        "price_basis": "CASE",
+        "currency": "HKD",
+        "content_amount": "1.02",
+        "content_uom": "KG",
+        "purchase_uom": "INNER BOX",
+        "break_pack_allowed": null,
+        "reason": "nav_uom says INNER BOX, so HK$105 buys the case, not a pouch. The name prints the pack (85G X 12) and navision_weight agrees (12 x 85 g = 1.02 kg), so twelve is evidenced rather than assumed — and units_per_pack is deliberately NOT forced to 1, which is what keeps a case from being read as a single item."
+      }
+    }
+  ],
+  "technical_debt": []
+}

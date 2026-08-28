@@ -16,6 +16,7 @@ import platform
 import re
 import threading
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from enum import Enum
@@ -501,6 +502,7 @@ def _extract_spreadsheet(content: bytes) -> ExtractionResult:
         for sheet in sheets:
             observed_rows = 0
             header: dict[int, str | None] = {}
+            seen_digests: Counter[str] = Counter()
             try:
                 for row in sheet.iter_rows():
                     non_empty = [cell for cell in row if cell.value is not None and str(cell.value).strip()]
@@ -516,7 +518,14 @@ def _extract_spreadsheet(content: bytes) -> ExtractionResult:
                         f"{get_column_letter(first_column)}{row_number}:"
                         f"{get_column_letter(last_column)}{row_number}"
                     )
-                    key = f"sheet:{sheet.title}:row:{row_number}"
+                    # Content identity, as for CSV and for pages: a re-exported
+                    # sheet must name a row by what it says, not by where an
+                    # insertion happened to leave it.
+                    digest = _row_digest(
+                        header, [("" if cell.value is None else str(cell.value)) for cell in row]
+                    )
+                    seen_digests[digest] += 1
+                    key = f"sheet:{sheet.title}:obs:{digest}:{seen_digests[digest]}"
                     raw_cells = tuple(
                         RawCell(
                             cell_reference=cell.coordinate,
@@ -606,6 +615,22 @@ def _is_formula_value(value: Any) -> bool:
     return isinstance(value, str) and value.startswith("=")
 
 
+def _row_digest(header: dict[int, str | None], row: list[str]) -> str:
+    """Stable identity for one delimited row: its headings and its values.
+
+    Mirrors the page reader's digest so both source kinds name a row the same
+    way — by what it says, not where it sits.
+    """
+
+    material = {
+        "columns": [header.get(index) for index in range(1, len(row) + 1)],
+        "cells": [str(value) for value in row],
+    }
+    return hashlib.sha256(
+        json.dumps(material, sort_keys=True, ensure_ascii=False).encode()
+    ).hexdigest()[:16]
+
+
 def _header_labels(rows: list[list[str]]) -> dict[int, str | None]:
     """First non-empty row's values as column labels, keyed by 1-based column index.
 
@@ -641,10 +666,19 @@ def _extract_csv(content: bytes) -> ExtractionResult:
 
     header = _header_labels(rows)
     observations: list[ExtractedEvidence] = []
+    seen_digests: Counter[str] = Counter()
     for row_number, row in enumerate(rows, start=1):
         if not any(value.strip() for value in row):
             continue
-        key = f"csv:row:{row_number}"
+        # Identity is the row's CONTENT, not its position — the same discipline
+        # the page reader uses. A delimited source is usually a re-exported
+        # snapshot of the same catalogue, where one inserted product shifts
+        # every row beneath it; positional keys would then call two different
+        # products the same row, and the document desk (which folds a
+        # supplier's captures on this key) would hide one behind the other.
+        digest = _row_digest(header, row)
+        seen_digests[digest] += 1
+        key = f"csv:obs:{digest}:{seen_digests[digest]}"
         last_column = max(1, len(row))
         observations.append(
             ExtractedEvidence(

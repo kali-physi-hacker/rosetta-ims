@@ -38,6 +38,8 @@ EXPECTED_CONTRACT_IDS = [
     "kpn_trading.case_only_price_list.v1",
     "kpn_trading.catalogue_bundle.v1",
     "kpn_trading.pack_price_list.v1",
+    "royal_canin.non_vet_webshop_snapshot.v1",
+    "royal_canin.vet_webshop_snapshot.v1",
     "vetapet.non_vet_price_list.v1",
     "vetapet.vet_price_list.v1",
 ]
@@ -196,6 +198,13 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # vet layout pinned by kangaroo_vet_clinic. Each price column
         # declares its own basis.
         "kangaroo_pet_nutrition.unit_price_list.v1",
+        # Royal Canin's catalogue is fetched from their webshop rather than
+        # sent as a file, and the connector writes the snapshot's headings
+        # itself — so the source shape is guaranteed, not inferred. Verified
+        # 2026-08-27 against a live read: 454 products, every one conforming
+        # with a price, zero held.
+        "royal_canin.non_vet_webshop_snapshot.v1",
+        "royal_canin.vet_webshop_snapshot.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):

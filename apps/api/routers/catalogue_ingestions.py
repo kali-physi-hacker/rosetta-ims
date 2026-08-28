@@ -216,6 +216,145 @@ def list_supported_supplier_contracts(
     return {"suppliers": suppliers}
 
 
+class RoyalCaninCaptureRequest(BaseModel):
+    force_incomplete: bool = Field(
+        False,
+        description=(
+            "Release a snapshot that came back materially shorter than the last one. "
+            "A part-finished read looks exactly like a mass delisting, so this is a "
+            "person's decision, never a default."
+        ),
+    )
+
+
+def _royal_canin_result(outcome) -> dict[str, Any]:
+    """One supplier's half of a capture, as a person needs to read it."""
+    return {
+        "product_range": outcome.product_range,
+        "supplier_id": outcome.supplier_id,
+        "supplier": outcome.supplier_label,
+        "status": outcome.status,
+        "rows": outcome.row_count,
+        "checksum": outcome.checksum,
+        "filename": outcome.filename,
+        "completeness": outcome.completeness,
+        # Coded, not just worded: an unpriced product and a product filed under
+        # two channels want different answers from a person, and a screen given
+        # only sentences cannot tell them apart.
+        "warnings": [
+            {"code": warning.code, "message": warning.message} for warning in outcome.warnings
+        ],
+        "refusal": outcome.refusal,
+        "releasable": outcome.releasable,
+        "ingestion_run_id": (
+            str(outcome.ingestion_run_id) if outcome.ingestion_run_id else None
+        ),
+        "status_url": (
+            f"/catalogues/ingestions/{outcome.ingestion_run_id}"
+            if outcome.ingestion_run_id
+            else None
+        ),
+        "message": (
+            f"Queued {outcome.row_count} products for {outcome.supplier_label}."
+            if outcome.status == "submitted"
+            else outcome.refusal
+            if outcome.status == "refused"
+            else f"{outcome.supplier_label} is unchanged ({outcome.row_count} products); nothing was submitted."
+        ),
+    }
+
+
+@router.post("/connectors/royal-canin/capture", status_code=status.HTTP_202_ACCEPTED)
+def capture_royal_canin_catalogue(
+    request: Request,
+    body: RoyalCaninCaptureRequest | None = None,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Read Royal Canin's webshop now and queue it if the catalogue changed.
+
+    Royal Canin sends no price list, so their catalogue is fetched rather than
+    uploaded. Everything after this point is the ordinary pipeline: the
+    snapshot becomes a source document, and conformance, matching, review and
+    publishing proceed exactly as they do for a supplier who emails a PDF.
+    """
+    from services import royal_canin_connector, royal_canin_ingestion
+
+    payload = body or RoyalCaninCaptureRequest()
+    try:
+        outcomes = royal_canin_ingestion.capture_and_submit(
+            db,
+            submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+            force_incomplete=payload.force_incomplete,
+        )
+    except royal_canin_ingestion.RoyalCaninCaptureRefused as exc:
+        # 409 only when the whole capture queued nothing — the service raises
+        # in no other case. The other suppliers' outcomes ride along, because
+        # "unchanged" is an answer and dropping it leaves a person unable to
+        # tell a supplier that was fine from one that was never looked at.
+        detail: dict[str, Any] = dict(_detail("ROYAL_CANIN_CAPTURE_INCOMPLETE", str(exc)))
+        detail["results"] = [_royal_canin_result(o) for o in getattr(exc, "outcomes", ())]
+        raise HTTPException(status_code=409, detail=detail) from exc
+    except royal_canin_connector.RoyalCaninConnectorError as exc:
+        # The connector's errors are written FOR the person holding the
+        # button — which key to re-read, which group to re-verify. Falling
+        # through to _http_error would replace all of that with "Catalogue
+        # submission failed", which tells them nothing they can act on.
+        raise HTTPException(
+            status_code=502, detail=_detail("ROYAL_CANIN_SOURCE_UNAVAILABLE", str(exc))
+        ) from exc
+    except Exception as exc:
+        raise _http_error(exc) from exc
+
+    for outcome in outcomes:
+        if outcome.status != "submitted":
+            continue
+        try:
+            audit_log.record(
+                db,
+                action="catalogue.royal_canin_capture",
+                actor=user,
+                entity_type="ingestion_run",
+                entity_id=str(outcome.ingestion_run_id),
+                entity_label=outcome.filename,
+                details={
+                    "supplier_id": outcome.supplier_id,
+                    "product_range": outcome.product_range,
+                    "rows": outcome.row_count,
+                    "checksum": outcome.checksum,
+                    "previous_checksum": outcome.previous_checksum,
+                    "completeness": outcome.completeness,
+                    "forced": payload.force_incomplete,
+                },
+                request=request,
+                commit=True,
+            )
+        except Exception:
+            db.rollback()
+            logger.exception(
+                "Royal Canin capture %s was submitted but audit logging failed",
+                outcome.ingestion_run_id,
+            )
+
+    results = [_royal_canin_result(outcome) for outcome in outcomes]
+    queued = [r for r in results if r["status"] == "submitted"]
+    refused = [r for r in results if r["status"] == "refused"]
+    return {
+        # Royal Canin invoices veterinary and retail separately, so one read
+        # produces one result per supplier — and one supplier's refusal does
+        # not speak for the other, which may already be queued.
+        "results": results,
+        "status": "submitted" if queued else "unchanged",
+        # Only what was actually queued. Counting an unchanged or refused
+        # supplier's rows here would report work that never reached the desk.
+        "rows": sum(r["rows"] for r in queued),
+        "message": " ".join(
+            [r["message"] for r in queued]
+            + [r["message"] for r in refused]
+        ) or "Royal Canin's catalogue is unchanged; nothing was submitted.",
+    }
+
+
 @router.post(
     "/ingestions",
     response_model=CatalogueSubmissionResponse,

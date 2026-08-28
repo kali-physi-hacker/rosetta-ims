@@ -123,6 +123,199 @@ const RUN_PILL: Record<string, { bg: string; color: string }> = {
 
 export const Route = createFileRoute('/_authed/catalogues/')({ component: CataloguesPage })
 
+/** Suppliers whose catalogue Rosetta reads directly, because they publish no file.
+ *
+ * Listed beside the upload box as the OTHER way a catalogue can arrive, so the
+ * screen answers "where is this supplier's price list?" for both kinds. Adding
+ * a connector later means adding a row here.
+ */
+const CONNECTORS = [
+  {
+    key: 'royal-canin',
+    name: 'Royal Canin',
+    where: 'Hong Kong webshop · your clinic account',
+    why: 'Royal Canin issues no price list — Rosetta reads their catalogue and your trade prices straight from their system, and files each product under the account that invoices it: veterinary or retail.',
+    endpoint: '/catalogues/connectors/royal-canin/capture',
+  },
+] as const
+
+/** One per-product note, and what kind of problem it actually is. */
+type ConnectorWarning = { code: string; message: string }
+
+/** What one capture did for one supplier. */
+type ConnectorResult = {
+  supplier: string
+  product_range: string
+  status: 'submitted' | 'unchanged' | 'refused'
+  rows: number
+  message: string
+  refusal?: string | null
+  releasable?: boolean
+  warnings?: ConnectorWarning[]
+}
+
+/** How each kind of per-product note reads, and what it asks of a person.
+ *
+ * The count used to be printed under a single sentence about dual-filing, so a
+ * product with no price for our account was reported as a channel problem.
+ * Three different problems want three different answers. */
+const WARNING_KINDS: { code: string; say: (n: number) => string }[] = [
+  {
+    code: 'DUAL_LISTED',
+    say: n => `${n} product(s) Royal Canin files under both a veterinary and a retail channel — review which account they belong to.`,
+  },
+  {
+    code: 'NO_PRICE',
+    say: n => `${n} product(s) carry no price for our account. They are still queued, and the review board holds each one until a price is confirmed.`,
+  },
+  {
+    code: 'NO_SUPPLIER_CODE',
+    say: n => `${n} product(s) had no Royal Canin item number and were left out — there is nothing to order against.`,
+  },
+]
+
+/** One fetchable supplier: press it and the catalogue is read now.
+ *
+ * Four outcomes, all shown plainly, and per supplier — Royal Canin invoices
+ * veterinary and retail separately, so one press can queue one and refuse the
+ * other. A CHANGED catalogue becomes a run like any upload. An UNCHANGED one
+ * queues nothing — re-reading is not new work, and a run per press would bury
+ * the review board in identical rows. A read that came back SHORT refuses,
+ * because a half-finished fetch looks exactly like the supplier discontinuing
+ * half their range; releasing it is a deliberate second press by someone who
+ * knows the products really are gone. A read that came back EMPTY refuses
+ * outright and cannot be released: an account whose whole range vanished while
+ * the other's stayed means the shop re-filed its products, not that it stopped
+ * selling to us.
+ */
+function ConnectorSource({
+  connector, onQueued,
+}: { connector: (typeof CONNECTORS)[number]; onQueued: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [shortRead, setShortRead] = useState<string | null>(null)
+  const [results, setResults] = useState<ConnectorResult[]>([])
+
+  async function fetchNow(force: boolean) {
+    setBusy(true)
+    try {
+      const res = await fetch(`${API}${connector.endpoint}`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force_incomplete: force }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (res.status === 409) {
+        // Nothing at all was queued. The refused read's per-supplier outcomes
+        // still come back, so a supplier that was merely unchanged is shown
+        // rather than lost behind the banner.
+        setShortRead(body?.detail?.message ?? `${connector.name} returned a short catalogue.`)
+        setResults((body?.detail?.results ?? []) as ConnectorResult[])
+        return
+      }
+      if (!res.ok) throw new Error(body?.detail?.message ?? body?.detail ?? `Fetch failed (${res.status})`)
+      setShortRead(null)
+      const outcomes = (body.results ?? []) as ConnectorResult[]
+      setResults(outcomes)
+      if (body.status === 'submitted') {
+        toast.success(body.message ?? `Queued ${body.rows} products from ${connector.name}`)
+        onQueued()
+        // One supplier can be queued while the other is refused. Saying so
+        // out loud, because the green toast otherwise reads as "all done".
+        const refused = outcomes.filter(o => o.status === 'refused')
+        if (refused.length) toast.info(refused.map(o => o.refusal ?? o.message).join(' '))
+      } else {
+        toast.info(body.message ?? `${connector.name}’s catalogue is unchanged`)
+      }
+    } catch (error) {
+      toast.error(String((error as Error)?.message ?? error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: 'white', padding: '14px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{connector.name}</div>
+          <div style={{ fontSize: 11.5, color: C.faint, marginTop: 1 }}>{connector.where}</div>
+          <div style={{ fontSize: 12, color: C.sub, marginTop: 5, maxWidth: 620 }}>{connector.why}</div>
+        </div>
+        <button
+          onClick={() => fetchNow(false)}
+          disabled={busy}
+          style={{
+            background: busy ? C.line : C.indigo, color: busy ? C.knobOff : 'white',
+            border: 'none', borderRadius: 7, padding: '8px 18px',
+            fontSize: 12.5, fontWeight: 650, cursor: busy ? 'wait' : 'pointer', whiteSpace: 'nowrap',
+          }}
+        >
+          {busy ? 'Reading…' : '⤓ Fetch catalogue'}
+        </button>
+      </div>
+
+      {/* Royal Canin invoices veterinary and retail separately, so one read
+          reports once per supplier — each with its own outcome. Shown beside a
+          refusal too: one supplier can be queued while the other is held. */}
+      {results.length > 0 && (
+        <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+          {results.map(result => (
+            <div key={result.product_range} style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 11.5 }}>
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: 0.3, padding: '2px 7px', borderRadius: 20,
+                background: result.status === 'submitted' ? C.primaryBg : result.status === 'refused' ? C.warnBg : C.monoBg,
+                color: result.status === 'submitted' ? C.indigoInk : result.status === 'refused' ? C.amberInk : C.muted,
+              }}>
+                {result.status === 'submitted' ? `${result.rows} QUEUED`
+                  : result.status === 'refused' ? 'HELD' : 'UNCHANGED'}
+              </span>
+              <span style={{ color: C.sub }}>{result.supplier}</span>
+              <span style={{ color: C.faint }}>{result.message}</span>
+            </div>
+          ))}
+          {WARNING_KINDS.map(kind => {
+            const count = results.flatMap(r => r.warnings ?? []).filter(w => w.code === kind.code).length
+            if (!count) return null
+            return (
+              <div key={kind.code} style={{ fontSize: 11, color: C.amberInk, background: C.warnBg, border: '1px solid #FDE68A', borderRadius: 7, padding: '6px 10px' }}>
+                {kind.say(count)}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {shortRead && (
+        <div style={{ background: C.warnBg, border: '1px solid #FDE68A', borderRadius: 9, padding: '10px 14px', marginTop: 10, fontSize: 12.5, color: C.amberInk }}>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>Nothing was queued — this read looks incomplete</div>
+          <div style={{ lineHeight: 1.5 }}>{shortRead}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => fetchNow(false)}
+              disabled={busy}
+              style={{ background: 'white', color: C.amberInk, border: '1px solid #FDE68A', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              ↻ Try the read again
+            </button>
+            {/* Offered only for a SHORT read, where the products really may be
+                gone. An empty range is a filing change at the shop's end and
+                no press should be able to publish it as a delisting. */}
+            {results.some(r => r.releasable) && (
+              <button
+                onClick={() => fetchNow(true)}
+                disabled={busy}
+                style={{ background: 'none', color: C.muted, border: `1px solid ${C.line}`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              >
+                These products really are gone — queue it anyway
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** One SUPPORTED document format a supplier publishes. */
 interface SupplierContractOption { contract_id: string; contract_version: string; format_name: string; document_type: string }
 
@@ -528,6 +721,23 @@ function CataloguesPage() {
           <p style={{ fontSize: 11, color: C.faint, marginTop: 10 }}>
             PDF · Excel · CSV · JPG · PNG. Handles one file or a whole batch — files extract 3 at a time; review continues in the Review board.
           </p>
+        </div>
+
+        {/* The other way a catalogue arrives: some suppliers publish no file at
+            all, so Rosetta reads their system instead. Same pipeline from here
+            on — the rows land in the Review board exactly like an upload. */}
+        <div style={{ marginTop: 18, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+            <b style={{ fontSize: 13.5, color: C.ink }}>Or fetch from a supplier system</b>
+            <span style={{ fontSize: 12, color: C.muted }}>
+              No file to upload — Rosetta reads the catalogue directly and queues what changed.
+            </span>
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {CONNECTORS.map(connector => (
+              <ConnectorSource key={connector.key} connector={connector} onQueued={() => runs.refetch()} />
+            ))}
+          </div>
         </div>
 
         {batchFiles.length > 0 && (

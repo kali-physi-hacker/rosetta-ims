@@ -1796,9 +1796,49 @@ def _winning_price_field(runtime_contract, fields: dict[str, Any] | None):
     return None
 
 
+def _row_stated_cost_basis(runtime_contract, fields: dict[str, Any] | None):
+    """The basis THIS ROW states, when the contract says a column names it.
+
+    Royal Canin's webshop prints one price beside a unit column reading UNIT or
+    INNER BOX, so the basis is a property of the row, not of the column or the
+    document. Only declared spellings resolve: an unmapped or missing unit
+    yields nothing, and the row is held as CONTRACT_PRICE_BASIS_UNRESOLVED
+    rather than being priced on a guess.
+    """
+    pricing = runtime_contract.declaration.pricing
+    source_field = pricing.price_basis_source_field
+    if not source_field:
+        return None
+    # Declared fields are addressable by their own key under the `source:`
+    # prefix, whatever role they carry — the basis column is a plain OTHER
+    # field, so its value never lands in a role slot.
+    raw = _text((fields or {}).get(f"source:{source_field}"))
+    if raw is None:
+        return None
+    mapped = None
+    needle = raw.strip().casefold()
+    for spelling, code in (pricing.price_basis_value_map or {}).items():
+        if str(spelling).strip().casefold() == needle:
+            mapped = code
+            break
+    if mapped is None:
+        return None
+    # A label is only permitted alongside OTHER; for a known code the source's
+    # own spelling is already preserved on the row's evidence.
+    if str(mapped).upper() == UnitCode.OTHER.value:
+        return UnitOfMeasure(code=UnitCode.OTHER, label=raw.strip())
+    return UnitOfMeasure(code=mapped)
+
+
 def _declared_cost_basis(runtime_contract, fields: dict[str, Any] | None):
-    """The basis the row's cost amount is declared on: the winning price
-    column's own basis where it declares one, else the contract-level basis."""
+    """The basis the row's cost amount is declared on.
+
+    Most specific first: the basis this ROW states, then the winning price
+    column's own basis, then the contract-level one.
+    """
+    stated = _row_stated_cost_basis(runtime_contract, fields)
+    if stated is not None:
+        return stated
     winner = _winning_price_field(runtime_contract, fields)
     if winner is not None and winner.price_basis is not None:
         return winner.price_basis
