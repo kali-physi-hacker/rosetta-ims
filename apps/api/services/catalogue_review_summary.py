@@ -42,7 +42,6 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
 
     item_issues, run_issues = _issues_by_item(db, run)
     evidence = _first_evidence_by_uuid(db, run)
-    published = _published_candidate_uuids(db, [c.mastering_candidate_uuid for c in candidates])
 
     parsed = [
         (
@@ -53,6 +52,7 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
         )
         for candidate in candidates
     ]
+    published = _published_candidate_uuids(db, parsed)
 
     offer_prices = _current_offer_prices(
         db,
@@ -95,7 +95,15 @@ def run_review_summary(db: Session, run_uuid: UUID) -> dict[str, Any]:
                 "name": variant.get("proposed_name") or variant.get("product_variant_name"),
                 "cost_amount": cost,
                 "cost_currency": (price.get("current_cost") or {}).get("currency"),
-                "cost_basis": ((price.get("current_cost") or {}).get("price_basis") or {}).get("label"),
+                # Label first (it exists only for deliberate OTHER units), then
+                # the code. A known code carries no label by construction, so
+                # reading only the label printed nothing on every real row —
+                # and "$105" beside a case reads exactly like "$105" beside a
+                # pouch. What one price buys belongs on the card.
+                "cost_basis": (
+                    ((price.get("current_cost") or {}).get("price_basis") or {}).get("label")
+                    or ((price.get("current_cost") or {}).get("price_basis") or {}).get("code")
+                ),
                 # What the cost is PER. Every price in this pipeline is per
                 # sellable unit (basis code UNIT), and the contract's own basis
                 # label is null on real runs, so the variant's uom is the only
@@ -441,9 +449,21 @@ def _first_evidence_by_uuid(db: Session, run: str) -> dict[str, tuple[int | None
     return out
 
 
-def _published_candidate_uuids(db: Session, candidate_uuids: list[str]) -> set[str]:
-    if not candidate_uuids:
+def _published_candidate_uuids(db: Session, parsed: list[tuple]) -> set[str]:
+    """Candidates whose approved material is live in serving.
+
+    Own current publication counts — and so does a cross-document TWIN's
+    current publication for the same supplier SKU, same canonical product and
+    the same money. Without the twin clause, an older document's copy loses
+    its publication the moment a newer document's twin publishes (shared
+    publication key), drops back into "staged", and offers a retry that can
+    never succeed — its apply is a preserved no-op by design. A twin carrying
+    DIFFERENT material stays unpublished on purpose: a pending price change
+    is not "already live".
+    """
+    if not parsed:
         return set()
+    candidate_uuids = [candidate.mastering_candidate_uuid for candidate, *_ in parsed]
     rows = (
         db.query(models.CatalogueServingPublication.mastering_candidate_uuid)
         .filter(
@@ -452,7 +472,48 @@ def _published_candidate_uuids(db: Session, candidate_uuids: list[str]) -> set[s
         )
         .all()
     )
-    return {value for (value,) in rows}
+    published = {value for (value,) in rows}
+
+    skus = {
+        str(offer.get("supplier_sku"))
+        for candidate, offer, _, _ in parsed
+        if candidate.mastering_candidate_uuid not in published and offer.get("supplier_sku")
+    }
+    if not skus:
+        return published
+    live_by_key = {}
+    for pub in (
+        db.query(models.CatalogueServingPublication)
+        .filter(
+            models.CatalogueServingPublication.supplier_sku.in_(skus),
+            models.CatalogueServingPublication.is_current == 1,
+        )
+        .all()
+    ):
+        live_by_key[(pub.supplier_id, str(pub.supplier_sku))] = pub
+    for candidate, offer, variant, price in parsed:
+        if candidate.mastering_candidate_uuid in published or not offer.get("supplier_sku"):
+            continue
+        pub = live_by_key.get((offer.get("supplier_id"), str(offer.get("supplier_sku"))))
+        if pub is None:
+            continue
+        canonical = str(variant.get("canonical_sku") or variant.get("product_variant_id") or "")
+        if not canonical or str(pub.canonical_sku or "") != canonical:
+            continue
+        cost = price.get("current_cost") or {}
+        if cost.get("amount") is None or pub.current_approved_cost_amount is None:
+            continue
+        try:
+            if Decimal(str(pub.current_approved_cost_amount)) != Decimal(str(cost.get("amount"))):
+                continue
+        except InvalidOperation:
+            continue
+        if (pub.current_approved_cost_currency or "") != (cost.get("currency") or ""):
+            continue
+        if (pub.current_approved_cost_basis_uom_code or "") != ((cost.get("price_basis") or {}).get("code") or ""):
+            continue
+        published.add(candidate.mastering_candidate_uuid)
+    return published
 
 
 def _current_offer_prices(db: Session, offer_keys: list[str]) -> dict[str, float]:

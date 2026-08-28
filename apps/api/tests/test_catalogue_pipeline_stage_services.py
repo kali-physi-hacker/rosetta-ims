@@ -591,6 +591,114 @@ def test_stage_services_apply_approved_candidate_and_publish_idempotently(db):
     assert serving.is_current == 1
 
 
+def test_a_superseded_twins_publish_says_already_live(db):
+    """The prod 6238 story (2026-08-27): twins across documents must not fail forever.
+
+    The same printed product arrives in several uploaded documents, each with
+    its own candidate. Publishing the newer twin takes the offering and
+    supersedes the older twin's publication; the older twin's apply is a
+    preserved no-op by design — and its publish then failed into a red retry
+    lane that could never succeed. When what is live IS what the older twin
+    says — same product, same money — publish acknowledges "superseded,
+    already live". A twin whose money DISAGREES with the live state keeps
+    refusing loudly, and never counts as published in the summary.
+    """
+    import json as _json
+    from uuid import uuid4 as _uuid4
+
+    _seed_context(db)
+    _seed_product(db)
+    raw_id = _capture_raw(db)
+    staging_id = _build_claim(db, raw_id)
+    candidate_id = _prepare_candidate(db, staging_id)
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-07-23T00:05:00+00:00",
+            reason="Approved fixture candidate.",
+            idempotency_key="approve-twin-base",
+        )
+    )
+    stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(
+            mastering_candidate_id=candidate_id, applied_at="2026-07-23T00:06:00+00:00"
+        )
+    )
+    publisher = stages.ServingPublicationService(db)
+    publisher.publish(
+        stages.PublishServingItemCommand(
+            mastering_candidate_id=candidate_id,
+            publication_version="2026-07-23T00:10:00Z",
+            published_at="2026-07-23T00:10:00+00:00",
+            idempotency_key="publish-twin-base",
+        )
+    )
+
+    # A newer twin from another document applies and republishes: its price is
+    # current, it owns the offering's decision, and the live snapshot is its.
+    offering = db.query(models.SupplierOffering).one()
+    own_price = db.query(models.CatalogueSupplierPrice).one()
+    live = db.query(models.CatalogueServingPublication).one()
+    own_price.is_current = 0
+    twin_price = {
+        c.name: getattr(own_price, c.name)
+        for c in models.CatalogueSupplierPrice.__table__.columns
+        if c.name != "id"
+    }
+    twin_price.update(
+        supplier_price_uuid=str(_uuid4()),
+        mastering_candidate_uuid=str(_uuid4()),
+        review_decision_uuid=str(_uuid4()),
+        is_current=1,
+    )
+    db.add(models.CatalogueSupplierPrice(**twin_price))
+    offering.approved_review_decision_uuid = twin_price["review_decision_uuid"]
+    live.mastering_candidate_uuid = twin_price["mastering_candidate_uuid"]
+    db.flush()
+
+    result = publisher.publish(
+        stages.PublishServingItemCommand(
+            mastering_candidate_id=candidate_id,
+            publication_version="2026-07-23T01:00:00Z",
+            published_at="2026-07-23T01:00:00+00:00",
+            idempotency_key="publish-twin-retry",
+        )
+    )
+    assert result.status == "superseded"
+    assert result.metrics.reused_count == 1
+    assert result.output_ids == (live.serving_item_uuid,)
+    # No second snapshot was minted for the acknowledgment.
+    assert db.query(models.CatalogueServingPublication).count() == 1
+
+    # The summary counts the older twin as live — same product, same money.
+    from services.catalogue_review_summary import _published_candidate_uuids
+
+    candidate_row = db.query(models.CatalogueMasteringCandidate).one()
+    parsed = [(
+        candidate_row,
+        _json.loads(candidate_row.supplier_product_resolution_json),
+        _json.loads(candidate_row.product_variant_resolution_json),
+        _json.loads(candidate_row.supplier_price_resolution_json),
+    )]
+    assert candidate_row.mastering_candidate_uuid in _published_candidate_uuids(db, parsed)
+
+    # Different money: the live state no longer says what this twin says —
+    # publish refuses loudly and the summary keeps the row unpublished.
+    live.current_approved_cost_amount = Decimal("999.0000")
+    db.flush()
+    with pytest.raises(stages.PublicationIneligible, match="state applied from this candidate"):
+        publisher.publish(
+            stages.PublishServingItemCommand(
+                mastering_candidate_id=candidate_id,
+                publication_version="2026-07-23T02:00:00Z",
+                idempotency_key="publish-twin-conflict",
+            )
+        )
+    assert candidate_row.mastering_candidate_uuid not in _published_candidate_uuids(db, parsed)
+
+
 def test_picking_the_variant_settles_an_ambiguous_offering(db):
     """The "needs a pick" lane has to be exitable.
 

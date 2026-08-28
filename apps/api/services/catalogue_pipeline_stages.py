@@ -1413,6 +1413,63 @@ class ApprovedCommercialStateService(_TransactionalService):
 class ServingPublicationService(_TransactionalService):
     """Publish approved and applied commercial state as an immutable serving snapshot."""
 
+    def _superseded_but_live(
+        self,
+        candidate: MasteringCandidateV1,
+        supplier_product: models.SupplierOffering,
+    ) -> StageResult | None:
+        """Acknowledge an older twin whose product is already live, or None.
+
+        The same printed product can arrive in several uploaded documents, each
+        with its own candidate. Publishing one twin supersedes the other's
+        publication, and the older twin then re-offers itself for publish —
+        where its apply is a no-op (its historical state must not clobber the
+        newer decision) and this guard used to fail it into a retry lane that
+        could never succeed. When what is live IS what this candidate says —
+        same product, same money — the honest outcome is "superseded, already
+        live", not an error. A twin whose price DISAGREES with the live state
+        keeps refusing loudly: an older document must never silently look
+        published while carrying different material.
+        """
+        candidate_uuid = str(candidate.mastering_candidate_id)
+        own_rows = self.db.query(models.CatalogueSupplierPrice).filter_by(
+            supplier_product_id=supplier_product.id,
+            mastering_candidate_uuid=candidate_uuid,
+        ).all()
+        # Exactly the apply service's "superseded" shape: applied historically,
+        # a different candidate's application owns the current state.
+        if not own_rows or any(row.is_current for row in own_rows):
+            return None
+        newer_current = self.db.query(models.CatalogueSupplierPrice).filter(
+            models.CatalogueSupplierPrice.supplier_product_id == supplier_product.id,
+            models.CatalogueSupplierPrice.is_current == 1,
+            models.CatalogueSupplierPrice.mastering_candidate_uuid != candidate_uuid,
+        ).first()
+        if newer_current is None:
+            return None
+        resolved_product = _resolved_product(self.db, candidate.product_variant_resolution)
+        if resolved_product is None or supplier_product.product_variant_id != resolved_product.id:
+            return None
+        live = self.db.query(models.CatalogueServingPublication).filter_by(
+            supplier_product_id=supplier_product.id,
+            is_current=1,
+        ).first()
+        cost = candidate.supplier_price_resolution.current_cost
+        if live is None or cost is None or live.current_approved_cost_amount is None:
+            return None
+        if Decimal(str(live.current_approved_cost_amount)) != Decimal(str(cost.amount)):
+            return None
+        if (live.current_approved_cost_currency or "") != (cost.currency or ""):
+            return None
+        if (live.current_approved_cost_basis_uom_code or "") != cost.price_basis.code.value:
+            return None
+        return StageResult(
+            stage="serving_publication",
+            output_ids=(live.serving_item_uuid,),
+            status="superseded",
+            metrics=StageMetrics(input_count=1, reused_count=1, warning_count=1),
+        )
+
     def publish(self, command: PublishServingItemCommand) -> StageResult:
         candidate_row = _candidate_row(self.db, command.mastering_candidate_id)
         if candidate_row.review_status not in {ReviewStatus.APPROVED.value, ReviewStatus.APPROVED_WITH_OVERRIDE.value}:
@@ -1428,6 +1485,9 @@ class ServingPublicationService(_TransactionalService):
             raise PublicationIneligible("Serving publication requires applied Supplier Offer state")
         decision_id = str(candidate.review_decision_id)
         if supplier_product.approved_review_decision_uuid != decision_id:
+            superseded = self._superseded_but_live(candidate, supplier_product)
+            if superseded is not None:
+                return superseded
             raise PublicationIneligible(
                 "Serving publication requires Supplier Offer state applied from this candidate's review decision"
             )
