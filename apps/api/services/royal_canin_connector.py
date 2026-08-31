@@ -83,6 +83,25 @@ _NON_CHANNEL_CATEGORIES = ("BUY AGAIN", "PROMOTION", "RECOMMEND", "NEW ARRIVAL")
 #: Nutrition, VD = Veterinary Diet). A retail line never carries these.
 _VET_NAME_PREFIXES = ("VHN ", "VD ", "VCN ")
 
+#: What one purchase unit is CALLED, in the vocabulary conformance knows.
+#: Royal Canin's own word for a case is "INNER BOX", which that vocabulary has
+#: no entry for — so the snapshot states the case in the house word beside the
+#: count. Must agree with the contract's price_basis_value_map or the basis and
+#: the packaging would name the same thing differently and no division could
+#: line up; a test binds the two.
+PACK_CONTAINER_BY_NAV_UOM = {"INNER BOX": "CASE", "BOX": "BOX"}
+
+#: How many sellable units a case holds, as Royal Canin prints it in the
+#: product's own name: "CAN 410GX12" is twelve cans, "200ML x3" is three
+#: bottles. A measure, then the multiplier — anchored that way so "AGEING 15+ P
+#: 85GX12" reads twelve and not fifteen.
+#:
+#: Deliberately refuses a compound pack: "85GX3X4" is three sachets in a sleeve,
+#: four sleeves to the case, and which of those we sell is not something the
+#: name settles. Blank leaves the row to the contract's declared ambiguity
+#: instead of publishing a per-unit cost off a guess.
+_PRINTED_PACK = re.compile(r"\d+(?:\.\d+)?\s*(?:KG|ML|G|M|L)\s*[X×]\s*(\d+)\b", re.I)
+
 #: The snapshot's headings — Royal Canin's own field names, so the contract
 #: maps what the source calls things rather than what we wish it called them.
 SNAPSHOT_COLUMNS = (
@@ -92,6 +111,7 @@ SNAPSHOT_COLUMNS = (
     "ean_code",
     "price_hkd",
     "nav_uom",
+    "pack_breakdown",
     "navision_weight",
     "gtm_category",
     "nav_animal_type",
@@ -297,6 +317,24 @@ def _category_path(hit: dict) -> str:
     return ""
 
 
+def pack_breakdown(hit: dict) -> str:
+    """"12 / CASE" — what one purchase unit holds, when the name says so.
+
+    Only for a purchase unit that IS a container: a UNIT row buys one thing, so
+    there is nothing to break down and a count would only invite dividing a
+    price that is already per unit. Written in the "count / container" form
+    conformance already reads, so no new parsing exists anywhere downstream.
+    """
+    container = PACK_CONTAINER_BY_NAV_UOM.get(str(hit.get("nav_uom") or "").strip().upper())
+    if not container:
+        return ""
+    printed = _PRINTED_PACK.search(str(hit.get("name") or ""))
+    if not printed:
+        return ""
+    count = printed.group(1)
+    return f"{count} / {container}" if int(count) > 1 else ""
+
+
 def _row_for(hit: dict, customer_group: str) -> dict[str, str]:
     stock = hit.get("stock_configuration") or {}
     price = group_price(hit, customer_group)
@@ -310,6 +348,7 @@ def _row_for(hit: dict, customer_group: str) -> dict[str, str]:
         # IS the cost the pipeline goes on to publish.
         "price_hkd": "" if price is None else format(price, "f"),
         "nav_uom": str(hit.get("nav_uom") or ""),
+        "pack_breakdown": pack_breakdown(hit),
         "navision_weight": str(hit.get("navision_weight") or ""),
         "gtm_category": str(hit.get("gtm_category") or ""),
         "nav_animal_type": str(hit.get("nav_animal_type") or ""),

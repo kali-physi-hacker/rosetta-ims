@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from schemas.catalogue_pipeline.common import UnitOfMeasure
 from schemas.catalogue_pipeline.enums import SourceFormat, UnitCode
 from schemas.catalogue_pipeline.supplier_contracts.common import (
     SUPPLIER_SOURCE_SCHEMA_VERSION,
@@ -127,6 +128,7 @@ def _webshop_snapshot_contract(
                     "ean_code",
                     "price_hkd",
                     "nav_uom",
+                    "pack_breakdown",
                     "navision_weight",
                     "gtm_category",
                     "nav_animal_type",
@@ -215,6 +217,20 @@ def _webshop_snapshot_contract(
                 evidence=_ROYAL_CANIN_EVIDENCE,
             ),
             SourceFieldContract(
+                field_key="pack_breakdown",
+                role=SourceFieldRole.PACKAGING,
+                requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="pack_breakdown",
+                description=(
+                    "What one CASE holds, as Royal Canin prints it in the product's own "
+                    "name: \"CAN 410GX12\" is twelve cans, so this reads \"12 / CASE\". "
+                    "Blank on a UNIT row, which buys one thing and has nothing to break "
+                    "down, and blank where the name does not settle it — a compound pack "
+                    "like 85GX3X4 states sleeves and sachets without saying which we sell."
+                ),
+                evidence=_ROYAL_CANIN_EVIDENCE,
+            ),
+            SourceFieldContract(
                 field_key="pack_weight_kg",
                 role=SourceFieldRole.PACKAGING,
                 requirement=SourceFieldRequirement.OPTIONAL,
@@ -291,12 +307,24 @@ def _webshop_snapshot_contract(
         packaging=PackagingSourceSemantics(
             packaging_source_field="description",
             content_measure_source_field="pack_weight_kg",
+            # The connector reads the case count out of Royal Canin's own printed
+            # name and states it as "12 / CASE" — one text carrying the count and
+            # the container, the same idiom "100 tabs / box" already uses. Without
+            # this the case price stood in as the price of ONE pouch, and a $123.60
+            # case against an $11.00 pouch published a margin of -1023%.
+            purchase_uom_source_field="pack_breakdown",
+            sellable_units_per_purchase_unit_source_field="pack_breakdown",
+            # What a case holds is a countable thing, but Royal Canin does not name
+            # it consistently — "P", "P-J", "MOU CAN", "LOAF" — so no pouch/can is
+            # claimed. UNIT says "one of whatever is inside", which is what the
+            # division needs and all the source actually supports.
+            sellable_unit_uom=UnitOfMeasure(code=UnitCode.UNIT),
             break_pack_allowed=None,
             interpretation_rules=[
                 "nav_uom names the purchase unit: UNIT buys one item, INNER BOX buys a case.",
                 (
                     "A case's sellable count comes from the printed name (CAN 410GX12 -> 12, "
-                    "200ML x3 -> 3) and must agree with navision_weight before it is used."
+                    "200ML x3 -> 3), carried into pack_breakdown by the connector."
                 ),
                 "navision_weight is a weight, never a count of sellable units.",
             ],
@@ -354,6 +382,7 @@ def _webshop_snapshot_contract(
             "barcode",
             "trade_price",
             "purchase_unit",
+            "pack_breakdown",
             "pack_weight_kg",
             "category_path",
             "availability",

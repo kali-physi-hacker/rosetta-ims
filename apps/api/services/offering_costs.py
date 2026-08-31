@@ -495,20 +495,41 @@ def _scanned_files(db: Session, run_uuids: set[str]) -> dict[str, dict]:
     return {run: {"filename": filename, "received_at": received} for run, filename, received in rows}
 
 
+#: Basis words that name a MULTI-UNIT container by definition. Anything else —
+#: BOTTLE, TUBE, BAG, CAN, POUCH, PIECE — can legitimately BE the thing sold,
+#: so a price on one of those stands as a per-sell-unit cost.
+_CONTAINER_BASIS_CODES = frozenset({"CASE", "CARTON", "BOX", "PACK"})
+
+
 def _per_sell_unit(
     amount: float,
     basis_code: str | None,
     pack: tuple[str | None, str | None, float | None] | None,
-) -> float:
-    if pack:
-        purchase, sellable, per_purchase = pack
-        if (
-            per_purchase is not None
-            and per_purchase > 1
-            and basis_code
-            and purchase
-            and basis_code == purchase
-            and basis_code != (sellable or "")
-        ):
-            return amount / per_purchase
+) -> float | None:
+    """The cost of ONE sellable unit, or None when the source cannot say.
+
+    Returning the amount unconverted used to be the fallback for everything,
+    and it is the wrong answer for exactly one shape: a price based on a
+    container we have no count for. Royal Canin prices wet food by the case, so
+    a $123.60 case stood in as the cost of one pouch and every margin built on
+    it read about -1000%. A cost nobody can derive has to be absent — a blank
+    margin sends someone to look, a confident -1023% sends them to renegotiate
+    a price that was never wrong.
+    """
+    purchase, sellable, per_purchase = pack or (None, None, None)
+    code = (basis_code or "").strip().upper()
+    if (
+        per_purchase is not None
+        and per_purchase > 1
+        and code
+        and purchase
+        and code == purchase
+        and code != (sellable or "")
+    ):
+        return amount / per_purchase
+    if code and code == (sellable or "").strip().upper():
+        # The basis IS the sellable unit — sold by the box, priced by the box.
+        return amount
+    if code in _CONTAINER_BASIS_CODES:
+        return None
     return amount

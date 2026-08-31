@@ -165,23 +165,85 @@ def test_the_rows_own_unit_decides_the_published_basis(published):
 
 
 @pytest.mark.parametrize("product_range", RANGES)
-def test_the_pack_breakdown_is_not_resolved_yet(published, product_range):
-    """A KNOWN GAP, asserted so it cannot be forgotten (DEV-212).
+def test_a_case_publishes_the_count_royal_canin_printed(published, product_range):
+    """"CAN 410GX12" is twelve cans, and the pipeline now says so.
 
-    Royal Canin prints the case contents in the product's own name — "CAN
-    410GX12" is twelve cans — but nothing reads it: the contract's packaging
-    rules say so in prose and no declared field carries the count. So every
-    case row publishes a case price with no idea how many sellable units are
-    in the case, and no per-unit cost can be derived from it.
-
-    This test passes TODAY and is meant to fail the moment that is fixed. When
-    it does, invert it: assert the count is 12 rather than absent.
+    Royal Canin prices wet food by the case and dry food by the bag. Until the
+    printed count was read, a case published with no idea what was in it — so
+    a $123.60 case stood in as the cost of one $11.00 pouch and the margin read
+    -1023%. The count comes from Royal Canin's own name, never from the legacy
+    units_per_pack column, which on other suppliers carries the ORDER MULTIPLE
+    and would relocate DEV-211 rather than fix this.
     """
+    source = {row["original_sku"]: row for row in _snapshot_rows(product_range)}
     rows = published[product_range]
-    unresolved = [code for code, row in rows.items()
-                  if not row["sellable_units_per_price_basis"].strip()]
-    assert len(unresolved) == len(rows), (
-        "the pack breakdown now resolves for some rows — good. Invert this test: "
-        f"rows still unresolved {sorted(unresolved)}"
-    )
-    assert all(not row["package_configuration"].strip() for row in rows.values())
+
+    for code, row in rows.items():
+        stated = source[code]["pack_breakdown"]
+        if not stated:
+            continue
+        count = stated.split("/")[0].strip()
+        assert row["sellable_units_per_price_basis"] == count, f"{code}: lost the printed count"
+        assert row["package_configuration"] == f"{count} UNIT / CASE"
+
+
+def test_a_case_cost_is_the_case_price_divided_by_what_it_holds(published):
+    """The number every margin runs on, checked at the end of the real path.
+
+    ``get_unit_cost`` is documented as the cost of ONE SELL-UNIT and is the
+    single figure margins divide by. For a case-priced row that means the case
+    price over the printed count — the exact arithmetic that was missing.
+    """
+    from services import offering_costs
+
+    session = database.SessionLocal()
+    try:
+        source = {row["original_sku"]: row for row in _snapshot_rows("vet")}
+        offerings = {
+            offering.supplier_sku: offering
+            for offering in session.query(models.SupplierOffering).filter_by(supplier_id=40).all()
+        }
+        per_unit = offering_costs._session_map(session)
+
+        checked = 0
+        for sku, offering in offerings.items():
+            row = source.get(sku)
+            if row is None or offering.product_variant_id is None:
+                continue
+            cost = per_unit.get((offering.supplier_id, offering.product_variant_id))
+            if cost is None:
+                continue
+            case_price = float(row["price_hkd"])
+            if row["pack_breakdown"]:
+                count = int(row["pack_breakdown"].split("/")[0].strip())
+                assert cost == pytest.approx(case_price / count, rel=1e-6), (
+                    f"{sku}: {case_price} over {count} should be {case_price / count}, got {cost}"
+                )
+                assert count > 1
+            else:
+                # Nothing to divide by: a bag is already one sellable unit.
+                assert cost == pytest.approx(case_price, rel=1e-6), f"{sku}: a unit price was altered"
+            checked += 1
+        assert checked, "no Royal Canin offering carried a cost to check"
+    finally:
+        session.close()
+
+
+@pytest.mark.parametrize("product_range", RANGES)
+def test_a_pack_royal_canin_does_not_spell_out_stays_unresolved(published, product_range):
+    """The refusal half, which is the reason the rest can be trusted.
+
+    Three products print no count at all, and two print "85GX3X4" — three
+    sachets to a sleeve, four sleeves to a case, without saying which one we
+    sell. Those publish no count rather than a guess, and the contract's
+    declared ambiguity is what a reviewer sees instead.
+    """
+    source = {row["original_sku"]: row for row in _snapshot_rows(product_range)}
+    rows = published[product_range]
+
+    for code, row in rows.items():
+        if source[code]["pack_breakdown"]:
+            continue
+        assert not row["sellable_units_per_price_basis"].strip(), (
+            f"{code}: a count was invented for a pack Royal Canin never printed"
+        )
