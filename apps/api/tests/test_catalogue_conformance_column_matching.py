@@ -755,7 +755,13 @@ def test_diagnostic_attributes_are_kept_without_being_interpreted():
     assert extra["sample_volume"] == "220μL"
     # The packing column is still the only thing read as packaging.
     assert row.raw_fields["packaging"] == "20 pcs/ box"
-    assert "220" not in str(row.normalized_fields.get("packaging") or "")
+    # Compare the packaging SEMANTICS, not the whole serialized block: it
+    # carries an evidence id minted by uuid4(), and a run whose hex happened to
+    # contain "220" failed this assertion for a reason that has nothing to do
+    # with packaging. Seen in CI on 2026-08-31: 68ac07d1-9220-4b24-…
+    packaging = dict(row.normalized_fields.get("packaging") or {})
+    packaging.pop("evidence", None)
+    assert "220" not in str(packaging)
     assert "220" not in str(row.raw_fields["packaging"])
 
 
