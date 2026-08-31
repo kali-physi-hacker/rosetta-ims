@@ -796,7 +796,14 @@ def _supplier_identity_issues(
     if not identity_text:
         return ()
     supplier = runtime_contract.declaration.supplier
-    own_names = [name for name in (supplier.supplier_name, supplier.supplier_code) if name]
+    # Every name this supplier prints, not only the one we file it under. A
+    # company that renamed still sends documents on the old letterhead, and
+    # reading those as another company's pages blocks a whole catalogue.
+    own_names = [
+        name
+        for name in (supplier.supplier_name, supplier.supplier_code, *supplier.also_trades_as)
+        if name
+    ]
     if not own_names:
         return ()
     if any(_identity_names_overlap(identity_text, name) for name in own_names):
@@ -821,6 +828,13 @@ _IDENTITY_STOPWORDS = frozenset({
     "and", "co", "company", "corp", "corporation", "enterprise", "enterprises",
     "group", "holding", "holdings", "inc", "incorporated", "international",
     "limited", "ltd", "the",
+    # What the company SELLS is not who it is. Half this trade is called
+    # "<something> Pet Nutrition" — 'nutrition' alone let "Hill's Pet
+    # Nutrition" vouch for "Kangaroo Pet Nutrition", which is the exact
+    # confusion this check exists to catch.
+    "distribution", "distributors", "medical", "nutrition", "pharma",
+    "pharmaceutical", "pharmaceuticals", "products", "supplies", "supply",
+    "trading", "veterinary",
 })
 
 

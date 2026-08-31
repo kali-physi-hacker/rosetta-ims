@@ -135,6 +135,18 @@ class SupplierSourceReference(SupplierSourceModel):
     )
     supplier_name: str = Field(..., min_length=1, description="Human-readable supplier name.")
     supplier_code: str | None = Field(None, min_length=1, description="Stable supplier code or abbreviation when known.")
+    also_trades_as: tuple[str, ...] = Field(
+        default_factory=tuple,
+        description=(
+            "Other names THIS SAME supplier prints on its own documents — a former "
+            "trading name, a parent company, the Chinese form of the letterhead. The "
+            "page-identity check accepts any of them, so a supplier that renamed does "
+            "not have its older documents read as another company's pages. Only ever "
+            "names of the same legal counterparty: listing a genuinely different "
+            "supplier here would disable the routing check that stops one company's "
+            "pages being priced against another's contract."
+        ),
+    )
 
     @field_validator("supplier_name", "supplier_code", mode="before")
     @classmethod
