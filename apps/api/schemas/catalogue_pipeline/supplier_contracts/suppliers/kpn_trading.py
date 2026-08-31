@@ -570,6 +570,19 @@ KPN_TRADING_PACK_PRICE_LIST_V1 = register_supplier_source_contract(
                 aliases=[
                     "每包批發價", "Wholesale Price Per Unit", "Wholesale Price Per Pack",
                     "批發價 (HKD)", "批發價 每包",
+                    # The same per-unit price as this supplier's other layouts
+                    # print it. Column lookup is exact-key, so a missing space or
+                    # a hyphen is a different heading entirely: "批發價(HKD)" never
+                    # matched the declared "批發價 (HKD)" and held 52 rows on its own.
+                    # EVERY entry here names a PER-UNIT price. A per-case heading
+                    # belongs to case_wholesale_price — listing one here would file
+                    # a case price as the cost of one pack, which is the whole
+                    # defect this field's description warns about.
+                    "批發價(HKD)",
+                    "批發價 W/S Price (HKD)",
+                    "批發價-每包",
+                    "每罐批發價 Wholesale Price Per tin",
+                    "每罐批發價",
                 ],
                 description="The STANDARD wholesale amount — always the per-pack/per-tin figure, never a case figure.",
                 evidence=_KPN_TRADING_PACK_EVIDENCE,
@@ -597,6 +610,13 @@ KPN_TRADING_PACK_PRICE_LIST_V1 = register_supplier_source_contract(
                     "批發價 每箱(平均每包價)",
                     "每箱(24包) 批發價 Wholesale Price Per Case (24 packs)",
                     "每箱(24罐) 批發價 Wholesale Price Per Case (24 tins)",
+                    # Further spellings of a CASE price across the same document.
+                    "批發價-每箱(平均每包價)",
+                    "每箱(24罐)批發價 Wholesale Price Per Case (24 tins)",
+                    "每箱(12盒) 批發價 Wholesale Price Per Case (12 boxes)",
+                    "每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)",
+                    "批發價(HKD)每箱(12罐)",
+                    "批發價 (HKD) 每箱*",
                 ],
                 tier_quantity_field="units_per_case",
                 description=(

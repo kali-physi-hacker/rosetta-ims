@@ -311,7 +311,12 @@
         "Wholesale Price Per Unit",
         "Wholesale Price Per Pack",
         "批發價 (HKD)",
-        "批發價 每包"
+        "批發價 每包",
+        "批發價(HKD)",
+        "批發價 W/S Price (HKD)",
+        "批發價-每包",
+        "每罐批發價 Wholesale Price Per tin",
+        "每罐批發價"
       ],
       "description": "The STANDARD wholesale amount — always the per-pack/per-tin figure, never a case figure.",
       "evidence": [
@@ -374,7 +379,13 @@
       "aliases": [
         "批發價 每箱(平均每包價)",
         "每箱(24包) 批發價 Wholesale Price Per Case (24 packs)",
-        "每箱(24罐) 批發價 Wholesale Price Per Case (24 tins)"
+        "每箱(24罐) 批發價 Wholesale Price Per Case (24 tins)",
+        "批發價-每箱(平均每包價)",
+        "每箱(24罐)批發價 Wholesale Price Per Case (24 tins)",
+        "每箱(12盒) 批發價 Wholesale Price Per Case (12 boxes)",
+        "每箱(12盒)批發價 Wholesale Price Per Case (12 boxes)",
+        "批發價(HKD)每箱(12罐)",
+        "批發價 (HKD) 每箱*"
       ],
       "description": "OPTIONAL case-quantity BULK price — an MBB tier, not a replacement for wholesale_price (user ruling 2026-08-17: pack+case is the pack layout plus a bulk term, one contract). Buying the quantity units_per_case states unlocks the printed per-unit case rate. On Stella & Chewy's frozen-raw rows the cell embeds the case total and its printed per-pack average in one string ('$1094/箱 ($182/包)'); the per-unit rate is the smaller printed amount, and a cell carrying only a bundle total is refused by the cheaper-than-gross guard rather than divided — no value is computed that the source did not print.",
       "evidence": [
