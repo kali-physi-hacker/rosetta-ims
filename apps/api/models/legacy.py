@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Index, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Float, Numeric, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -264,8 +264,22 @@ class SellingItem(Base):
     inventory_item_id = Column(Integer, ForeignKey("inventory_items.id"), nullable=True)
     channel = Column(String, nullable=False)
     external_listing_id = Column(String, nullable=True)
+    #: What the customer is charged in on THIS channel. The clinic sells a
+    #: 30 mL bottle by the millilitre while Shopify sells the bottle whole, so
+    #: this is genuinely per-channel and is not the product's own uom.
     sell_uom = Column(String, nullable=True)
+    #: How many `sell_uom` make up ONE SELLABLE UNIT — the thing cost is
+    #: derived in. 30 where a 30 mL bottle is sold by the mL; 1, and normally
+    #: left null, wherever the channel sells the unit whole. Null reads as 1.
+    #: Authoritative for the sell side: a bottle may hold 30 mL and be sold in
+    #: 5 mL doses, so this is recorded, never inferred from the content measure.
+    sell_uom_count = Column(Numeric(18, 6), nullable=True)
+    #: A listing that bundles several sellable units into one purchase.
     units_per_listing = Column(Integer, nullable=True)
+    #: The customer buys in multiples of this — 12 means 12, 24, 36, never 1
+    #: and never 18. The multiple IS the minimum. Distinct from
+    #: units_per_listing: a 12-can bundle is priced once for twelve, whereas a
+    #: multiple of 12 is priced per can and merely cannot be bought alone.
     order_multiple = Column(Integer, nullable=True)
     selling_price = Column(Float, nullable=True)
     status = Column(String, nullable=False, default="ACTIVE")

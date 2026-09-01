@@ -3,6 +3,8 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from sqlalchemy.orm import Session
+
 from models import ProductVariant, ProductChannel, ProductSupplier, CategoryRule
 from services import offering_costs
 from services import transform_engine as engine
@@ -233,6 +235,33 @@ def _pack_sell_unit_delivery(weight_g: float | None, units_per_pack: int | None,
     return shopify_logistics((weight_g or 0) * shipped_together) / shipped_together
 
 
+def _shipped_together(
+    ps: ProductSupplier | None,
+    product: ProductVariant | None,
+    channel: ProductChannel | None = None,
+) -> int | None:
+    """The smallest quantity that can travel in one parcel.
+
+    What the CUSTOMER must buy decides this, not what we buy. A channel that
+    sells in multiples of twelve never ships one; a channel that sells singles
+    ships one however the supplier packs it. So the channel's own multiple wins,
+    and the supplier's ordering floor stands in only where the channel has not
+    said — which is every row until the sell side is populated, so nothing moves
+    on the strength of this change alone.
+    """
+    from services import channel_sale_terms
+
+    if channel is not None and product is not None:
+        session = Session.object_session(product)
+        if session is not None:
+            terms = channel_sale_terms.terms_for(
+                session, product.id, getattr(channel, "channel", None)
+            )
+            if terms.order_multiple > 1:
+                return terms.order_multiple
+    return _order_multiple(ps, product)
+
+
 def _order_multiple(ps: ProductSupplier | None, product: ProductVariant | None) -> int | None:
     """The smallest quantity the supplier will actually sell.
 
@@ -263,7 +292,7 @@ def _fee_delivery(channel: ProductChannel, product: ProductVariant) -> tuple[flo
         return 0.0, _pack_sell_unit_delivery(
             product.weight_g,
             ps.units_per_pack if ps else None,
-            _order_multiple(ps, product),
+            _shipped_together(ps, product, channel),
         )
     return 0.0, 0.0
 
