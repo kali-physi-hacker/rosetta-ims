@@ -223,6 +223,17 @@ class SourceFieldContract(SupplierSourceModel):
     source_path: str | None = Field(None, description="Section, banner, or document path when not a table column.")
     composed_from: list[str] = Field(default_factory=list, description="Source columns joined to form this field.")
     constant_value: str | None = Field(None, description="Supplier-format constant value, if not printed per row.")
+    value_map: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Source spelling → our vocabulary, for a column whose values are an enumerated "
+            "set the supplier prints in its own words (AVM's Formula column says 'Canine + "
+            "Feline' where we file 'both'). Matched case-insensitively on the trimmed value. "
+            "Lenient by design: a value the map does not cover is carried through verbatim "
+            "rather than dropped, because an unrecognised species is still evidence — unlike "
+            "a price basis, where an unmapped unit must hold the row rather than be guessed."
+        ),
+    )
     aliases: list[str] = Field(default_factory=list, description="Observed header aliases justified by evidence.")
     description: str | None = Field(None, description="Readable explanation of the mapping.")
     evidence: list[EvidenceReference] = Field(default_factory=list, description="Evidence supporting this field mapping.")
@@ -491,6 +502,17 @@ class PackagingSourceSemantics(SupplierSourceModel):
             "$1,390 per bottle and $1,486 per box; calling both PIECE leaves every per-unit cost "
             "divided by the wrong denominator. Requires purchase_uom_source_field, and falls back "
             "to the declared price_basis for a row whose unit could not be read."
+        ),
+    )
+    sellable_count_excludes_measures: bool = Field(
+        False,
+        description=(
+            "For a column that states EITHER a count of countable things ('180 Capsules') OR a "
+            "bare measure ('30ml Liquid'): take the leading number as a unit count only in the "
+            "first case, and let the second become content instead. A 30 ml bottle is one "
+            "sellable thing, not thirty. Default False because a supplier may legitimately sell "
+            "BY the measure — Alfamedic's '30ml/ bot' keeps its 30 — so this is declared by the "
+            "contracts whose column means a count, never assumed."
         ),
     )
     order_increment_source_field: str | None = Field(None, description="Field key proving supplier order multiple.")

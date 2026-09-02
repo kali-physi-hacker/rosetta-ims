@@ -1,0 +1,81 @@
+{
+ "contract_id": "asia_vet_medical.vetriscience_price_list.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 3,
+ "supplier_name": "Asia Vet Medical Limited",
+ "notes": "Read end to end from the captured page at tests/fixtures/catalogue_pipeline/asia_vet_medical/vetriscience_page_1.json: 31 rows conform with no blocking issue and no warning, 29 carrying a unit count and 2 a content measure, and all 31 publish. AVM sends more than one price list; this contract covers the VetriScience range only — the consumables list is a separate document with its own shape (455 rows, 43% of them carrying no item code at all).\n\nSTILL OPEN at the time this was marked SUPPORTED (user decision 2026-09-02), recorded here because clearing technical_debt is what SUPPORTED requires and these must not vanish with it:\n  * Only 7 of the 31 rows are corroborated by the golden sample sheet; the rest rest on one captured page.\n  * The golden sheet records 725.060 with a per-basis count of 1 where the page prints '60 Bite-Sized Chews'. The page is right and the sheet needs correcting.\n  * The golden sheet records BOTTLE and BOX as the price basis. Neither word appears on the page, so the contract declares the generic PACK and the sheet's container has to come from a recorded decision rather than from this document.\n  * The source is an image, so every ingestion runs a vision provider. AVM's consumables list is text-extractable on all 13 pages; a PDF of the VetriScience list would make this free.\n  * Species resolves correctly at conformance (dog 13 / cat 9 / both 9) but stops there: mastering_candidate_v1 has no species field, so NO supplier's candidates carry it. Pre-existing pipeline gap, not specific to this contract.",
+ "examples": [
+  {
+   "example_id": "avm-vetriscience-580180-capsule-count-row",
+   "source": {
+    "sample_reference": "external-sample:VetriScience Product Price List (image; ___AVM.jpg)",
+    "page_number": 1,
+    "extraction_method": "hand-captured vision envelope (asia_vet_medical/vetriscience_page_1.json, Joint Health table)",
+    "text_excerpt": "580.180 Vetri Disc Capsules Canine 180 Capsules 225.00"
+   },
+   "raw_row": {
+    "Item ID": "580.180",
+    "Description": "Vetri Disc Capsules",
+    "Formula": "Canine",
+    "Package": "180 Capsules",
+    "Price HK$": "225.00"
+   },
+   "runtime_input": {
+    "supplier_sku": "580.180",
+    "description": "Vetri Disc Capsules",
+    "species": "Canine",
+    "package": "180 Capsules",
+    "unit_price": "225.00",
+    "category": "Joint Health"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "180",
+    "species": "dog",
+    "break_pack_allowed": null,
+    "reason": "One price per row buys one package. The page states what the package HOLDS ('180 Capsules') but never what it IS — it says neither bottle nor box — so the basis is the generic PACK rather than a vessel nobody printed (user ruling 2026-09-01). The item code's suffix repeats the same 180 and corroborates it. Formula 'Canine' maps to the species vocabulary the product record already uses."
+   }
+  },
+  {
+   "example_id": "avm-vetriscience-590030-measure-not-a-count-row",
+   "source": {
+    "sample_reference": "external-sample:VetriScience Product Price List (image; ___AVM.jpg)",
+    "page_number": 1,
+    "extraction_method": "hand-captured vision envelope (asia_vet_medical/vetriscience_page_1.json, Immune Health table)",
+    "text_excerpt": "590.030 Vetri DMG Liquid Canine + Feline 30ml Liquid 95.00"
+   },
+   "raw_row": {
+    "Item ID": "590.030",
+    "Description": "Vetri DMG Liquid",
+    "Formula": "Canine + Feline",
+    "Package": "30ml Liquid",
+    "Price HK$": "95.00"
+   },
+   "runtime_input": {
+    "supplier_sku": "590.030",
+    "description": "Vetri DMG Liquid",
+    "species": "Canine + Feline",
+    "package": "30ml Liquid",
+    "unit_price": "95.00",
+    "category": "Immune Health"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": null,
+    "content_amount": "30",
+    "content_uom": "ML",
+    "species": "both",
+    "break_pack_allowed": null,
+    "reason": "The same column that states a count on 29 rows states a MEASURE on this one. Thirty millilitres is what the package holds, not thirty sellable things, so the row takes a content measure and NO unit count — sellable_count_excludes_measures declares that this column means a count wherever it is one. 'Canine + Feline' is a single species value, 'both', not two."
+   }
+  }
+ ],
+ "technical_debt": []
+}

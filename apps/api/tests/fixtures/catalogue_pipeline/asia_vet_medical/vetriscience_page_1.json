@@ -1,0 +1,75 @@
+{
+  "page_outcome": "evidence",
+  "supplier_identity_text": "AVM",
+  "page_brand_text": "VetriScience Laboratories",
+  "tables": [
+    {
+      "section": "Joint Health",
+      "columns": ["Item ID", "Description", "Formula", "Package", "Price HK$"],
+      "rows": [
+        {"cells": ["580.180", "Vetri Disc Capsules", "Canine", "180 Capsules", "225.00"], "confidence": "0.95"},
+        {"cells": ["886.120", "Glyco Flex II Canine Chewable Tablets", "Canine", "120 Tablets", "355.00"], "confidence": "0.95"},
+        {"cells": ["572.120", "Glyco Flex II Canine Bite-Sized Chews", "Canine", "120 Bite-Sized Chews", "297.00"], "confidence": "0.95"},
+        {"cells": ["822.060", "Glyco Flex II Feline Bite-Sized Chews", "Feline", "60 Bite-Sized Chews", "99.00"], "confidence": "0.95"},
+        {"cells": ["887.120", "Glyco Flex III Canine Chewable Tablets", "Canine", "120 Tablets", "448.00"], "confidence": "0.95"},
+        {"cells": ["569.120", "Glyco Flex III Canine Bite-Sized Chews", "Canine", "120 Bite-Sized Chews", "364.00"], "confidence": "0.95"},
+        {"cells": ["88A.060", "Glyco-Flex III Feline Bite-Sized Chews", "Feline", "60 Bite-Sized Chews", "103.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Behavioral Health",
+      "columns": ["Item ID", "Description", "Formula", "Package", "Price HK$"],
+      "rows": [
+        {"cells": ["23A.060", "Composure PRO All Weight Ranges Bite-Sized Chews", "Canine + Feline", "60 Bite-Sized Chews", "202.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Gastrointestinal Health",
+      "columns": ["Item ID", "Description", "Formula", "Package", "Price HK$"],
+      "rows": [
+        {"cells": ["23F.060", "GI Balance PRO Bite-Sized Chews", "Canine + Feline", "60 Bite-Sized Chews", "164.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Immune Health",
+      "columns": ["Item ID", "Description", "Formula", "Package", "Price HK$"],
+      "rows": [
+        {"cells": ["590.030", "Vetri DMG Liquid", "Canine + Feline", "30ml Liquid", "95.00"], "confidence": "0.95"},
+        {"cells": ["743.120", "Vetri Lysine Plus Bite-Sized Chews", "Feline", "120 Bite-Sized Chews", "148.00"], "confidence": "0.95"},
+        {"cells": ["367.030", "Omega 369 PRO", "Canine + Feline", "30 Gel Caps", "70.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Specialty Products",
+      "columns": ["Item ID", "Description", "Formula", "Package", "Price HK$"],
+      "rows": [
+        {"cells": ["331.030", "Vetri SAMe 90mg", "Canine + Feline", "30 Enteric-Coated Tablets", "174.00"], "confidence": "0.95"},
+        {"cells": ["332.030", "Vetri SAMe 225mg", "Canine", "30 Enteric-Coated Tablets", "236.00"], "confidence": "0.95"},
+        {"cells": ["792.120", "Vetri Liver Feline Bite-Sized Chews", "Feline", "120 Bite-Sized Chews", "224.00"], "confidence": "0.95"},
+        {"cells": ["725.060", "Vetri Liver Canine Bite-Sized Chews", "Canine", "60 Bite-Sized Chews", "322.00"], "confidence": "0.95"},
+        {"cells": ["650.060", "Renal Essentials PRO Bite-Sized Chews", "Canine + Feline", "60 Bite-Sized Chews", "198.00"], "confidence": "0.95"},
+        {"cells": ["662.120", "Renal Essentials Feline Bite-Sized Chews", "Feline", "120 Bite-Sized Chews", "107.00"], "confidence": "0.95"},
+        {"cells": ["322.100", "Co Enzyme Q10 10mg Capsules", "Canine + Feline", "100 Capsules", "96.00"], "confidence": "0.95"},
+        {"cells": ["631.090", "Cardio-Strength", "Canine + Feline", "90 Capsules", "311.00"], "confidence": "0.95"},
+        {"cells": ["602.060", "Vetri Cardio Canine Bite-Sized Chews", "Canine", "60 Bite-Sized Chews", "238.00"], "confidence": "0.95"},
+        {"cells": ["605.060", "UT Strength PRO Bite-Sized Chews", "Canine", "60 Bite-Sized Chews", "237.00"], "confidence": "0.95"},
+        {"cells": ["56H.090", "UT Strength Feline PRO Bite-Sized Chews", "Feline", "90 Bite-Sized Chews", "142.00"], "confidence": "0.95"},
+        {"cells": ["96A.060", "Feline Furball PRO", "Feline", "60 Bite-Sized Chews", "61.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Everyday Health",
+      "columns": ["Item ID", "Description", "Formula", "Package", "Price HK$"],
+      "rows": [
+        {"cells": ["91E.030", "Canine Plus Multivitamin Bite-Sized Chews", "Canine", "30 Bite-Sized Chews", "60.00"], "confidence": "0.95"},
+        {"cells": ["86F.090", "Canine Plus Multivitamin Chewable Tablets", "Canine", "90 Chewable Tablets", "107.00"], "confidence": "0.95"},
+        {"cells": ["85F.060", "Canine Plus Senior Multivitamin Bite-Sized Chews", "Canine", "60 Bite-Sized Chews", "104.00"], "confidence": "0.95"},
+        {"cells": ["86F.060", "Canine Plus Senior Multivitamin Chewable Tablets", "Canine", "60 Chewable Tablets", "107.00"], "confidence": "0.95"},
+        {"cells": ["29F.030", "NU Cat Multivitamin Bite-Sized Chews", "Feline", "30 Bite-Sized Chews", "49.00"], "confidence": "0.95"},
+        {"cells": ["87F.030", "NU Cat Senior Cat Multivitamin Bite-Sized Chews", "Feline", "30 Bite-Sized Chews", "51.00"], "confidence": "0.95"},
+        {"cells": ["988.016", "Perio Support PRO Powder", "Canine + Feline", "16oz Powder", "249.00"], "confidence": "0.95"}
+      ]
+    }
+  ],
+  "text_observations": []
+}

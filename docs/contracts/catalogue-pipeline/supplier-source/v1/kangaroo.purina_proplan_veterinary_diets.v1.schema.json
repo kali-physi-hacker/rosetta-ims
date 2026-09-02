@@ -326,6 +326,12 @@
           "description": "Field key whose printed text NAMES the purchase unit after a slash — Alfamedic writes '30ml/ bot' and '100 tabs/ box', so the unit varies per row and cannot be a single declared value. Only units the vocabulary knows are accepted; anything else is left null rather than guessed, because a wrong purchase unit silently rebases every per-unit cost derived from it.",
           "title": "Purchase Uom Source Field"
         },
+        "sellable_count_excludes_measures": {
+          "default": false,
+          "description": "For a column that states EITHER a count of countable things ('180 Capsules') OR a bare measure ('30ml Liquid'): take the leading number as a unit count only in the first case, and let the second become content instead. A 30 ml bottle is one sellable thing, not thirty. Default False because a supplier may legitimately sell BY the measure — Alfamedic's '30ml/ bot' keeps its 30 — so this is declared by the contracts whose column means a count, never assumed.",
+          "title": "Sellable Count Excludes Measures",
+          "type": "boolean"
+        },
         "sellable_unit_uom": {
           "anyOf": [
             {
@@ -759,6 +765,14 @@
           "default": null,
           "description": "The field key carrying a tier's quantity threshold. For MBB_TIER_ROW: Alfamedic prints '10 bots' in its Order Units column on a line that has no order code and a cheaper price — condition and benefit both stated, so the term is fully determined. The row is consumed as a term on the product above it rather than becoming a catalogue row of its own; a priced line with no identity is not a product. For MBB_TIER_PRICE: the quantity-conditioned alternative to tier_minimum_spend — K.P.N. Trading prints a case price in an extra column ON the product's own row ('批發價 每箱'), conditioned on buying the case quantity its units-per-case column states; naming that field here makes the condition declared, not inferred.",
           "title": "Tier Quantity Field"
+        },
+        "value_map": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Source spelling → our vocabulary, for a column whose values are an enumerated set the supplier prints in its own words (AVM's Formula column says 'Canine + Feline' where we file 'both'). Matched case-insensitively on the trimmed value. Lenient by design: a value the map does not cover is carried through verbatim rather than dropped, because an unrecognised species is still evidence — unlike a price basis, where an unmapped unit must hold the row rather than be guessed.",
+          "title": "Value Map",
+          "type": "object"
         }
       },
       "required": [

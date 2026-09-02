@@ -1,5 +1,6 @@
 """Registered supplier-source contract declarations."""
 
+from .asia_vet_medical import ASIA_VET_MEDICAL_VETRISCIENCE_PRICE_LIST_V1
 from .alfamedic import ALFAMEDIC_PRICE_LIST_V1
 from .hills import HILLS_PRICE_LIST_V1
 from .kangaroo import (
@@ -23,6 +24,7 @@ from .royal_canin import (
 from .vetapet import VETAPET_NON_VET_PRICE_LIST_V1, VETAPET_VET_PRICE_LIST_V1
 
 __all__ = [
+    "ASIA_VET_MEDICAL_VETRISCIENCE_PRICE_LIST_V1",
     "ROYAL_CANIN_NON_VET_WEBSHOP_SNAPSHOT_V1",
     "ROYAL_CANIN_VET_WEBSHOP_SNAPSHOT_V1",
     "ALFAMEDIC_PRICE_LIST_V1",

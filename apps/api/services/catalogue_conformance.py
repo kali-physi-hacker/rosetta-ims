@@ -452,6 +452,7 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
                 if target:
                     fields.setdefault(target, page_brand)
     def _record(contract_field, value: Any) -> None:
+        value = _mapped_value(contract_field, value)
         target = _role_target(contract_field.role) or f"additional:{contract_field.field_key}"
         # Preserve every declaration by its stable contract field key even
         # when multiple fields share one semantic role (for example pack
@@ -1766,6 +1767,31 @@ def _stable_term_uuid(evidence: dict[str, Any], field_key: str) -> uuid.UUID:
     return uuid.uuid5(uuid.NAMESPACE_URL, f"rosetta:mbb-tier:{seed}")
 
 
+def _mapped_value(contract_field, value: Any) -> Any:
+    """Translate a source's own spelling into ours, where the contract declares it.
+
+    For a column whose values are an enumerated set the supplier writes in its
+    own words — AVM prints "Canine + Feline" where we file "both". Declared
+    spellings only, matched case-insensitively on the trimmed text.
+
+    Lenient on purpose: a value the map does not cover passes through verbatim.
+    An unrecognised species is still evidence and a reviewer can read it, which
+    is not true of a price basis — there an unmapped unit must hold the row,
+    and that is enforced separately by the pricing semantics.
+    """
+    mapping = getattr(contract_field, "value_map", None)
+    if not mapping:
+        return value
+    text = _text(value)
+    if text is None:
+        return value
+    needle = text.strip().casefold()
+    for spelling, ours in mapping.items():
+        if str(spelling).strip().casefold() == needle:
+            return ours
+    return value
+
+
 def _read_purchase_unit(fields: dict[str, Any], semantics) -> str | None:
     """The per-row purchase unit, from the declared field or the packing text.
 
@@ -2028,6 +2054,16 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
     # '10 mL (8 mL when constituted)' reads its content volume as a sellable
     # count and makes the publication guard refuse the row. Alfamedic's
     # '30ml/ bot' keeps its 30: that row resolves BOTTLE.
+    # A leading number followed by a UNIT of measure is content, not a count:
+    # "30ml Liquid" is one bottle holding thirty millilitres, not thirty things.
+    # Only for contracts that declared their column means a count — a supplier
+    # selling by the measure keeps the old reading.
+    if (
+        sellable_count is not None
+        and semantics.sellable_count_excludes_measures
+        and _content_measure(sellable_source)
+    ):
+        sellable_count = None
     if sellable_count is not None and (read_unit or semantics.purchase_uom is not None):
         proposal["sellable_units_per_purchase_unit"] = str(sellable_count)
     # '30ml/ bot' names a MEASURE, not a countable — the count above is the

@@ -29,6 +29,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 EXPECTED_CONTRACT_IDS = [
     "alfamedic.price_list.v1",
+    "asia_vet_medical.vetriscience_price_list.v1",
     "hills.price_list.v1",
     "kangaroo.earthz_pet_price_sheet.v1",
     "kangaroo.mixed_price_catalogue.v1",
@@ -205,6 +206,9 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # with a price, zero held.
         "royal_canin.non_vet_webshop_snapshot.v1",
         "royal_canin.vet_webshop_snapshot.v1",
+        # AVM's VetriScience list: a real five-column table with an item code on
+        # every row, read end to end from the captured page — 31 rows, nothing held.
+        "asia_vet_medical.vetriscience_price_list.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):
