@@ -1,0 +1,151 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "PET PRODUCTS 寵物專用產品 / Woosh Pet Wipes 寵物用濕紙巾",
+   "columns": [
+    "Code",
+    "Product",
+    "",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "WTFHK-SS8888-01",
+      "Woosh Pet Wipes Reseal, 20’s /pack",
+      "24 packs / case",
+      "$20.00 / pack"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Blood Glucose Monitoring System 寵物用血糖機產品",
+   "columns": [
+    "Code",
+    "Product",
+    "",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "272271",
+      "Vetmate Blood Monitoring System (Starter Kit: Vetmate Meter x 1’s, Vetmate Test Strip x 10's, Lancet x 10's & Lancing Device x 1’s)",
+      null,
+      "$550.00 / set"
+     ]
+    },
+    {
+     "cells": [
+      "272604",
+      "Vetmate Blood Glucose Test Strips",
+      "(50’s / box)",
+      "$290.00 / box"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "WAI YUEN TONG 位元堂",
+   "columns": [
+    "Code",
+    "Product",
+    "",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "6825B02",
+      "位您寵蟲草 CS4 配方 80 粒裝 (獸醫專用)",
+      "(80’s / box)",
+      "$800.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "6820AB02",
+      "位您寵雲芝配方 80 粒裝 (獸醫專用)",
+      "(80’s / box)",
+      "$800.00 / box"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Health Supplements 營養補充及保健產品",
+   "columns": [
+    "Code",
+    "Product",
+    "",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2513838HK",
+      "Ferro Sachet 1.5g",
+      "(28’s / box)",
+      "$179.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "2535564HK",
+      "Lipo-Sachet Vitamin C Sachets",
+      "(30’s / box)",
+      "$289.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "2589982HK",
+      "Lipo-Sachet Vitamin C Sachets Blackcurrant",
+      "(30’s / box)",
+      "$289.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "2587157HK",
+      "Lipo-Sachet Vitamin C Sachets for Kids",
+      "(30’s / box)",
+      "$259.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "VLPT01",
+      "Pomi-T 60 Caps",
+      null,
+      "$230.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "2612747HK",
+      "Kiwi Chew",
+      null,
+      "$143.00 / box"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.9"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.9"
+  },
+  {
+   "text": "Remarks : 另有 Pharma Group Supplements, 種類繁多…(Proven, Return, 森下仁丹, Holdbody..) 詳情請致電 2887 5175 營業部查詢。",
+   "confidence": "0.9"
+  }
+ ]
+}

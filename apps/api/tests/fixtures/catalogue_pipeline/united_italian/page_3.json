@@ -1,0 +1,279 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Extension Tube (Luer Lock & Luer Slip) 延長管",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "ET06",
+      "T Connector (50’s / box)",
+      "$6.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0330",
+      "Mini Volume 4” (100mm) LL (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0331",
+      "Mini Volume 10” (250mm) LL (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0333",
+      "Mini Volume 20” (500mm) LL (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0335",
+      "Mini Volume 30” (750mm) LL (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0336",
+      "Mini Volume 33” (825mm) LL (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0337",
+      "Mini Volume 40” (1,000mm) LL (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0340",
+      "Mini Volume 4” (100mm) Luer Slip (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0341",
+      "Mini Volume 10” (250mm) Luer Slip (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0343",
+      "Mini Volume 20” (500mm) Luer Slip (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0345",
+      "Mini Volume 30” (750mm) Luer Slip (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0346",
+      "Mini Volume 33” (825mm) Luer Slip (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0328",
+      "Mini Volume (1,500mm) LL (50’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0103",
+      "Standard Volume 20” (500mm) LL (25’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0106",
+      "Standard Volume 33” (825mm) LL (25’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0113",
+      "Standard Volume 20” (500mm) Luer Slip (25’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0115",
+      "Standard Volume 30” (750mm) Luer Slip (25’s / box)",
+      "$8.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "803-0116",
+      "Standard Volume 33” (825mm) Luer Slip (25’s / box)",
+      "$8.00 / pc"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Disinfectant 消毒劑",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "#B29A",
+      "Virusolve + Concentrate Disinfectant 2.5L",
+      "$830.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "J49C",
+      "Opa 5L",
+      "$1325.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "Q112",
+      "Amity Opa Test Strips (50’s / tube)",
+      "$1,700.00 / tube"
+     ]
+    },
+    {
+     "cells": [
+      "100144",
+      "Sencron",
+      "$556.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "2024SRSTRP",
+      "Sencron Strips",
+      "$250.00 / bot"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Detergent 洗滌劑",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "100199",
+      "Enzymatic Medical Instrument Cleaner, Ecotouch 1, 1L\nAniosyme Synergy 5 5L",
+      "$260.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "100311",
+      "Enzymatic Medical Instrument Cleaner, Ecotouch 1, 5L\nAniosyme Synergy 5 5L",
+      "$1,200.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "#J69B",
+      "Viruzyme Ve 5L",
+      "$1,200.00 / bot"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Air Purifier",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "1200S",
+      "Eolis Air Manager",
+      "*****"
+     ]
+    },
+    {
+     "cells": [
+      "HYGEOLIS",
+      "Hygeolis",
+      "*****"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Others 其他",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "#J30TP",
+      "Virusolve + Spray 750ml",
+      "$200.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "#J19C",
+      "Sanitab Plus 3.25g Tablet with 1.7g Active NaDCC 犀利逹 3.25g 漂白丸 (1.7g NaDCC + 活性劑) (200’s / bot)",
+      "$400.00 / bot"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.95"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.95"
+  },
+  {
+   "text": "***** : Please contact our salesmen for further product detail",
+   "confidence": "0.9"
+  }
+ ]
+}

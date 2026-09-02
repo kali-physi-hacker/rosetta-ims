@@ -1,0 +1,275 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "INTRAVENOUS SOLUTION 注射輸液 / Others 其他",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "AHB2544",
+      "Plasma-Lyte 148 Approx. PH7.4 IV Infusion 1000ml (12’s / box)",
+      "$100.00 / bag $1,200.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2D5632Q",
+      "Mannitol 20% 250ml (36’s / box)",
+      "$96.00 / bag $3,456.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "FE64513",
+      "Gelofusine 4% 500ml (10’s / box)",
+      "$148.00 / bottle $1,480.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3549291",
+      "Sodium Bicarbonate 8.4% 100ml, Glass Bottle (20’s / box)",
+      "$104.00 / bottle $2,080.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB7317",
+      "1.5% Glycine Irrigation Solution 3000ml (4’s / box)",
+      "$106.00 / bag $424.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B3421",
+      "Metronidazole Inj. 500mg/100ml (24’s / box)",
+      "$64.00 / bag $1,536.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3611096",
+      "Heparin Sodium 10iu/ml in 0.9% NaCl 5ml (20’s / box)",
+      "$460.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3638793",
+      "Heparin Sodium 25000iu/5ml (10’s / box)",
+      "$118.80 / vial $1,188.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610419",
+      "Hartman’s Solution 500ml (10’s / box)",
+      "$35.00 / bottle $350.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610002",
+      "Osmofundin 20% EP 250ml (30’s / box)",
+      "$93.00 / bottle $2,790.00 / box"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Solution for Injection 注射用溶液",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "3612759",
+      "NaCl 5.85% 20ml (20’s / box)",
+      "$390.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3612767",
+      "Sodium Chloride 0.9% 10ml (20’s / box)",
+      "$82.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3612775",
+      "Sodium Chloride 0.9% 20ml (20’s / box)",
+      "$146.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3612716",
+      "Water for Injection 10ml (20’s / box)",
+      "$79.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3612724",
+      "Water for Injection 20ml (20’s / box)",
+      "$184.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3615427",
+      "Water for Injection 100ml (50’s / box)",
+      "$22.00 / bottle $1,100.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3638642",
+      "Water for Injection 100ml (Glass) (20’s / box)",
+      "$39.00 / bottle $780.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610694",
+      "Water for Injection 500ml (10’s / box)",
+      "$38.00 / bottle $380.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3612821",
+      "Glucose 50% 20ml (20’s / box)",
+      "$256.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3611054",
+      "Glucose 50% 500ml (10’s / box)",
+      "$242.00 / bottle $2,420.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3615425",
+      "Sodium Chloride 0.9% 100ml (50’s / box)",
+      "$27.00 / bottle $1,350.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3638650",
+      "Sodium Chloride 0.9% 100ml (Glass) (20’s / box)",
+      "$45.00 / bottle $900.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610013",
+      "Sodium Chloride 0.9% 250ml (30’s / box)",
+      "$37.00 / bottle $1,110.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610401",
+      "Sodium Chloride 0.9% 500ml (10’s / box)",
+      "$22.00 / bottle $220.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610396",
+      "Sodium Chloride 0.9% 1000ml (10’s / box)",
+      "$26.00 / bottle $260.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3612830",
+      "Potassium Chloride 14.9% 10ml (20’s / box)",
+      "$214.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3549356",
+      "Calcium Gluconate 10% 10ml (20’s / box)",
+      "$386.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3615186",
+      "Glucose 5% 100ml (50’s / box)",
+      "$31.00 / bottle $1,550.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610041",
+      "Glucose 5% 250ml (30’s / box)",
+      "$38.00 / bottle $1,140.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3610412",
+      "Glucose 5% 500ml (10’s / box)",
+      "$19.00 / bottle $190.00 / box"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.95"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.95"
+  }
+ ]
+}

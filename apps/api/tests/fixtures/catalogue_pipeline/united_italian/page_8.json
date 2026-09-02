@@ -1,0 +1,217 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "PROTECTIVE WEARING 保護性衣物 / PE Apron, Drape & Gown 即棄膠圍裙、消毒覆蓋及即棄袍",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "47614",
+      "Half Drape 58” x 40” (60’s / case)",
+      "$30.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "89471",
+      "Brachial Angiography Drape, 41” x 31” (Sterile) (50’s / case)",
+      "$52.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "89731",
+      "Utility Drape with Tape, 15” x 25”, 2’s/pk (100 pks / case)",
+      "$22.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "47622",
+      "Large Drape, 55” x 76” (32’s / case)",
+      "$38.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "89431",
+      "Head Drape, 50” x 36” (Sterile) (38’s / case)",
+      "$48.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "88716",
+      "EENT Pack II",
+      "$350.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "89358",
+      "EENT Split Drape, 76” x 124” w / 3” x 24” Split (10’s / case)",
+      "$125.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "89601",
+      "Mayo Stand Cover",
+      "$35.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "89701",
+      "Absorbent Towel, 2’s/pk (100 pks / case)",
+      "$18.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "78940",
+      "KC Surgical Gown, Medium (China) (60’s / case)",
+      "$56.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "78945",
+      "KC Surgical Gown, Large (China) (60’s / case)",
+      "$56.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "78950",
+      "KC Surgical Gown, Extra-Large (China) (60’s / case)",
+      "$56.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "90012",
+      "Non-Reinforced Surgical Gown, Large (USA)",
+      "$50.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "90042",
+      "Non-Reinforced Surgical Gown, Extra-Large (USA)",
+      "$50.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "8023-30",
+      "Isolation Gown 30g, Regular Size, Blue, Cuff",
+      "$80.00 / 10’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "8023-40",
+      "Isolation Gown 40g, Regular Size, Blue, Cuff",
+      "$165.00 / 10’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "8023-PEPP",
+      "PE Gown (with Sleeves), Blue, Individual Pack",
+      "$6.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "A1176",
+      "Medplus Isolation Gown, 120 x 140cm w/ Elastic Cuff, Level 1, Non-Sterile, Yellow (10’s / bag)",
+      "$130.00 / bag"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "CP01.21.0027",
+      "Medplus Isolation Gown, SSP 30g, XL, 115 x 137cm, w/ Knitted Cuff, Non-Sterile, Light Blue (10’s / bag)",
+      "$72.00 / bag"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFWGSG834C0500001",
+      "Sterile Surgical Gown M",
+      "$36.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFWGSG834D0500001",
+      "Sterile Surgical Gown L",
+      "$36.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFWGSG834E0500001",
+      "Sterile Surgical Gown XL",
+      "$36.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SSLHDP0006-0200001",
+      "SSL Ophthalmic Drape 170 x 200cm",
+      "$80.00 / pc"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFWGGW824R0050010",
+      "S FW SMS Isolation Gown Yellow Reg (50’s/cs)",
+      "$420.00 / bag"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.9"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.9"
+  }
+ ]
+}

@@ -1,0 +1,247 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "GLOVES 手套 / Nitrile Gloves 丁腈手套",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "1137A – E",
+      "SafeTouch Nitrile P/F Gloves - XS - XL",
+      "$52.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "1174A – D",
+      "SafeTouch Nitrile P/F Gloves - XS - L",
+      "$56.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "1175A – D",
+      "SafeTouch Slim Blue Nitrile P/F Gloves - XS - L",
+      "$52.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "50601 – 50603",
+      "KC SafeSkin Purple Nitrile-Xtra 12” Exam. Gloves - S - L",
+      "$305.00 / 50’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "52816 – 52819",
+      "Lanvender Gloves – XS – L",
+      "$230.00 / 250’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USNG4F-S",
+      "Disposable Examination Nitrile PD Gloves, Blue - S",
+      "$85.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USNG4F -M",
+      "Disposable Examination Nitrile PD Gloves, Blue - M",
+      "$85.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USNG4F -L",
+      "Disposable Examination Nitrile PD Gloves, Blue - L",
+      "$85.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USNG3.5F-S",
+      "Disposable Nitrile P/F Gloves - S",
+      "$68.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USNG3.5F-M",
+      "Disposable Nitrile P/F Gloves - M",
+      "$68.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USNG3.5F-L",
+      "Disposable Nitrile P/F Gloves - L",
+      "$68.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "47452 – 47456",
+      "Pink Underguard Nitrile Gloves - XS - XL",
+      "$290.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "GLOVES 手套 / Chemotherapy Sterile Gloves 化療用消毒手套",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "14260",
+      "Purple Nitrile Xtra Sterile Gloves - S (50 pairs / box)",
+      "$900.00 / 50’s"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "14261",
+      "Purple Nitrile Xtra Sterile Gloves – M",
+      "$900.00 / 50’s"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "14262",
+      "Purple Nitrile Xtra Sterile Gloves – L 需訂貨，詳情請問 Sales",
+      "$900.00 / 50’s"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "14263",
+      "Purple Nitrile Xtra Sterile Gloves - XL",
+      "$900.00 / 50’s"
+     ],
+     "confidence": "0.9"
+    }
+   ]
+  },
+  {
+   "section": "GLOVES 手套 / PE & Vinyl Gloves 手套",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "VITHC1210B0100100 – VITHC1210D0100100",
+      "CPE Gloves - S - L",
+      "$17.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "1208A – D",
+      "Second Skin Vinyl PD Gloves - XS - L",
+      "$46.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "1209A – D",
+      "Second Skin Vinyl P/F Gloves - XS - L",
+      "$34.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USVG5.0MF-S",
+      "Disposable Vinyl P/F Gloves - S",
+      "$48.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USVG5.0MF-M",
+      "Disposable Vinyl P/F Gloves - M",
+      "$48.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "USVG5.0MF-L",
+      "Disposable Vinyl P/F Gloves - L",
+      "$48.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "PAPER CUPS 紙杯",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "140",
+      "Distech Poly-Coated Paper Cup 5oz., White",
+      "$24.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "139-0300100",
+      "Paper Cup 5oz., Blue (Teeth)",
+      "$24.00 / 100’s"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.95"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.95"
+  }
+ ]
+}

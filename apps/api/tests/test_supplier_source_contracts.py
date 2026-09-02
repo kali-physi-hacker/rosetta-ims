@@ -43,6 +43,7 @@ EXPECTED_CONTRACT_IDS = [
     "queens_pharma.zoetis_price_list.v1",
     "royal_canin.non_vet_webshop_snapshot.v1",
     "royal_canin.vet_webshop_snapshot.v1",
+    "united_italian.gp_price_list.v1",
     "vetapet.non_vet_price_list.v1",
     "vetapet.vet_price_list.v1",
 ]
@@ -222,6 +223,11 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # captured forms — all ten conform, and the pipeline derives the same
         # box-of-two packaging BizOps recorded by hand on all six sheet rows.
         "queens_pharma.zoetis_price_list.v1",
+        # United Italian's general-practice list: 40 pages, 657 priced lines,
+        # and the basis printed inside every price cell. Verified 2026-09-02
+        # against eleven recorded pages — 282 rows conform with nothing held,
+        # and eleven of the sheet's thirteen coded rows agree to the cent.
+        "united_italian.gp_price_list.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):

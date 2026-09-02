@@ -1220,13 +1220,13 @@
       "type": "object"
     }
   },
-  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/supplier-source/v1/kpn_trading.case_only_price_list.v1.schema.json",
+  "$id": "https://rosetta-ims.local/contracts/catalogue-pipeline/supplier-source/v1/united_italian.gp_price_list.v1.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "JSON Schema derived from the authoritative SupplierSourceContractV1 Pydantic model for kpn_trading.case_only_price_list.v1@v1.",
+  "description": "JSON Schema derived from the authoritative SupplierSourceContractV1 Pydantic model for united_italian.gp_price_list.v1@v1.",
   "properties": {
     "contract_id": {
-      "const": "kpn_trading.case_only_price_list.v1",
+      "const": "united_italian.gp_price_list.v1",
       "description": "Stable supplier-format contract identity.",
       "title": "Contract Id",
       "type": "string"
@@ -1416,6 +1416,6 @@
     "created_at",
     "created_by"
   ],
-  "title": "kpn_trading.case_only_price_list.v1 Supplier Source Contract",
+  "title": "united_italian.gp_price_list.v1 Supplier Source Contract",
   "type": "object"
 }
