@@ -617,6 +617,41 @@ def _date_proposal(value: Any, evidence: dict[str, Any]) -> dict[str, Any] | Non
     return {"value": parsed.isoformat(), "evidence": evidence}
 
 
+#: "$100.00 / bag $1,200.00 / box" — the unit price and the case price in one
+#: cell, which is how the vision pass renders the intravenous tables on some
+#: pages and as two columns on others. The FIRST pair is the per-unit one, on
+#: every page and on the golden sheet, so both the amount and the basis are
+#: taken from it. Reading the last pair instead would price a bag as a box.
+_PRICE_WITH_BASIS = re.compile(r"^\s*([^/]+?)\s*/\s*([^/$]+?)\s*(?:\$|$)")
+
+
+def _first_price_and_basis(value: Any) -> tuple[str, str] | None:
+    match = _PRICE_WITH_BASIS.match(str(value or ""))
+    return (match.group(1), match.group(2).strip()) if match else None
+
+
+def _cost_amount(value: Any, pricing, *, non_negative: bool = False) -> Decimal | None:
+    """The money on a cost cell, allowing for a basis printed after the amount.
+
+    _decimal_value deliberately refuses a numeric suffix so a genuine fraction
+    ("3/8") never half-parses — a good default this does not weaken. But United
+    Italian print "$52.00 / 100’s": a perfectly clear amount whose basis happens
+    to BE a count. Where a contract has DECLARED that the text after the slash
+    is the basis, the money is the half before it.
+
+    Used by both the cost proposal and the issue check, because a price the
+    pipeline can read and a price it reports as unreadable must never be
+    decided by two different pieces of code.
+    """
+    reader = _decimal_or_none if non_negative else _decimal_value
+    amount = reader(value)
+    if amount is None and pricing.price_basis_is_suffix_of_price:
+        head = _first_price_and_basis(value)
+        if head:
+            amount = reader(head[0])
+    return amount
+
+
 def _normalization_issues(
     fields: dict[str, Any],
     runtime_contract,
@@ -633,7 +668,10 @@ def _normalization_issues(
                 message="The supplier marked the cost as unavailable; no numeric cost was proposed.",
             )
         )
-    elif _decimal_or_none(raw_cost) is not None and _declared_cost_basis(runtime_contract, fields) is None:
+    elif (
+        _cost_amount(raw_cost, declaration.pricing, non_negative=True) is not None
+        and _declared_cost_basis(runtime_contract, fields) is None
+    ):
         issues.append(
             ContractExecutionIssue(
                 issue_code="CONTRACT_PRICE_BASIS_UNRESOLVED",
@@ -643,7 +681,7 @@ def _normalization_issues(
             )
         )
     elif _text(raw_cost) is not None and (
-        _decimal_value(raw_cost) is None or _decimal_value(raw_cost) < 0
+        (_cost := _cost_amount(raw_cost, declaration.pricing)) is None or _cost < 0
     ):
         issues.append(
             ContractExecutionIssue(
@@ -1836,6 +1874,14 @@ def _winning_price_field(runtime_contract, fields: dict[str, Any] | None):
     return None
 
 
+#: A price basis printed as a plain quantity — "100’s", "50’s", "1,000's".
+#: The possessive form is REQUIRED, not optional: it is how this source writes
+#: a count on every one of them, and demanding it keeps a bare number out. A
+#: suture gauge ("2\"", "0 (1.5) 45cm DS19") and a genuine fraction ("3/8") sit
+#: in the same position and must never be mistaken for a quantity of goods.
+_BARE_COUNT = re.compile(r"\d[\d,]*\s*[’']\s*s", re.IGNORECASE)
+
+
 def _row_stated_cost_basis(runtime_contract, fields: dict[str, Any] | None):
     """The basis THIS ROW states, when the contract says a column names it.
 
@@ -1861,6 +1907,25 @@ def _row_stated_cost_basis(runtime_contract, fields: dict[str, Any] | None):
         if str(spelling).strip().casefold() == needle:
             mapped = code
             break
+    if mapped is None and pricing.price_basis_is_suffix_of_price:
+        # United Italian print the basis INSIDE the price — "$46.00 / bag",
+        # "$205.00 / box". Only reached when the whole value did not match, so a
+        # source whose basis column already answers outright is untouched; and
+        # the declared map still governs, so this widens WHERE we look, never
+        # WHAT we accept.
+        head = _first_price_and_basis(raw)
+        suffix = (head[1] if head else "").casefold()
+        for spelling, code in (pricing.price_basis_value_map or {}).items():
+            if str(spelling).strip().casefold() == suffix:
+                mapped = code
+                raw = suffix
+                break
+        if mapped is None and pricing.price_basis_count_unit:
+            # "$78.00 / 100's" — a quantity, and no vessel named. The contract
+            # says what a bare count stands for; nothing is inferred here.
+            if _BARE_COUNT.fullmatch(suffix):
+                mapped = pricing.price_basis_count_unit
+                raw = suffix
     if mapped is None:
         return None
     # A label is only permitted alongside OTHER; for a known code the source's
@@ -1888,8 +1953,8 @@ def _declared_cost_basis(runtime_contract, fields: dict[str, Any] | None):
 def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any], fields: dict[str, Any] | None = None) -> dict[str, Any] | None:
     if _matches_null_marker(value, runtime_contract.declaration.pricing.null_cost_markers):
         return None
-    amount = _decimal_or_none(value)
     pricing = runtime_contract.declaration.pricing
+    amount = _cost_amount(value, pricing, non_negative=True)
     basis = _declared_cost_basis(runtime_contract, fields)
     packaging = runtime_contract.declaration.packaging
     if fields is not None and packaging.price_basis_follows_purchase_unit:
