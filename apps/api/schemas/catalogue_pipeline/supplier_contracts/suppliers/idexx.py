@@ -246,13 +246,19 @@ IDEXX_ORDER_PORTAL_SNAPSHOT_V1 = register_supplier_source_contract(
             AmbiguityRule(
                 issue_code="IDEXX_PORTAL_DOES_NOT_COVER_EVERY_INVOICED_PRODUCT",
                 condition=(
-                    "A product AVM invoices that the ordering portal does not list — reference "
-                    "laboratory tests among them."
+                    "A product AVM invoices that the ordering portal does not list — send-out "
+                    "laboratory tests in particular."
                 ),
                 review_guidance=(
-                    "The snapshot proves what the portal sells, not everything AVM bills. Two of "
-                    "the eight IDEXX rows on the golden sheet (99-0018136, 99-0004959) are absent "
-                    "from it, so a missing product is not evidence of a delisting."
+                    "The snapshot proves what the portal SELLS AS STOCK, not everything AVM "
+                    "bills. Reference-laboratory-supplies holds 20 items and every one is a free "
+                    "collection consumable — tubes, swabs, jars, specimen bags — with not a "
+                    "single test among them: IDEXX gives you the tube, and the test it goes to "
+                    "is a service invoiced separately. That is why two of the eight IDEXX rows "
+                    "on the golden sheet (99-0018136 Pancreatic Lipase, 99-0004959 CRP) are "
+                    "absent while their in-house equivalents, SNAP cPL and SNAP fPL, are "
+                    "present. A product missing from a snapshot is therefore never evidence of "
+                    "a delisting."
                 ),
                 blocks_supported_status=False,
             ),
