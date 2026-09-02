@@ -281,8 +281,13 @@ def _install_golden_replay(monkeypatch, envelope_paths: list[Path]):
     payloads = [path.read_text(encoding="utf-8") for path in envelope_paths]
     calls = {"n": 0}
 
+    #: What extraction actually sends a vision provider. PDF pages are rendered
+    #: one at a time; an IMAGE source is a single unit sent as itself, which is
+    #: how a photographed price list arrives (Queen's, AVM VetriScience).
+    replayable = {"application/pdf", "image/jpeg", "image/png"}
+
     def replay(_content: bytes, *, media_type: str):
-        assert media_type == "application/pdf"
+        assert media_type in replayable, f"unexpected media type {media_type!r}"
         index = calls["n"]
         calls["n"] += 1
         return extraction._VisionResponse(text=payloads[index], request_id=f"golden_{index + 1}")
