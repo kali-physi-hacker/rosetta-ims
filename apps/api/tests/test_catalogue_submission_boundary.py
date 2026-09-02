@@ -476,3 +476,74 @@ def test_xlsx_passes_the_capability_gate_and_ole_signatures_do_not(client, db):
     )
     assert response.status_code == 415
     assert "does not match supplier contract" in response.json()["detail"]["message"]
+
+
+# --- images are a carrier, not a different document ---------------------------
+#
+# Extraction has read JPEG and PNG since 2026-07-23 (_extract_image sends them
+# to the vision provider exactly as it sends a rendered PDF page), but the
+# capability gate was authored a day later from the formats then in use and
+# never listed them. Suppliers who photograph their price list — Queen's send
+# theirs over WhatsApp, AVM's VetriScience list is a photo — had to have the
+# file wrapped in a PDF by hand first, even though the PDF we then stored was
+# that very image inside a wrapper.
+
+
+def test_images_pass_the_capability_gate():
+    """The suffix and its magic bytes, together. A suffix accepted without a
+    signature branch would be rejected as a mismatch on every upload, because
+    signature_matches falls through to False for a format it does not know."""
+    from services.source_capability import signature_matches
+
+    assert catalogue_submission._source_format_from_suffix(".jpg") == "IMAGE"
+    assert catalogue_submission._source_format_from_suffix(".jpeg") == "IMAGE"
+    assert catalogue_submission._source_format_from_suffix(".png") == "IMAGE"
+
+    assert signature_matches("IMAGE", bytes.fromhex("ffd8ffe000104a464946"))
+    assert signature_matches("IMAGE", b"\x89PNG\r\n\x1a\n" + b"\x00" * 8)
+    assert not signature_matches("IMAGE", b"%PDF-1.7")
+    assert not signature_matches("PDF", bytes.fromhex("ffd8ffe0"))
+
+
+def test_an_image_satisfies_a_pdf_table_contract():
+    """A photograph of a price list is the same document as a scan of one.
+
+    Deliberately mapped onto the PDF contracts rather than asking them to
+    declare IMAGE: a contract's source_format states the SHAPE of the content,
+    and PDF_TABLE is what keeps a page's header, footer and policy notes
+    classed as furniture instead of arriving BLOCKING — conformance reads the
+    CONTRACT's format, never the upload's.
+    """
+    from services.source_capability import format_satisfies_contract
+
+    assert format_satisfies_contract("IMAGE", "PDF_TABLE")
+    assert format_satisfies_contract("IMAGE", "PDF")
+    assert format_satisfies_contract("PDF", "PDF_TABLE")
+    assert format_satisfies_contract("IMAGE", "IMAGE")
+
+    # An image is not a spreadsheet and never stands in for one.
+    assert not format_satisfies_contract("IMAGE", "CSV")
+    assert not format_satisfies_contract("IMAGE", "SPREADSHEET")
+    assert not format_satisfies_contract("SPREADSHEET", "PDF_TABLE")
+
+
+def test_the_gate_and_the_flow_answer_the_format_question_identically():
+    """This rule was written out twice — once at the submission gate, once in
+    the flow that re-checks the recorded run — and the copies disagreed: an
+    image accepted at the gate then failed the flow with RECORDED_CONTRACT_ERROR
+    after the upload had already been stored. Both now defer to one authority,
+    and this is what stops them drifting apart again.
+    """
+    from orchestration.catalogue_contract_resolution import source_format_matches
+    from schemas.catalogue_pipeline.enums import SourceFormat
+    from services.source_capability import format_satisfies_contract
+
+    for recorded in ("PDF", "IMAGE", "CSV", "SPREADSHEET"):
+        for contract in SourceFormat:
+            authority = format_satisfies_contract(recorded, contract.value)
+            assert source_format_matches(recorded, contract.value) == authority, (
+                f"flow disagrees for {recorded} vs {contract.value}"
+            )
+            assert (
+                catalogue_submission._format_matches_contract(recorded, contract) == authority
+            ), f"gate disagrees for {recorded} vs {contract.value}"

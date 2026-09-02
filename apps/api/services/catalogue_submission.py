@@ -26,6 +26,7 @@ from services import supplier_source_contract_runtime
 from services.source_capability import (
     DEFAULT_UPLOAD_ROOT,
     SUPPORTED_SOURCE_SUFFIXES,
+    format_satisfies_contract,
     signature_matches,
 )
 from schemas.catalogue_pipeline.enums import SourceFormat
@@ -965,13 +966,9 @@ def _source_format_from_suffix(suffix: str) -> str | None:
 
 
 def _format_matches_contract(source_format: str, expected: SourceFormat) -> bool:
-    if expected in {SourceFormat.PDF, SourceFormat.PDF_TABLE}:
-        return source_format == "PDF"
-    if expected == SourceFormat.SPREADSHEET:
-        return source_format == "SPREADSHEET"
-    if expected == SourceFormat.CSV:
-        return source_format == "CSV"
-    return expected == SourceFormat.OTHER
+    """The gate's half of the capability policy — the rule itself lives in
+    source_capability so the gate and the flow cannot answer differently."""
+    return format_satisfies_contract(source_format, expected.value)
 
 
 _signature_matches = signature_matches

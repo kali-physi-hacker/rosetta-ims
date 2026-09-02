@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 import models
 from services import supplier_source_contract_runtime
+from services.source_capability import format_satisfies_contract
 
 from .catalogue_types import RecordedContractError, RecordedSupplierContract, RunNotFound
 
@@ -63,11 +64,11 @@ def source_format_matches(recorded: str, contract_format: str) -> bool:
     """Whether a stored source's format can satisfy a contract's declared one.
 
     Public because reparse-with-a-contract-override must ask the same question
-    at request time that this module asks at flow time.
+    at request time that this module asks at flow time. Both, and the
+    submission gate, defer to services.source_capability — the rule was written
+    out twice before and a format accepted at the gate then failed the flow.
     """
-    if contract_format in {"PDF", "PDF_TABLE"}:
-        return recorded == "PDF"
-    return recorded == contract_format
+    return format_satisfies_contract(recorded, contract_format)
 
 
 _source_format_matches = source_format_matches
