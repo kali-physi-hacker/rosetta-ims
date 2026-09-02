@@ -1,67 +1,21 @@
 {
- "page_outcome": "evidence",
- "tables": [
-  {
-   "columns": [
-    "Brand",
-    "Ingredients",
-    "Pack Size",
-    "Unit",
-    "PriceHK$",
-    "Order"
-   ],
-   "rows": [
+  "page_outcome": "evidence",
+  "supplier_identity_text": "QUEEN'S PHARMA Distributor for zoetis",
+  "tables": [
     {
-     "cells": [
-      "LIBRELA 5mg",
-      "Bedinvetmab 5mg injection",
-      "1ml/bot",
-      "2vials per box",
-      "600",
-      "Box"
-     ],
-     "confidence": "0.95"
-    },
-    {
-     "cells": [
-      "LIBRELA 10mg",
-      "Bedinvetmab 10mg injection",
-      "1ml/bot",
-      "2vials per box",
-      "630",
-      "Box"
-     ],
-     "confidence": "0.95"
-    },
-    {
-     "cells": [
-      "LIBRELA 15mg",
-      "Bedinvetmab 15mg injection",
-      "1ml/bot",
-      "2vials per box",
-      "680",
-      "Box"
-     ],
-     "confidence": "0.95"
-    },
-    {
-     "cells": [
-      "SOLENSIA 7MG",
-      "Frunevetmab 7mg injection",
-      "1ml/bot",
-      "2vials per box",
-      "650",
-      "Box"
-     ],
-     "confidence": "0.95"
+      "section": "PRICE LIST AND PRE ORDER FORM 2025 from 1st January",
+      "columns": ["Brand", "Ingredients", "Pack Size", "Unit", "PriceHK$", "Order"],
+      "rows": [
+        {"cells": ["LIBRELA 5mg", "Bedinvetmab 5mg injection", "1ml/bot", "2vials per box", "600", "Box"], "confidence": "0.95"},
+        {"cells": ["LIBRELA 10mg", "Bedinvetmab 10mg injection", "1ml/bot", "2vials per box", "630", "Box"], "confidence": "0.95"},
+        {"cells": ["LIBRELA 15mg", "Bedinvetmab 15mg injection", "1ml/bot", "2vials per box", "680", "Box"], "confidence": "0.95"},
+        {"cells": ["SOLENSIA 7MG", "Frunevetmab 7mg injection", "1ml/bot", "2vials per box", "650", "Box"], "confidence": "0.95"}
+      ]
     }
-   ]
-  }
- ],
- "text_observations": [
-  {
-   "text": "*MOQ: Free of Charge for delivery when $1,000/order\nAdditional $50 delivery charge when <$1,000/order",
-   "confidence": "0.9"
-  }
- ]
+  ],
+  "text_observations": [
+    {"text": "PRICE LIST AND PRE ORDER FORM 2025 from 1st January", "confidence": "0.9"},
+    {"text": "*MOQ: Free of Charge for delivery when $1, 000/order", "confidence": "0.9"},
+    {"text": "Additional $50 delivery charge when <$1, 000/order", "confidence": "0.9"}
+  ]
 }

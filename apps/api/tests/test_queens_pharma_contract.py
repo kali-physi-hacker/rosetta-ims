@@ -39,6 +39,11 @@ from test_catalogue_golden_suppliers import _blank_pdf, _install_golden_replay  
 
 FIXTURES = Path(__file__).parent / "fixtures" / "catalogue_pipeline" / "queens_pharma"
 PAGES = [FIXTURES / f"page_{n}.json" for n in (1, 2, 3)]
+#: The same three forms read a SECOND time, independently. The two readings
+#: disagree about which optional fields to populate — supplier_identity_text and
+#: page_brand_text appear in one and not the other — so replaying both is what
+#: stops the contract being tuned to a single vision run.
+ALT_PAGES = [FIXTURES / f"alt_page_{n}.json" for n in (1, 2, 3)]
 CONTRACT = "queens_pharma.zoetis_price_list.v1"
 
 KIT = "AlphaTRAK 3 (Blood Glucose Monitoring System ) Starter Kit"
@@ -72,6 +77,27 @@ RESOLVED = {
     KIT: ("PACK", "1"),
     "AlphaTRAK 3": ("BOX", "1"),
 }
+
+
+def _conform(pages):
+    """Replay a set of recorded pages through extraction and conformance."""
+    from _pytest.monkeypatch import MonkeyPatch
+
+    patch = MonkeyPatch()
+    try:
+        patch.setenv("CATALOGUE_VISION_PROVIDER", "anthropic")
+        patch.setenv("ANTHROPIC_API_KEY", "replay-only")
+        calls = _install_golden_replay(patch, pages)
+        result = extract_evidence(_blank_pdf(len(pages)), "queens-zoetis.pdf", "application/pdf")
+        assert calls["n"] == len(pages), "replayed from the recorded pages — no provider was called"
+        runtime = SupplierSourceRuntimeContract(
+            declaration=get_supplier_source_contract(CONTRACT, "v1").declaration
+        )
+        return conform_observations(
+            result.observations, tuple(uuid4() for _ in result.observations), runtime
+        )
+    finally:
+        patch.undo()
 
 
 @pytest.fixture(scope="module")
@@ -272,3 +298,87 @@ def test_the_sheet_records_no_code_for_any_queens_row():
     """Why this set is verified here and not as a golden set: the harness joins
     sheet to export on the supplier code, and neither side has one."""
     assert all(not row["supplier_product_code"] for row in _sheet_rows())
+
+
+# --- robustness against the model that did the reading ------------------------
+
+
+def test_a_second_independent_reading_of_the_same_forms_agrees(conformed):
+    """The same three forms, read twice by the production vision path, produce
+    envelopes that DIFFER: one populates supplier_identity_text and
+    page_brand_text where the other leaves them null. None of that may change
+    what the contract reads, or the catalogue depends on which run happened to
+    read it — and the next run is always a different one.
+    """
+    alt = _conform(ALT_PAGES)
+
+    def facts(outcome):
+        return {
+            (row.raw_fields.get("product_name") or "").strip(): (
+                str(row.raw_fields.get("cost")),
+                str((row.normalized_fields.get("packaging") or {}).get("sellable_units_per_purchase_unit")),
+                ((row.normalized_fields.get("packaging") or {}).get("price_basis") or {}).get("code"),
+                row.raw_fields.get("brand"),
+            )
+            for row in outcome.items
+            if (row.raw_fields.get("product_name") or "").strip()
+        }
+
+    assert facts(alt) == facts(conformed)
+
+
+def test_the_two_readings_really_are_different_envelopes():
+    """Guards the test above from becoming a tautology: if someone copies one
+    reading over the other, the agreement assertion still passes and proves
+    nothing. These are the fields that actually differ."""
+    import json
+
+    a = json.loads((FIXTURES / "page_3.json").read_text(encoding="utf-8"))
+    b = json.loads((FIXTURES / "alt_page_3.json").read_text(encoding="utf-8"))
+
+    assert a.get("page_brand_text") != b.get("page_brand_text")
+    assert a.get("supplier_identity_text") != b.get("supplier_identity_text")
+
+
+def test_a_form_filled_in_by_a_clinic_yields_none_of_the_handwriting():
+    """One of the two Cytopoint documents we hold was filled in and signed by a
+    clinic before it reached us — a date, a clinic name, an order-by signature
+    and handwritten quantities down the Order column.
+
+    Neither reading carries any of it. The Order cells hold the printed unit,
+    and no clinic name, date or quantity appears anywhere in the envelope. That
+    is what makes QUEENS_FORM_IS_ALSO_AN_ORDER_FORM a note for a reviewer
+    rather than a way for one clinic's order to become our catalogue.
+    """
+    import json
+    import re
+
+    for name in ("page_1.json", "cytopoint_second_read.json"):
+        page = json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+        orders = [row["cells"][-1] for table in page["tables"] for row in table["rows"]]
+        assert orders == ["Box", "Box", "Box", "Box"], name
+
+        blob = json.dumps(page, ensure_ascii=False)
+        assert not re.search(r"Hugh|Stanley|046\b|28\s*/\s*7", blob), (
+            f"{name} carries handwriting from the clinic that filled the form in"
+        )
+
+
+def test_the_two_readings_of_the_cytopoint_form_price_it_identically():
+    """Prices are the one thing two readings must never disagree on."""
+    import json
+
+    def priced(name):
+        page = json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+        return {r["cells"][1]: r["cells"][5] for t in page["tables"] for r in t["rows"]}
+
+    assert priced("page_1.json") == priced("cytopoint_second_read.json")
+
+
+def test_the_marketing_banner_is_not_a_catalogue():
+    """Queen's send a stock banner alongside the forms. It has no table and no
+    prices, and must yield no products rather than a run that fails — the
+    pipeline classes it as furniture and moves on."""
+    banner = _conform([FIXTURES / "stock_banner.json"])
+
+    assert [r for r in banner.items if (r.raw_fields.get("product_name") or "").strip()] == []

@@ -1,11 +1,14 @@
 {
- "source": "queens_price_lists.pdf",
- "recorded_from": "live anthropic claude-sonnet-5 extraction via scripts/record_golden_envelopes.py",
- "provider": "anthropic",
- "model": "claude-sonnet-5",
- "pages": [
-  1,
-  2,
-  3
- ]
+  "source": "Queen's Pharma PRICE LIST AND PRE ORDER FORM — three photographed forms",
+  "pages": {
+    "page_1.json": "Cytopoint 2024 (from 1 October) — 4 products",
+    "page_2.json": "Librela + Solensia 2025 (from 1 January) — 4 products",
+    "page_3.json": "AlphaTRAK 3 2024 (from 1 August) — 2 products",
+    "cytopoint_second_read.json": "A second reading of the Cytopoint form. One of the two Cytopoint documents we hold is a copy filled in and signed by a clinic; neither reading carries any of that handwriting.",
+    "stock_banner.json": "A marketing banner Queen's sent alongside the forms. Not a catalogue — no table, no products, no prices. Kept so the pipeline's behaviour on a non-catalogue file is pinned rather than assumed.",
+    "alt_page_1.json / alt_page_2.json / alt_page_3.json": "An INDEPENDENT reading of the same three forms, recorded via scripts/record_golden_envelopes.py on 2026-09-02 (anthropic / claude-sonnet-5, the production path). Kept as a cross-check: the two readings differ in which optional fields the model chose to populate — supplier_identity_text and page_brand_text are present in one and absent in the other — and the contract must read both identically. A contract tuned to one vision run is a contract that breaks on the next."
+  },
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "recorded_from": "page_1..3, cytopoint_second_read and stock_banner supplied by the user 2026-09-02; alt_page_1..3 recorded from the same images via scripts/record_golden_envelopes.py"
 }

@@ -1,0 +1,9 @@
+{
+  "page_outcome": "evidence",
+  "supplier_identity_text": "QUEEN'S PHARMA",
+  "tables": [],
+  "text_observations": [
+    {"text": "接近2025年第四季度，我們所有產品都有庫存 請向我們查詢", "confidence": "0.9"},
+    {"text": "IN STOCK NOW", "confidence": "0.85"}
+  ]
+}

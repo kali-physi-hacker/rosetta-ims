@@ -1,52 +1,20 @@
 {
- "page_outcome": "evidence",
- "tables": [
-  {
-   "columns": [
-    "Form",
-    "Brand",
-    "Ingredients",
-    "Pack Size",
-    "Unit",
-    "PriceHK$",
-    "Order"
-   ],
-   "rows": [
+  "page_outcome": "evidence",
+  "supplier_identity_text": "QUEEN'S PHARMA Distributor for zoetis",
+  "page_brand_text": "AlphaTRAK 3",
+  "tables": [
     {
-     "cells": [
-      null,
-      "AlphaTRAK 3 (Blood Glucose Monitoring System ) Starter Kit",
-      "Blood Glucose Monitoring Meter, 25's Test Strips, 30's Lancets, New Lancing Device, Control Solution, Diabetes Diary, Full User Guide, Quick User Guide, Carrying Case",
-      "1 set/box",
-      "1 set",
-      "1250",
-      "Set"
-     ],
-     "confidence": "0.95"
-    },
-    {
-     "cells": [
-      null,
-      "AlphaTRAK 3",
-      "Test Strips",
-      "50's/box",
-      "1 box",
-      "350",
-      "Box"
-     ],
-     "confidence": "0.95"
+      "section": "PRICE LIST AND PRE ORDER FORM 2024 from 1st August",
+      "columns": ["Form", "Brand", "Ingredients", "Pack Size", "Unit", "PriceHK$", "Order"],
+      "rows": [
+        {"cells": [null, "AlphaTRAK 3 (Blood Glucose Monitoring System ) Starter Kit", "Blood Glucose Monitoring Meter, 25's Test Strips, 30's Lancets, New Lancing Device, Control Solution, Diabetes Diary, Full User Guide, Quick User Guide, Carrying Case", "1 set/box", "1 set", "1250", "Set"], "confidence": "0.95"},
+        {"cells": [null, "AlphaTRAK 3", "Test Strips", "50's/box", "1 box", "350", "Box"], "confidence": "0.95"}
+      ]
     }
-   ]
-  }
- ],
- "text_observations": [
-  {
-   "text": "*MOQ: Free of Charge for delivery when $1,000/order Additional $50 delivery charge when <$1,000/order",
-   "confidence": "0.95"
-  },
-  {
-   "text": "PRICE LIST AND PRE ORDER FORM 2024 from 1st August",
-   "confidence": "0.9"
-  }
- ]
+  ],
+  "text_observations": [
+    {"text": "PRICE LIST AND PRE ORDER FORM 2024 from 1st August", "confidence": "0.9"},
+    {"text": "*MOQ: Free of Charge for delivery when $1, 000/order", "confidence": "0.9"},
+    {"text": "Additional $50 delivery charge when <$1, 000/order", "confidence": "0.9"}
+  ]
 }
