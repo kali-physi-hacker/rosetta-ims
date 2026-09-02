@@ -137,6 +137,13 @@ const CONNECTORS = [
     why: 'Royal Canin issues no price list — Rosetta reads their catalogue and your trade prices straight from their system, and files each product under the account that invoices it: veterinary or retail.',
     endpoint: '/catalogues/connectors/royal-canin/capture',
   },
+  {
+    key: 'idexx',
+    name: 'IDEXX',
+    where: 'IDEXX ordering portal · your clinic account',
+    why: 'IDEXX sends no price list — Rosetta signs in to their ordering portal and reads the catalogue at the prices your clinic pays, including the items IDEXX supplies free with an analyser.',
+    endpoint: '/catalogues/connectors/idexx/capture',
+  },
 ] as const
 
 /** One per-product note, and what kind of problem it actually is. */
@@ -145,7 +152,9 @@ type ConnectorWarning = { code: string; message: string }
 /** What one capture did for one supplier. */
 type ConnectorResult = {
   supplier: string
-  product_range: string
+  /** Royal Canin's word for the account a product is invoiced under. A
+   *  connector with a single account does not have one. */
+  product_range?: string
   status: 'submitted' | 'unchanged' | 'refused'
   rows: number
   message: string
@@ -170,7 +179,11 @@ const WARNING_KINDS: { code: string; say: (n: number) => string }[] = [
   },
   {
     code: 'NO_SUPPLIER_CODE',
-    say: n => `${n} product(s) had no Royal Canin item number and were left out — there is nothing to order against.`,
+    say: n => `${n} product(s) had no supplier item number and were left out — there is nothing to order against.`,
+  },
+  {
+    code: 'NO_PACK',
+    say: n => `${n} product(s) do not say how many the pack holds. They are still queued; the review board holds each one until someone confirms the count, because a case price read as a single price is wrong by whatever the case holds.`,
   },
 ]
 
@@ -260,7 +273,7 @@ function ConnectorSource({
       {results.length > 0 && (
         <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
           {results.map(result => (
-            <div key={result.product_range} style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 11.5 }}>
+            <div key={result.supplier} style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 11.5 }}>
               <span style={{
                 fontSize: 10, fontWeight: 700, letterSpacing: 0.3, padding: '2px 7px', borderRadius: 20,
                 background: result.status === 'submitted' ? C.primaryBg : result.status === 'refused' ? C.warnBg : C.monoBg,

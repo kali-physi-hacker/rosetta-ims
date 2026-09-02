@@ -1,0 +1,125 @@
+{
+ "contract_id": "idexx.order_portal_snapshot.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 3,
+ "supplier_name": "Asia Vet Medical Limited",
+ "notes": "Read end to end from the real capture at tests/fixtures/catalogue_pipeline/idexx/idexx_hk_snapshot.csv: 105 products taken from the live IDEXX HK ordering portal on 2026-09-02 under the clinic's own account, all 105 conforming and publishing (tests/test_idexx_end_to_end.py). AVM invoices more than one brand; this contract covers the IDEXX range only, and the VetriScience list is a separate document with its own shape.\n\nCorroborated against the BizOps golden sample sheet: six of the eight IDEXX rows on it match the captured price to the cent AND agree on the unit count (99-0013506, 98-11003-02, 98-11009-02, 99-0009442, 99-0001174, 99-26306-00).\n\nSTILL OPEN at the time this was marked SUPPORTED, recorded here because clearing technical_debt is what SUPPORTED requires and these must not vanish with it:\n  * The portal does not carry everything AVM invoices. Two golden-sheet rows (99-0018136 Pancreatic Lipase, 99-0004959 CRP) are absent from it entirely — reference-laboratory tests are ordered another way. A product missing from a snapshot is therefore NOT evidence that it was delisted, and the completeness guard is what stops a short walk being read that way.\n  * The container is never printed. The page says what one item HOLDS ('12 panels per item') and never what it IS, so the basis is the generic PACK.\n  * Break-pack permission is not stated anywhere in the portal.\n  * IDEXX's list price appears beside ours on only 3 of 105 rows — too sparse to declare, so only our own price is captured.",
+ "examples": [
+  {
+   "example_id": "idexx-99-0013506-priced-multi-unit-pack",
+   "source": {
+    "sample_reference": "external-sample:IDEXX HK ordering portal (order.idexx.com, account 426799, captured 2026-09-02)",
+    "page_number": 1,
+    "extraction_method": "connector capture (services/idexx_connector.py; Catalyst-supplies/Catalyst-Profiles)",
+    "text_excerpt": "Catalyst Chem 18 Profile | Product: 99-0013506 | 12 panels per item | HKD 4,766.00 *"
+   },
+   "raw_row": {
+    "material": "99-0013506",
+    "description": "Catalyst Chem 18 Profile",
+    "category": "Catalyst-supplies/Catalyst-Profiles",
+    "pack_text": "12 panels per item",
+    "units_per_item": "12",
+    "pack_noun": "panels",
+    "price_hkd": "4766.00",
+    "is_free_item": "FALSE"
+   },
+   "runtime_input": {
+    "supplier_sku": "99-0013506",
+    "description": "Catalyst Chem 18 Profile",
+    "pack": "12 panels per item",
+    "units_per_item": "12",
+    "unit_price": "4766.00",
+    "free_item": "FALSE",
+    "category": "Catalyst-supplies/Catalyst-Profiles"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "12",
+    "brand": "IDEXX",
+    "break_pack_allowed": null,
+    "reason": "One price buys one item, and the page states what the item holds. Reading HKD4,766 as the price of a single panel would overstate this cost twelvefold, which is the whole reason the pack count is carried rather than inferred. The figure taken is the one carrying the asterisk — our account's price; the unmarked HKD5,299 beside it is IDEXX's list price and is deliberately not captured. Corroborated by the BizOps golden sheet, which records 4,766.00 and 12 UNITS / BOX."
+   }
+  },
+  {
+   "example_id": "idexx-03-20192-00-free-item-priced-zero",
+   "source": {
+    "sample_reference": "external-sample:IDEXX HK ordering portal (order.idexx.com, account 426799, captured 2026-09-02)",
+    "page_number": 1,
+    "extraction_method": "connector capture (services/idexx_connector.py; SediVue-Dx-supplies)",
+    "text_excerpt": "Optical Tissues | Product: 03-20192-00 | 1 booklet per item | Free item"
+   },
+   "raw_row": {
+    "material": "03-20192-00",
+    "description": "Optical Tissues",
+    "category": "SediVue-Dx-supplies",
+    "pack_text": "1 booklet per item",
+    "units_per_item": "1",
+    "pack_noun": "booklet",
+    "price_hkd": "0.00",
+    "is_free_item": "TRUE"
+   },
+   "runtime_input": {
+    "supplier_sku": "03-20192-00",
+    "description": "Optical Tissues",
+    "pack": "1 booklet per item",
+    "units_per_item": "1",
+    "unit_price": "0.00",
+    "free_item": "TRUE",
+    "category": "SediVue-Dx-supplies"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "1",
+    "brand": "IDEXX",
+    "break_pack_allowed": null,
+    "reason": "About a third of this catalogue is supplied free with an analyser contract. Zero is a price IDEXX has STATED, not a price that is missing: publishing it holds no one up, where treating it as absent would send someone to chase an answer the supplier already gave. It is still stock the clinic holds, counts and dispenses."
+   }
+  },
+  {
+   "example_id": "idexx-99-26306-00-single-unit-item",
+   "source": {
+    "sample_reference": "external-sample:IDEXX HK ordering portal (order.idexx.com, account 426799, captured 2026-09-02)",
+    "page_number": 1,
+    "extraction_method": "connector capture (services/idexx_connector.py; ProCyte-Dx-supplies/ProCyte-test-packs)",
+    "text_excerpt": "ProCyte Dx Reagent Kit | Product: 99-26306-00 | 1 kit per item | HKD 3,372.00 *"
+   },
+   "raw_row": {
+    "material": "99-26306-00",
+    "description": "ProCyte Dx Reagent Kit",
+    "category": "ProCyte-Dx-supplies/ProCyte-test-packs",
+    "pack_text": "1 kit per item",
+    "units_per_item": "1",
+    "pack_noun": "kit",
+    "price_hkd": "3372.00",
+    "is_free_item": "FALSE"
+   },
+   "runtime_input": {
+    "supplier_sku": "99-26306-00",
+    "description": "ProCyte Dx Reagent Kit",
+    "pack": "1 kit per item",
+    "units_per_item": "1",
+    "unit_price": "3372.00",
+    "free_item": "FALSE",
+    "category": "ProCyte-Dx-supplies/ProCyte-test-packs"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "1",
+    "brand": "IDEXX",
+    "break_pack_allowed": null,
+    "reason": "The portal states a pack on every row, including the rows where the pack is one. Pinned alongside the twelve-panel row because a source that always prints a count is a source where a MISSING count is a signal, not a default. Corroborated by the BizOps golden sheet, which records 3,372.00 and 1 BOX."
+   }
+  }
+ ],
+ "technical_debt": []
+}

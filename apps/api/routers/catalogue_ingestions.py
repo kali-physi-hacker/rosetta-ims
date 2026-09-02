@@ -355,6 +355,122 @@ def capture_royal_canin_catalogue(
     }
 
 
+class IdexxCaptureRequest(BaseModel):
+    force_incomplete: bool = Field(
+        False,
+        description=(
+            "Release a snapshot that came back materially shorter than the last one. "
+            "A walk that stopped halfway looks exactly like a mass delisting, so this "
+            "is a person's decision, never a default."
+        ),
+    )
+
+
+@router.post("/connectors/idexx/capture", status_code=status.HTTP_202_ACCEPTED)
+def capture_idexx_catalogue(
+    request: Request,
+    body: IdexxCaptureRequest | None = None,
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+) -> dict[str, Any]:
+    """Read the IDEXX ordering portal now and queue it if the catalogue changed.
+
+    Asia Vet Medical invoices IDEXX products but sends no price file, so this
+    catalogue is fetched rather than uploaded. The prices are this practice's
+    own. Everything after this point is the ordinary pipeline.
+    """
+    from services import idexx_connector, idexx_ingestion
+
+    payload = body or IdexxCaptureRequest()
+    try:
+        outcome = idexx_ingestion.capture_and_submit(
+            db,
+            submitted_by=getattr(user, "username", None) or str(getattr(user, "id", "")),
+            force_incomplete=payload.force_incomplete,
+        )
+    except idexx_ingestion.IdexxCaptureRefused as exc:
+        raise HTTPException(
+            status_code=409, detail=_detail("IDEXX_CAPTURE_INCOMPLETE", str(exc))
+        ) from exc
+    except idexx_connector.IdexxConnectorError as exc:
+        # The connector's errors name what a person can actually do — sign in
+        # again, check the account. _http_error would flatten all of that into
+        # "Catalogue submission failed".
+        raise HTTPException(
+            status_code=502, detail=_detail("IDEXX_SOURCE_UNAVAILABLE", str(exc))
+        ) from exc
+    except Exception as exc:
+        raise _http_error(exc) from exc
+
+    if outcome.status == "submitted":
+        try:
+            audit_log.record(
+                db,
+                action="catalogue.idexx_capture",
+                actor=user,
+                entity_type="ingestion_run",
+                entity_id=str(outcome.ingestion_run_id),
+                entity_label=outcome.filename,
+                details={
+                    "supplier_id": idexx_ingestion.SUPPLIER_ID,
+                    "rows": outcome.row_count,
+                    "pages_read": outcome.pages_read,
+                    "checksum": outcome.checksum,
+                    "previous_checksum": outcome.previous_checksum,
+                    "completeness": outcome.completeness,
+                    "forced": payload.force_incomplete,
+                },
+                request=request,
+                commit=True,
+            )
+        except Exception:
+            db.rollback()
+            logger.exception(
+                "IDEXX capture %s was submitted but audit logging failed",
+                outcome.ingestion_run_id,
+            )
+
+    message = (
+        f"Queued {outcome.row_count} IDEXX products."
+        if outcome.status == "submitted"
+        else f"IDEXX's catalogue is unchanged ({outcome.row_count} products); "
+             f"nothing was submitted."
+    )
+    # The same envelope Royal Canin returns — a list of per-supplier outcomes —
+    # so one screen reads every connector. IDEXX has one account, hence one
+    # entry; the shape does not change for that.
+    result = {
+        "supplier": idexx_ingestion.SUPPLIER_LABEL,
+        "supplier_id": idexx_ingestion.SUPPLIER_ID,
+        "status": outcome.status,
+        "rows": outcome.row_count,
+        "pages_read": outcome.pages_read,
+        "checksum": outcome.checksum,
+        "filename": outcome.filename,
+        "completeness": outcome.completeness,
+        "warnings": [
+            {"code": warning.code, "message": warning.message} for warning in outcome.warnings
+        ],
+        "refusal": None,
+        "releasable": False,
+        "ingestion_run_id": (
+            str(outcome.ingestion_run_id) if outcome.ingestion_run_id else None
+        ),
+        "status_url": (
+            f"/catalogues/ingestions/{outcome.ingestion_run_id}"
+            if outcome.ingestion_run_id
+            else None
+        ),
+        "message": message,
+    }
+    return {
+        "results": [result],
+        "status": outcome.status,
+        "rows": outcome.row_count if outcome.status == "submitted" else 0,
+        "message": message,
+    }
+
+
 @router.post(
     "/ingestions",
     response_model=CatalogueSubmissionResponse,

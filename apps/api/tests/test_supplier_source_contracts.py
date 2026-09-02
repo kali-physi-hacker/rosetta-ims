@@ -31,6 +31,7 @@ EXPECTED_CONTRACT_IDS = [
     "alfamedic.price_list.v1",
     "asia_vet_medical.vetriscience_price_list.v1",
     "hills.price_list.v1",
+    "idexx.order_portal_snapshot.v1",
     "kangaroo.earthz_pet_price_sheet.v1",
     "kangaroo.mixed_price_catalogue.v1",
     "kangaroo.purina_proplan_veterinary_diets.v1",
@@ -209,6 +210,12 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # AVM's VetriScience list: a real five-column table with an item code on
         # every row, read end to end from the captured page — 31 rows, nothing held.
         "asia_vet_medical.vetriscience_price_list.v1",
+        # IDEXX's catalogue is read from their ordering portal — AVM invoices it
+        # but sends no file. The connector writes the snapshot's headings itself,
+        # so the source shape is guaranteed rather than inferred. Verified
+        # 2026-09-02 against a live read: 105 products, all conforming and
+        # publishing, six corroborated to the cent by the BizOps golden sheet.
+        "idexx.order_portal_snapshot.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):

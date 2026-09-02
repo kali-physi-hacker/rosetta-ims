@@ -12,6 +12,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Chromium, solely for IDEXX. Their ordering portal sits behind a login whose
+# risk check fails a plain HTTP request before any password is read, so a real
+# browser is the only way in — Royal Canin, the other fetched catalogue, needs
+# no browser at all. It runs on demand when someone presses Capture, never as
+# part of serving a request; --with-deps pulls the system libraries headless
+# Chromium needs, which a slim image does not carry.
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright
+RUN playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
+
 # App code (see .dockerignore — venv, local DB, .env, secrets are excluded).
 COPY . .
 
