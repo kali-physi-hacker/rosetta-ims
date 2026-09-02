@@ -7,6 +7,7 @@ can be read next to the thing it describes.
 |---|---|---|
 | [Queen's Pharma](queens-pharma/) | `queens_pharma.zoetis_price_list.v1` | 3 photographed forms + a marketing banner |
 | [Asia Vet Medical](asia-vet-medical/) | `asia_vet_medical.vetriscience_price_list.v1` | 1 photographed list, plus a consumables list nothing reads yet |
+| [United Italian](united-italian/) | `united_italian.gp_price_list.v1` | 1 born-digital PDF, 40 pages |
 | [IDEXX](idexx/) | `idexx.order_portal_snapshot.v1` | none — the catalogue is fetched from a portal |
 
 Suppliers whose catalogues are **fetched rather than sent** have no file here:
