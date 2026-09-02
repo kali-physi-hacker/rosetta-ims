@@ -40,6 +40,7 @@ EXPECTED_CONTRACT_IDS = [
     "kpn_trading.case_only_price_list.v1",
     "kpn_trading.catalogue_bundle.v1",
     "kpn_trading.pack_price_list.v1",
+    "queens_pharma.zoetis_price_list.v1",
     "royal_canin.non_vet_webshop_snapshot.v1",
     "royal_canin.vet_webshop_snapshot.v1",
     "vetapet.non_vet_price_list.v1",
@@ -216,6 +217,11 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # 2026-09-02 against a live read: 105 products, all conforming and
         # publishing, six corroborated to the cent by the BizOps golden sheet.
         "idexx.order_portal_snapshot.v1",
+        # Queen's Pharma's Zoetis forms: three layouts, one table shape, ten
+        # products, no item code anywhere. Verified 2026-09-02 against the three
+        # captured forms — all ten conform, and the pipeline derives the same
+        # box-of-two packaging BizOps recorded by hand on all six sheet rows.
+        "queens_pharma.zoetis_price_list.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):

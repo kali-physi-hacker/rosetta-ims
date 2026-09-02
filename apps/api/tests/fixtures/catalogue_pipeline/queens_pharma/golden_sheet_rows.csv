@@ -1,0 +1,7 @@
+supplier,supplier_product_code,product_name,product name [Rosetta],weight,brand,package_configuration,order_multiple,catalogue_price_hkd,catalogue_price_basis_qty,catalogue_price_basis_uom,sellable_qty,sellable_uom,sellable_units_per_price_basis,rrp,mbb_tier_1,mbb_tier_2,mbb_tier_3,mbb_tier_4,commercial_offer_summary
+Queen's Pharma Limited,,Cytopoint Inj 10mg,Cytopoint Inj 10mg,,Zoetis,2 VIALS / BOX,2 VIALS,$650.00,1,BOX,1,VIAL,2,,,,,,
+Queen's Pharma Limited,,Cytopoint Inj 20mg,Cytopoint Inj 20mg,,Zoetis,2 VIALS / BOX,2 VIALS,$950.00,1,BOX,1,VIAL,2,,,,,,
+Queen's Pharma Limited,,Cytopoint Inj 30mg,Cytopoint Inj 30mg,,Zoetis,2 VIALS / BOX,2 VIALS,"$1,150.00",1,BOX,1,VIAL,2,,,,,,
+Queen's Pharma Limited,,Cytopoint Inj 40mg,Cytopoint Inj 40mg,,Zoetis,2 VIALS / BOX,2 VIALS,"$1,300.00",1,BOX,1,VIAL,2,,,,,,
+Queen's Pharma Limited,,Funevetmab (Solensia) Inj 7mg/ml,Frunevetmab (Solensia) Inj 7mg/ml,,Zoetis,2 VIALS / BOX,2 VIALS,$650.00,1,BOX,1,VIAL,2,,,,,,
+Queen's Pharma Limited,,Librela Inj 5mg,Librela Inj 5mg,,Zoetis,2 VIALS / BOX,2 VIALS,$600.00,1,BOX,1,VIAL,2,,,,,,

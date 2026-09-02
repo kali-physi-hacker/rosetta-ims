@@ -1,0 +1,11 @@
+{
+ "source": "queens_price_lists.pdf",
+ "recorded_from": "live anthropic claude-sonnet-5 extraction via scripts/record_golden_envelopes.py",
+ "provider": "anthropic",
+ "model": "claude-sonnet-5",
+ "pages": [
+  1,
+  2,
+  3
+ ]
+}

@@ -1,0 +1,116 @@
+{
+ "contract_id": "queens_pharma.zoetis_price_list.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 63,
+ "supplier_name": "Queen's Pharma Limited",
+ "notes": "Read end to end from three captured forms at tests/fixtures/catalogue_pipeline/queens_pharma/: Cytopoint (2024, from 1 October), Librela and Solensia (2025, from 1 January), and AlphaTRAK 3 (2024, from 1 August). Ten products, all ten conforming with no blocking issue and no warning (tests/test_queens_pharma_contract.py). Queen's is a distributor; this contract covers the Zoetis range they send us, which is everything they have sent so far.\n\nCorroborated against the BizOps golden sample sheet: all six of its Queen's rows match the forms to the dollar, AND the pipeline independently derives the packaging BizOps recorded by hand — basis 1 BOX, two vials to the box, sellable unit VIAL.\n\nSTILL OPEN at the time this was marked SUPPORTED, recorded here because clearing technical_debt is what SUPPORTED requires and these must not vanish with it:\n  * NO ROW CARRIES AN ITEM CODE, on any form, and the sheet agrees (supplier_product_code is N/A on all six). Every Queen's row therefore reaches manual matching and takes its identity there, per the 2026-08-26 codeless ruling. Ten products, so this is a short job — but it is a person's job, not an automatic publish.\n  * There is consequently NO GOLDEN SET for Queen's. The golden harness joins the sheet to the published export on supplier_product_code, and neither side has one — the code a Queen's offering ends up with is the Rosetta SKU adopted at the match, which the sheet has never seen. Verification is therefore conformance-level (pages vs sheet), not publish-level. The publish path itself is covered by the seven suppliers that do print codes.\n  * SET is not a unit this system knows, so the AlphaTRAK starter kit's Order value is mapped to PACK. Retire the map if SET ever earns its own code.\n  * Four of the ten products are not on the golden sheet (Librela 10mg and 15mg, both AlphaTRAK rows) and rest on the captured pages alone.\n  * The forms are photographs, so every ingestion runs a vision provider. Source files from Queen's would make this free and exact.\n  * The sheet spells row 6 'Funevetmab' where the form and the Rosetta name both say 'Frunevetmab'. Harmless — that column is not enforced — but it is a typo in the sheet.",
+ "examples": [
+  {
+   "example_id": "queens-cytopoint-40mg-box-of-two-vials",
+   "source": {
+    "sample_reference": "external-sample:Queen's Pharma PRICE LIST AND PRE ORDER FORM (images, captured 2026-09-02)",
+    "page_number": 1,
+    "extraction_method": "recorded vision envelope (queens_pharma/page_1.json, Cytopoint 2024 form)",
+    "text_excerpt": "CYTOPOINT 40mg | Monoclonal Antibody ( mAb) targets and neutralizes canine IL-31 – 40mg/ml | 1ml/bot | 2vials per box | 1,300 | Box"
+   },
+   "raw_row": {
+    "Brand": "CYTOPOINT 40mg",
+    "Ingredients": "Monoclonal Antibody ( mAb) targets and neutralizes canine IL-31 – 40mg/ml",
+    "Pack Size": "1ml/bot",
+    "Unit": "2vials per box",
+    "PriceHK$": "1,300",
+    "Order": "Box"
+   },
+   "runtime_input": {
+    "product_name": "CYTOPOINT 40mg",
+    "ingredients": "Monoclonal Antibody ( mAb) targets and neutralizes canine IL-31 – 40mg/ml",
+    "content_measure": "1ml/bot",
+    "units_per_purchase_unit": "2vials per box",
+    "unit_price": "1,300",
+    "purchase_unit": "Box"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "BOX",
+    "currency": "HKD",
+    "purchase_uom": "BOX",
+    "sellable_units_per_purchase_unit": "2",
+    "sellable_unit_uom": "VIAL",
+    "brand": "Zoetis",
+    "break_pack_allowed": null,
+    "reason": "The Order column names what the price buys — a Box — and the Unit column says the box holds two vials. HKD1,300 is therefore HKD650 a vial; read as a vial price it would double the cost of every Cytopoint we buy. The BizOps golden sheet records exactly this reading (basis 1 BOX, 2 VIALS / BOX, sellable unit VIAL), reached independently by hand, so page and sheet corroborate each other. Pack Size states the vial's content, 1 ml, and is never read as a count."
+   }
+  },
+  {
+   "example_id": "queens-alphatrak-strips-content-measure-is-not-a-count",
+   "source": {
+    "sample_reference": "external-sample:Queen's Pharma PRICE LIST AND PRE ORDER FORM (images, captured 2026-09-02)",
+    "page_number": 3,
+    "extraction_method": "recorded vision envelope (queens_pharma/page_3.json, AlphaTRAK 2024 form)",
+    "text_excerpt": "AlphaTRAK 3 | Test Strips | 50's/box | 1 box | 350 | Box"
+   },
+   "raw_row": {
+    "Brand": "AlphaTRAK 3",
+    "Ingredients": "Test Strips",
+    "Pack Size": "50's/box",
+    "Unit": "1 box",
+    "PriceHK$": "350",
+    "Order": "Box"
+   },
+   "runtime_input": {
+    "product_name": "AlphaTRAK 3",
+    "ingredients": "Test Strips",
+    "content_measure": "50's/box",
+    "units_per_purchase_unit": "1 box",
+    "unit_price": "350",
+    "purchase_unit": "Box"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "BOX",
+    "currency": "HKD",
+    "purchase_uom": "BOX",
+    "sellable_units_per_purchase_unit": "1",
+    "brand": "Zoetis",
+    "break_pack_allowed": null,
+    "reason": "The row that proves the two packaging columns must stay apart. Pack Size says fifty strips are IN the box; Unit says one box is what HKD350 buys. Reading the fifty as a sellable count would price a strip at HKD7 and understate every box we purchase fiftyfold. The schema refuses to let one field prove both, and the contract declares content_measure and sellable units from different columns for exactly this reason."
+   }
+  },
+  {
+   "example_id": "queens-alphatrak-kit-set-is-mapped-to-pack",
+   "source": {
+    "sample_reference": "external-sample:Queen's Pharma PRICE LIST AND PRE ORDER FORM (images, captured 2026-09-02)",
+    "page_number": 3,
+    "extraction_method": "recorded vision envelope (queens_pharma/page_3.json, AlphaTRAK 2024 form)",
+    "text_excerpt": "AlphaTRAK 3 (Blood Glucose Monitoring System ) Starter Kit | Blood Glucose Monitoring Meter, 25's Test Strips, 30's Lancets, ... | 1 set/box | 1 set | 1250 | Set"
+   },
+   "raw_row": {
+    "Brand": "AlphaTRAK 3 (Blood Glucose Monitoring System ) Starter Kit",
+    "Ingredients": "Blood Glucose Monitoring Meter, 25's Test Strips, 30's Lancets, New Lancing Device, Control Solution, Diabetes Diary, Full User Guide, Quick User Guide, Carrying Case",
+    "Pack Size": "1 set/box",
+    "Unit": "1 set",
+    "PriceHK$": "1250",
+    "Order": "Set"
+   },
+   "runtime_input": {
+    "product_name": "AlphaTRAK 3 (Blood Glucose Monitoring System ) Starter Kit",
+    "content_measure": "1 set/box",
+    "units_per_purchase_unit": "1 set",
+    "unit_price": "1250",
+    "purchase_unit": "Set"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "1",
+    "brand": "Zoetis",
+    "break_pack_allowed": null,
+    "reason": "The purchase unit follows the row's own Order column rather than a basis pinned once for the contract — this row says Set where every other row says Box. SET is not a unit the system knows, so it is mapped to the generic PACK: a starter kit is a pack of components bought and priced together, which is the same generic container AVM's list resolves to when the page names no vessel. Pinning BOX for the whole contract would price a HKD1,250 kit as a box it is never sold in."
+   }
+  }
+ ],
+ "technical_debt": []
+}
