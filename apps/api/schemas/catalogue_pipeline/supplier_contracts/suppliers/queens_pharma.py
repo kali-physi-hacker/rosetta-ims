@@ -64,6 +64,18 @@ _QUEENS = SupplierSourceReference(
     supplier_id=63,
     supplier_name="Queen's Pharma Limited",
     supplier_code="QUEENSPH",
+    # Every Queen's form prints "Distributor for zoetis" beneath the logo, and
+    # a vision pass sometimes returns only that fragment as the page's identity
+    # — dropping the "QUEEN'S PHARMA" above it. Read literally that names a
+    # company we do not buy from, so the identity check blocked the whole
+    # Cytopoint page while the other two forms went through: the same document,
+    # ingested twice, can pass once and fail once.
+    #
+    # Zoetis rather than the whole phrase, because "distributor" is not an
+    # identity stopword and declaring it would let any page saying
+    # "<anyone> Distributor" vouch for Queen's. Zoetis vouches for nothing else
+    # we ingest, and Queen's is the only route we buy it by.
+    also_trades_as=("Zoetis",),
 )
 
 _EVIDENCE = [

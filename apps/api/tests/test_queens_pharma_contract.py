@@ -382,3 +382,44 @@ def test_the_marketing_banner_is_not_a_catalogue():
     banner = _conform([FIXTURES / "stock_banner.json"])
 
     assert [r for r in banner.items if (r.raw_fields.get("product_name") or "").strip()] == []
+
+
+def test_the_letterhead_fragment_does_not_block_the_page():
+    """A live ingestion blocked the whole Cytopoint form on this.
+
+    Every Queen's form prints "Distributor for zoetis" beneath the logo. A
+    vision pass sometimes returns the full identity line and sometimes only
+    that fragment — the same document, read twice, identifying itself two
+    different ways. Read literally the fragment names a company we do not buy
+    from, so the identity check refused all four Cytopoint rows as BLOCKING
+    while the other two forms went through untouched.
+
+    Both readings must vouch for Queen's, and nothing else may.
+    """
+    from services.catalogue_conformance import _identity_names_overlap
+
+    declaration = get_supplier_source_contract(CONTRACT, "v1").declaration
+    supplier = declaration.supplier
+    names = [supplier.supplier_name, supplier.supplier_code, *supplier.also_trades_as]
+
+    for printed in ("QUEEN'S PHARMA Distributor for zoetis", "Distributor for zoetis"):
+        assert any(_identity_names_overlap(printed, n) for n in names if n), printed
+
+    # And the check keeps its teeth: these are the suppliers whose pages this
+    # one must never be confused with.
+    for other in ("Hill's Pet Nutrition", "Kangaroo Pet Nutrition",
+                  "IDEXX Laboratories", "Acme Distributor Ltd"):
+        assert not any(_identity_names_overlap(other, n) for n in supplier.also_trades_as), other
+
+
+def test_the_identity_check_is_actually_exercised_by_a_fixture():
+    """The gap that let this reach a live run: my recorded pages carried a
+    supplier identity on one page and null on the others, so the blocking path
+    was never entered by any test. At least one fixture must state an identity."""
+    import json
+
+    stated = [
+        json.loads((FIXTURES / name).read_text(encoding="utf-8")).get("supplier_identity_text")
+        for name in ("page_1.json", "page_2.json", "page_3.json")
+    ]
+    assert any(s for s in stated), "no fixture states a page identity — the check is untested"
