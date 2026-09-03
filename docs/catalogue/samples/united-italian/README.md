@@ -26,19 +26,25 @@ FIRST amount-and-unit pair. Taking the last prices a bag as a box.
 resolve to a PACK of that many. The golden sheet records BOX for them, which is
 a vessel this page never prints; the prices agree to the cent.
 
-## Two open questions for BizOps
+## Three sheet errors this document settled
 
-Recorded here as well as in the row-evidence fixture, because they are about the
-sheet rather than the code and will outlive this file being read:
+The golden sheet disagreed with this list on three rows. The page won each
+time, the projection in
+`apps/api/tests/fixtures/catalogue_pipeline/united_italian/golden_sheet_rows.csv`
+was corrected, and the reasoning is in
+[the conformance ledger](../../golden-sheet-conformance-ledger.md). **The sheet
+itself still holds the old values**, so a re-projection regresses them until it
+is edited to match.
 
-* **`89471`** — the sheet records the basis as CASE, so $52.00 buys fifty
-  drapes. The page prints `(50's / case) $52.00 / pc`. **A fiftyfold difference
-  in the cost of every drape.** The contract reads the page.
-* **`3549232` Propofol** — sheet $135.00, this list $320.00, same product.
-
-And one likely slip: **`AHB1323HK` appears twice on the sheet**, once as "LRS
-Fluid Bag 500ml". The page says that code is NaCl 0.9% 500ml and that Lactated
-Ringer 500ml is `2B2323Q`.
+* **`89471`** — the sheet recorded the basis as CASE, making $52.00 buy fifty
+  drapes. Page 23 prints `(50's / case) $52.00 / pc`: fifty to a case, and the
+  price **per piece**. A fiftyfold understatement of the cost of every drape,
+  and the correction most worth checking.
+* **`3549232`** Propofol — sheet $135.00, page 30 prints **$320.00**.
+* **"LRS Fluid Bag 500ml"** was filed under `AHB1323HK`, which page 16 says is
+  NaCl 0.9% — and it carried NaCl's figures too, making it a mislabelled
+  duplicate of the row beside it. Lactated Ringer 500ml is **`2B2323Q`**:
+  $45.00/bag, 24 to a box.
 
 ## Cost
 

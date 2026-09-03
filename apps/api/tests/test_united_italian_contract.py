@@ -225,65 +225,84 @@ def test_every_sheet_code_is_found_on_the_recorded_pages(conformed):
         assert _sheet_to_page(row["supplier_product_code"], by_code), row["supplier_product_code"]
 
 
-def test_the_price_matches_the_sheet_wherever_the_sheet_is_right(conformed):
-    """Eleven of thirteen traceable codes agree to the cent.
+def test_every_sheet_price_matches_the_page_to_the_cent(conformed):
+    """No exceptions any more.
 
-    The twelfth is a known sheet defect (3549232, below). The thirteenth,
-    89471, agrees on the amount and disagrees on the basis — also below.
+    Three rows disagreed when this contract was written and all three were the
+    sheet's error, corrected in the projection and written up in
+    docs/catalogue/golden-sheet-conformance-ledger.md. The sheet itself still
+    holds the old values, so re-projecting an unedited sheet regresses this on
+    purpose — that is the ledger's whole point.
     """
     by_code = _by_code(conformed)
-    KNOWN_PRICE_DISPUTE = {"3549232"}
 
     for row in _sheet_rows():
         code = (row["supplier_product_code"] or "").strip()
-        if not code or code in KNOWN_PRICE_DISPUTE:
-            continue
-        key = _sheet_to_page(code, by_code)
-        if key is None:
+        key = _sheet_to_page(code, by_code) if code else None
+        want = _money(row["catalogue_price_hkd"])
+        if key is None or want is None:
             continue
         got = _money(_cost(by_code[key]).get("amount"))
-        want = _money(row["catalogue_price_hkd"])
-        if want is None:
-            continue
         assert got == want, f"{code}: sheet {want}, page {got}"
 
 
-def test_the_sheet_and_the_page_disagree_about_89471_and_the_page_wins(conformed):
-    """The sheet says $52.00 buys a CASE of fifty drapes. The page prints
-    '(50's / case) $52.00 / pc' — fifty to a case, and the price is PER PIECE.
+#: The one basis where the SHEET is right and our vocabulary is the lossy half:
+#: the page prints "/ sleeve", there is no SLEEVE unit code, so the pipeline
+#: resolves OTHER and keeps the supplier's own word as the label. Adding a
+#: SLEEVE code would retire this.
+_NO_UNIT_CODE_FOR = {"SLEEVE": "OTHER"}
 
-    A fiftyfold difference in the cost of every drape we buy, and the kind that
-    reaches a purchase order. The contract reads what the supplier printed.
-    Pinned rather than quietly resolved: if BizOps correct the sheet this test
-    tells us, and if they confirm CASE instead then the page has been
-    misunderstood and this contract needs revisiting.
-    """
-    drape = _by_code(conformed).get("89471")
+
+def test_every_sheet_basis_matches_the_page(conformed):
+    """The basis is the half of a price that can be wrong by fiftyfold while
+    the number looks perfect — 89471 was exactly that, and is corrected."""
+    by_code = _by_code(conformed)
+
+    for row in _sheet_rows():
+        code = (row["supplier_product_code"] or "").strip()
+        want = (row["catalogue_price_basis_uom"] or "").strip().upper()
+        key = _sheet_to_page(code, by_code) if code else None
+        if key is None or not want:
+            continue
+        got = (_cost(by_code[key]).get("price_basis") or {}).get("code")
+        assert got == _NO_UNIT_CODE_FOR.get(want, want), f"{code}: sheet {want}, page {got}"
+
+
+def test_the_drape_is_priced_per_piece(conformed):
+    """The correction most worth a second pair of eyes. The page prints
+    '(50's / case) $52.00 / pc': fifty to a case, and the price is per piece.
+    The sheet had recorded the basis as CASE, which made $52.00 buy all fifty
+    — a fiftyfold understatement of the cost of every drape."""
+    drape = _by_code(conformed)["89471"]
     sheet = next(r for r in _sheet_rows() if r["supplier_product_code"] == "89471")
 
-    assert _money(_cost(drape).get("amount")) == Decimal("52.00") == _money(sheet["catalogue_price_hkd"])
     assert (_cost(drape).get("price_basis") or {}).get("code") == "PIECE"
-    assert sheet["catalogue_price_basis_uom"] == "CASE"
+    assert sheet["catalogue_price_basis_uom"] == "PIECE"
+    assert sheet["package_configuration"] == "50 PIECES / CASE"
 
 
-def test_the_sheet_and_the_page_disagree_about_the_propofol_price(conformed):
-    """Sheet $135.00, 2025 list $320.00, same product. The sheet predates this
-    price list or is wrong; either way a person has to say which."""
-    propofol = _by_code(conformed).get("3549232")
-    sheet = next(r for r in _sheet_rows() if r["supplier_product_code"] == "3549232")
+def test_lactated_ringer_is_no_longer_filed_under_the_saline_code(conformed):
+    """The sheet listed 'LRS Fluid Bag 500ml' under AHB1323HK — which the page
+    says is NaCl 0.9% — and gave it NaCl's figures too, making it a mislabelled
+    duplicate of the row beside it. Lactated Ringer 500ml is 2B2323Q."""
+    by_code = _by_code(conformed)
+    rows = {r["supplier_product_code"]: r for r in _sheet_rows()}
 
-    assert _money(_cost(propofol).get("amount")) == Decimal("320.00")
-    assert _money(sheet["catalogue_price_hkd"]) == Decimal("135.00")
+    assert "2B2323Q" in rows and _money(rows["2B2323Q"]["catalogue_price_hkd"]) == Decimal("45.00")
+    assert _money(_cost(by_code["2B2323Q"]).get("amount")) == Decimal("45.00")
+    # The saline keeps its own code, its own price and its own pack.
+    assert _money(_cost(by_code["AHB1323HK"]).get("amount")) == Decimal("46.00")
+    assert [c for c in rows].count("AHB1323HK") == 1
 
 
-def test_the_sheet_names_a_container_the_page_never_prints(conformed):
-    """On the '/100's' rows the sheet records BOX. The page names no vessel at
-    all, so the contract resolves PACK. A deliberate divergence, pinned so it
-    stays a decision rather than becoming a surprise."""
+def test_a_price_that_names_a_count_agrees_with_the_sheet_as_a_pack(conformed):
+    """The sheet had recorded BOX for the '/100's' rows — a container the page
+    never prints. Corrected to the generic PACK, so page and sheet now agree
+    rather than diverging by convention."""
     by_code = _by_code(conformed)
 
     for code in ("302032", "301805", "A4019", "1208A – D"):
         key = _sheet_to_page(code, by_code)
         sheet = next(r for r in _sheet_rows() if r["supplier_product_code"].strip() == code)
         assert (_cost(by_code[key]).get("price_basis") or {}).get("code") == "PACK", code
-        assert sheet["catalogue_price_basis_uom"] == "BOX", code
+        assert sheet["catalogue_price_basis_uom"] == "PACK", code
