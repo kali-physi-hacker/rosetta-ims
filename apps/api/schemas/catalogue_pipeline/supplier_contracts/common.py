@@ -385,11 +385,30 @@ class SourceFieldContract(SupplierSourceModel):
 
     @model_validator(mode="after")
     def _mapping_has_location_or_constant(self):
-        if not (self.source_column or self.source_path or self.composed_from or self.constant_value is not None):
-            raise ValueError("source field requires source_column, source_path, composed_from, or constant_value")
+        # A field may also be addressed by POSITION alone — the nth column of a
+        # repeated heading family. United Italian need it: their second price
+        # column is called "Price (HK$) per box" on the pages that print two,
+        # and a page that prints ONE calls its only column that as well. Any
+        # exact name they could be given would bind to that lone column and
+        # hand the case price the unit price, so position is the only honest
+        # discriminator.
+        by_position = bool(self.source_column_prefix and self.source_column_occurrence)
+        if not (
+            self.source_column
+            or self.source_path
+            or self.composed_from
+            or self.constant_value is not None
+            or by_position
+        ):
+            raise ValueError(
+                "source field requires source_column, source_path, composed_from, "
+                "constant_value, or source_column_prefix with source_column_occurrence"
+            )
         if self.requirement == SourceFieldRequirement.REQUIRED and self.constant_value is not None:
             raise ValueError("required source fields must be observed, not only constant")
-        if self.requirement == SourceFieldRequirement.REQUIRED and not (self.source_column or self.source_path or self.composed_from):
+        if self.requirement == SourceFieldRequirement.REQUIRED and not (
+            self.source_column or self.source_path or self.composed_from or by_position
+        ):
             raise ValueError("required source fields require source_column, source_path, or composed_from")
         return self
 

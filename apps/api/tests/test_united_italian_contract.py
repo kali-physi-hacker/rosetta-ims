@@ -306,3 +306,139 @@ def test_a_price_that_names_a_count_agrees_with_the_sheet_as_a_pack(conformed):
         sheet = next(r for r in _sheet_rows() if r["supplier_product_code"].strip() == code)
         assert (_cost(by_code[key]).get("price_basis") or {}).get("code") == "PACK", code
         assert sheet["catalogue_price_basis_uom"] == "PACK", code
+
+
+# --- the whole document, read a second time and a different way ---------------
+#
+# `whole_document.json` is a BizOps extraction of all 40 pages in one envelope,
+# against the eleven per-page envelopes recorded here from the production path.
+# The two disagree about things a contract can easily be over-fitted to:
+#
+#   * the two price columns are named DISTINCTLY there ("Price (HK$) per unit",
+#     "Price (HK$) per box") and IDENTICALLY here — the shape the contract's
+#     occurrence lookup was built for;
+#   * there is no separate Pack column there at all;
+#   * the page identity is stated there and null on every page here.
+#
+# Reading both is the only way to know the contract answers the same either way.
+
+
+def _conform_whole_document():
+    from _pytest.monkeypatch import MonkeyPatch
+
+    patch = MonkeyPatch()
+    try:
+        patch.setenv("CATALOGUE_VISION_PROVIDER", "anthropic")
+        patch.setenv("ANTHROPIC_API_KEY", "replay-only")
+        _install_golden_replay(patch, [FIXTURES / "whole_document.json"])
+        result = extract_evidence(_blank_pdf(1), "united-italian.pdf", "application/pdf")
+        runtime = SupplierSourceRuntimeContract(
+            declaration=get_supplier_source_contract(CONTRACT, "v1").declaration
+        )
+        return conform_observations(
+            result.observations, tuple(uuid4() for _ in result.observations), runtime
+        )
+    finally:
+        patch.undo()
+
+
+@pytest.fixture(scope="module")
+def whole_document():
+    return _conform_whole_document()
+
+
+def test_the_whole_document_reads_with_one_row_held(whole_document):
+    """801 products across all 40 pages. The single held row is a price cell
+    that came back holding pack text — a mis-segmentation a person should see,
+    not something to guess past."""
+    products = [r for r in whole_document.items if (r.raw_fields.get("product_name") or "").strip()]
+    blocking = [
+        i.issue_code for r in whole_document.items for i in r.issues if i.severity == "BLOCKING"
+    ]
+
+    assert len(products) == 801
+    assert blocking == ["CONTRACT_COST_UNPARSEABLE"]
+
+
+def test_a_case_price_is_never_the_unit_price_wearing_a_hat(whole_document, conformed):
+    """The bug this second reading found.
+
+    case_price declared the same exact heading as unit_price, so an exact match
+    won outright and handed it the FIRST price column. Every single-price row in
+    the catalogue — all 282 of the recorded pages, and 746 of the whole
+    document — came out carrying a case price equal to its unit price: a bulk
+    term claiming a whole box costs what one piece does.
+
+    A case price must exist only where the page prints a second one.
+    """
+    for outcome in (whole_document, conformed):
+        leaked = [
+            r for r in outcome.items
+            if (fields := r.raw_fields.get("additional_fields") or {})
+            and fields.get("case_price")
+            and str(fields["case_price"]).strip() == str(fields.get("unit_price") or "").strip()
+        ]
+        assert leaked == []
+
+
+def test_both_readings_agree_about_every_price_they_share(whole_document, conformed):
+    """The contract must not depend on how the vision pass happened to name or
+    split the columns. Same codes, same money, same basis, either way."""
+    def by_code(outcome):
+        out = {}
+        for row in outcome.items:
+            code = (row.raw_fields.get("supplier_sku") or "").strip()
+            if code and (row.normalized_fields.get("cost") or {}).get("amount") is not None:
+                cost = row.normalized_fields["cost"]
+                out.setdefault(code, (_money(cost["amount"]), (cost.get("price_basis") or {}).get("code")))
+        return out
+
+    mine, theirs = by_code(conformed), by_code(whole_document)
+    shared = set(mine) & set(theirs)
+
+    assert len(shared) > 150, f"only {len(shared)} codes in common — the fixtures drifted apart"
+    disagreed = {c: (mine[c], theirs[c]) for c in shared if mine[c] != theirs[c]}
+    assert disagreed == {}
+
+
+def test_a_price_naming_a_count_of_something_is_still_a_pack(whole_document):
+    """'$115.00 / 24 rolls' — twenty-four of something bought together for one
+    price, which is the same statement as '/ 100's' with the countable named.
+    The trailing word must already be a declared spelling, so this accepts
+    nothing the contract had not accepted anyway."""
+    tapes = [
+        r for r in whole_document.items
+        if (r.raw_fields.get("supplier_sku") or "").startswith("MEDI-T3")
+    ]
+
+    assert tapes, "the Medi-Tape rows are gone — re-check the fixture"
+    for row in tapes:
+        cost = row.normalized_fields.get("cost") or {}
+        assert _money(cost.get("amount")) == Decimal("115.00")
+        assert (cost.get("price_basis") or {}).get("code") == "PACK"
+
+
+def test_a_product_listed_without_a_price_is_still_a_product(whole_document):
+    """Page 7 lists the Vacutainer tube range by name alone. Requiring a price
+    blocked 26 real products with a message about a missing field, which is not
+    what the page is saying."""
+    tubes = [
+        r for r in whole_document.items
+        if "Vacutainer" in (r.raw_fields.get("product_name") or "")
+    ]
+
+    assert len(tubes) >= 6
+    for row in tubes:
+        assert not [i for i in row.issues if i.severity == "BLOCKING"]
+
+
+def test_the_second_refusal_to_publish_a_price_is_recognised(whole_document):
+    """'*****' is not the only way this list declines. Three products say 'For
+    details, please contact the Sales Department' instead — a stated refusal,
+    and a warning for a person rather than a blocked row."""
+    flagged = [
+        r for r in whole_document.items
+        for i in r.issues if i.issue_code == "CONTRACT_NULL_COST_REQUIRES_REVIEW"
+    ]
+
+    assert len(flagged) == 6

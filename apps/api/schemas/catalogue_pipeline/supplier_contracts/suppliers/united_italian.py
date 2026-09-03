@@ -167,7 +167,11 @@ UNITED_ITALIAN_GP_PRICE_LIST_V1 = register_supplier_source_contract(
             SourceFieldContract(
                 field_key="unit_price",
                 role=SourceFieldRole.SOURCE_PRICE,
-                requirement=SourceFieldRequirement.REQUIRED,
+                # OPTIONAL because this list really does print products with no
+                # price: page 7 lists the Vacutainer tube range by name alone.
+                # Requiring one blocked 26 real products with a message about a
+                # missing field, which is not what the page is saying.
+                requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Price (HK$)",
                 source_column_prefix="Price",
                 # Where a row prints two prices the FIRST is the per-unit one.
@@ -183,9 +187,15 @@ UNITED_ITALIAN_GP_PRICE_LIST_V1 = register_supplier_source_contract(
                 field_key="case_price",
                 role=SourceFieldRole.MBB_TIER_PRICE,
                 requirement=SourceFieldRequirement.OPTIONAL,
-                source_column="Price (HK$)",
+                # Addressed by POSITION and nothing else. Given any exact
+                # heading, an exact match wins outright and hands this field the
+                # FIRST price column — and every single-price row in the
+                # catalogue then carries a case price equal to its unit price, a
+                # bulk term claiming a whole box costs what one piece does. The
+                # names cannot discriminate either: a page printing two prices
+                # calls the second "Price (HK$) per box", and a page printing
+                # one calls its only column exactly the same.
                 source_column_prefix="Price",
-                # The SECOND price column, on the intravenous pages only.
                 source_column_occurrence=2,
                 tier_order=1,
                 # The condition is a QUANTITY, and the pack cell states it:
@@ -271,7 +281,10 @@ UNITED_ITALIAN_GP_PRICE_LIST_V1 = register_supplier_source_contract(
             # "*****" is how the list prints a product it will not price in
             # public — quoted by the sales desk instead. A stated refusal, not
             # an unreadable cell.
-            null_cost_markers=["*****"],
+            # Two ways this list declines to publish a price, both a stated
+            # refusal rather than an unreadable cell. Matched as substrings, so
+            # the second catches its full bilingual form.
+            null_cost_markers=["*****", "For details, please contact"],
             price_basis_status=SemanticResolutionStatus.VERIFIED,
             notes=(
                 "The basis is printed in the price cell itself and is read from there, "

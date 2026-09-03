@@ -1882,6 +1882,22 @@ def _winning_price_field(runtime_contract, fields: dict[str, Any] | None):
 _BARE_COUNT = re.compile(r"\d[\d,]*\s*[’']\s*s", re.IGNORECASE)
 
 
+#: "24 rolls", "12 rolls" — a count and the thing counted, where the thing is a
+#: unit the contract already declares. Split out so the noun can be checked
+#: against the declared vocabulary rather than accepted on sight.
+_COUNT_OF_UNIT = re.compile(r"\d[\d,]*\s*[’']?s?\s+([A-Za-z]+)", re.IGNORECASE)
+
+
+def _declares_spelling(pricing, word: str) -> bool:
+    """Whether the contract declares this unit word, singular or plural."""
+    needle = word.strip().casefold()
+    singular = needle[:-1] if needle.endswith("s") else needle
+    return any(
+        str(spelling).strip().casefold() in {needle, singular}
+        for spelling in (pricing.price_basis_value_map or {})
+    )
+
+
 def _row_stated_cost_basis(runtime_contract, fields: dict[str, Any] | None):
     """The basis THIS ROW states, when the contract says a column names it.
 
@@ -1923,7 +1939,15 @@ def _row_stated_cost_basis(runtime_contract, fields: dict[str, Any] | None):
         if mapped is None and pricing.price_basis_count_unit:
             # "$78.00 / 100's" — a quantity, and no vessel named. The contract
             # says what a bare count stands for; nothing is inferred here.
-            if _BARE_COUNT.fullmatch(suffix):
+            # "$115.00 / 24 rolls" is the same statement with the countable
+            # named: twenty-four of something, bought together, for one price.
+            # The trailing word must ALREADY be a declared spelling, so this
+            # accepts nothing the contract had not accepted anyway — it only
+            # allows a count to stand in front of it.
+            counted = _COUNT_OF_UNIT.fullmatch(suffix)
+            if _BARE_COUNT.fullmatch(suffix) or (
+                counted and _declares_spelling(pricing, counted.group(1))
+            ):
                 mapped = pricing.price_basis_count_unit
                 raw = suffix
     if mapped is None:

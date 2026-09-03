@@ -1,0 +1,1705 @@
+{
+  "page_outcome": "evidence",
+  "supplier_identity_text": "永義(香港)有限公司 United Italian Corp. (HK) Ltd.",
+  "tables": [
+    {
+      "section": "Bandage 繃帶",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["JI007", "Elastic Crepe Bandage, Size 5cm (2\") x 4.5m", "$7.00 / roll"], "confidence": "0.95"},
+        {"cells": ["JI008", "Elastic Crepe Bandage, Size 7.5cm (3\") x 4.5m", "$8.00 / roll"], "confidence": "0.95"},
+        {"cells": ["JI012", "Elastic Crepe Bandage, Size 10cm (4\") x 4.5m", "$11.00 / roll"], "confidence": "0.95"},
+        {"cells": ["JI013", "Elastic Crepe Bandage, Size 15cm (6\") x 4.5m", "$13.00 / roll"], "confidence": "0.95"},
+        {"cells": ["COT5307", "Cohesive Bandage 2\", Lake Blue Color (box of 24 rolls)", "$8.00 / roll"], "confidence": "0.95"},
+        {"cells": ["COT5308", "Cohesive Bandage 3\", Sky Blue Color (box of 16 rolls)", "$10.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Lubricant 潤滑劑",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1123", "Sterile Lubricating Jelly 2.7g (box of 144 pks)", "$205.00 / box"], "confidence": "0.95"},
+        {"cells": ["1120", "Sterile Lubricating Jelly 5g (box of 150 pks)", "$335.00 / box"], "confidence": "0.95"},
+        {"cells": ["1122", "Sterile Lubricating Jelly 82g", "$28.50 / tube"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Cotton 棉花用品",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["JI006", "Cotton Wool Roll (500g) 棉花卷", "$42.00 / roll"], "confidence": "0.95"},
+        {"cells": ["8151030", "Sterile Non-Woven Gauze Ball 30g 消毒棉花球 (5's x 20pks / box)", "$90.00 / box"], "confidence": "0.95"},
+        {"cells": ["80504", "Sterile Cotton Wool Ball (5's / pack)", "$2.50 / pack"], "confidence": "0.95"},
+        {"cells": ["JI037", "Cotton Wool Ball 0.5g 棉花球 (1,000's / pack)", "$60.00 / pack"], "confidence": "0.95"},
+        {"cells": ["03100", "Cotton Wool Ball 0.3g (100's / pack)", "$8.00 / pack"], "confidence": "0.95"},
+        {"cells": ["03500", "Cotton Wool Ball 0.3g (500's / pack)", "$30.00 / pack"], "confidence": "0.95"},
+        {"cells": ["JI023", "Wooden Stick Cotton Tip Applicator 6\" 木棉簽 6 吋 (100's / pack)", "$7.50 / pack"], "confidence": "0.95"},
+        {"cells": ["JI067", "Sterile Wooden Stick, Cotton Tip Applicator 6\" 消毒木棉簽 6 吋 (10's / pack)", "$2.50 / pack"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GAUZE & GAUZE AND SPONGES 紗布及棉花 - Absorbent Gauze 脫脂紗布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["3004-100", "N/S Gauze Sponges 3\" x 3\" x 12-ply x 1 sleeve (100's / sleeve)", "$33.00 / sleeve"], "confidence": "0.95"},
+        {"cells": ["3006-100", "N/S Gauze Sponges 4\" x 4\" x 12-ply x 1 sleeve (100's / sleeve)", "$45.00 / sleeve"], "confidence": "0.95"},
+        {"cells": ["3002-200", "N/S Gauze Sponges 2\" x 2\" x 12-ply x 1 sleeve (200's / sleeve)", "$34.00 / sleeve"], "confidence": "0.95"},
+        {"cells": ["3004-200", "N/S Gauze Sponges 3\" x 3\" x 12-ply x 1 sleeve (200's / sleeve)", "$37.00 / sleeve"], "confidence": "0.95"},
+        {"cells": ["3006-200", "N/S Gauze Sponges 4\" x 4\" x 12-ply x 1 sleeve (200's / sleeve)", "$59.00 / sleeve"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GAUZE & GAUZE AND SPONGES 紗布及棉花 - Non-Woven Gauze 無紡紗布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["2100-200", "N/S Non-Woven Sponges 4\" x 4\" x 4-ply (200's / sleeve)", "$59.00 / sleeve"], "confidence": "0.95"},
+        {"cells": ["2101-200", "N/S Non-Woven Sponges 2\" x 2\" x 4-ply (200's / sleeve)", "$34.00 / sleeve"], "confidence": "0.95"},
+        {"cells": ["2103-200", "N/S Non-Woven Sponges 3\" x 3\" x 4-ply (200's / sleeve)", "$37.00 / sleeve"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GAUZE & GAUZE AND SPONGES 紗布及棉花 - Sterile Gauze 消毒紗布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["8505042", "Non-Woven Sterilized Gauze, Size 5 x 5cm, 4-ply (2 pcs/pack) (100's / box)", "$2.50 / pack"], "confidence": "0.95"},
+        {"cells": ["8757542", "Non-Woven Sterilized Gauze, Size 7.5 x 7.5cm, 4-ply (2 pcs/pack) (100's / box)", "$3.00 / pack"], "confidence": "0.95"},
+        {"cells": ["8331205", "Absorbent Sterilized Gauze, Size 7.5 x 7.5cm, 12-ply (5's / pack)", "$4.00 / pack"], "confidence": "0.95"},
+        {"cells": ["2240", "Sterile Non-Woven Sponges 2\" x 2\" x 4-ply (2 pcs/pack) (50's / box)", "$70.00 / box"], "confidence": "0.95"},
+        {"cells": ["3340", "Sterile Non-Woven Sponges 3\" x 3\" x 4-ply (2 pcs/pack) (50's / box)", "$75.00 / box"], "confidence": "0.95"},
+        {"cells": ["4440", "Sterile Non-Woven Sponges 4\" x 4\" x 4-ply (2 pcs/pack) (50's / box)", "$80.00 / box"], "confidence": "0.95"},
+        {"cells": ["#HNWSY77", "Safegauze Sterile Non-Woven Key-Hole Gauze Swab, Size 7.5 x 7.5cm (2pcs/pack) (1,200's / case)", "$1,200.00 / case"], "confidence": "0.95"},
+        {"cells": ["HNWS077", "Safegauze Sterile Non-Woven Gauze, 7.5 x 7.5cm, 4-ply (5 pcs/pack) (600's / case)", "$750.00 / case"], "confidence": "0.95"},
+        {"cells": ["SFGSFGHNWS077R", "Safegauze Sterile Non-Woven Gauze, 7.5 x 7.5cm, 4-ply (5 pcs/pack) (25pk / box)", "$43.00 / box"], "confidence": "0.95"},
+        {"cells": ["HNWS111RP", "Safegauze Combine Dressing, 10 x 10cm (30's / bag)", "$45.00 / bag"], "confidence": "0.95"},
+        {"cells": ["HNWS112RP", "Safegauze Combine Dressing, 10 x 20cm (20's / bag)", "$40.00 / bag"], "confidence": "0.95"},
+        {"cells": ["HNWS124RP", "Safegauze Combine Dressing, 20 x 40cm (10's / bag)", "$40.00 / bag"], "confidence": "0.95"},
+        {"cells": ["101001", "Pre-Cut Swabs 10cm x 10cm, 1kg", "$90.00 / pack"], "confidence": "0.95"},
+        {"cells": ["12512501", "Pre-Cut Swabs 12.5cm x 12.5cm, 1kg", "$90.00 / pack"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "TAPING 膠布 - Hypoallergenic 低敏感透氣膠布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["MEDI-T300W", "Medi-Tape T-300 (½\")", "$115.00 / 24 rolls"], "confidence": "0.95"},
+        {"cells": ["MEDI-T310W", "Medi-Tape T-310 (1\")", "$115.00 / 12 rolls"], "confidence": "0.95"},
+        {"cells": ["UNISD", "Spot Plaster 防菌圓點膠布", "$20.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["PLA5309", "Adhesive Sterile Plaster, Skin Tone", "$20.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "TAPING 膠布 - Others 其他",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["ORS192000", "Universal Eye Shield (50's / box)", "$11.00 / pc"], "confidence": "0.95"},
+        {"cells": ["DRE100008", "Standard Dressing Set 清洗傷口包 (60's / box)", "$11.00 / pack"], "confidence": "0.95"},
+        {"cells": ["8110", "Medicom Basic Dressing Set 消毒傷口包 (50's / box)", "$8.50 / pack"], "confidence": "0.95"},
+        {"cells": ["GSP8111", "Safeseal Pack Basic Dressing Set (Non-Woven Sponges) (80's / box)", "$8.50 / pack"], "confidence": "0.95"},
+        {"cells": ["5000209", "(Eye Wipes)", "$140.00 / pack"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "CRYOTHERAPEUTIC PRODUCTS 冷凍治療",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1001-0412", "Histofreezer Portable Cryosurgical System 2 x 80ml Kit w/24's 2mm & 36's 5mm App.", "$1,600.00 / set"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "ULTRASOUND GEL 超聲波啫喱",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1157", "Ultrasound Gel 250g", "$21.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["02-400B-015", "Clear Image Singles – Ultrasound Gel 15ml, High (100's / box)", "$335.00 / box"], "confidence": "0.95"},
+        {"cells": ["04-048", "Clear Image Singles - Sterile Ultrasound Gel 20g, Inside Peel Pouch (48's / box)", "$768.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "DIAGNOSTIC TEST PRODUCTS 診斷及測試專用產品 - Blood Collection Tubes 採血試管",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": [null, "Vacutainer Plain Tube, Red (100's / pack)", "For details, please contact the Sales Department on 2887 5175. 種類繁多，未能盡錄，詳情請致電 2887 5175 營業部查詢。"], "confidence": "0.85"},
+        {"cells": [null, "Vacutainer Lithium Heparin, Green", null], "confidence": "0.8"},
+        {"cells": [null, "Vacutainer SST II Gel Tube, Gold", null], "confidence": "0.8"},
+        {"cells": [null, "Vacutainer NaF / Potassium Oxalate Tube, Grey", null], "confidence": "0.8"},
+        {"cells": [null, "Vacutainer Cit. Na., Light Blue", null], "confidence": "0.8"},
+        {"cells": [null, "Vacutainer K2EDTA, Lavender", null], "confidence": "0.8"},
+        {"cells": [null, "Microtainer Plain Tube, Red", null], "confidence": "0.8"},
+        {"cells": [null, "Microtainer SST Gel Tube, Gold", null], "confidence": "0.8"},
+        {"cells": [null, "Microtainer K2EDTA, Lavender", null], "confidence": "0.8"},
+        {"cells": [null, "Microtainer Lithium Heparin, Green", null], "confidence": "0.8"},
+        {"cells": [null, "Microtainer Sodium Fluoride, Grey", null], "confidence": "0.8"},
+        {"cells": [null, "Multi-Sample Needle (100's / box)", null], "confidence": "0.8"},
+        {"cells": [null, "Blood Collection Set (50's / box)", null], "confidence": "0.8"},
+        {"cells": [null, "Safety-Lok Blood Collection Set (50's / box)", null], "confidence": "0.8"}
+      ]
+    },
+    {
+      "section": "COMPRESSION SUPPORT STOCKINGS 壓力襪系列",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": [null, "Medi Assure Compression Stockings 「脈廸」壓舒襪", "For details, please contact the Sales Department on 2887 5175. 種類繁多，未能盡錄，詳情請致電 2887 5175 營業部查詢。"], "confidence": "0.85"},
+        {"cells": [null, "CCL1 (20-30mm HG) 第一級壓力 Pressure Stockings, Calf, Panty, Thigh Beige / Black, Open / Close Toes", null], "confidence": "0.8"},
+        {"cells": [null, "CCL2 (30-40mm HG) 第二級壓力 Pressure Stockings, Calf, Panty, Thigh Beige / Black, Open / Close Toes", null], "confidence": "0.8"},
+        {"cells": ["T140A12-6", "Men, Calf, Anthracite, Size S - XXL", "$380.00 / pr"], "confidence": "0.95"},
+        {"cells": ["T140512-6", "Men, Calf, Black, Size S - XXL", "$380.00 / pr"], "confidence": "0.95"},
+        {"cells": ["T147A12-6", "Men, Calf Petite Anthracite, Size S - XXL", "$380.00 / pr"], "confidence": "0.95"},
+        {"cells": ["T147512-6", "Men, Calf Petite Black, Size S - XXL", "$380.00 / pr"], "confidence": "0.95"},
+        {"cells": ["T140122-6", "Women, Calf, Caramel, Size S - XXL", "$380.00 / pr"], "confidence": "0.95"},
+        {"cells": ["T140522-6", "Women, Calf, Black, Size S - XXL", "$380.00 / pr"], "confidence": "0.95"},
+        {"cells": ["T147522-6", "Women, Calf Petite, Black, Size S - XXL", "$380.00 / pr"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Blood Glucose Sensor & Accessories 血糖機產品系列",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["71400.80 & 99881.79", "FreeStyle NEO Sensor w/ 10's Glucose Test Strips", "$825.00 / set"], "confidence": "0.95"},
+        {"cells": ["71742.75", "FreeStyle Optium G3CN Blood Glucose Test Strips 雅培「確安妥」血糖試紙 (50's / box)", "$300.00 / box"], "confidence": "0.95"},
+        {"cells": ["99113.77", "Optium Ketone Strips 雅培「確安妥」血酮試紙 (10's / box)", "$400.00 / box"], "confidence": "0.95"},
+        {"cells": ["71189.71", "FreeStyle Freedom Lite Meter", "$598.00 / set"], "confidence": "0.95"},
+        {"cells": ["71192.70", "FreeStyle Lite Test Strips (50's / box)", "$250.00 / box"], "confidence": "0.95"},
+        {"cells": ["80139-20", "Control Solution, High/Low, Glucose/Ketone", "$120.00 / set"], "confidence": "0.95"},
+        {"cells": ["10600113", "Sinocare", "$750.00 / set"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Blood Sampling Products 刺血取樣產品",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["70043.71", "Thin Lancet 28G", "$90.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["366592", "CA Lancet Needle 30G x 1.5mm Depth (Purple)", "$820.00 / 200's"], "confidence": "0.95"},
+        {"cells": ["366593", "CA Lancet Needle 21G x 1.8mm Depth (Pink)", "$800.00 / 200's"], "confidence": "0.95"},
+        {"cells": ["366594", "CA Lancet: Blade: 1.5mm Width x 2.0mm Depth (Blue)", "$860.00 / 200's"], "confidence": "0.95"},
+        {"cells": ["1HS01-10", "Haemstix Massage Safety Lancets, 28G", "$200.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1HS08-10", "Haemstix Massage Safety Lancets, 23G", "$200.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["MN-92110", "PH Paper 0-14", "$130.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["MN-92121", "PH Paper 4.5-10", "$130.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "BP Meter 血壓計",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["JPD-900A", "Blood Pressure Monitor, Arm Type", "$480.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JPD-900W", "Blood Pressure Monitor, Wrist Type", "$380.00 / pc"], "confidence": "0.95"},
+        {"cells": ["BM 85", "Beurer BM 85 Bluetooth Upper Arm Blood Pressure Monitor", "$1,428.00 / pc"], "confidence": "0.95"},
+        {"cells": ["BC 44", "Beurer BC44 Wrist Blood Pressure Monitor", "$518.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "CLO Test",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["DRY050", "Dryclo", "$3,700.00 / 50's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Nebulizer 霧化器",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["IH 21", "Beurer IH 21 Nebulizer", "$658.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MTA10", "Mesh Nebulizer", "$250.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Others",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["MSGLT-09", "Electrodes, Foam Backing, Solid Gel, 51 x 33mm (100's / pack)", "$80.00 / pack"], "confidence": "0.95"},
+        {"cells": ["3423MED", "Radio-Translucent Electrodes, Carbon Substrate, Chloride Based, Hydrogel, 34 x 23mm (100's / pack)", "$60.00 / pack"], "confidence": "0.95"},
+        {"cells": ["MSGLT-05MG", "Electrodes, Foam Backing, Solid Gel, 40x36mm, 5x20's", "$80.00 / pack"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "FEEDING PRODUCTS 餵食專用產品 - Feeding Utensil 餵食器具",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["305220", "Oral Syringe 3ml 餵食針筒 (100's / box)", "$580.00 / box"], "confidence": "0.95"},
+        {"cells": ["305218", "Oral Syringe 5ml Clear (Teaspoon Marking) (100's / box)", "$400.00 / box"], "confidence": "0.95"},
+        {"cells": ["305219", "Oral Syringe 10ml Clear (Teaspoon Marking) (100's / box)", "$1,400.00 / box"], "confidence": "0.95"},
+        {"cells": ["MI-191P", "Feeding Bag 1,200ml, Purple 餵食用奶袋連接駁喉 (30's / box)", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI-220P", "Feeding Bag 600ml, Purple 餵食用奶袋連接駁喉 (30's / box)", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["1115", "Oral Swabsticks Lemon Glycerine (3's/pk, 25pks/box)", "$68.00 / box"], "confidence": "0.95"},
+        {"cells": ["1116", "Oral Swabsticks Blackcurrant Glycerine (3's/pk, 25pks/box)", "$68.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "FEEDING PRODUCTS 餵食專用產品 - Suction Products 廢液收集產品",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["MI287", "2,000ml \"Bag\" Suction Liner", "$21.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI286", "1,500ml \"Bag\" Suction Liner", "$20.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI285", "1,000ml \"Bag\" Suction Liner", "$20.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI287-0009", "2,000ml \"Bag\" Suction Liner with 20g Solidifier", "$28.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI288-0008", "3000Ml \"Bag\" Suction Liner", "$37.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI153-0004", "Solidifier, 10g (20's / bag)", "$73.00 / bag"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "FEEDING PRODUCTS 餵食專用產品 - Fortune Stomach Tubes 胃喉",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["2020-0012", "Silicone Stomach Tube, X-Ray Opaque Line, 12FR, 1200mm", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["2020-0014", "Silicone Stomach Tube, X-Ray Opaque Line, 14FR, 1200mm", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["2020-0016", "Silicone Stomach Tube, X-Ray Opaque Line, 16FR, 1200mm", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MIC-KEY", "Gastrostomy Feeding Tube and Gastrostomy Feeding Tubes", "For details, please contact the Sales Department on 2887 5175. 種類繁多，未能盡錄，詳情請致電 2887 5175 營業部查詢。"], "confidence": "0.85"}
+      ]
+    },
+    {
+      "section": "FOLEY CATHETERS, URINE BAG AND URINE COLLECTOR 尿喉，尿袋及尿套 - Urine Bag & Urine Holder 尿袋及尿套",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["URIN01", "Paediatric Urine Collector 小兒尿袋", "$20.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JI001", "Disposable Urine Bag 2,000ml 即棄尿袋", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JI084", "Male Urine Holder 30mm, Size L 男性尿套(大碼)", "$5.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JI085", "Male Urine Holder 35mm, Size XL 男性尿套(加大碼)", "$5.00 / pc"], "confidence": "0.95"},
+        {"cells": ["G-542", "Urine Bag 2000ml 尿袋", "$7.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "FOLEY CATHETERS, URINE BAG AND URINE COLLECTOR 尿喉，尿袋及尿套 - Fortune Silicone Foley",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1821-0508", "Silicone 2-Way Foley Balloon Catheter, 2-3ml, 8FR", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["1821-0510", "Silicone 2-Way Foley Balloon Catheter, 3-5ml, 10FR", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["1822-0512", "Silicone 2-Way Foley Balloon Catheter, 5-10ml, 12FR", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["1822-0514", "Silicone 2-Way Foley Balloon Catheter, 5-10ml, 14FR", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["1822-0516", "Silicone 2-Way Foley Balloon Catheter, 5-10ml, 16FR", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["1822-0518", "Silicone 2-Way Foley Balloon Catheter, 5-10ml, 18FR", "$35.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "FOLEY CATHETERS, URINE BAG AND URINE COLLECTOR 尿喉，尿袋及尿套 - Bactiguard (BIP) Foley",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["111120510", "2-Way BIP Foley Catheter 12FR, 10ml, 40cm", "$200.00 / pc"], "confidence": "0.95"},
+        {"cells": ["111140510", "2-Way BIP Foley Catheter 14FR, 10ml, 40cm", "$200.00 / pc"], "confidence": "0.95"},
+        {"cells": ["111160510", "2-Way BIP Foley Catheter 16FR, 10ml, 40cm", "$200.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL CARE PRODUCTS 一般護理專用產品 - Suction Catheter 抽痰喉",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["JI043", "Suction Catheter with Control 8FR (Blue) (50's / box)", "$17.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JI044", "Suction Catheter with Control 10FR (Black)", "$17.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JI045", "Suction Catheter with Control 12FR (White)", "$17.00 / pc"], "confidence": "0.95"},
+        {"cells": ["G-643#14", "Suction Catheter With Control 14FR", "$17.00 / pc"], "confidence": "0.95"},
+        {"cells": ["G-643", "Suction Catheter With Control 16FR", "$17.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL CARE PRODUCTS 一般護理專用產品 - Disposable Wipes 即棄抹布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["GNW4033", "Safetouch Medisorb Towel 35 x 30cm (100's / box)", "$100.00 / box"], "confidence": "0.95"},
+        {"cells": ["GNW4063", "Safetouch Medisorb Towel 60 x 35cm (100's / box)", "$180.00 / box"], "confidence": "0.95"},
+        {"cells": ["A40002", "Lanolin Premoistened Washcloths 64's", "$40.00 / pack"], "confidence": "0.95"},
+        {"cells": ["#B225W", "Virusolve + Disinfectant Wipes, 225's", "$525.00 / tube"], "confidence": "0.95"},
+        {"cells": ["WTF-SS8887-0025", "Hospicare Waterbased Disinfectant Wipes", "$50.00 / pc"], "confidence": "0.95"},
+        {"cells": ["WTF-FS7777-0043", "Alcohol Wipes (10's / pack)", "$15.00 / pack"], "confidence": "0.95"},
+        {"cells": ["WTF-FS7777-0060", "Antiseptic Wipes (10's / pack)", "$17.00 / pack"], "confidence": "0.95"},
+        {"cells": ["HR60B", "Hirota 75% 酒精濕紙巾 140x160mm (100's / box)", "$50.00 / box"], "confidence": "0.95"},
+        {"cells": ["326894", "Alcohol Swab 酒精棉 (100's / box)", "$36.00 / box"], "confidence": "0.95"},
+        {"cells": ["1102", "Optipro Pre-Injection Isopropyl Wipes (100's / box)", "$22.00 / box"], "confidence": "0.95"},
+        {"cells": ["1102HK", "Optipro Pre-Injection Isopropyl Wipes (200's / box)", "$44.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL CARE PRODUCTS 一般護理專用產品 - 消毒搓手液",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["MED-GAR010034", "Medirub WHO F1 500ml, Round Spray", "$75.00 / bot"], "confidence": "0.95"},
+        {"cells": ["100489", "Hexadermal Alcohol Based Hand Disinfectant 500ml (Liquid)", "$80.00 / bot"], "confidence": "0.95"},
+        {"cells": ["100490", "Hexadermal Alcohol Based Hand Disinfectant 500ml (Gel)", "$80.00 / bot"], "confidence": "0.95"},
+        {"cells": ["G010004", "Medigel 500ml", "$75.00 / bot"], "confidence": "0.95"},
+        {"cells": ["G010006", "Medigel 30ml", "$11.00 / bot"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL CARE PRODUCTS 一般護理專用產品 - Others 其他",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["EUR180000", "Nasal Oxygen Cannula", "$20.00 / pc"], "confidence": "0.95"},
+        {"cells": ["G-673", "氧氣面罩", "$20.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL CARE PRODUCTS 一般護理專用產品 - Saniswiss Products",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["132092", "Sanitizer Service S1 750ml 安全消毒水", "$780.00 / bot"], "confidence": "0.95"},
+        {"cells": ["132101", "K1 - Pest Control 950ml 環保驅蟲水", "$1,300.00 / bot"], "confidence": "0.95"},
+        {"cells": ["133095 - C1", "C1 - Surfaces 750ml 多功能清潔劑", "$120.00 / bot"], "confidence": "0.95"},
+        {"cells": ["133104 - C3", "C3 - Sanitary 750ml 潔具清洗劑", "$120.00 / bot"], "confidence": "0.95"},
+        {"cells": ["133069 - C5", "C5 - Glasses 750ml 玻璃清潔劑", "$120.00 / bot"], "confidence": "0.95"},
+        {"cells": ["133108 - C6", "C6 - Odor 750ml 除臭吸味劑", "$120.00 / bot"], "confidence": "0.95"},
+        {"cells": ["132015", "I - Sanitizer Instrument (Concentrated) 1000ml 環保醫療儀器消毒劑", "$1,000.00 / bot"], "confidence": "0.95"},
+        {"cells": ["132157", "S3 Sanitizer 750ml", "$200.00 / bot"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Extension Tube (Luer Lock & Luer Slip) 延長管",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["ET06", "T Connector (50's / box)", "$6.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0330", "Mini Volume 4\" (100mm) LL (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0331", "Mini Volume 10\" (250mm) LL (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0333", "Mini Volume 20\" (500mm) LL (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0335", "Mini Volume 30\" (750mm) LL (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0336", "Mini Volume 33\" (825mm) LL (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0337", "Mini Volume 40\" (1,000mm) LL (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0340", "Mini Volume 4\" (100mm) Luer Slip (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0341", "Mini Volume 10\" (250mm) Luer Slip (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0343", "Mini Volume 20\" (500mm) Luer Slip (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0345", "Mini Volume 30\" (750mm) Luer Slip (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0346", "Mini Volume 33\" (825mm) Luer Slip (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0328", "Mini Volume (1,500mm) LL (50's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0103", "Standard Volume 20\" (500mm) LL (25's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0106", "Standard Volume 33\" (825mm) LL (25's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0113", "Standard Volume 20\" (500mm) Luer Slip (25's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0115", "Standard Volume 30\" (750mm) Luer Slip (25's / box)", "$8.00 / pc"], "confidence": "0.95"},
+        {"cells": ["803-0116", "Standard Volume 33\" (825mm) Luer Slip (25's / box)", "$8.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Disinfectant 消毒劑",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["#B29A", "Virusolve + Concentrate Disinfectant 2.5L", "$830.00 / bot"], "confidence": "0.95"},
+        {"cells": ["J49C", "Opa 5L", "$1325.00 / bot"], "confidence": "0.95"},
+        {"cells": ["Q112", "Amity Opa Test Strips (50's / tube)", "$1,700.00 / tube"], "confidence": "0.95"},
+        {"cells": ["100144", "Sencron", "$556.00 / bot"], "confidence": "0.95"},
+        {"cells": ["2024SRSTRP", "Sencron Strips", "$250.00 / bot"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Detergent 洗滌劑",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["100199", "Enzymatic Medical Instrument Cleaner, Ecotouch 1, 1L Aniosyme Synergy 5 5L", "$260.00 / bot"], "confidence": "0.9"},
+        {"cells": ["100311", "Enzymatic Medical Instrument Cleaner, Ecotouch 1, 5L Aniosyme Synergy 5 5L", "$1,200.00 / bot"], "confidence": "0.9"},
+        {"cells": ["#J69B", "Viruzyme Ve 5L", "$1,200.00 / bot"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Air Purifier",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1200S", "Eolis Air Manager", "*****"], "confidence": "0.9"},
+        {"cells": ["HYGEOLIS", "Hygeolis", "*****"], "confidence": "0.9"}
+      ]
+    },
+    {
+      "section": "Others 其他",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["#J30TP", "Virusolve + Spray 750ml", "$200.00 / bot"], "confidence": "0.95"},
+        {"cells": ["#J19C", "Sanitab Plus 3.25g Tablet with 1.7g Active NaDCC 犀利逹 3.25g 漂白丸 (1.7g NaDCC + 活性劑) (200's / bot)", "$400.00 / bot"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL EXAMINATION APPLIANCES 一般檢查器具 - Thermometer 探熱針",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["FT 09/1", "Beurer White Thermometer", "$58.00 / pc"], "confidence": "0.95"},
+        {"cells": ["FT 15/1", "Beurer Instant Thermometer 10 Sec.", "$98.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JPD-FR202", "Infrared Thermometer", "$690.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JPD-FR409", "Infrared Dual-Mode Thermometer", "$350.00 / pc"], "confidence": "0.95"},
+        {"cells": ["#303030", "Genius Tympanic Probe Cover (6 x 16's)", "$58.00 / bx"], "confidence": "0.95"},
+        {"cells": ["303013", "Genius 3 Tympanic Thermometer", "$4,600.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL EXAMINATION APPLIANCES 一般檢查器具 - Pulse Oximeter 血氧儀",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["PO 30", "Beurer Pulse Oximeter", "$698.00 / pc"], "confidence": "0.95"},
+        {"cells": ["PO 40", "Beurer Pulse Oximeter with PMI", "$738.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JPD-500H", "Jumper Pulse Oximeter (For Children Age 3-12)", "$250.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JPD-500G", "OLED Pulse Oximeter (OLED)", "$200.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GENERAL EXAMINATION APPLIANCES 一般檢查器具 - Others 其他",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["ORS170003", "Disposable Proctoscope 直腸窺器 (80's / box)", "$11.00 / pc"], "confidence": "0.95"},
+        {"cells": ["ORS120004", "Disposable Sterile Vaginal Speculum, Size XS 陰道窺器 (加細碼) (100's / box)", "$11.00 / pc"], "confidence": "0.95"},
+        {"cells": ["ORS120003", "Disposable Sterile Vaginal Speculum, Size S 陰道窺器 (細碼) (100's / box)", "$11.00 / pc"], "confidence": "0.95"},
+        {"cells": ["ORS120002", "Disposable Sterile Vaginal Speculum, Size M 陰道窺器 (中碼) (100's / box)", "$11.00 / pc"], "confidence": "0.95"},
+        {"cells": ["ORS120001", "Disposable Sterile Vaginal Speculum, Size L 陰道窺器 (大碼) (100's / box)", "$11.00 / pc"], "confidence": "0.95"},
+        {"cells": ["JI009", "Wooden Tongue Depressor, Adult 成人木壓舌捧 15cm x 1.8cm", "$15.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["JI087", "Wooden Tongue Depressor, Paed. 小童木壓舌捧 12cm x 1.4cm", "$15.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GLOVES 手套 - Latex Gloves 乳膠手套",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["TG001 –5", "Top Glove Non-Sterile Latex Exam. Gloves - XS - XL", "$55.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["TG006 – 9", "Top Glove Non-Sterile P/F Latex Exam. Gloves - XS - L", "$60.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1122A – D", "SafeTouch Ultra Grip P/F Gloves - XS - L", "$68.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1124A – E", "SafeTouch Latex P/F Gloves - XS - XL", "$80.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1204A – D", "Second Skin P/F Gloves - XS - L", "$54.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USLG5.5MF-XS – USLG5.5MF-L", "United Shield Disposable Latex P/F Gloves XS - L", "$60.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["101312A – D", "DRG Optimal Fit Latex PF XS-L", "$55.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["101224A-D", "Global – X Latex PF Gloves – XS - L", "$58.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GLOVES 手套 - 手術用消毒乳膠手套 (有粉)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["TG010", "TG Powdered Surgical Gloves - 5.5", "$4.80 / pair"], "confidence": "0.95"},
+        {"cells": ["TG011", "TG Powdered Surgical Gloves - 6", "$4.80 / pair"], "confidence": "0.95"},
+        {"cells": ["TG012", "TG Powdered Surgical Gloves - 6.5", "$4.80 / pair"], "confidence": "0.95"},
+        {"cells": ["TG013", "TG Powdered Surgical Gloves - 7", "$4.80 / pair"], "confidence": "0.95"},
+        {"cells": ["TG014", "TG Powdered Surgical Gloves - 7.5", "$4.80 / pair"], "confidence": "0.95"},
+        {"cells": ["TG015", "TG Powdered Surgical Gloves - 8", "$4.80 / pair"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GLOVES 手套 - 手術用消毒乳膠手套 (無粉)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["TG016", "TG P/F Surgical Gloves - 5.5 (50 pairs / box)", "$6.00 / pair"], "confidence": "0.95"},
+        {"cells": ["TG017", "TG P/F Surgical Gloves - 6", "$6.00 / pair"], "confidence": "0.95"},
+        {"cells": ["TG018", "TG P/F Surgical Gloves - 6.5", "$6.00 / pair"], "confidence": "0.95"},
+        {"cells": ["TG019", "TG P/F Surgical Gloves - 7", "$6.00 / pair"], "confidence": "0.95"},
+        {"cells": ["TG020", "TG P/F Surgical Gloves - 7.5", "$6.00 / pair"], "confidence": "0.95"},
+        {"cells": ["TG021", "TG P/F Surgical Gloves - 8", "$6.00 / pair"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GLOVES 手套 - Nitrile Gloves 丁腈手套",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1137A – E", "SafeTouch Nitrile P/F Gloves - XS - XL", "$52.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1174A – D", "SafeTouch Nitrile P/F Gloves - XS - L", "$56.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1175A – D", "SafeTouch Slim Blue Nitrile P/F Gloves - XS - L", "$52.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["50601 – 50603", "KC SafeSkin Purple Nitrile-Xtra 12\" Exam. Gloves - S - L", "$305.00 / 50's"], "confidence": "0.95"},
+        {"cells": ["52816 – 52819", "Lanvender Gloves – XS – L", "$230.00 / 250's"], "confidence": "0.95"},
+        {"cells": ["USNG4F-S", "Disposable Examination Nitrile PD Gloves, Blue - S", "$85.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USNG4F -M", "Disposable Examination Nitrile PD Gloves, Blue - M", "$85.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USNG4F -L", "Disposable Examination Nitrile PD Gloves, Blue - L", "$85.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USNG3.5F-S", "Disposable Nitrile P/F Gloves - S", "$68.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USNG3.5F-M", "Disposable Nitrile P/F Gloves - M", "$68.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USNG3.5F-L", "Disposable Nitrile P/F Gloves - L", "$68.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["47452 – 47456", "Pink Underguard Nitrile Gloves - XS - XL", "$290.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GLOVES 手套 - Chemotherapy Sterile Gloves 化療用消毒手套",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["14260", "Purple Nitrile Xtra Sterile Gloves - S (50 pairs / box)", "$900.00 / 50's"], "confidence": "0.95"},
+        {"cells": ["14261", "Purple Nitrile Xtra Sterile Gloves – M", "$900.00 / 50's"], "confidence": "0.95"},
+        {"cells": ["14262", "Purple Nitrile Xtra Sterile Gloves – L 需訂貨，詳情請問 Sales", "$900.00 / 50's"], "confidence": "0.95"},
+        {"cells": ["14263", "Purple Nitrile Xtra Sterile Gloves - XL", "$900.00 / 50's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GLOVES 手套 - PE & Vinyl Gloves 手套",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["VITHC1210B0100100 – VITHC1210D0100100", "CPE Gloves - S - L", "$17.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1208A – D", "Second Skin Vinyl PD Gloves - XS - L", "$46.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["1209A – D", "Second Skin Vinyl P/F Gloves - XS - L", "$34.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USVG5.0MF-S", "Disposable Vinyl P/F Gloves - S", "$48.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USVG5.0MF-M", "Disposable Vinyl P/F Gloves - M", "$48.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["USVG5.0MF-L", "Disposable Vinyl P/F Gloves - L", "$48.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PAPER CUPS 紙杯",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["140", "Distech Poly-Coated Paper Cup 5oz., White", "$24.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["139-0300100", "Paper Cup 5oz., Blue (Teeth)", "$24.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "B.BRAUN - IVF 注射輸液 - Dextrose",
+      "columns": ["Code", "Product", "Price (HK$) per bag", "Price (HK$) per box"],
+      "rows": [
+        {"cells": ["AHB0087", "Dextrose 5% 100ml (48's / box)", "$49.00 / bag", "$2,352.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB0062", "Dextrose 5% 250ml (24's / box)", "$54.00 / bag", "$1,296.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB0063", "Dextrose 5% 500ml (18's / box)", "$44.00 / bag", "$792.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B0064X", "Dextrose 5% 1000ml (14's / box)", "$53.00 / bag", "$742.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB0163", "Dextrose 10% 500ml (18's / box)", "$42.00 / bag", "$756.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B0164X", "Dextrose 10% 1000ml (14's / box)", "$51.00 / bag", "$714.00 / box"], "confidence": "0.95"},
+        {"cells": ["A6C0062HK", "Glucose 5% 250ml (40's / box)", "$72.00 / bag", "$2,880.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "B.BRAUN - IVF 注射輸液 - Lactated Ringer",
+      "columns": ["Code", "Product", "Price (HK$) per bag", "Price (HK$) per box"],
+      "rows": [
+        {"cells": ["2B2323Q", "Lactated Ringer 500ml (24's / box)", "$45.00 / bag", "$1,080.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B2324X", "Lactated Ringer 1000ml (14's / box)", "$53.00 / bag", "$742.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B2074X", "Lactated Ringer & Dextrose 5% 1000ml (14's / box)", "$52.00 / bag", "$728.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "B.BRAUN - IVF 注射輸液 - Normal Saline",
+      "columns": ["Code", "Product", "Price (HK$) per bag", "Price (HK$) per box/case"],
+      "rows": [
+        {"cells": ["2B1314X", "NaCl 0.45% 1000ml (14's / box)", "$104.00 / bag", "$1456.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB1306A", "NaCl 0.9% 50ml (60's / box)", "$48.00 / bag", "$2,880.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB1307", "NaCl 0.9% 100ml (48's / box)", "$51.00 / bag", "$2,448.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB1322", "NaCl 0.9% 250ml (24's / box)", "$48.00 / bag", "$1,152.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB1323HK", "NaCl 0.9% 500ml (18's / box)", "$46.00 / bag", "$828.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB1324HK", "NaCl 0.9% 1000ml (12's / box)", "$48.00 / bag", "$576.00 / box"], "confidence": "0.95"},
+        {"cells": ["A6C1307HK", "NaCl 0.9% AVIVA 100ml (80 bags/ case)", "$77.00 / bag", "$6,160.00 / case"], "confidence": "0.95"},
+        {"cells": ["A6C1322HK", "NaCl 0.9% AVIVA 250ml (40 bags/ case)", "$72.00 / bag", "$2,880.00 / case"], "confidence": "0.95"},
+        {"cells": ["A6C1323HK", "NaCl 0.9% AVIVA 500ml (24 bags/ case)", "$68.00 / bag", "$1,632.00 / case"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "B.BRAUN - IVF 注射輸液 - Dextrose & Normal Saline",
+      "columns": ["Code", "Product", "Price (HK$) per bag", "Price (HK$) per box"],
+      "rows": [
+        {"cells": ["2B1094X", "Dextrose 5% & NaCl 0.2% 1000ml (14's / box)", "$55.00 / bag", "$770.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB1023", "Dextrose 2.5% & NaCl 0.45% 500ml (18's / box)", "$40.00 / bag", "$720.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B1024X", "Dextrose 2.5% & NaCl 0.45% 1000ml (14's / box)", "$58.00 / bag", "$812.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B1074X", "Dextrose 5% & NaCl 0.45% 1000ml (14's / box)", "$52.00 / bag", "$728.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B1063Q", "Dextrose 5% & NaCl 0.9% 500ml (24's / box)", "$51.00 / bag", "$1,224.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B1064X", "Dextrose 5% & NaCl 0.9% 1000ml (14's / box)", "$51.00 / bag", "$714.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INTRAVENOUS SOLUTION 注射輸液 - Others 其他",
+      "columns": ["Code", "Product", "Price (HK$) per unit", "Price (HK$) per box"],
+      "rows": [
+        {"cells": ["AHB2544", "Plasma-Lyte 148 Approx. PH7.4 IV Infusion 1000ml (12's / box)", "$100.00 / bag", "$1,200.00 / box"], "confidence": "0.95"},
+        {"cells": ["2D5632Q", "Mannitol 20% 250ml (36's / box)", "$96.00 / bag", "$3,456.00 / box"], "confidence": "0.95"},
+        {"cells": ["FE64513", "Gelofusine 4% 500ml (10's / box)", "$148.00 / bottle", "$1,480.00 / box"], "confidence": "0.95"},
+        {"cells": ["3549291", "Sodium Bicarbonate 8.4% 100ml, Glass Bottle (20's / box)", "$104.00 / bottle", "$2,080.00 / box"], "confidence": "0.95"},
+        {"cells": ["AHB7317", "1.5% Glycine Irrigation Solution 3000ml (4's / box)", "$106.00 / bag", "$424.00 / box"], "confidence": "0.95"},
+        {"cells": ["2B3421", "Metronidazole Inj. 500mg/100ml (24's / box)", "$64.00 / bag", "$1,536.00 / box"], "confidence": "0.95"},
+        {"cells": ["3611096", "Heparin Sodium 10iu/ml in 0.9% NaCl 5ml (20's / box)", null, "$460.00 / box"], "confidence": "0.9"},
+        {"cells": ["3638793", "Heparin Sodium 25000iu/5ml (10's / box)", "$118.80 / vial", "$1,188.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610419", "Hartman's Solution 500ml (10's / box)", "$35.00 / bottle", "$350.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610002", "Osmofundin 20% EP 250ml (30's / box)", "$93.00 / bottle", "$2,790.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Solution for Injection 注射用溶液",
+      "columns": ["Code", "Product", "Price (HK$) per unit", "Price (HK$) per box"],
+      "rows": [
+        {"cells": ["3612759", "NaCl 5.85% 20ml (20's / box)", null, "$390.00 / box"], "confidence": "0.9"},
+        {"cells": ["3612767", "Sodium Chloride 0.9% 10ml (20's / box)", null, "$82.00 / box"], "confidence": "0.9"},
+        {"cells": ["3612775", "Sodium Chloride 0.9% 20ml (20's / box)", null, "$146.00 / box"], "confidence": "0.9"},
+        {"cells": ["3612716", "Water for Injection 10ml (20's / box)", null, "$79.00 / box"], "confidence": "0.9"},
+        {"cells": ["3612724", "Water for Injection 20ml (20's / box)", null, "$184.00 / box"], "confidence": "0.9"},
+        {"cells": ["3615427", "Water for Injection 100ml (50's / box)", "$22.00 / bottle", "$1,100.00 / box"], "confidence": "0.95"},
+        {"cells": ["3638642", "Water for Injection 100ml (Glass) (20's / box)", "$39.00 / bottle", "$780.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610694", "Water for Injection 500ml (10's / box)", "$38.00 / bottle", "$380.00 / box"], "confidence": "0.95"},
+        {"cells": ["3612821", "Glucose 50% 20ml (20's / box)", null, "$256.00 / box"], "confidence": "0.9"},
+        {"cells": ["3611054", "Glucose 50% 500ml (10's / box)", "$242.00 / bottle", "$2,420.00 / box"], "confidence": "0.95"},
+        {"cells": ["3615425", "Sodium Chloride 0.9% 100ml (50's / box)", "$27.00 / bottle", "$1,350.00 / box"], "confidence": "0.95"},
+        {"cells": ["3638650", "Sodium Chloride 0.9% 100ml (Glass) (20's / box)", "$45.00 / bottle", "$900.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610013", "Sodium Chloride 0.9% 250ml (30's / box)", "$37.00 / bottle", "$1,110.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610401", "Sodium Chloride 0.9% 500ml (10's / box)", "$22.00 / bottle", "$220.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610396", "Sodium Chloride 0.9% 1000ml (10's / box)", "$26.00 / bottle", "$260.00 / box"], "confidence": "0.95"},
+        {"cells": ["3612830", "Potassium Chloride 14.9% 10ml (20's / box)", null, "$214.00 / box"], "confidence": "0.9"},
+        {"cells": ["3549356", "Calcium Gluconate 10% 10ml (20's / box)", null, "$386.00 / box"], "confidence": "0.9"},
+        {"cells": ["3615186", "Glucose 5% 100ml (50's / box)", "$31.00 / bottle", "$1,550.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610041", "Glucose 5% 250ml (30's / box)", "$38.00 / bottle", "$1,140.00 / box"], "confidence": "0.95"},
+        {"cells": ["3610412", "Glucose 5% 500ml (10's / box)", "$19.00 / bottle", "$190.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INTRAVENOUS SOLUTION 注射輸液 - Irrigation Fluid 沖洗用消毒藥水",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["AHF7969HK", "Chlorhexidine 0.015% & 0.15% Cetrimide 1000ml (10's / box)", "$50.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7970", "Chlorhexidine 0.015% & 0.15% Cetrimide 500ml (10's / box)", "$45.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7971", "Chlorhexidine 0.015% & 0.15% Cetrimide 100ml (24's / box)", "$32.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7977", "Chlorhexidine 0.05% 100ml (24's / box)", "$35.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7979", "Chlorhexidine 0.05% & Cetrimide 0.5% 100ml (24's / box)", "$39.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7983HK", "Chlorhexidine 0.05% 500ml (15's / box)", "$40.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7984HK", "Chlorhexidine 0.05% 1000ml (10's / box)", "$59.00 / bottle"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INTRAVENOUS SOLUTION 注射輸液 - Irrigation Fluid 沖洗用蒸餾水及鹽水",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["3521370", "Sodium Chloride 0.9% For Irrigation 1000ml (6's / box)", "$55.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["3521390", "Sterile Water For Irrigation 1000ml (6's / box)", "$50.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7114", "Water for Irrigation 1000 ml (10's / box)", "$49.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["AHF7124", "0.9% NaCl for Irrigation 1000ml (10's / box)", "$54.00 / bottle"], "confidence": "0.95"},
+        {"cells": ["3615168", "NaCl for Contact Lens 10ml (32's / box)", "$166.00 / box"], "confidence": "0.95"},
+        {"cells": ["G-563", "Monovict 20Cc Saline For Irrigation (60's / box)", "$132.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PosiFlush Saline SP Pre-Filled Flush Syringe",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["306544", "BD Saline Pre-Filled Flush Syringe 3ml (30's / box)", "$285.00 / box"], "confidence": "0.95"},
+        {"cells": ["306545", "BD Saline Pre-Filled Flush Syringe 5ml (30's / box)", "$300.00 / box"], "confidence": "0.95"},
+        {"cells": ["306546", "BD Saline Pre-Filled Flush Syringe 10ml (30's / box)", "$330.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "OptiPure Pre-Filled Syringe",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1128", "Pre-Filled Sterile Water Syringe 10ml (20's / box)", "$160.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INTRAVENOUS THERAPY PRODUCTS 靜脈注射治療專用產品 - Intravenous Catheter 靜脈穿刺針",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["381167", "Angiocath 14G x 1.88\" (Orange) (50's / box)", "$28.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381157", "Angiocath 16G x 1.88\" (Grey) (50's / box)", "$36.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381144", "Angiocath 18G x 1.16\" (Green) (50's / box)", "$29.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381147", "Angiocath 18G x 1.88\" (50's / box)", "$25.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381134", "Angiocath 20G x 1.16\" (Pink) (50's / box)", "$26.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381137", "Angiocath 20G x 1.88\" (50's / box)", "$25.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381123", "Angiocath 22G x 1\" (Blue) (50's / box)", "$25.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381112", "Angiocath 24G x ¾\" (Yellow) (50's / box)", "$28.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381267", "Insyte 14G x 1.75\" (Orange) (50's / box)", "$22.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381254", "Insyte 16G x 1.16\" (Grey) (50's / box)", "$23.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381257", "Insyte 16G x 1.77\" (50's / box)", "$29.50 / pc"], "confidence": "0.95"},
+        {"cells": ["381244", "Insyte 18G x 1.16\" (Green) (50's / box)", "$23.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381247", "Insyte 18G x 1.88\" (50's / box)", "$23.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381234", "lnsyte 20G x 1.16\" (Pink) (50's / box)", "$23.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381237", "Insyte 20G x 1.88\" (50's / box)", "$23.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381223", "Insyte 22G x l\" (Blue) (50's / box)", "$23.00 / pc"], "confidence": "0.95"},
+        {"cells": ["381212", "Insyte 24G x ¾\" (Yellow) (50's / box)", "$30.00 / pc"], "confidence": "0.95"},
+        {"cells": ["#381044", "Insyte Autoguard BC Pro 18G x 1.16\" (50's / box)", "$23.00 / pc"], "confidence": "0.95"},
+        {"cells": ["#381034", "Insyte Autoguard BC Pro 20G x 1.16\" (50's / box)", "$22.00 / pc"], "confidence": "0.95"},
+        {"cells": ["#381023", "Insyte Autoguard BC Pro 22G x 1\" (50's / box)", "$22.00 / pc"], "confidence": "0.95"},
+        {"cells": ["#381012", "Insyte Autoguard BC Pro 24G x 0.75\" (50's / box)", "$26.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INTRAVENOUS THERAPY PRODUCTS 靜脈注射治療專用產品 - Scalp Vein Set 頭皮針",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["802-1915", "Scalp Vein Set 19G (Brown) (100's / box)", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["802-2015", "Scalp Vein Set 20G (Yellow) (100's / box)", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["802-2115", "Scalp Vein Set 21G (Green) (100's / box)", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["802-2215", "Scalp Vein Set 22G (Black) (100's / box)", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["802-2315", "Scalp Vein Set 23G (Blue) (100's / box)", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["802-2517", "Scalp Vein Set 25G (Orange) (100's / box)", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["802-2505", "Scalp Vein Set 25G (Orange, Long Size) (100's / box)", "$7.00 / pc"], "confidence": "0.95"},
+        {"cells": ["802-2715", "Scalp Vein Set 27G (Grey) (100's / box)", "$7.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INTRAVENOUS THERAPY PRODUCTS 靜脈注射治療專用產品 - TPN - Emulsion for Infusion 靜脈營養輸注液",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["3549240", "NuTRIflex Lipid Peri N3C 1250ml HK (5's / case)", "$3,150.00 / case"], "confidence": "0.95"},
+        {"cells": ["3549330", "NuTRIflex Lipid Peri N3C 1875ml HK (5's / case)", "$3,250.00 / case"], "confidence": "0.95"},
+        {"cells": ["3638505", "NuTRIflex Omega Special N3C 1250ml HK (5's / case)", "$3,200.00 / case"], "confidence": "0.95"},
+        {"cells": ["3638520", "NuTRIflex Omega Special N3C 1875ml HK (5's / case)", "$3,550.00 / case"], "confidence": "0.95"},
+        {"cells": ["FA64494", "NuTRIflex Plus N2C 1000ml HK (5's / case)", "$2,960.00 / case"], "confidence": "0.95"},
+        {"cells": ["FA64499", "NuTRIflex Peri N2C 1000ml HK (5's / case)", "$2,350.00 / case"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INTRAVENOUS THERAPY PRODUCTS 靜脈注射治療專用產品 - Infusion Set 輸液喉",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["801-2052", "Type-200 without Needle (25's / box)", "$10.00 / pc"], "confidence": "0.95"},
+        {"cells": ["801-5040", "Type-500 with Air Vented (25's / box)", "$15.00 / pc"], "confidence": "0.95"},
+        {"cells": ["801-2062", "Type-200 without Needle LL", "$10.00 / pc"], "confidence": "0.95"},
+        {"cells": ["801-5073", "Type-500 with Air Vented LL", "$15.00 / pc"], "confidence": "0.95"},
+        {"cells": ["801-6140", "Infusion Set with 100ml Buret, Airway (10's / box)", "$50.00 / pc"], "confidence": "0.95"},
+        {"cells": ["812-0206", "Transfusion Set Type Y with Airway (10's / box)", "$55.00 / pc"], "confidence": "0.95"},
+        {"cells": ["811-4007", "Blood Bag CPDA-1 Single 450ml w/ 16G Needle", "$125.00 / pc"], "confidence": "0.95"},
+        {"cells": ["397015", "Flopro Transfer Needle", "$12.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "INFUSION PUMP/SYRINGE PUMP 輸液泵",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["OT-701", "OT-701 Infusion Pump", "$22,000.00 / unit"], "confidence": "0.95"},
+        {"cells": ["EQGSP0303", "SP-500X Syringe Pump", "$18,000.00 / unit"], "confidence": "0.95"},
+        {"cells": ["394601", "Connecta 3-Way Color Code LL 三頭掣 (100's / box)", "$9.00 / pc"], "confidence": "0.95"},
+        {"cells": ["394995", "Connecta 3-Way with 10cm Extension Tube LL", "$15.00 / pc"], "confidence": "0.95"},
+        {"cells": ["385100", "Q-Syte Luer (50's / box)", "$17.00 / pc"], "confidence": "0.95"},
+        {"cells": ["TP-MF-O", "Male-Female Luer Lock Cap, Orange (100's / box)", "$180.00 / box"], "confidence": "0.95"},
+        {"cells": ["2000E", "Smartsite Needle-Free Connector (50's / box)", "$350.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "VEINVIEWER 顯影器",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["134-002102-02", "VeinViewer Flex (12 Months Comprehensive Warranty, Battery With 6 Months Warranty)", "$84,000.00 / set"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "DENTAL BINOCULAR SURGICAL LOUPES 牙科手術用放大鏡",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": [null, "Pentax Prismvue NF2 Type T", "$25,000.00 / set"], "confidence": "0.95"},
+        {"cells": [null, "Pentax Prismvue NF2 Type Y", "$28,500.00 / set"], "confidence": "0.95"},
+        {"cells": [null, "Pentax KP303", "*****"], "confidence": "0.9"},
+        {"cells": ["YHL-ANRL", "Portable LED Headlight with Pentax Adaptor", "$3,000.00 / set"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "MATTRESS COVER & UNDERPAD 床褥套及床墊",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["UP4060", "Forma Care Underpad 40 x 60cm (50 pcs / bag)", "$108.00 / bag"], "confidence": "0.95"},
+        {"cells": ["UP4060RP", "Forma Care Underpad 40 x 60cm (10 pcs / bag)", "$22.00 / bag"], "confidence": "0.95"},
+        {"cells": ["#624575", "Medinop Protective Sheet, White, 2-ply PVC Free 45cm x 75cm 「萬得寶」高級護理床墊", "$140.00 / 50's"], "confidence": "0.95"},
+        {"cells": ["775050", "Medinop Examination Couch Covers in Roll, White, 2-ply, Perforated Every 28cm, 50cm x 50m (10 rolls / box)", "$192.00 / roll"], "confidence": "0.95"},
+        {"cells": ["775950", "Medinop Examination Couch Covers in Roll, White, 2-ply, Perforated Every 28cm, 59cm x 50m (10 rolls / box)", "$215.00 / roll"], "confidence": "0.95"},
+        {"cells": ["CP5050B", "Couch Paper Roll 50cm x 50m", "$80.00 / roll"], "confidence": "0.95"},
+        {"cells": ["CP5950B", "Couch Paper Roll 59cm x 50m", "$80.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Others – 床墊卷",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["80201", "Table Paper - Smooth 21\" x 225\" (12 rolls / case)", "$62.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Others – 防水圍巾",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["8280", "Medicom Dry-Back Bibs 13\" x 18\", Lavender (500's / case)", "$240.00 / case"], "confidence": "0.95"},
+        {"cells": ["8282", "Medicom Dry-Back Bibs 13\" x 18\", Blue (500's / case)", "$240.00 / case"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "All Purpose Wipes – 萬用抹布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["VITGWR9015-0120025", "Medicom iWipe Advance 345 x 395mm, Blue (25's / pack)", "$75.00 / pack"], "confidence": "0.95"},
+        {"cells": ["VITGWR9016-0120025", "Medicom iWipe Advance 345 x 395mm, Pink (25's / pack)", "$75.00 / pack"], "confidence": "0.95"},
+        {"cells": ["VITGWR9017-0120025", "Medicom iWipe Advance 345 x 395mm, Yellow (25's / pack)", "$75.00 / pack"], "confidence": "0.95"},
+        {"cells": ["VITGWR9018-0120025", "Medicom iWipe Advance 345 x 395mm, Green (25's / pack)", "$75.00 / pack"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PROTECTIVE WEARING 保護性衣物 - Disposable Face Mask & Face Shield 即棄口罩及面罩",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["2027-PP", "Safemask Premier Plus Face Mask, Blue (50's / box)", "$48.00 / box"], "confidence": "0.95"},
+        {"cells": ["#2033", "Safemask Full Face Shield - Clear (30's / box)", "$300.00 / box"], "confidence": "0.95"},
+        {"cells": ["A3050", "AGL Full Face Shield (5's / pack)", "$37.50 / pack"], "confidence": "0.95"},
+        {"cells": ["2115PM", "Procedure Mask, Blue, Earloop (50's / box)", "$31.00 / box"], "confidence": "0.95"},
+        {"cells": ["2330", "Safemask Sof-Skin Earloop Mask, White (50's / box)", "$76.00 / box"], "confidence": "0.95"},
+        {"cells": ["46727", "Fluidshield PFR95 N95 Mask (35's / box) (MOQ:6 boxes)", "$590.00 / box"], "confidence": "0.95"},
+        {"cells": ["48100", "Kimberly-Clark Tie-On Mask (50's / box)", "$100.00 / box"], "confidence": "0.95"},
+        {"cells": ["62356", "The Lite One Procedure Mask, Blue (50's / box)", "$95.00 / box"], "confidence": "0.95"},
+        {"cells": ["ASU-GMK219515", "AUS Balance Lv3 Earloop Mask, Blue (50's / box)", "$55.00 / box"], "confidence": "0.95"},
+        {"cells": ["KMI-M3531130", "Kolmi OP Air Earloop Mask IIR, Yellow (50's / box)", "$121.00 / box"], "confidence": "0.95"},
+        {"cells": ["HMB2115", "PMR Individual Pack Mask, Blue (40's / box) (12boxes /case)", "$37.00 / box"], "confidence": "0.95"},
+        {"cells": ["MED-GMK212694-HL2", "Comfort + Type II Earloop Mask, Orange (50's / box)", "$80.00 / box"], "confidence": "0.95"},
+        {"cells": ["SFM-203214", "Safemask Architect Pro N95, S, White (50's / box)", "$750.00 / box"], "confidence": "0.95"},
+        {"cells": ["SFM-203314", "Safemask Architect Pro N95, M, White (50's / box)", "$750.00 / box"], "confidence": "0.95"},
+        {"cells": ["48247", "Fluidshield Fog Free Surgical Mask w/Wraparound Visor (25's / box)", "$260.00 / box"], "confidence": "0.95"},
+        {"cells": ["MED-JMK200614", "Med Anti-Fog Mask, White Individual Pack (40's / box)", "$106.00 / box"], "confidence": "0.95"},
+        {"cells": ["CTR-GMK216014-H1", "3D Mask, White, Individual Pack (10's / box)", "$35.00 / box"], "confidence": "0.95"},
+        {"cells": ["SFM-GMK200015", "Safemask Kid Individual Pack Mask, Blue (40's / box)", "$60.00 / box"], "confidence": "0.95"},
+        {"cells": ["SFM-GMK201915", "Premier Elite Earloop Mask, Blue, Level 3 (50's / box)", "$85.00 / box"], "confidence": "0.95"},
+        {"cells": ["PLE-FMK211014", "Pro-Lane Relax Earloop Mask, White, Individual (40's / box)", "$72.00 / box"], "confidence": "0.95"},
+        {"cells": ["PLE-FMK211015", "Pro-Lane Relax Earloop Mask, Blue, Individual (40's / box)", "$72.00 / box"], "confidence": "0.95"},
+        {"cells": ["PLE-FMK211016", "Pro-Lane Relax Earloop Mask, Pink, Individual (40's / box)", "$72.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PROTECTIVE WEARING 保護性衣物 - Cap & Shoes Cover 紙帽及鞋套",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["A5002", "Shoe Cover SPP 35g, Light Blue, 16x40cm, Anti-Skid", "$85.00 /100's"], "confidence": "0.95"},
+        {"cells": ["A4019", "Mob Cap SPP 10g, Blue, 21\"", "$65.00 /100's"], "confidence": "0.95"},
+        {"cells": ["69240", "KC Surgical Cap, Blue 即棄外科紙帽", "$250.00 /100's"], "confidence": "0.95"},
+        {"cells": ["8044-B", "Medicom Cap Blue (100's)", "$65.00 /100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PROTECTIVE WEARING 保護性衣物 - PE Apron, Drape & Gown 即棄膠圍裙、消毒覆蓋及即棄袍",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["47614", "Half Drape 58\" x 40\" (60's / case)", "$30.00 / pc"], "confidence": "0.95"},
+        {"cells": ["89471", "Brachial Angiography Drape, 41\" x 31\" (Sterile) (50's / case)", "$52.00 / pc"], "confidence": "0.95"},
+        {"cells": ["89731", "Utility Drape with Tape, 15\" x 25\", 2's/pk (100 pks / case)", "$22.00 / pack"], "confidence": "0.95"},
+        {"cells": ["47622", "Large Drape, 55\" x 76\" (32's / case)", "$38.00 / pc"], "confidence": "0.95"},
+        {"cells": ["89431", "Head Drape, 50\" x 36\" (Sterile) (38's / case)", "$48.00 / pc"], "confidence": "0.95"},
+        {"cells": ["88716", "EENT Pack II", "$350.00 / pack"], "confidence": "0.95"},
+        {"cells": ["89358", "EENT Split Drape, 76\" x 124\" w / 3\" x 24\" Split (10's / case)", "$125.00 / pack"], "confidence": "0.95"},
+        {"cells": ["89601", "Mayo Stand Cover", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["89701", "Absorbent Towel, 2's/pk (100 pks / case)", "$18.00 / pack"], "confidence": "0.95"},
+        {"cells": ["78940", "KC Surgical Gown, Medium (China) (60's / case)", "$56.00 / pc"], "confidence": "0.95"},
+        {"cells": ["78945", "KC Surgical Gown, Large (China) (60's / case)", "$56.00 / pc"], "confidence": "0.95"},
+        {"cells": ["78950", "KC Surgical Gown, Extra-Large (China) (60's / case)", "$56.00 / pc"], "confidence": "0.95"},
+        {"cells": ["90012", "Non-Reinforced Surgical Gown, Large (USA)", "$50.00 / pc"], "confidence": "0.95"},
+        {"cells": ["90042", "Non-Reinforced Surgical Gown, Extra-Large (USA)", "$50.00 / pc"], "confidence": "0.95"},
+        {"cells": ["8023-30", "Isolation Gown 30g, Regular Size, Blue, Cuff", "$80.00 / 10's"], "confidence": "0.95"},
+        {"cells": ["8023-40", "Isolation Gown 40g, Regular Size, Blue, Cuff", "$165.00 / 10's"], "confidence": "0.95"},
+        {"cells": ["8023-PEPP", "PE Gown (with Sleeves), Blue, Individual Pack", "$6.00 / pc"], "confidence": "0.95"},
+        {"cells": ["A1176", "Medplus Isolation Gown, 120 x 140cm w/ Elastic Cuff, Level 1, Non-Sterile, Yellow (10's / bag)", "$130.00 / bag"], "confidence": "0.95"},
+        {"cells": ["CP01.21.0027", "Medplus Isolation Gown, SSP 30g, XL, 115 x 137cm, w/ Knitted Cuff, Non-Sterile, Light Blue (10's / bag)", "$72.00 / bag"], "confidence": "0.95"},
+        {"cells": ["SFWGSG834C0500001", "Sterile Surgical Gown M", "$36.00 / pc"], "confidence": "0.95"},
+        {"cells": ["SFWGSG834D0500001", "Sterile Surgical Gown L", "$36.00 / pc"], "confidence": "0.95"},
+        {"cells": ["SFWGSG834E0500001", "Sterile Surgical Gown XL", "$36.00 / pc"], "confidence": "0.95"},
+        {"cells": ["SSLHDP0006-0200001", "SSL Ophthalmic Drape 170 x 200cm", "$80.00 / pc"], "confidence": "0.95"},
+        {"cells": ["SFWGGW824R0050010", "S FW SMS Isolation Gown Yellow Reg (50's/cs)", "$420.00 / bag"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SPINAL NEEDLE, SHARPS COLLECTOR & PEN NEEDLES 脊髓穿刺針、胰島素注射筆及利器收集器 - Spinal Needle 脊髓穿刺針",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["405248", "Quincke Point Spinal Needle 18G x 3½\" (25's / box)", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405250", "Quincke Point Spinal Needle 19G x 3½\"", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405253", "Quincke Point Spinal Needle 20G x 3½\"", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405256", "Quincke Point Spinal Needle 22G x 3½\"", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405240", "Quincke Point Spinal Needle 23G x 3½\"", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405257", "Quincke Point Spinal Needle 25G x 3½\"", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405254", "Quincke Point Spinal Needle 22G x 1½\"", "$18.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405076", "Whitacre Spinal Needle 25G x 3½\"", "$95.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405075", "Whitacre Spinal Needle 27G x 3½\"", "$95.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405149", "Long Length Spinal Needle 22G x 7\"", "$95.00 / pc"], "confidence": "0.95"},
+        {"cells": ["405211", "Long Length Spinal Needle 20G x 6\"", "$95.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SPINAL NEEDLE, SHARPS COLLECTOR & PEN NEEDLES 脊髓穿刺針、胰島素注射筆及利器收集器 - Insulin Pen & Pen Needle 胰島素注射筆及針咀",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["320470", "BD Pen Needle 31G x ¼\" (0.25mm x 5mm)", "$200.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["320471", "BD Pen Needle 31G x 5/16\" (0.25mm x 8mm)", "$200.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["320472", "BD Pen Needle 32G x 4mm (0.23mm x 4mm)", "$200.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["320566", "Ultra-Fine Pro Pen Needle 32G x 4mm", "$210.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SPINAL NEEDLE, SHARPS COLLECTOR & PEN NEEDLES 脊髓穿刺針、胰島素注射筆及利器收集器 - Sharps Collector 利器收集器",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["300491", "Guardian Sharps Collector, 1.4L", "$39.00 / pc"], "confidence": "0.95"},
+        {"cells": ["QLICK001", "Qlicksmart Scalpel Blade Removal Flask 自動脫除手術刀片系統", "$296.00 / pc"], "confidence": "0.95"},
+        {"cells": ["300336", "Sharps Collector, 13.2L (MOQ: 20 pcs) (20's / box)", "$100.00 / pc"], "confidence": "0.95"},
+        {"cells": ["305608", "Sharps Collector, 34L", "$520.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI-207", "Sharps Container, 0.6L", "$10.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI312", "Sharps Container, 1L", "$30.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI313", "Sharps Container, 7L", "$35.00 / pc"], "confidence": "0.95"},
+        {"cells": ["MI-218", "Sharps Container, 40L", "$435.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "STERILIZATION PRODUCTS 消毒爐專用產品 - 消毒用包裝紙",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["68018", "KC Kimguard Sterilization Wrapper 18\" x 18\"", "$650.00 / 500's"], "confidence": "0.95"},
+        {"cells": ["68024", "KC Kimguard Sterilization Wrapper 24\" x 24\"", "$600.00 / 250's"], "confidence": "0.95"},
+        {"cells": ["68030", "KC Kimguard Sterilization Wrapper 30\" x 30\"", "$360.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["68040", "KC Kimguard Sterilization Wrapper 40\" x 40\"", "$280.00 / 50's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "STERILIZATION PRODUCTS 消毒爐專用產品 - 消毒用包裝器",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["0.611.130", "Model: HD270MS8 Hawodent Pulse Sealing Machines for Packaging of Sterile Goods", "$12,100.00 / unit"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "STERILIZATION PRODUCTS 消毒爐專用產品 - 消毒袋",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["88015 / 68015", "Self-Sealing Sterilization Pouch 57x102mm (2¼\"x4\") (200's / box)", "$75.00 / box"], "confidence": "0.95"},
+        {"cells": ["88000 / 68000", "Self-Sealing Sterilization Pouch 70x229mm (2¾\"x9\") (200's / box)", "$100.00 / box"], "confidence": "0.95"},
+        {"cells": ["88005 / 68005", "Self-Sealing Sterilization Pouch 89x133mm (3½\"x5¼\") (200's / box)", "$95.00 / box"], "confidence": "0.95"},
+        {"cells": ["88010 / 68010", "Self-Sealing Sterilization Pouch 89x229mm (3½\"x9\") (200's / box)", "$105.00 / box"], "confidence": "0.95"},
+        {"cells": ["88025 / 68025", "Self-Sealing Sterilization Pouch 133x254mm (5¼\"x10\") (200's / box)", "$200.00 / box"], "confidence": "0.95"},
+        {"cells": ["88030 / 68030", "Self-Sealing Sterilization Pouch 191x330mm (7½\"x13\") (200's / box)", "$280.00 / box"], "confidence": "0.95"},
+        {"cells": ["88035 / 68035", "Self-Sealing Sterilization Pouch 254x356mm (10\"x14\") (200's / box)", "$460.00 / box"], "confidence": "0.95"},
+        {"cells": ["88040 / 68040", "Self-Sealing Sterilization Pouch 305x432mm (12\"x17\") (200's / box)", "$720.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "STERILIZATION PRODUCTS 消毒爐專用產品 - 消毒卷",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["UI075", "9510 Flat Sterilization Reels - 2\" x 200m", "$180.00 / roll"], "confidence": "0.95"},
+        {"cells": ["UI076", "9520 Flat Sterilization Reels - 3\" x 200m", "$250.00 / roll"], "confidence": "0.95"},
+        {"cells": ["UI077", "9530 Medicom Flat Sterilization Reel 4\" x 200m", "$330.00 / roll"], "confidence": "0.95"},
+        {"cells": ["UI078", "9540 Flat Sterilization Reels - 6\" x 200m", "$460.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "GKE STERILIZATION MONITORING SYSTEM",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["211-150", "C-S-BDS-EUH-RCPCD-KIT Start-Up Kit w/Compact-PCD Blue & 100's Self-Adhesive Integrating Indictor Strips", "$5,570.00 / pc"], "confidence": "0.95"},
+        {"cells": ["211-120", "Start-Up Kit w/Compact-PCD Purple & 100's Self-Adhesive Integrating Indictor Strips", "$5,570.00 / pc"], "confidence": "0.95"},
+        {"cells": ["211-111", "Refill Pack Indicator Strips for BDS (100's / pack)", "$2,900.00 / pack"], "confidence": "0.95"},
+        {"cells": ["211-112", "Refill Pack Indicator Strips for BDS (250's / pack)", "$5,920.00 / pack"], "confidence": "0.95"},
+        {"cells": ["211-115", "Refill Pack Indicator Strips for BDS (500's / pack)", "$10,500.00 / pack"], "confidence": "0.95"},
+        {"cells": ["610-120", "1-57-AB-MBP Incubator w/SCBI Aluminum Block, Incubation Temp. 57°C", "$5,300.00 / ea"], "confidence": "0.95"},
+        {"cells": ["300-032", "B-PM-RCPCD-0 Steri-Record Process Challenge Device for Mini-Bio-Plus SCBIs", "$1,980.00 / pc"], "confidence": "0.95"},
+        {"cells": ["300-040", "B-PM-RCPCD-4 Steri-Record Process Challenge Device for Mini-Bio-Plus SCBIs", "$1,980.00 / pc"], "confidence": "0.95"},
+        {"cells": ["324-505", "B-S-MBP-10-5 Mini-Bio-Plus Self-Contained Biological Indicators (50's / box)", "$1,770.00 / box"], "confidence": "0.95"},
+        {"cells": ["211-224", "C-S-P-5-SV1 Type 5 Steam Sterilization Indicators (400's / box)", "$1,060.00 / box"], "confidence": "0.95"},
+        {"cells": ["211-352", "C-S-L1-AT Autoclave Tape 19mm (48's / pack)", "$73.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SURGICAL INSTRUMENTS 外科儀器 - Surgical Blade 手術刀片",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["ELCON-110-110", "No. 10 (100's / box)", "$220.00 / box"], "confidence": "0.95"},
+        {"cells": ["ELCON-110-111", "No. 11 (100's / box)", "$220.00 / box"], "confidence": "0.95"},
+        {"cells": ["ELCON-110-112", "No. 12 (100's / box)", "$220.00 / box"], "confidence": "0.95"},
+        {"cells": ["ELCON-110-115", "No. 15 (100's / box)", "$220.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SURGICAL INSTRUMENTS 外科儀器 - 即棄手術刀",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["90000-10", "No. 10 (10's / box)", "$135.00 / box"], "confidence": "0.95"},
+        {"cells": ["90000-11", "No. 11 (10's / box)", "$135.00 / box"], "confidence": "0.95"},
+        {"cells": ["90000-12", "No. 12 (10's / box)", "$135.00 / box"], "confidence": "0.95"},
+        {"cells": ["90000-15", "No. 15 (10's / box)", "$135.00 / box"], "confidence": "0.95"},
+        {"cells": ["90000-20", "No. 20 (10's / box)", "$135.00 / box"], "confidence": "0.95"},
+        {"cells": ["90000-21", "No. 21 (10's / box)", "$135.00 / box"], "confidence": "0.95"},
+        {"cells": ["90000-22", "No. 22 (10's / box)", "$135.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SURGICAL INSTRUMENTS 外科儀器 - 手術刀片",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["90010-10", "No. 10 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-11", "No. 11 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-12", "No. 12 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-15", "No. 15 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-20", "No. 20 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-21", "No. 21 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-22", "No. 22 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-23", "No. 23 (100's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["90010-24", "No. 24 (100's / box)", "$240.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SURGICAL INSTRUMENTS 外科儀器 - Skin Closure",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["783100", "Manipler AZ - 35W Skinstapler (6's / box)", "$430.00 / box"], "confidence": "0.95"},
+        {"cells": ["783106", "Skin Stapler 35W (5's / box)", "$450.00 / box"], "confidence": "0.95"},
+        {"cells": ["1051250P", "Tissue Adhesive Histoacryl Flexible (5's / box)", "$420.00 / pc"], "confidence": "0.95"},
+        {"cells": ["10520000", "Histoacryl Octyl Micro (10's / box)", "$1,650.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SURGICAL INSTRUMENTS 外科儀器 - Biopsy Punches",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["33-31L", "Disposable Biopsy Punch 2mm (50's / box)", "$43.00 / pc"], "confidence": "0.95"},
+        {"cells": ["33-32L", "Disposable Biopsy Punch 3mm (50's / box)", "$43.00 / pc"], "confidence": "0.95"},
+        {"cells": ["33-34L", "Disposable Biopsy Punch 4mm (50's / box)", "$43.00 / pc"], "confidence": "0.95"},
+        {"cells": ["33-35L", "Disposable Biopsy Punch 5mm (50's / box)", "$43.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SURGICAL INSTRUMENTS 外科儀器 - Dermal Curettes",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["33-53", "Disposable Dermal Curettes 3mm (50's / box)", "$3,060.00 / box"], "confidence": "0.95"},
+        {"cells": ["33-54", "Disposable Dermal Curettes 4mm (50's / box)", "$3,060.00 / box"], "confidence": "0.95"},
+        {"cells": ["33-100", "Miltex Biopblade, 50's", "$1,620.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SUTURES 手術縫線 - Supramid White – Non-Absorbable Sutures Cassette (Wet Pack)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["F1184032", "USP 4/0 (Metric 1.5), 100m less", "$480.00 / pc"], "confidence": "0.9"},
+        {"cells": ["F1184040", "USP 3/0 (Metric 2), 100m", "$460.00 / pc"], "confidence": "0.95"},
+        {"cells": ["F1184059", "USP 2/0 (Metric 3), 100m", "$520.00 / pc"], "confidence": "0.95"},
+        {"cells": ["F1184067", "USP 0 (Metric 3.5), 75m", "$540.00 / pc"], "confidence": "0.95"},
+        {"cells": ["F1184075", "USP 1 (Metric 4), 75m", "$540.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SUTURES 手術縫線 - Catgut Chrom – Enzymatic Degradation Sutures Cassette (Wet Pack)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["F1154044", "USP 3/0 (Metric 3), 100m", "$1,040.00 / pc"], "confidence": "0.95"},
+        {"cells": ["F1154052", "USP 2/0 (Metric 3.5), 100m", "$1,100.00 / pc"], "confidence": "0.95"},
+        {"cells": ["F1154060", "USP 0 (Metric 4), 75m", "$1,080.00 / pc"], "confidence": "0.95"},
+        {"cells": ["F1154079", "USP 1 (Metric 5), 75m", "$980.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SUTURES 手術縫線 - Dafilon – Non-Absorbable Sutures with Needles",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["C0932205", "DS19, USP4/0 (Metric 1.5), 45cm (36's / pack)", "$43.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0932213", "DS19, USP3/0 (Metric 2), 45cm", "$27.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0932558", "DS39, USP2/0 (Metric 3), 75cm", "$32.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0932116", "DS16, USP6/0 (Metric 0.7), 45cm", "$45.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0932124", "DS16, USP5/0 (Metric 1), 45cm", "$44.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0932132-L", "DS16, USP4/0 (Metric 1.5), 45cm", "$53.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SUTURES 手術縫線 - Novosyn – Hydrolysis Degradation Sutures with Needles",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["C0068212-L", "NOVOSYN USP 5/0, DS16, 45cm", "$63.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0068213-L", "NOVOSYN USP 4/0, DS16, 45cm", "$46.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0068040N1-L", "NOVOSYN 4/0, HR26, 70cm", "$54.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0068041N1-L", "NOVOSYN 3/0, HR26, 70cm", "$44.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0068042N1-L", "NOVOSYN 2/0, HR26, 70cm", "$53.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0068043N1-L", "NOVOSYN 0, HR26, 70cm", "$51.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SUTURES 手術縫線 - Monosyn – Absorbable Sutures with Needle",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["C2022024-L", "MONOSYN VIOLET 4/0, HR26, 70cm", "$60.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C2022025-L", "MONOSYN VIOLET 3/0, HR26, 70cm", "$55.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C2022026", "MONOSYN VIOLET 2/0, HR26, 70cm", "$108.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SUTURES 手術縫線 - Monoplus – Absorbable Sutures with Needle",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["C2024024-L", "MONOPLUS VIOLET 4/0, HR26, 70cm", "$61.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C2024025", "MONOPLUS VIOLET 3/0, HR26, 70cm (36's / box)", "$68.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C2024026-L", "MONOPLUS VIOLET 2/0, HR26, 70cm", "$67.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SUTURES 手術縫線 - Silkam – Non-Absorbable Sutures with Needle",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["C0760404", "Silkam Black 4/0 (1.5) 75cm, HR26 (36's / box)", "$820.00 / box"], "confidence": "0.95"},
+        {"cells": ["C0762202", "Silkam Black 4/0 (1.5) 45cm DS19", "$40.00 / pc"], "confidence": "0.95"},
+        {"cells": ["C0762210-L", "Silkam Black 3/0 (2) 45cm DS19", "$21.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SYRINGES & NEEDLES 針筒及針咀 - Disposable Needle 針咀",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["BLN1838F", "Blunt Needle 18GX1-1/2\"", "$90.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["305198", "16G x 1½\" (Purple)", "$118.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302032", "18G x 1½\" (Pink)", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302015", "21G x l\" (Green)", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302017", "21G x 1½\"", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["305194", "23G x 1½\"", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302006", "23G x 1\" (Blue)", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["301807", "25G x 1\"", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["301805", "25G x ⅝\" (Orange)", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["305127", "25G x 1½\"", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["305109", "27G x ½\" (Grey)", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["305107", "30G x ½\" (Brown)", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["305108", "30G x 1\"", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["HN2025", "20G x 1\"", "$78.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["HN2219", "22G x 3/4\"", "$78.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SYRINGES & NEEDLES 針筒及針咀 - Disposable Syringe 針筒",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["309628", "1cc (LL)", "$440.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302100", "1cc (ST)", "$210.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302106", "3cc (ST)", "$130.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["309657", "3cc (LL) (4 x 200's / case)", "$960.00 / 800's"], "confidence": "0.95"},
+        {"cells": ["302130", "5cc (ST)", "$190.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302135", "5cc (LL)", "$190.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302143", "10cc (ST)", "$240.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["300613", "20cc (ET: Eccentric Tip 側咀)", "$630.00 / 120's"], "confidence": "0.95"},
+        {"cells": ["302830", "20cc (LL)", "$240.00 / 48's"], "confidence": "0.95"},
+        {"cells": ["20CCSN", "20cc (SN: Side Nozzle 側咀)", "$190.00 / 50's"], "confidence": "0.95"},
+        {"cells": ["AS270", "20cc (Catheter Tip 導管咀 with Enfit Connector) (50's / box)", "$200.00 / box"], "confidence": "0.95"},
+        {"cells": ["AS270L", "20cc (Catheter Tip 導管咀 with Enfit Connector)", "$4.00 / pc"], "confidence": "0.95"},
+        {"cells": ["302832", "30cc (LL) (56's / box)", "$15.00 / pc"], "confidence": "0.95"},
+        {"cells": ["30CCSN", "30cc (SN)", "$450.00 / 50's"], "confidence": "0.95"},
+        {"cells": ["300866", "50cc (ET) (60's / box)", "$12.00 / pc"], "confidence": "0.95"},
+        {"cells": ["300865", "50/60cc (LL) (60's / box)", "$12.00 / pc"], "confidence": "0.95"},
+        {"cells": ["300867", "50/60cc (Catheter Tip 導管咀) (60's / box)", "$12.00 / pc"], "confidence": "0.95"},
+        {"cells": ["100CCLL", "100cc (LL) (25's / box)", "$44.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SYRINGES & NEEDLES 針筒及針咀 - Disposable Syringe with Needle 針筒連針咀",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["301320", "1cc 25G x ⅝\" (T.B.)", "$210.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302110", "3cc 23G x 1\" (ST)", "$150.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302118", "3cc 23G x 1\" (LL)", "$150.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302109", "3cc 24G x 1\" (ST)", "$150.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302172", "5cc 21G x 1½\" (LL)", "$220.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["301988", "5cc 23G x 1\" (LS)", "$220.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302173", "5cc 23G x 1\" (LL)", "$220.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302145", "10cc 21G x 1½\" (ST)", "$270.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["302153", "10cc 21G x 1½\" (LL)", "$270.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["561233662", "20cc 21G x 1½\" (ST)", "$200.00 / 50's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SYRINGES & NEEDLES 針筒及針咀 - Insulin Syringe with Needle 胰島素注射針筒連針咀",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["560319152", "1cc 27G x ½\" (Insulin)", "$295.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["320310", "1cc 29G x ½\" (10 x 10's)", "$260.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["320312", "½cc 29G x ½\" (10 x 10's)", "$250.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["320313", "3/10cc 29G x ½\" (10 x 10's)", "$250.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["328818", "1cc 30G x 8mm (10 x 10's)", "$290.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["328868", "½cc 30G x 8mm (10 x 10's)", "$280.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["328838", "3/10cc 30G x 8mm (10 x 10's)", "$290.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["328440", "3/10cc 31G x 8mm (10 x 10's)", "$280.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["328821", "½cc 31G x 8mm (10 x 10's)", "$270.00 / 100's"], "confidence": "0.95"},
+        {"cells": ["SYL12525", "1cc 25G x 1\"", "$180.00 / 100's"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PHARMACEUTICAL PRODUCTS 藥物 - Dermatological Drugs 皮膚科藥物",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["31812", "Lanate (Ammonium Lactate) Cream 17.5% 150g", "$360.00 / tube"], "confidence": "0.95"},
+        {"cells": ["40224", "Oratane (Isotretinoin) Capsule 10mg 膚康美 (4 × 15's / box)", "$790.00 / box"], "confidence": "0.95"},
+        {"cells": ["40222", "Oratane (Isotretinoin) Capsule 20mg 膚康美 (4 × 15's / box)", "$1,580.00 / box"], "confidence": "0.95"},
+        {"cells": ["502763", "Oratane (Isotretinoin) Capsule 5mg 膚康美 (6 × 10's / box)", "$460.00 / box"], "confidence": "0.95"},
+        {"cells": ["50099", "Sebizole Shampoo (Ketoconazole) 2% 100ml 絲必爽", "$125.00 / bot"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PHARMACEUTICAL PRODUCTS 藥物 - Hormone 荷爾蒙藥",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["40082", "Estelle-35 (Cyproterone Acetate 2mg/ Ethinyloestradiol 0.035mg) Tablet (1 x 21's / box)", "$115.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PHARMACEUTICAL PRODUCTS 藥物 - Miscellaneous 其他藥物",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["330250", "Attane (Isoflurane) for Veterinary Use 250ml", "$1,180.00 / bot"], "confidence": "0.95"},
+        {"cells": ["3549232", "Propofol-Lipuro Injection 1% (10mg/ml) (1 x 5's / box)", "$320.00 / box"], "confidence": "0.95"},
+        {"cells": ["40027", "Azamun 50mg 100's", "$810.00 / box"], "confidence": "0.95"},
+        {"cells": ["3638794", "Propofol Lipuro Emulsion for Injection/Infusion 200mg/20ml (10's / box)", "$300.00 / box"], "confidence": "0.95"},
+        {"cells": ["3638795", "Propofol Lipuro Emulsion for Injection/Infusion 500mg/50ml (10's / box)", "$875.00 / box"], "confidence": "0.95"},
+        {"cells": ["3638783", "Paracetamol B. Braun Solution for Infusion 1000mg/100ml (10's / cs)", "$1,900.00 / cs"], "confidence": "0.95"},
+        {"cells": ["100952022", "Maxigesic Tablets, 100's", "$250.00 / box"], "confidence": "0.95"},
+        {"cells": ["100952021", "Maxigesic Tablets, 16's", "$53.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PHARMACEUTICAL PRODUCTS 藥物 - Baxter Oncology",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["2638B5194", "Endoxan 200mg, 1 Vial", "$325.00 / vial"], "confidence": "0.95"},
+        {"cells": ["2638B5195", "Endoxan 1g, 1 Vial", "$1,190.00 / vial"], "confidence": "0.95"},
+        {"cells": ["2638B1064", "Endoxan 50 Coated Tablets – Weighted", "$1,470.00 / ea"], "confidence": "0.95"},
+        {"cells": ["2617B3573", "Holoxan 1g, 1 Vial - Weighted", "$1,380.00 / ea"], "confidence": "0.95"},
+        {"cells": ["2639B2058", "Uromitexan 4ml, 15 Amps - Weighted", "$2,100.00 / ea"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PHARMACEUTICAL PRODUCTS 藥物 - Cream 外用軟膏",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["1110", "Emulsifying Ointment B.P. 500g", "$96.00 / jar"], "confidence": "0.95"},
+        {"cells": ["1100", "Aqueous Cream B.P. 500g", "$80.00 / jar"], "confidence": "0.95"},
+        {"cells": ["1632", "Aqueous Cream 250ml", "$60.00 / tube"], "confidence": "0.95"},
+        {"cells": ["1662", "Baby SLS Free Aqueous Cream 250ml", "$76.00 / tube"], "confidence": "0.95"},
+        {"cells": ["11314", "Coconut Oil 100g", "$88.00 / pc"], "confidence": "0.95"},
+        {"cells": ["11754", "Paraffin Gel 100g", "$38.00 / pc"], "confidence": "0.95"},
+        {"cells": ["1014", "GFA Body Lotion 250ml", "$200 / bot"], "confidence": "0.95"},
+        {"cells": ["1015", "GFA Body Wash 250ml", "$200 / bot"], "confidence": "0.95"},
+        {"cells": ["1016", "GFA Body Wash 250ml", "$200 / bot"], "confidence": "0.95"},
+        {"cells": ["12084", "Elave Dermatological Intensive Cream 50g", "$80.00 / bot"], "confidence": "0.95"},
+        {"cells": ["1212", "Elave Body Lotion 250ml", "$180.00 / bot"], "confidence": "0.95"},
+        {"cells": ["1222", "Elave Facial Cleanser 250ml", "$180.00 / bot"], "confidence": "0.95"},
+        {"cells": ["1360", "Elave Shampoo 250ml", "$180.00 / bot"], "confidence": "0.95"},
+        {"cells": ["1445", "Elave Intensive Cream 125g", "$160.00 / bot"], "confidence": "0.95"},
+        {"cells": ["1452", "Elave Body Wash 250ml", "$180.00 / bot"], "confidence": "0.95"},
+        {"cells": ["1463", "Elave Dermo Renew Daily Skin Defence SPF45 50ml", "$340.00 / bot"], "confidence": "0.95"},
+        {"cells": ["1523", "Elave Daily Lip Defence SPF20 15g", "$180.00 / bot"], "confidence": "0.95"},
+        {"cells": ["7264128", "Cutimed Acute 125ml 5% Urea", "$290.00 / tube"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PET PRODUCTS 寵物專用產品 - Woosh Pet Wipes 寵物用濕紙巾",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["WTFHK-SS8888-01", "Woosh Pet Wipes Reseal, 20's /pack 24 packs / case", "$20.00 / pack"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PET PRODUCTS 寵物專用產品 - Blood Glucose Monitoring System 寵物用血糖機產品",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["272271", "Vetmate Blood Monitoring System (Starter Kit: Vetmate Meter x 1's, Vetmate Test Strip x 10's, Lancet x 10's & Lancing Device x 1's)", "$550.00 / set"], "confidence": "0.95"},
+        {"cells": ["272604", "Vetmate Blood Glucose Test Strips (50's / box)", "$290.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PET PRODUCTS 寵物專用產品 - WAI YUEN TONG 位元堂",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["6825B02", "位您寵蟲草 CS4 配方 80 粒裝 (獸醫專用) (80's / box)", "$800.00 / box"], "confidence": "0.95"},
+        {"cells": ["6820AB02", "位您寵雲芝配方 80 粒裝 (獸醫專用) (80's / box)", "$800.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Health Supplements 營養補充及保健產品",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["2513838HK", "Ferro Sachet 1.5g (28's / box)", "$179.00 / box"], "confidence": "0.95"},
+        {"cells": ["2535564HK", "Lipo-Sachet Vitamin C Sachets (30's / box)", "$289.00 / box"], "confidence": "0.95"},
+        {"cells": ["2589982HK", "Lipo-Sachet Vitamin C Sachets Blackcurrant (30's / box)", "$289.00 / box"], "confidence": "0.95"},
+        {"cells": ["2587157HK", "Lipo-Sachet Vitamin C Sachets for Kids (30's / box)", "$259.00 / box"], "confidence": "0.95"},
+        {"cells": ["VLPT01", "Pomi-T 60 Caps", "$230.00 / box"], "confidence": "0.95"},
+        {"cells": ["2612747HK", "Kiwi Chew", "$143.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "PHASE SCIENTIFIC 妥析",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["2110200", "Indicaid™ Covid-19 Rapid Antigen Test - HK/C (25's / box)", null], "confidence": "0.85"},
+        {"cells": ["0102002201", "UU Tube by Indicaid™ Helicobacter Pylori Antigen Test x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0098", "Indicaid™ Covid-19/Flu A&B Rapid Antigen Test x1's", "$360.00 / box"], "confidence": "0.85"},
+        {"cells": ["P0099", "Indicaid™ Covid-19/Flu A&B Rapid Antigen Test 12's", "(12's / box)"], "confidence": "0.85"},
+        {"cells": ["P0150", "Indicaid™ Respiratory 5-in-1 Rapid Antigen Test x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0181", "Indicaid™ Respiratory 6-in-1 Rapid Antigen Test x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0156", "Indicaid™ Fecal Occult Blood Test Strips x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0157", "Indicaid™ Gastrointestinal 3-in-1 Rapid Antigen Test x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0164", "Indicaid™ Hiv Antigen / Antibody Rapid Test x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0165", "Indicaid™ Rapid Pregnancy Test x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0169", "Indicaid™ Hiv / Syphilis Rapid Antibody Test x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0170", "Indicaid™ Hpv Urine Test with Report (Standard) x 1's", null], "confidence": "0.85"},
+        {"cells": ["P0172", "Indicaid™ Ovulation Rapid Test x 10 stripes", null], "confidence": "0.85"}
+      ]
+    },
+    {
+      "section": "COLON MANAGEMENT 腸道管理",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["TOX022", "Toxout 50's", "$575.00 / bag"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "KHOISAN ROOIBOS TEA 高山南非國寶茶",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["BX0053", "Organic Pure Rooibos Tea 20's x 2.5g", "$80.00 / box"], "confidence": "0.95"},
+        {"cells": ["BX076", "Organic Pure Rooibos Tea 40's x 2.5g", "$120.00 / box"], "confidence": "0.95"},
+        {"cells": ["AAT013E", "Organic Pure Rooibos Tea 40's 2.5g (African Animal Tin)", "$150.00 / tin"], "confidence": "0.95"},
+        {"cells": ["BX054", "Organic Pure Green Rooibos Tea 20's x 2.5g", "$80.00 / box"], "confidence": "0.95"},
+        {"cells": ["AAT014E", "Organic Pure Green Rooibos Tea 40's x 2.5g (African Animal Tin)", "$150.00 / tin"], "confidence": "0.95"},
+        {"cells": ["AAT005", "Organic Pure Green Rooibos Tea 200g", "$180.00 / tin"], "confidence": "0.95"},
+        {"cells": ["BX061", "Organic Pure Ginger Rooibos Tea 20's x 2.5g", "$80.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "ADULT DIAPERS 成人尿片",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["4462-10NT", "Forma Care Sensitive Super (Day), Medium (bag of 10's)", "$75.00 / bag"], "confidence": "0.95"},
+        {"cells": ["4463-10NT", "Forma Care Sensitive Super (Day), Large (bag of 10's)", "$90.00 / bag"], "confidence": "0.95"},
+        {"cells": ["4472-10NT", "Forma Care Sensitive Extra (Night), Medium (bag of 10's)", "$90.00 / bag"], "confidence": "0.95"},
+        {"cells": ["4473-10NT", "Forma Care Sensitive Extra (Night), Large (bag of 10's)", "$120.00 / bag"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Acticoat Burn Acticoat 納米銀敷料",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000808", "5 x 5cm", "$95.00 / pc"], "confidence": "0.95"},
+        {"cells": ["66000791", "10 x 10cm", "$205.00 / pc"], "confidence": "0.95"},
+        {"cells": ["66000792", "10 x 20cm", "$315.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Acticoat Flex 3 Acticoat Flex 納米銀敷料 (3 日)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800396", "5 x 5cm", "$75.00 / pc"], "confidence": "0.95"},
+        {"cells": ["66800399", "10 x 10cm", "$180.00 / pc"], "confidence": "0.95"},
+        {"cells": ["66800409", "10 x 20cm", "$290.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Acticoat Flex 7 Acticoat Flex 納米銀敷料 (7 日)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800397", "10 x 12.5cm", "$370.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Algisite M Dressing 海藻酸鹽敷料",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000519", "5cm x 5cm (10's / box)", "$120.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000520", "10cm x 10cm (10's / box)", "$240.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Allevyn Adhesive Allevyn 吸水性海綿敷料連貼",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000043", "7.5cm x 7.5cm (10's / box)", "$280.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000044", "12.5cm x 12.5cm (10's / box)", "$440.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000045", "17.5cm x 17.5cm (10's / box)", "$1,100.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Allevyn Ag 銀離子抗菌海綿敷料",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800073", "Adhesive 7.5cm x 7.5cm (10's / box)", "$350.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800078", "Adhesive 12.5cm x 12.5cm (10's / box)", "$760.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800086", "Non-Adhesive 10cm x 10cm (10's / box)", "$580.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Allevyn Ag Gentle Border",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800460", "7.5cm x 7.5cm (10's / box)", "$435.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800462", "12.5cm x 12.5cm (10's / box)", "$790.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Allevyn Gentle Border",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800269", "7.5cm x 7.5cm (10's / box)", "$350.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800272", "12.5cm x 12.5cm (10's / box)", "$630.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800264", "10cm x 25cm (10's / box)", "$700.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800265", "10cm x 30cm (10's / box)", "$760.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Allevyn Hydrocellular",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66007643", "5cm x 5cm (10's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["66007637", "10cm x 10cm (10's / box)", "$330.00 / box"], "confidence": "0.95"},
+        {"cells": ["66007335", "10cm x 20cm (10's / box)", "$1,0150.00 / box"], "confidence": "0.9"},
+        {"cells": ["66007638", "20cm x 20cm (10's / box)", "$1,430.00 / box"], "confidence": "0.95"},
+        {"cells": ["66007640", "9cm x 9cm, Tracheostomy (10's / box)", "$325.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Allevyn Life",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66801067", "10.3cm x 10.3cm (10's / box)", "$315.00 / box"], "confidence": "0.95"},
+        {"cells": ["66801068", "12.9cm x 12.9cm (10's / box)", "$460.00 / box"], "confidence": "0.95"},
+        {"cells": ["66801069", "15.4cm x 15.4cm (10's / box)", "$590.00 / box"], "confidence": "0.95"},
+        {"cells": ["66801070", "21cm x 21cm (10's / box)", "$850.00 / box"], "confidence": "0.95"},
+        {"cells": ["66801306", "17.2cm x 17.5cm (10's / box)", "$790.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Bactigras Tulle Gras Dx Bactigras 制菌油性紗布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["7456", "5 x 5cm (50's / box)", "$330.00 / box"], "confidence": "0.95"},
+        {"cells": ["7457", "10 x 10cm (10's / box)", "$135.00 / box"], "confidence": "0.95"},
+        {"cells": ["7461", "15 x 20cm (10's / box)", "$270.00 / box"], "confidence": "0.95"},
+        {"cells": ["66007505", "15 x 1m", "$160.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Biobrane",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800046", "13 x 13cm", "$1,280.00 / pc"], "confidence": "0.95"},
+        {"cells": ["66800047", "13 x 38cm", "$2,240.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Cica-Care",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66250704", "12cm x 6cm Cica-Care 黏性矽膠片", "$310.00 / sheet"], "confidence": "0.95"},
+        {"cells": ["66250706", "12cm x 15cm Cica-Care 黏性矽膠片", "$430.00 / sheet"], "confidence": "0.95"},
+        {"cells": ["66801491", "Gel 15g Cica-Care 矽膠啫喱", "$275.00 / tube"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Durafiber",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800559", "5cm x 5cm (10's / box)", "$165.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800560", "10cm x 10cm (10's / box)", "$380.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Durafiber Ag",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800578", "5cm x 5cm (10's / box)", "$430.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800579", "10cm x 10cm (10's / box)", "$1,100.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Elastic Crepe Bandage (Heavy Weight) 彈性繃帶 (Heavy Weight)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["963002SQ", "5cm x 4.5m", "$16.00 / roll"], "confidence": "0.95"},
+        {"cells": ["963003SQ", "7.5cm x 4.5m", "$20.00 / roll"], "confidence": "0.95"},
+        {"cells": ["963004SQ", "10cm x 4.5m", "$28.00 / roll"], "confidence": "0.95"},
+        {"cells": ["963006SQ", "15cm x 4.5m", "$30.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Elastic Crepe Bandage (Medium Weight) 彈性繃帶 (Medium Weight)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["9606002K", "5cm x 4m", "$10.00 / roll"], "confidence": "0.95"},
+        {"cells": ["9606003K", "7.5cm x 4m", "$13.00 / roll"], "confidence": "0.95"},
+        {"cells": ["9606004K", "10cm x 4m", "$16.00 / roll"], "confidence": "0.95"},
+        {"cells": ["9606005K", "15cm x 4m", "$20.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Electofix 無紡貼布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66801758", "5cm x 10m", "$25.00 / roll"], "confidence": "0.95"},
+        {"cells": ["66801759", "10cm x 10m", "$28.00 / roll"], "confidence": "0.95"},
+        {"cells": ["66801760", "15cm x 10m", "$40.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Elect IV 透明薄膜貼",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["53IV0607", "6cm x 7cm (100's / box)", "$120.00 / box"], "confidence": "0.95"},
+        {"cells": ["53IV1012", "10cm x 12cm (50's / box)", "$150.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Flamazine Cream 1% Silver Sulphadiazine 乳膏",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66160155", "500g", "$680.00 / jar"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - IntraSite Conformable",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000324", "10 x 10cm (10's / box)", "$280.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - IntraSite Gel IntraSite 水凝啫喱",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["7308", "8g, Applipak (10's / box)", "$290.00 / box"], "confidence": "0.95"},
+        {"cells": ["7311", "15g, Applipak (10's / box)", "$320.00 / box"], "confidence": "0.95"},
+        {"cells": ["7313", "25g, Applipak (10's / box)", "$390.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Iodosorb Iodine Dressing Iodosorb 粉末及軟膏 (0.9%碘)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66001286", "Powder, 3gm (7's / box)", "$280.00 / box"], "confidence": "0.95"},
+        {"cells": ["66001298RP", "Ointment, 10gm", "$125.00 / pc"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Iruxol Mono Ointment Iruxol Mono 軟膏",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66169015", "Iruxol Mono Ointment 15g", "$155.00 / tube"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - IV 3000 Frame Delivery Dressing IV 3000 高透氣薄膠膜",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["59410082", "6 x 7cm (100's / box)", "$320.00 / box"], "confidence": "0.95"},
+        {"cells": ["59410882", "10 x 12cm (50's / box)", "$420.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - IV 3000 Ported",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["4006", "7 x 9cm (100's / box)", "$483.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Jelonet Paraffin Gauze 石蠟非藥性油紗布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["7403", "5cm x 5cm (50's / box)", "$85.00 / box"], "confidence": "0.95"},
+        {"cells": ["7409", "10cm x 10cm (100's / box)", "$325.00 / box"], "confidence": "0.95"},
+        {"cells": ["7404", "10cm x 10cm (10's / box)", "$35.00 / box"], "confidence": "0.95"},
+        {"cells": ["7415", "15cm x 2m", "$105.00 / roll"], "confidence": "0.95"},
+        {"cells": ["7459", "10cm x 40cm (10's / box)", "$100.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Leukostrip Skin Closure Dressing Leukostrip 免縫膠布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66002876", "38 x 4mm, 8 strip / bag, 50 / box", "$210.00 / box"], "confidence": "0.95"},
+        {"cells": ["66002878", "76 x 6.4mm, 3 strip / bag, 50 / box", "$190.00 / box"], "confidence": "0.95"},
+        {"cells": ["66002879", "102 x 6.4mm, 5 strip / bag, 50 / box", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["66002880", "102 x 13mm, 6 strip / bag, 50 / box", "$300.00 / box"], "confidence": "0.95"},
+        {"cells": ["66002903", "76 x 4mm, 4 strip / bag, 50 / box", "$220.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Melolin BP Melolin 不黏傷口護墊",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66974940", "5cm x 5cmm Sterile (100's / box)", "$130.00 / box"], "confidence": "0.95"},
+        {"cells": ["66974941", "10cm x 10cm, Sterile (100's / box)", "$325.00 / box"], "confidence": "0.95"},
+        {"cells": ["66974939", "10cm x 20cm, Sterile (100's / box)", "$800.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - New OpSite Post-Op OpSite Post-Op 防水膠布 (護墊+透明薄膜)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000708", "6.5cm x 5cm (100's / box)", "$420.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000709", "9.5cm x 8.5cm (20's / box)", "$195.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000710", "12cm x 10cm (10's / box)", "$100.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000712", "15.5cm x 8.5cm (20's / box)", "$240.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000713", "20cm x 10cm (20's / box)", "$285.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000714", "25cm x 10cm (20's / box)", "$550.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - OpSite FlexiFix Film Dx OpSite FlexiFix 透明薄膜(卷裝)",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000040", "5cm x 10m", "$135.00 / roll"], "confidence": "0.95"},
+        {"cells": ["66000041", "10cm x 10m", "$230.00 / roll"], "confidence": "0.95"},
+        {"cells": ["66000375", "15cm x 10m", "$300.00 / roll"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - OpSite FlexiGrid Film Dx OpSite FlexiGrid 透明薄膜",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["964628T", "6cm x 7cm (100's / box)", "$250.00 / box"], "confidence": "0.95"},
+        {"cells": ["964630T", "10cm x 12cm (50's / box)", "$260.00 / box"], "confidence": "0.95"},
+        {"cells": ["4631", "15cm x 20cm (10's / box)", "$125.00 / box"], "confidence": "0.95"},
+        {"cells": ["4632", "12cm x 25cm (20's / box)", "$250.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - OpSite Incise Drapes OpSite Incise 透明薄膜",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["4986", "15cm x 28cm (10's / box)", "$160.00 / box"], "confidence": "0.95"},
+        {"cells": ["4987", "28cm x 30cm (10's / box)", "$260.00 / box"], "confidence": "0.95"},
+        {"cells": ["4988", "28cm x 45cm (10's / box)", "$490.00 / box"], "confidence": "0.95"},
+        {"cells": ["4989", "55cm x 45cm (10's / box)", "$680.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - OpSite Post-Op Visible OpSite Post-Op 透視吸收墊連透明薄膜",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800136", "10cm x 8cm (20's / box)", "$460.00 / box"], "confidence": "0.95"},
+        {"cells": ["66800137", "15cm x 10cm (20's / box)", "$570.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - OpSite Spray 噴霧膠布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000679", "40ml", "$60.00 / can"], "confidence": "0.95"},
+        {"cells": ["66004979", "100ml", "$65.00 / can"], "confidence": "0.95"},
+        {"cells": ["66004980", "240ml", "$115.00 / can"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Primapore Primapore 傷口護墊貼",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["7133", "7.2cm x 5cm (100's / box)", "$200.00 / box"], "confidence": "0.95"},
+        {"cells": ["7135", "8.3cm x 6cm (50's / box)", "$130.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000317", "10cm x 8cm (20's / box)", "$65.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000318", "15cm x 8cm (20's / box)", "$95.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000319", "20cm x 10cm (20's / box)", "$160.00 / box"], "confidence": "0.95"},
+        {"cells": ["66000320", "25cm x 10cm (20's / box)", "$195.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - PICO",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66801358", "Pico w/Soft Port Single Use Sterile Pumps 10 x 20cm", "$2,380.00 / ea"], "confidence": "0.95"},
+        {"cells": ["66802005", "Pico 7 System 15 x 15cm", "$1,800.00 / box"], "confidence": "0.95"},
+        {"cells": ["66802042", "Pico 14 System 10 x 20cm", "$3,200.00 / box"], "confidence": "0.95"},
+        {"cells": ["66802045", "Pico 14 System 15 x 15cm", "$3,200.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Profore Bandage System",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66000016", "1 Dx + 4 Bandages System", "$190.00 / kit"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Remove 除黏膠抹布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["403100", "Single Wipes (50's / box)", "$110.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Skin Prep 皮膚保護劑抹布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["420400", "Single Wipes (50's / box)", "$95.00 / box"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "SMITH & NEPHEW 傷口護理產品 - Non-Sting Skin Prep 不刺激皮膚保護劑抹布",
+      "columns": ["Code", "Product", "Price (HK$)"],
+      "rows": [
+        {"cells": ["66800709", "Spray 28ml Bottle", "$100.00 / bot"], "confidence": "0.95"},
+        {"cells": ["59420600", "Wipe 1 ml (50's / box)", "$105.00 / box"], "confidence": "0.95"}
+      ]
+    }
+  ],
+  "text_observations": [
+    {"text": "價目表 PRICE LIST", "confidence": "0.9"},
+    {"text": "最低消費限額：港幣伍佰元 Minimum Order: HK$500.00", "confidence": "0.9"},
+    {"text": "DISTRIBUTOR FOR: 1. Abbott (Laboratories) U. S. A. 2. AFT Pharmaceuticals Ltd New Zealand 3. Alleva Medical China 4. Aspen Surgical U. S. A. 5. Avanos U. S. A. 6. B. Braun Germany 7. Baxter U. S. A. 8. Becton Dickinson (BD) U. S. A. 9. Beurer Germany 10. Best Vallery Medical China 11. Bloomfield China 12. BTO China 13. Douglas New Zealand 14. Forma Care (Asia) Ltd. Germany 15. Forward Medicines China 16. Freshening Singapore 17. GPY Company Ltd. China 18. Hawo Germany 19. Hiu Fung China 20. Jiangxi China 21. JMS Japan / Singapore 22. Jumper China 23. Integra Miltex U. S. A. 24. Masimo U. S. A. 25. Medasil U. K. 26. Medplus China 27. Medi Bayreuth Germany 28. Medicom China 29. Miracle Asia Malaysia 30. Minrad U. S. A. 31. Minston China 32. Optimum U.K. 33. Orasure Technologies The Netherlands 34. Ovelle Ireland 35. Pentax Japan 36. Qlicksmart Australia 37. SaniSwiss Switzerland 38. Sengewald Germany 39. Smith & Nephew U.K. 40. Steril Singapore 41. TIDI U.S.A. 42. Top Gloves Malaysia 43. Ultra Care (MSL) U.K.", "confidence": "0.9"},
+    {"text": "INDEX 目錄 - Categories 分類: Bandage, Taping & Wound Management Products 繃帶、膠布及傷口護理專用產品 P.4 – P.6; Cryotherapeutic Products 冷凍治療 P.6; Diagnostic Test Products 診斷及測試專用產品 P.7 – P.8; Feeding Products 餵食專用產品 P.9; Foley Catheter, Urine Bag & Urine Collector 尿喉、尿袋及尿套 P.10; General Care Products 一般護理專用產品 P.11 – P.12; General Examination Appliances 一般檢查器具 P.13; Gloves & Paper Cups 手套及紙杯 P.14 – P.15; Intravenous Solution 注射輸液 P.16 – P.18; Intravenous Therapy Products 靜脈注射治療專用產品 P.19 – P.20; Infusion Pump / Syringe Pump & Dental Binocular Surgical Loupes 輸液泵及牙科手術用放大鏡 P.20; Mattress Cover & Underpad 床褥套及床墊 P.21; Protective Wearing 保護性衣物 P.22 – P.23; Spinal Needle, Pen Needles & Sharps Collector 脊髓穿刺針、胰島素注射筆及利器收集器 P.24; Sterilization Products 消毒爐專用產品 P.25; Surgical Instruments 外科儀器 P.26; Sutures 手術縫線 P.27 – P.28; Syringes & Needles 針筒及針咀 P.28 – P.29; Pharmaceutical Products 藥物 P.30; Pet Products 寵物專用產品 P.31; Health Supplements 營養補充及保健產品 P.31; Phase Scientific 妥析 P.32; Colon Management Products 腸道健康產品 P.33; Khoisan Rooibos Tea 高山南非國寶茶 P.33; Adult Diapers & Pull Up 成人尿片 P.33; Smith & Nephew Products S&N 傷口護理產品 P.34 – P.39", "confidence": "0.9"},
+    {"text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~", "confidence": "0.9"},
+    {"text": "~ BONUS TERMS FOR BULK PURCHASE ~", "confidence": "0.9"},
+    {"text": "Package 1 : $4,000.00 – Include 70 boxes ear probes and 1 pc of thermometer.", "confidence": "0.85"},
+    {"text": "Package 2 : $3,000.00 – Include 30 boxes ear probes and 1 pc of thermometer.", "confidence": "0.85"},
+    {"text": "For details, please contact the Sales Dept. on 2887 5175. 種類繁多，未能盡錄，詳情請致電 2887 5175 營業部查詢。", "confidence": "0.85"},
+    {"text": "***** : Please contact our salesmen for further product detail product details.", "confidence": "0.85"},
+    {"text": "***** : Please contact our salesmen for further product details.", "confidence": "0.85"},
+    {"text": "Remarks : 另有 Pharma Group Supplements, 種類繁多…(Proven, Return, 森下仁丹, Holdbody..) 詳情請致電 2887 5175 營業部查詢。", "confidence": "0.85"},
+    {"text": "***** 詳情請致電 2887 5175 營業部查詢 *****", "confidence": "0.85"},
+    {"text": "Updated @ 20/06//2025", "confidence": "0.9"}
+  ]
+}
