@@ -250,3 +250,101 @@ def test_the_sheet_carries_products_this_price_list_never_prices(conformed):
     for row in uncoded:
         stem = row["product_name"].split()[0].lower()
         assert not any(stem in name for name in names), row["product_name"]
+
+
+# --- the same list, read a second time and a different way -------------------
+#
+# `whole_document.json` is a BizOps extraction of all four pages in one
+# envelope, against the four per-page envelopes recorded here from the
+# production path. They disagree about things a contract can be over-fitted to:
+# theirs names the header one way on every page and STATES the page identity,
+# where the recordings here alternate the header and leave identity null.
+
+
+def _conform_whole_document():
+    from _pytest.monkeypatch import MonkeyPatch
+
+    patch = MonkeyPatch()
+    try:
+        patch.setenv("CATALOGUE_VISION_PROVIDER", "anthropic")
+        patch.setenv("ANTHROPIC_API_KEY", "replay-only")
+        _install_golden_replay(patch, [FIXTURES / "whole_document.json"])
+        result = extract_evidence(_blank_pdf(1), "provet.pdf", "application/pdf")
+        runtime = SupplierSourceRuntimeContract(
+            declaration=get_supplier_source_contract(CONTRACT, "v1").declaration
+        )
+        return conform_observations(
+            result.observations, tuple(uuid4() for _ in result.observations), runtime
+        )
+    finally:
+        patch.undo()
+
+
+@pytest.fixture(scope="module")
+def whole_document():
+    return _conform_whole_document()
+
+
+def test_both_readings_agree_about_every_price(whole_document, conformed):
+    """The contract must not depend on how the vision pass named the columns.
+    Same codes, same money, same basis, either way — including the code the
+    page prints twice, which must arrive twice in both."""
+    def priced(outcome):
+        out = {}
+        for row in _products(outcome):
+            code = (row.raw_fields.get("supplier_sku") or "").strip()
+            if code:
+                out.setdefault(code, []).append(
+                    (_money(_cost(row).get("amount")),
+                     (_cost(row).get("price_basis") or {}).get("code"))
+                )
+        return {k: sorted(v, key=lambda x: (x[0] is None, x[0])) for k, v in out.items()}
+
+    mine, theirs = priced(conformed), priced(whole_document)
+
+    assert set(mine) == set(theirs)
+    assert mine == theirs
+
+
+def test_the_page_identity_is_read_when_the_source_states_it(whole_document):
+    """This reading STATES 'Kruuse Hong Kong Ltd' where the recorded pages leave
+    it null — the name the golden sheet files these rows under, and not the one
+    our own supplier record uses. Declared in also_trades_as, so the identity
+    check vouches for it instead of refusing the whole document.
+
+    The recorded pages never exercise this path, which is exactly how it would
+    go untested until a live read stated an identity and blocked the lot.
+    """
+    import json
+
+    from services.catalogue_conformance import _identity_names_overlap
+
+    stated = json.loads((FIXTURES / "whole_document.json").read_text(encoding="utf-8"))
+    identity = stated.get("supplier_identity_text")
+    assert identity, "the fixture no longer states an identity"
+
+    supplier = get_supplier_source_contract(CONTRACT, "v1").declaration.supplier
+    names = [supplier.supplier_name, supplier.supplier_code, *supplier.also_trades_as]
+    assert any(_identity_names_overlap(identity, n) for n in names if n)
+
+    blocking = [
+        i.issue_code
+        for row in whole_document.items
+        for i in row.issues
+        if i.severity == "BLOCKING"
+    ]
+    assert blocking == []
+
+
+def test_the_product_list_carries_no_price_to_read():
+    """ProVet's other document, kept as a fixture so the claim is checkable
+    rather than asserted in prose: 765 product names across 13 tables, one
+    column, and not a price or a code anywhere in it. There is nothing for a
+    contract to price."""
+    import json
+
+    doc = json.loads((FIXTURES / "product_list.json").read_text(encoding="utf-8"))
+    columns = {tuple(t.get("columns") or ()) for t in doc["tables"]}
+
+    assert columns == {("Product Name",)}
+    assert sum(len(t["rows"]) for t in doc["tables"]) > 700

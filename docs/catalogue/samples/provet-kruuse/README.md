@@ -50,12 +50,24 @@ it names products the price list does not carry — Atropt, Bactroban, Doxycycli
 paste, Panacur — which is why a product missing from the price list is a price
 we have not been given rather than a delisting.
 
-## Not committed
+## The Covetrus catalogue IS partly a price list
 
-A `Covetrus Catalogue 2025.pdf` arrived in the same folder: 32 pages of product
-copy with three dollar signs in the whole document. Marketing collateral, not a
-price list, for a different brand, and 4.7MB. Held outside the repo; say so if
-it should come in.
+Corrected 2026-09-03. I first checked it by counting dollar signs in its text
+layer, found three, and called it marketing collateral. A proper extraction says
+otherwise: **11 of its 54 tables carry prices — 122 rows** — in two shapes:
+
+    Provet Code | Description | Pack Size | Price          PV-MAXINJ20 ... 20mL  HKD$258
+    ItemNumber  | Description | List Price HK$ | Page No.  CV-2800540  ... $54.00   7
+
+The other 43 tables are an illustrated product catalogue with no prices at all —
+`Item | Description | Dimensions | Quantity` and a dozen variations of it,
+around 148 rows of specifications.
+
+So it is a **third contractable document** for this supplier, not a fourth
+brand's brochure, and its page identity reads "KRUUSE HONG KONG LIMITED". Its
+codes are prefixed `PV-` (Provet) and `CV-` (Covetrus), so one company sells
+both ranges. **Not yet contracted**; the file itself is held outside the repo at
+4.7MB pending that decision.
 
 ## What reads these
 

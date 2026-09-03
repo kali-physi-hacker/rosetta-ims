@@ -279,10 +279,11 @@ PROVET_KRUUSE_HK_PRICE_LIST_V1 = register_supplier_source_contract(
                     "Bactroban, Panacur and Doxycycline paste among them."
                 ),
                 review_guidance=(
-                    "ProVet issue a separate 'Product list' of names with no codes and no "
-                    "prices, and it names products this list does not price. A product "
-                    "missing from the price list is therefore not evidence of a delisting; "
-                    "it is a price we have not been given."
+                    "ProVet issue a separate 'Product list' — 765 names, no codes and no "
+                    "prices — and a Covetrus catalogue whose 54 tables include 11 priced "
+                    "ones this contract does not read. Between them they name products "
+                    "this price list does not carry, so a product missing from it is a "
+                    "price we have not been given, never evidence of a delisting."
                 ),
                 blocks_supported_status=False,
             ),
