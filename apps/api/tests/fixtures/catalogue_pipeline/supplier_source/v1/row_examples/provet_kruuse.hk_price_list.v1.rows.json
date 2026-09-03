@@ -1,0 +1,98 @@
+{
+ "contract_id": "provet_kruuse.hk_price_list.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 62,
+ "supplier_name": "ProVet Kruuse HK",
+ "notes": "Read from all four pages of the 2025 price list, revision 2 (tests/fixtures/catalogue_pipeline/provet_kruuse/): 192 rows, every one carrying a code, a description and a price, all conforming with nothing held (tests/test_provet_kruuse_contract.py). Eleven of the sheet's fifteen rows carry a code and all eleven agree with the page to the cent.\n\nSTILL OPEN at the time this was marked SUPPORTED, recorded here because clearing technical_debt is what SUPPORTED requires and these must not vanish with it:\n  * THE PAGE CONTRADICTS ITSELF ON ONE ROW. CERE60 (Cerenia 60mg Tablets 4s) is printed twice on page 2, at $174.00 and at $198.00, same description both times, with nothing saying which supersedes. One supplier code is one product, so the rows FOLD to a single offering and the surviving price is whichever was read last — not a decision anybody made. The contract's declared ambiguity is the only thing that tells a reviewer, so test_the_contradicted_code_folds_to_one_product_and_says_so pins that the warning fires. Confirm the price with ProVet.\n  * ALUTAB600 is also printed twice, at one price. A duplicated line, reported as its own issue so it is never mistaken for the case above.\n  * THE PAGE NAMES NO BASIS. One price sits beside one product and nothing says what the money buys. Read as the generic PACK on the user's ruling of 2026-09-03. The golden sheet records '1 Tab' for CERE16, which would make the box of four $360; its basis column is malformed on these rows ('1 1 Set', inconsistent case) and is not used.\n  * Ten rows read 'Please contact us' instead of a price, and every one is Zoetis — Cytopoint, Solensia, Beransa. That range is priced for us by Queen's Pharma. A stated refusal, so those rows cannot become candidates until a person prices them, which is the same footing as Vetapet's 'By Quote'.\n  * ProVet issue a SEPARATE 'Product list' — 7 pages, names only, no codes and no prices — which names products this price list does not carry (Atropt, Bactroban, Doxycycline paste, Panacur). Nothing reads it, and it could not be contracted: there is nothing to price. A product missing from the price list is a price we have not been given, not a delisting.\n  * A 'Covetrus Catalogue 2025.pdf' arrived in the same folder. It is 32 pages of product copy with three dollar signs in the whole document — marketing collateral, not a price list, and not contractable.\n  * One row hides a quantity break in prose: TEMVET10 reads 'Injection 10ml ($162 for 12 or up)'. Left in the product name where a reviewer will see it rather than parsed out of English on the strength of one example in 192.\n  * The sheet had recorded Prednefrin's code as N/A; page 3 prints PREDNEFRIN at the price the sheet already had. Corrected in the projection, see the conformance ledger.",
+ "examples": [
+  {
+   "example_id": "provet-cere16-a-price-buys-the-pack",
+   "source": {
+    "sample_reference": "external-sample:Provet Hong Kong Price List - Year 2025 v2.pdf",
+    "page_number": 2,
+    "extraction_method": "recorded vision envelope (provet_kruuse/page_2.json)",
+    "text_excerpt": "CERE16 | Cerenia 16mg Tablets 4s | $ 90.00"
+   },
+   "raw_row": {
+    "Product Code": "CERE16",
+    "Description": "Cerenia 16mg Tablets 4s",
+    "List Price (HKD$)": "$ 90.00"
+   },
+   "runtime_input": {
+    "supplier_sku": "CERE16",
+    "product_name": "Cerenia 16mg Tablets 4s",
+    "unit_price": "$ 90.00",
+    "pack": "Cerenia 16mg Tablets 4s"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "4",
+    "break_pack_allowed": null,
+    "reason": "The page states no basis anywhere, so the ruling of 2026-09-03 applies: a price buys the pack. $90.00 is the box of four, which makes a tablet $22.50; read per-tablet the box would be $360 and every tablet cost four times what it does. The count comes from the end of the description, which is the only place this supplier states one. PACK rather than a vessel, because the page names no container either."
+   }
+  },
+  {
+   "example_id": "provet-methone-a-measure-is-not-a-count",
+   "source": {
+    "sample_reference": "external-sample:Provet Hong Kong Price List - Year 2025 v2.pdf",
+    "page_number": 1,
+    "extraction_method": "recorded vision envelope (provet_kruuse/page_1.json)",
+    "text_excerpt": "METHONE | Methone (Methadone) 10mg/ml Injection 20ml | $ 493.00"
+   },
+   "raw_row": {
+    "Product Code": "METHONE",
+    "Description": "Methone (Methadone) 10mg/ml Injection 20ml",
+    "List Price (HKD$)": "$ 493.00"
+   },
+   "runtime_input": {
+    "supplier_sku": "METHONE",
+    "product_name": "Methone (Methadone) 10mg/ml Injection 20ml",
+    "unit_price": "$ 493.00",
+    "pack": "Methone (Methadone) 10mg/ml Injection 20ml"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": null,
+    "break_pack_allowed": null,
+    "reason": "The pack count and the content measure sit in the same string, and only the count form is read. Twenty millilitres is what one bottle HOLDS, not twenty things to sell; read as a count it would divide $493.00 by twenty and value a bottle of a controlled drug at $24.65. 62 of the 192 rows end in a measure this way."
+   }
+  },
+  {
+   "example_id": "provet-cere60-the-page-contradicts-itself",
+   "source": {
+    "sample_reference": "external-sample:Provet Hong Kong Price List - Year 2025 v2.pdf",
+    "page_number": 2,
+    "extraction_method": "recorded vision envelope (provet_kruuse/page_2.json) — two rows",
+    "text_excerpt": "CERE60 | Cerenia 60mg Tablets 4s | $ 174.00   ...   CERE60 | Cerenia 60mg Tablets 4s | $ 198.00"
+   },
+   "raw_row": {
+    "Product Code": "CERE60",
+    "Description": "Cerenia 60mg Tablets 4s",
+    "List Price (HKD$)": "$ 174.00 / $ 198.00 on two separate rows"
+   },
+   "runtime_input": {
+    "supplier_sku": "CERE60",
+    "product_name": "Cerenia 60mg Tablets 4s",
+    "unit_price": "$ 174.00",
+    "pack": "Cerenia 60mg Tablets 4s"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "4",
+    "break_pack_allowed": null,
+    "reason": "The row this contract exists to be careful about. One code, two rows, two prices, one description, and nothing on the page saying which supersedes. Conformance keeps both — a reader that took the first or the last would be choosing by accident — and the candidate stage then folds them, because one supplier code is one product. The price that survives is whichever was read last, so the contract's declared ambiguity is the only thing telling a reviewer a choice was made at all. The golden sheet's $198.00 is a record of somebody's decision, not a reading of this page."
+   }
+  }
+ ],
+ "technical_debt": []
+}
