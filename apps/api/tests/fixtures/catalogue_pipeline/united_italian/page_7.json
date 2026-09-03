@@ -1,0 +1,247 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "PROTECTIVE WEARING 保護性衣物 / Disposable Face Mask & Face Shield 即棄口罩及面罩",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2027-PP",
+      "Safemask Premier Plus Face Mask, Blue (50’s / box)",
+      "$48.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "#2033",
+      "Safemask Full Face Shield - Clear (30’s / box)",
+      "$300.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "A3050",
+      "AGL Full Face Shield (5’s / pack)",
+      "$37.50 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2115PM",
+      "Procedure Mask, Blue, Earloop (50’s / box)",
+      "$31.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2330",
+      "Safemask Sof-Skin Earloop Mask, White (50’s / box)",
+      "$76.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "46727",
+      "Fluidshield PFR95 N95 Mask (35’s / box) (MOQ:6 boxes)",
+      "$590.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "48100",
+      "Kimberly-Clark Tie-On Mask (50’s / box)",
+      "$100.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "62356",
+      "The Lite One Procedure Mask, Blue (50’s / box)",
+      "$95.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "ASU-GMK219515",
+      "AUS Balance Lv3 Earloop Mask, Blue (50’s / box)",
+      "$55.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "KMI-M3531130",
+      "Kolmi OP Air Earloop Mask IIR, Yellow (50’s / box)",
+      "$121.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "HMB2115",
+      "PMR Individual Pack Mask, Blue (40’s / box) (12boxes /case)",
+      "$37.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "MED-GMK212694-HL2",
+      "Comfort + Type II Earloop Mask, Orange (50’s / box)",
+      "$80.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFM-203214",
+      "Safemask Architect Pro N95, S, White (50’s / box)",
+      "$750.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFM-203314",
+      "Safemask Architect Pro N95, M, White (50’s / box)",
+      "$750.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "48247",
+      "Fluidshield Fog Free Surgical Mask w/Wraparound Visor (25’s / box)",
+      "$260.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "MED-JMK200614",
+      "Med Anti-Fog Mask, White Individual Pack (40’s / box)",
+      "$106.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "CTR-GMK216014-H1",
+      "3D Mask, White, Individual Pack (10’s / box)",
+      "$35.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFM-GMK200015",
+      "Safemask Kid Individual Pack Mask, Blue (40’s / box)",
+      "$60.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFM-GMK201915",
+      "Premier Elite Earloop Mask, Blue, Level 3 (50’s / box)",
+      "$85.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "PLE-FMK211014",
+      "Pro-Lane Relax Earloop Mask, White, Individual (40’s / box)",
+      "$72.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "PLE-FMK211015",
+      "Pro-Lane Relax Earloop Mask, Blue, Individual (40’s / box)",
+      "$72.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "PLE-FMK211016",
+      "Pro-Lane Relax Earloop Mask, Pink, Individual (40’s / box)",
+      "$72.00 / box"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Cap & Shoes Cover 紙帽及鞋套",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "A5002",
+      "Shoe Cover SPP 35g, Light Blue, 16x40cm, Anti-Skid",
+      "$85.00 /100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "A4019",
+      "Mob Cap SPP 10g, Blue, 21”",
+      "$65.00 /100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "69240",
+      "KC Surgical Cap, Blue 即棄外科紙帽",
+      "$250.00 /100’s"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "8044-B",
+      "Medicom Cap Blue (100’s)",
+      "$65.00 /100’s"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.9"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.9"
+  },
+  {
+   "text": "***** : Please contact our salesmen for further product details.",
+   "confidence": "0.9"
+  }
+ ]
+}

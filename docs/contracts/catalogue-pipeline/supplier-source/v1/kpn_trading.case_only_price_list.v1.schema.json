@@ -283,6 +283,19 @@
           "description": "Field key containing printed packaging text.",
           "title": "Packaging Source Field"
         },
+        "packaging_text_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A regex whose FIRST group is the pack phrase inside a larger text. For sources that print the pack in the product description rather than a column of its own — United Italian write 'Brachial Angiography Drape, 41\" x 31\" (Sterile) (50's / case)'. Reading that text whole takes the leading number, which is the drape's WIDTH; the pack is the parenthesised phrase and only that. No match means the row states no pack, exactly as an empty column would.",
+          "title": "Packaging Text Pattern"
+        },
         "price_basis": {
           "anyOf": [
             {
@@ -494,6 +507,25 @@
           ],
           "default": null,
           "description": "Unit basis that the supplier cost prices, when established."
+        },
+        "price_basis_count_unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The unit a bare COUNT resolves to, for sources that price by quantity and name no vessel — United Italian print '$78.00 / 100's' for a hundred of something in nothing named. Requires price_basis_is_suffix_of_price. DECLARED, never inferred: naming the container is the supplier's job, and where they decline it, choosing the generic stand-in is a contract's decision to state out loud.",
+          "title": "Price Basis Count Unit"
+        },
+        "price_basis_is_suffix_of_price": {
+          "default": false,
+          "description": "Set when the basis is printed INSIDE the price cell rather than in a column of its own — United Italian write '$46.00 / bag', '$205.00 / box'. The text after the final '/' is then matched against price_basis_value_map, which still governs: an undeclared spelling resolves to nothing and the row is held, exactly as when the value stands alone. Off by default, so a source whose basis column already matches outright cannot change behaviour.",
+          "title": "Price Basis Is Suffix Of Price",
+          "type": "boolean"
         },
         "price_basis_per_column": {
           "default": false,

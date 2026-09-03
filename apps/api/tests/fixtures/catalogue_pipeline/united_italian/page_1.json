@@ -1,0 +1,207 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Bandage 繃帶 / 強力彈性繃帶",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "JI007",
+      "Elastic Crepe Bandage, Size 5cm (2”) x 4.5m",
+      "$7.00 / roll"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JI008",
+      "Elastic Crepe Bandage, Size 7.5cm (3”) x 4.5m",
+      "$8.00 / roll"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JI012",
+      "Elastic Crepe Bandage, Size 10cm (4”) x 4.5m",
+      "$11.00 / roll"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JI013",
+      "Elastic Crepe Bandage, Size 15cm (6”) x 4.5m",
+      "$13.00 / roll"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Bandage 繃帶 / 自貼繃帶",
+   "columns": [
+    "Code",
+    "Product",
+    "Pack",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "COT5307",
+      "Cohesive Bandage 2”, Lake Blue Color",
+      "(box of 24 rolls)",
+      "$8.00 / roll"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "COT5308",
+      "Cohesive Bandage 3”, Sky Blue Color",
+      "(box of 16 rolls)",
+      "$10.00 / roll"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Lubricant 潤滑劑",
+   "columns": [
+    "Code",
+    "Product",
+    "Pack",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "1123",
+      "Sterile Lubricating Jelly 2.7g",
+      "(box of 144 pks)",
+      "$205.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "1120",
+      "Sterile Lubricating Jelly 5g",
+      "(box of 150 pks)",
+      "$335.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "1122",
+      "Sterile Lubricating Jelly 82g",
+      null,
+      "$28.50 / tube"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Cotton 棉花用品",
+   "columns": [
+    "Code",
+    "Product",
+    "Pack",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "JI006",
+      "Cotton Wool Roll (500g) 棉花卷",
+      null,
+      "$42.00 / roll"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "8151030",
+      "Sterile Non-Woven Gauze Ball 30g 消毒棉花球",
+      "(5’s x 20pks / box)",
+      "$90.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "80504",
+      "Sterile Cotton Wool Ball",
+      "(5’s / pack)",
+      "$2.50 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JI037",
+      "Cotton Wool Ball 0.5g 棉花球",
+      "(1,000’s / pack)",
+      "$60.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "03100",
+      "Cotton Wool Ball 0.3g",
+      "(100’s / pack)",
+      "$8.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "03500",
+      "Cotton Wool Ball 0.3g",
+      "(500’s / pack)",
+      "$30.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JI023",
+      "Wooden Stick Cotton Tip Applicator 6” 木棉簽 6 吋",
+      "(100’s / pack)",
+      "$7.50 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JI067",
+      "Sterile Wooden Stick, Cotton Tip Applicator 6” 消毒木棉簽 6 吋",
+      "(10’s / pack)",
+      "$2.50 / pack"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.9"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.9"
+  }
+ ]
+}

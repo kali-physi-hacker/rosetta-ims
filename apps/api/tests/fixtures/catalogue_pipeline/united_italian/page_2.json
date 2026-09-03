@@ -1,0 +1,221 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "GAUZE & GAUZE AND SPONGES 紗布及棉花 / Absorbent Gauze 脫脂紗布",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "3004-100",
+      "N/S Gauze Sponges 3” x 3” x 12-ply x 1 sleeve (100’s / sleeve)",
+      "$33.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3006-100",
+      "N/S Gauze Sponges 4” x 4” x 12-ply x 1 sleeve (100’s / sleeve)",
+      "$45.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3002-200",
+      "N/S Gauze Sponges 2” x 2” x 12-ply x 1 sleeve (200’s / sleeve)",
+      "$34.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3004-200",
+      "N/S Gauze Sponges 3” x 3” x 12-ply x 1 sleeve (200’s / sleeve)",
+      "$37.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3006-200",
+      "N/S Gauze Sponges 4” x 4” x 12-ply x 1 sleeve (200’s / sleeve)",
+      "$59.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "GAUZE & GAUZE AND SPONGES 紗布及棉花 / Non-Woven Gauze 無紡紗布",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2100-200",
+      "N/S Non-Woven Sponges 4” x 4” x 4-ply (200’s / sleeve)",
+      "$59.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2101-200",
+      "N/S Non-Woven Sponges 2” x 2” x 4-ply (200’s / sleeve)",
+      "$34.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2103-200",
+      "N/S Non-Woven Sponges 3” x 3” x 4-ply (200’s / sleeve)",
+      "$37.00 / sleeve"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "GAUZE & GAUZE AND SPONGES 紗布及棉花 / Sterile Gauze 消毒紗布",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "8505042",
+      "Non-Woven Sterilized Gauze, Size 5 x 5cm, 4-ply (2 pcs/pack) (100’s / box)",
+      "$2.50 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "8757542",
+      "Non-Woven Sterilized Gauze, Size 7.5 x 7.5cm, 4-ply (2 pcs/pack) (100’s / box)",
+      "$3.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "8331205",
+      "Absorbent Sterilized Gauze, Size 7.5 x 7.5cm, 12-ply (5’s / pack)",
+      "$4.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2240",
+      "Sterile Non-Woven Sponges 2” x 2” x 4-ply (2 pcs/pack) (50’s / box)",
+      "$70.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3340",
+      "Sterile Non-Woven Sponges 3” x 3” x 4-ply (2 pcs/pack) (50’s / box)",
+      "$75.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "4440",
+      "Sterile Non-Woven Sponges 4” x 4” x 4-ply (2 pcs/pack) (50’s / box)",
+      "$80.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "#HNWSY77",
+      "Safegauze Sterile Non-Woven Key-Hole Gauze Swab, Size 7.5 x 7.5cm (2pcs/pack) (1,200’s / case)",
+      "$1,200.00 / case"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "HNWS077",
+      "Safegauze Sterile Non-Woven Gauze, 7.5 x 7.5cm, 4-ply (5 pcs/pack) (600’s / case)",
+      "$750.00 / case"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SFGSFGHNWS077R",
+      "Safegauze Sterile Non-Woven Gauze, 7.5 x 7.5cm, 4-ply (5 pcs/pack) (25pk / box)",
+      "$43.00 / box"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "HNWS111RP",
+      "Safegauze Combine Dressing, 10 x 10cm (30’s / bag)",
+      "$45.00 / bag"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "HNWS112RP",
+      "Safegauze Combine Dressing, 10 x 20cm (20’s / bag)",
+      "$40.00 / bag"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "HNWS124RP",
+      "Safegauze Combine Dressing, 20 x 40cm (10’s / bag)",
+      "$40.00 / bag"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "101001",
+      "Pre-Cut Swabs 10cm x 10cm, 1kg",
+      "$90.00 / pack"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "12512501",
+      "Pre-Cut Swabs 12.5cm x 12.5cm, 1kg",
+      "$90.00 / pack"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.95"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.95"
+  }
+ ]
+}

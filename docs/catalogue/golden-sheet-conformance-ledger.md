@@ -227,3 +227,49 @@ Every conformed cell:
 | hills_classic | 3392 | catalogue_price_basis_uom | BOX | unit |  |
 | hills_classic | 3392 | sellable_units_per_price_basis | 24 | — |  |
 | hills_classic | 3392 | mbb_tier_1 | •  Minimum order amount for discount eligibility is $1200 •  Single order of $2200 or more → 4% discount •  Single order of $4500 or more → 6% discount •  Orders placed using Hill’s Excel form → 4% discount •  Electronic payment → 1% discount | — |  |
+
+---
+
+# United Italian — 2026-09-03
+
+`apps/api/tests/fixtures/catalogue_pipeline/united_italian/golden_sheet_rows.csv`
+is a projection of the sheet filtered to supplier 46, and it has been conformed
+to what the 2025 price list actually prints. **The sheet still holds the old
+values**, so a re-projection regresses these rows until it is edited to match.
+
+Verified against `docs/catalogue/samples/united-italian/gp-price-list-2025.pdf`
+— page numbers below are that document's.
+
+Substantive page-truth corrections:
+
+- **3549232** (Propofol-Lipuro 1%): p30 prints **$320.00 / box**; the sheet said
+  $135.00. The sheet predates this list or is wrong.
+- **89471** (Brachial Angiography Drape): p23 prints `(50's / case) $52.00 / pc`
+  — fifty to a case and the price **PER PIECE**. The sheet recorded the basis as
+  CASE, making $52.00 buy all fifty. **A fiftyfold difference in the cost of
+  every drape**, and the correction most worth a second pair of eyes.
+- **"LRS Fluid Bag 500ml"** was filed under **AHB1323HK**, which p16 says is
+  NaCl 0.9% 500ml — and the row carried NaCl's numbers too ($46.00/bag,
+  $828.00/box, 18 to a box), making it a mislabelled duplicate of the NaCl row
+  beside it. Lactated Ringer 500ml is **2B2323Q**: $45.00/bag, $1,080.00/box,
+  24 to a box. Corrected to that.
+
+Convention corrections (the sheet asserted product knowledge the page withholds):
+
+- **1208A – D, 301805, 302032, A4019** price as `$46.00 / 100's`,
+  `$78.00 / 100's`, `$65.00 /100's` — a COUNT, with no container named. The
+  sheet recorded **BOX**; corrected to the generic **PACK** on the 2026-09-01
+  ruling that we do not name a vessel the supplier withheld. Prices were already
+  in agreement. 106 of the list's priced lines read this way.
+- **ET06**: basis spelled `PIECES`; the unit code is **PIECE**.
+
+Left alone on purpose:
+
+- **2103-200** — the sheet records the basis as **SLEEVE**, which is exactly what
+  p5 prints. There is no SLEEVE unit code, so the pipeline resolves OTHER and
+  keeps "sleeve" as the label. Here the SHEET is right and our vocabulary is the
+  lossy one, so the fixture keeps the supplier's own word and the test allows
+  for it. Adding a SLEEVE code would retire this note.
+- Five sheet rows carry **no product code** and two of those no price either
+  ("Syringe 3ml" asserts nothing at all). They are untraceable to a page and are
+  neither corrected nor removed.

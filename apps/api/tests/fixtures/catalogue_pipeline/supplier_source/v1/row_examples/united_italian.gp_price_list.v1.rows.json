@@ -1,0 +1,97 @@
+{
+ "contract_id": "united_italian.gp_price_list.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 46,
+ "supplier_name": "United Italian Corp. (HK) Ltd",
+ "notes": "Read from eleven recorded pages of the 2025 general-practice list (tests/fixtures/catalogue_pipeline/united_italian/): every page carrying a golden-sheet row, plus one of each layout. 282 rows, all conforming, no blocking issue (tests/test_united_italian_contract.py). The full document is 40 pages and 657 priced lines across 26 categories and 43 distributed brands.\n\nCorroborated against the BizOps golden sheet: all thirteen of its coded rows were found on the recorded pages and eleven agree on price to the cent.\n\nSTILL OPEN at the time this was marked SUPPORTED, recorded here because clearing technical_debt is what SUPPORTED requires and these must not vanish with it:\n  * THREE SHEET ERRORS WERE FOUND AND CORRECTED IN THE PROJECTION, and the sheet itself still holds the old values — a re-projection regresses them on purpose. Written up in docs/catalogue/golden-sheet-conformance-ledger.md:\n      - 89471, the one worth a second pair of eyes: the sheet recorded the basis as CASE, making $52.00 buy fifty drapes. The page prints '(50's / case) $52.00 / pc' — fifty to a case and the price PER PIECE. A fiftyfold understatement of the cost of every drape.\n      - 3549232 Propofol: sheet $135.00, this list $320.00.\n      - 'LRS Fluid Bag 500ml' was filed under AHB1323HK, which the page says is NaCl 0.9%, and carried NaCl's figures too — a mislabelled duplicate of the row beside it. Lactated Ringer 500ml is 2B2323Q at $45.00/bag, 24 to a box.\n  * The '/100's' rows recorded BOX on the sheet, a container the page never prints; corrected to the generic PACK on the 2026-09-01 ruling. Page and sheet now agree.\n  * SLEEVE is not a unit code, so '$37.00 / sleeve' resolves to OTHER with the supplier's own word kept as the label. Here the SHEET is right and our vocabulary is the lossy half, so the projection keeps the supplier's word and the test allows for it. Adding a SLEEVE code would retire this.\n  * BRAND IS NOT CAPTURED AS A FIELD. United Italian distribute 43 brands and print none of them in a column — only in the section banner, which is kept as evidence. The sheet leaves brand blank on all eighteen of its rows, so nothing corroborates what we would extract.\n  * Every page is headed 'BONUS TERMS FOR BULK PURCHASE' but no tier or threshold is printed anywhere; the terms come from their sales desk. The only bulk fact on the page is the case price on the intravenous rows.\n  * Where a merged cell carries both prices, the case price is not captured — the second price has no column of its own to be addressed by. The COST is unaffected.\n  * The document costs 39 vision calls per ingestion, one per product page. Its text layer is excellent but deliberately unused: it linearises the multi-column tables into per-cell lines no contract could map.",
+ "examples": [
+  {
+   "example_id": "ui-ahb1323hk-two-prices-first-is-the-unit-price",
+   "source": {
+    "sample_reference": "external-sample:2025 UI GP Price List (External).pdf",
+    "page_number": 16,
+    "extraction_method": "recorded vision envelope (united_italian/page_5.json, B.BRAUN - IVF)",
+    "text_excerpt": "AHB1323HK | NaCl 0.9% 500ml | (18’s / box) | $46.00 / bag | $828.00 / box"
+   },
+   "raw_row": {
+    "Code": "AHB1323HK",
+    "Product": "NaCl 0.9% 500ml",
+    "Pack": "(18’s / box)",
+    "Price (HK$)": "$46.00 / bag",
+    "Price (HK$) [2]": "$828.00 / box"
+   },
+   "runtime_input": {
+    "supplier_sku": "AHB1323HK",
+    "product_name": "NaCl 0.9% 500ml",
+    "pack": "(18’s / box)",
+    "unit_price": "$46.00 / bag",
+    "case_price": "$828.00 / box"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "BAG",
+    "currency": "HKD",
+    "sellable_units_per_purchase_unit": "18",
+    "break_pack_allowed": null,
+    "reason": "Two prices on one row: $46.00 buys one bag, $828.00 the box of eighteen. The COST is the per-unit price — the golden sheet records exactly this, basis BAG at $46.00 — and the case price is kept beside it as a bulk term rather than thrown away. Taking the second would overstate the cost of a single bag eighteenfold. The basis is read from the price cell itself, not declared by the contract, because this supplier prints twenty-three different ones."
+   }
+  },
+  {
+   "example_id": "ui-1208a-price-names-a-count-not-a-container",
+   "source": {
+    "sample_reference": "external-sample:2025 UI GP Price List (External).pdf",
+    "page_number": 15,
+    "extraction_method": "recorded vision envelope (united_italian/page_4.json, PE & Vinyl Gloves)",
+    "text_excerpt": "1208A – D | Second Skin Vinyl PD Gloves - XS - L | $46.00 / 100’s"
+   },
+   "raw_row": {
+    "Code": "1208A – D",
+    "Product": "Second Skin Vinyl PD Gloves - XS - L",
+    "Price (HK$)": "$46.00 / 100’s"
+   },
+   "runtime_input": {
+    "supplier_sku": "1208A – D",
+    "product_name": "Second Skin Vinyl PD Gloves - XS - L",
+    "unit_price": "$46.00 / 100’s"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "break_pack_allowed": null,
+    "reason": "A hundred of something, in nothing named — 106 of the list's priced lines read this way. PACK rather than BOX on the 2026-09-01 ruling: the supplier stated the quantity and withheld the vessel, and naming one would be our invention. The golden sheet records BOX here, which is a container this page never prints; the price agrees to the cent. The Code names a RANGE of four sizes at one price, recorded as printed — whether it becomes one offering or four is the desk's decision."
+   }
+  },
+  {
+   "example_id": "ui-89471-the-page-prices-per-piece-and-the-sheet-says-case",
+   "source": {
+    "sample_reference": "external-sample:2025 UI GP Price List (External).pdf",
+    "page_number": 23,
+    "extraction_method": "recorded vision envelope (united_italian/page_8.json)",
+    "text_excerpt": "89471 | Brachial Angiography Drape, 41” x 31” (Sterile) | (50’s / case) | $52.00 / pc"
+   },
+   "raw_row": {
+    "Code": "89471",
+    "Product": "Brachial Angiography Drape, 41” x 31” (Sterile)",
+    "Pack": "(50’s / case)",
+    "Price (HK$)": "$52.00 / pc"
+   },
+   "runtime_input": {
+    "supplier_sku": "89471",
+    "product_name": "Brachial Angiography Drape, 41” x 31” (Sterile)",
+    "pack": "(50’s / case)",
+    "unit_price": "$52.00 / pc"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PIECE",
+    "currency": "HKD",
+    "sellable_units_per_purchase_unit": "50",
+    "break_pack_allowed": null,
+    "reason": "The row that shows why the basis must be read and never assumed. The page says fifty to a case AND that the price is per piece; the golden sheet had said $52.00 buys the case, which understated the cost of every drape fiftyfold. The sheet was corrected against the page (see the conformance ledger) and the two now agree. The contract reads what the supplier printed, which is the only reason the error was visible at all."
+   }
+  }
+ ],
+ "technical_debt": []
+}

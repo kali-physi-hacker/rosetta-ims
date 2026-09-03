@@ -385,11 +385,30 @@ class SourceFieldContract(SupplierSourceModel):
 
     @model_validator(mode="after")
     def _mapping_has_location_or_constant(self):
-        if not (self.source_column or self.source_path or self.composed_from or self.constant_value is not None):
-            raise ValueError("source field requires source_column, source_path, composed_from, or constant_value")
+        # A field may also be addressed by POSITION alone — the nth column of a
+        # repeated heading family. United Italian need it: their second price
+        # column is called "Price (HK$) per box" on the pages that print two,
+        # and a page that prints ONE calls its only column that as well. Any
+        # exact name they could be given would bind to that lone column and
+        # hand the case price the unit price, so position is the only honest
+        # discriminator.
+        by_position = bool(self.source_column_prefix and self.source_column_occurrence)
+        if not (
+            self.source_column
+            or self.source_path
+            or self.composed_from
+            or self.constant_value is not None
+            or by_position
+        ):
+            raise ValueError(
+                "source field requires source_column, source_path, composed_from, "
+                "constant_value, or source_column_prefix with source_column_occurrence"
+            )
         if self.requirement == SourceFieldRequirement.REQUIRED and self.constant_value is not None:
             raise ValueError("required source fields must be observed, not only constant")
-        if self.requirement == SourceFieldRequirement.REQUIRED and not (self.source_column or self.source_path or self.composed_from):
+        if self.requirement == SourceFieldRequirement.REQUIRED and not (
+            self.source_column or self.source_path or self.composed_from or by_position
+        ):
             raise ValueError("required source fields require source_column, source_path, or composed_from")
         return self
 
@@ -433,6 +452,28 @@ class PricingSourceSemantics(SupplierSourceModel):
             "supplier invents is a decision for a person, not a default."
         ),
     )
+    price_basis_is_suffix_of_price: bool = Field(
+        False,
+        description=(
+            "Set when the basis is printed INSIDE the price cell rather than in a column "
+            "of its own — United Italian write '$46.00 / bag', '$205.00 / box'. The text "
+            "after the final '/' is then matched against price_basis_value_map, which "
+            "still governs: an undeclared spelling resolves to nothing and the row is "
+            "held, exactly as when the value stands alone. Off by default, so a source "
+            "whose basis column already matches outright cannot change behaviour."
+        ),
+    )
+    price_basis_count_unit: str | None = Field(
+        None,
+        description=(
+            "The unit a bare COUNT resolves to, for sources that price by quantity and "
+            "name no vessel — United Italian print '$78.00 / 100's' for a hundred of "
+            "something in nothing named. Requires price_basis_is_suffix_of_price. "
+            "DECLARED, never inferred: naming the container is the supplier's job, and "
+            "where they decline it, choosing the generic stand-in is a contract's "
+            "decision to state out loud."
+        ),
+    )
     notes: str | None = Field(None, description="Business-readable price semantics.")
 
     @model_validator(mode="after")
@@ -451,6 +492,16 @@ class PricingSourceSemantics(SupplierSourceModel):
             for spelling, code in self.price_basis_value_map.items():
                 if not str(spelling).strip() or not str(code).strip():
                     raise ValueError("price_basis_value_map entries must both be non-empty")
+        if self.price_basis_count_unit and not self.price_basis_is_suffix_of_price:
+            raise ValueError(
+                "price_basis_count_unit requires price_basis_is_suffix_of_price — a bare "
+                "count is only ever read out of the price cell itself"
+            )
+        if self.price_basis_is_suffix_of_price and not self.price_basis_source_field:
+            raise ValueError(
+                "price_basis_is_suffix_of_price requires price_basis_source_field — it "
+                "says HOW to read that field, not whether there is one"
+            )
         if self.price_basis_status == SemanticResolutionStatus.UNRESOLVED and self.price_basis is not None:
             raise ValueError("unresolved price basis must leave price_basis null")
         if (
@@ -475,6 +526,17 @@ class PricingSourceSemantics(SupplierSourceModel):
 class PackagingSourceSemantics(SupplierSourceModel):
     """Supplier-format rules for packaging, content, and ordering semantics."""
 
+    packaging_text_pattern: str | None = Field(
+        None,
+        description=(
+            "A regex whose FIRST group is the pack phrase inside a larger text. For sources "
+            "that print the pack in the product description rather than a column of its own "
+            "— United Italian write 'Brachial Angiography Drape, 41\" x 31\" (Sterile) "
+            "(50's / case)'. Reading that text whole takes the leading number, which is the "
+            "drape's WIDTH; the pack is the parenthesised phrase and only that. No match "
+            "means the row states no pack, exactly as an empty column would."
+        ),
+    )
     packaging_source_field: str | None = Field(None, description="Field key containing printed packaging text.")
     purchase_uom: UnitOfMeasure | None = Field(None, description="Purchase unit when explicitly known.")
     price_basis: UnitOfMeasure | None = Field(None, description="Price basis repeated for packaging cross-checks.")

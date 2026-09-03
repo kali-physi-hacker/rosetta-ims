@@ -1,0 +1,297 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "SUTURES 手術縫線 / Silkam –Non-Absorbable Sutures with Needle",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "C0760404",
+      "Silkam Black 4/0 (1.5) 75cm, HR26 (36’s / box)",
+      "$820.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "C0762202",
+      "Silkam Black 4/0 (1.5) 45cm DS19",
+      "$40.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "C0762210-L",
+      "Silkam Black 3/0 (2) 45cm DS19",
+      "$21.00 / pc"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "SYRINGES & NEEDLES 針筒及針咀 / Disposable Needle 針咀",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "BLN1838F",
+      "Blunt Needle 18GX1-1/2\"",
+      "$90.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "305198",
+      "16G x 1½” (Purple)",
+      "$118.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302032",
+      "18G x 1½” (Pink)",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302015",
+      "21G x l” (Green)",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302017",
+      "21G x 1½”",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "305194",
+      "23G x 1½”",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302006",
+      "23G x 1” (Blue)",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "301807",
+      "25G x 1”",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "301805",
+      "25G x ⅝” (Orange)",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "305127",
+      "25G x 1½”",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "305109",
+      "27G x ½” (Grey)",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "305107",
+      "30G x ½” (Brown)",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "305108",
+      "30G x 1”",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "HN2025",
+      "20G x 1”",
+      "$78.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "HN2219",
+      "22G x 3/4”",
+      "$78.00 / 100’s"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "SYRINGES & NEEDLES 針筒及針咀 / Disposable Syringe 針筒",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "309628",
+      "1cc (LL)",
+      "$440.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302100",
+      "1cc (ST)",
+      "$210.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302106",
+      "3cc (ST)",
+      "$130.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "309657",
+      "3cc (LL) (4 x 200’s / case)",
+      "$960.00 / 800’s"
+     ]
+    },
+    {
+     "cells": [
+      "302130",
+      "5cc (ST)",
+      "$190.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302135",
+      "5cc (LL)",
+      "$190.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "302143",
+      "10cc (ST)",
+      "$240.00 / 100’s"
+     ]
+    },
+    {
+     "cells": [
+      "300613",
+      "20cc (ET: Eccentric Tip 側咀)",
+      "$630.00 / 120’s"
+     ]
+    },
+    {
+     "cells": [
+      "302830",
+      "20cc (LL)",
+      "$240.00 / 48’s"
+     ]
+    },
+    {
+     "cells": [
+      "20CCSN",
+      "20cc (SN: Side Nozzle 側咀)",
+      "$190.00 / 50’s"
+     ]
+    },
+    {
+     "cells": [
+      "AS270",
+      "20cc (Catheter Tip 導管咀 with Enfit Connector) (50’s / box)",
+      "$200.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "AS270L",
+      "20cc (Catheter Tip 導管咀 with Enfit Connector)",
+      "$4.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "302832",
+      "30cc (LL) (56’s / box)",
+      "$15.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "30CCSN",
+      "30cc (SN)",
+      "$450.00 / 50’s"
+     ]
+    },
+    {
+     "cells": [
+      "300866",
+      "50cc (ET) (60’s / box)",
+      "$12.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "300865",
+      "50/60cc (LL) (60’s / box)",
+      "$12.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "300867",
+      "50/60cc (Catheter Tip 導管咀) (60’s / box)",
+      "$12.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "100CCLL",
+      "100cc (LL) (25’s / box)",
+      "$44.00 / pc"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.95"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.95"
+  }
+ ]
+}

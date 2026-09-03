@@ -1,0 +1,324 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Dermatological Drugs 皮膚科藥物",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "31812",
+      "Lanate (Ammonium Lactate) Cream 17.5% 150g",
+      "$360.00 / tube"
+     ]
+    },
+    {
+     "cells": [
+      "40224",
+      "Oratane (Isotretinoin) Capsule 10mg 膚康美 (4 × 15’s / box)",
+      "$790.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "40222",
+      "Oratane (Isotretinoin) Capsule 20mg 膚康美 (4 × 15’s / box)",
+      "$1,580.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "502763",
+      "Oratane (Isotretinoin) Capsule 5mg 膚康美 (6 × 10’s / box)",
+      "$460.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "50099",
+      "Sebizole Shampoo (Ketoconazole) 2% 100ml 絲必爽",
+      "$125.00 / bot"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Hormone 荷爾蒙藥",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "40082",
+      "Estelle-35 (Cyproterone Acetate 2mg/ Ethinyloestradiol 0.035mg) Tablet (1 x 21’s / box)",
+      "$115.00 / box"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Miscellaneous 其他藥物",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "330250",
+      "Attane (Isoflurane) for Veterinary Use 250ml",
+      "$1,180.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "3549232",
+      "Propofol-Lipuro Injection 1% (10mg/ml) (1 x 5’s / box)",
+      "$320.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "40027",
+      "Azamun 50mg 100’s",
+      "$810.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "3638794",
+      "Propofol Lipuro Emulsion for Injection/Infusion 200mg/20ml (10’s / box)",
+      "$300.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "3638795",
+      "Propofol Lipuro Emulsion for Injection/Infusion 500mg/50ml (10’s / box)",
+      "$875.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "3638783",
+      "Paracetamol B. Braun Solution for Infusion 1000mg/100ml (10’s / cs)",
+      "$1,900.00 / cs"
+     ]
+    },
+    {
+     "cells": [
+      "100952022",
+      "Maxigesic Tablets, 100’s",
+      "$250.00 / box"
+     ]
+    },
+    {
+     "cells": [
+      "100952021",
+      "Maxigesic Tablets, 16's",
+      "$53.00 / box"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Baxter Oncology",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2638B5194",
+      "Endoxan 200mg, 1 Vial",
+      "$325.00 / vial"
+     ]
+    },
+    {
+     "cells": [
+      "2638B5195",
+      "Endoxan 1g, 1 Vial",
+      "$1,190.00 / vial"
+     ]
+    },
+    {
+     "cells": [
+      "2638B1064",
+      "Endoxan 50 Coated Tablets – Weighted",
+      "$1,470.00 / ea"
+     ]
+    },
+    {
+     "cells": [
+      "2617B3573",
+      "Holoxan 1g, 1 Vial - Weighted",
+      "$1,380.00 / ea"
+     ]
+    },
+    {
+     "cells": [
+      "2639B2058",
+      "Uromitexan 4ml, 15 Amps - Weighted",
+      "$2,100.00 / ea"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Cream 外用軟膏",
+   "columns": [
+    "Code",
+    "Product",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "1110",
+      "Emulsifying Ointment B.P. 500g",
+      "$96.00 / jar"
+     ]
+    },
+    {
+     "cells": [
+      "1100",
+      "Aqueous Cream B.P. 500g",
+      "$80.00 / jar"
+     ]
+    },
+    {
+     "cells": [
+      "1632",
+      "Aqueous Cream 250ml",
+      "$60.00 / tube"
+     ]
+    },
+    {
+     "cells": [
+      "1662",
+      "Baby SLS Free Aqueous Cream 250ml",
+      "$76.00 / tube"
+     ]
+    },
+    {
+     "cells": [
+      "11314",
+      "Coconut Oil 100g",
+      "$88.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "11754",
+      "Paraffin Gel 100g",
+      "$38.00 / pc"
+     ]
+    },
+    {
+     "cells": [
+      "1014",
+      "GFA Body Lotion 250ml",
+      "$200 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1015",
+      "GFA Body Wash 250ml",
+      "$200 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1016",
+      "GFA Body Wash 250ml",
+      "$200 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "12084",
+      "Elave Dermatological Intensive Cream 50g",
+      "$80.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1212",
+      "Elave Body Lotion 250ml",
+      "$180.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1222",
+      "Elave Facial Cleanser 250ml",
+      "$180.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1360",
+      "Elave Shampoo 250ml",
+      "$180.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1445",
+      "Elave Intensive Cream 125g",
+      "$160.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1452",
+      "Elave Body Wash 250ml",
+      "$180.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1463",
+      "Elave Dermo Renew Daily Skin Defence SPF45 50ml",
+      "$340.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "1523",
+      "Elave Daily Lip Defence SPF20 15g",
+      "$180.00 / bot"
+     ]
+    },
+    {
+     "cells": [
+      "7264128",
+      "Cutimed Acute 125ml 5% Urea",
+      "$290.00 / tube"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "PRICE SUBJECT TO CHANGE WITHOUT NOTICE",
+   "confidence": "0.95"
+  },
+  {
+   "text": "BONUS TERMS FOR BULK PURCHASE",
+   "confidence": "0.95"
+  }
+ ]
+}

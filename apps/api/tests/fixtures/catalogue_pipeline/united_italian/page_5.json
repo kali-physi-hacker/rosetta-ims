@@ -1,0 +1,313 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "B.BRAUN - IVF 注射輸液 / Dextrose",
+   "columns": [
+    "Code",
+    "Product",
+    "Pack",
+    "Price (HK$)",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "AHB0087",
+      "Dextrose 5% 100ml",
+      "(48’s / box)",
+      "$49.00 / bag",
+      "$2,352.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB0062",
+      "Dextrose 5% 250ml",
+      "(24’s / box)",
+      "$54.00 / bag",
+      "$1,296.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB0063",
+      "Dextrose 5% 500ml",
+      "(18’s / box)",
+      "$44.00 / bag",
+      "$792.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B0064X",
+      "Dextrose 5% 1000ml",
+      "(14’s / box)",
+      "$53.00 / bag",
+      "$742.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB0163",
+      "Dextrose 10% 500ml",
+      "(18’s / box)",
+      "$42.00 / bag",
+      "$756.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B0164X",
+      "Dextrose 10% 1000ml",
+      "(14’s / box)",
+      "$51.00 / bag",
+      "$714.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "A6C0062HK",
+      "Glucose 5% 250ml",
+      "(40’s / box)",
+      "$72.00 / bag",
+      "$2,880.00 / box"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Lactated Ringer",
+   "columns": [
+    "Code",
+    "Product",
+    "Pack",
+    "Price (HK$)",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2B2323Q",
+      "Lactated Ringer 500ml",
+      "(24’s / box)",
+      "$45.00 / bag",
+      "$1,080.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B2324X",
+      "Lactated Ringer 1000ml",
+      "(14’s / box)",
+      "$53.00 / bag",
+      "$742.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B2074X",
+      "Lactated Ringer & Dextrose 5% 1000ml",
+      "(14’s / box)",
+      "$52.00 / bag",
+      "$728.00 / box"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Normal Saline",
+   "columns": [
+    "Code",
+    "Product",
+    "Pack",
+    "Price (HK$)",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2B1314X",
+      "NaCl 0.45% 1000ml",
+      "(14’s / box)",
+      "$104.00 / bag",
+      "$1456.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB1306A",
+      "NaCl 0.9% 50ml",
+      "(60’s / box)",
+      "$48.00 / bag",
+      "$2,880.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB1307",
+      "NaCl 0.9% 100ml",
+      "(48’s / box)",
+      "$51.00 / bag",
+      "$2,448.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB1322",
+      "NaCl 0.9% 250ml",
+      "(24’s / box)",
+      "$48.00 / bag",
+      "$1,152.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB1323HK",
+      "NaCl 0.9% 500ml",
+      "(18’s / box)",
+      "$46.00 / bag",
+      "$828.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB1324HK",
+      "NaCl 0.9% 1000ml",
+      "(12’s / box)",
+      "$48.00 / bag",
+      "$576.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "A6C1307HK",
+      "NaCl 0.9% AVIVA 100ml",
+      "(80 bags/ case)",
+      "$77.00 / bag",
+      "$6,160.00 / case"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "A6C1322HK",
+      "NaCl 0.9% AVIVA 250ml",
+      "(40 bags/ case)",
+      "$72.00 / bag",
+      "$2,880.00 / case"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "A6C1323HK",
+      "NaCl 0.9% AVIVA 500ml",
+      "(24 bags/ case)",
+      "$68.00 / bag",
+      "$1,632.00 / case"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Dextrose & Normal Saline",
+   "columns": [
+    "Code",
+    "Product",
+    "Pack",
+    "Price (HK$)",
+    "Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2B1094X",
+      "Dextrose 5% & NaCl 0.2% 1000ml",
+      "(14’s / box)",
+      "$55.00 / bag",
+      "$770.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "AHB1023",
+      "Dextrose 2.5% & NaCl 0.45% 500ml",
+      "(18’s / box)",
+      "$40.00 / bag",
+      "$720.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B1024X",
+      "Dextrose 2.5% & NaCl 0.45% 1000ml",
+      "(14’s / box)",
+      "$58.00 / bag",
+      "$812.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B1074X",
+      "Dextrose 5% & NaCl 0.45% 1000ml",
+      "(14’s / box)",
+      "$52.00 / bag",
+      "$728.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B1063Q",
+      "Dextrose 5% & NaCl 0.9% 500ml",
+      "(24’s / box)",
+      "$51.00 / bag",
+      "$1,224.00 / box"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "2B1064X",
+      "Dextrose 5% & NaCl 0.9% 1000ml",
+      "(14’s / box)",
+      "$51.00 / bag",
+      "$714.00 / box"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "~ PRICE SUBJECT TO CHANGE WITHOUT NOTICE ~",
+   "confidence": "0.95"
+  },
+  {
+   "text": "~ BONUS TERMS FOR BULK PURCHASE ~",
+   "confidence": "0.95"
+  }
+ ]
+}
