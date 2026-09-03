@@ -526,6 +526,17 @@ class PricingSourceSemantics(SupplierSourceModel):
 class PackagingSourceSemantics(SupplierSourceModel):
     """Supplier-format rules for packaging, content, and ordering semantics."""
 
+    packaging_text_pattern: str | None = Field(
+        None,
+        description=(
+            "A regex whose FIRST group is the pack phrase inside a larger text. For sources "
+            "that print the pack in the product description rather than a column of its own "
+            "— United Italian write 'Brachial Angiography Drape, 41\" x 31\" (Sterile) "
+            "(50's / case)'. Reading that text whole takes the leading number, which is the "
+            "drape's WIDTH; the pack is the parenthesised phrase and only that. No match "
+            "means the row states no pack, exactly as an empty column would."
+        ),
+    )
     packaging_source_field: str | None = Field(None, description="Field key containing printed packaging text.")
     purchase_uom: UnitOfMeasure | None = Field(None, description="Purchase unit when explicitly known.")
     price_basis: UnitOfMeasure | None = Field(None, description="Price basis repeated for packaging cross-checks.")

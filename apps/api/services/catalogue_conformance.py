@@ -480,9 +480,33 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
         value = " ".join(parts) if parts else contract_field.constant_value
         if value is not None:
             _record(contract_field, value)
+    # A row that answers NONE of the contract's declared columns is not a row of
+    # the table the contract describes. United Italian print a No./Company/
+    # Country table listing the 43 brands they distribute; a live read takes it
+    # for products, and every one of its rows then blocks on a missing name.
+    # Only column-sourced values count — a section banner hangs over any table
+    # on the page, and a constant answers on every row by definition.
+    if not any(
+        key.removeprefix("source:") in _column_sourced_keys(runtime_contract)
+        for key in fields
+        if key.startswith("source:")
+    ):
+        return None
     if observation.confidence is not None:
         fields.setdefault("confidence", str(observation.confidence))
     return fields
+
+
+def _column_sourced_keys(runtime_contract) -> frozenset[str]:
+    """Field keys a row can only answer by printing the column they name."""
+    return frozenset(
+        field.field_key
+        for field in runtime_contract.declaration.fields
+        if field.source_column
+        or field.composed_from
+        or field.source_path == _UNLABELED_COLUMN_SOURCE
+        or (field.source_column_prefix and field.source_column_occurrence)
+    )
 
 
 def _item_from_fields(
@@ -622,11 +646,17 @@ def _date_proposal(value: Any, evidence: dict[str, Any]) -> dict[str, Any] | Non
 #: pages and as two columns on others. The FIRST pair is the per-unit one, on
 #: every page and on the golden sheet, so both the amount and the basis are
 #: taken from it. Reading the last pair instead would price a bag as a box.
-_PRICE_WITH_BASIS = re.compile(r"^\s*([^/]+?)\s*/\s*([^/$]+?)\s*(?:\$|$)")
+_PRICE_WITH_BASIS = re.compile(
+    r"((?:HK\$|HKD|\$)?\s*[\d,]+(?:\.\d+)?)\s*/\s*([^/$\n(]+?)\s*"
+    r"(?=\s*(?:HK\$|HKD|\$)|\s*[\n(]|$)"
+)
 
 
 def _first_price_and_basis(value: Any) -> tuple[str, str] | None:
-    match = _PRICE_WITH_BASIS.match(str(value or ""))
+    # SEARCH, not match: a cell can lead with its pack — "(12's / box)
+    # $100.00 / bag $1,200.00 / box" — and anchoring at the start read "box)"
+    # as the basis of a price that had not been reached yet.
+    match = _PRICE_WITH_BASIS.search(str(value or ""))
     return (match.group(1), match.group(2).strip()) if match else None
 
 
@@ -1830,7 +1860,7 @@ def _mapped_value(contract_field, value: Any) -> Any:
     return value
 
 
-def _read_purchase_unit(fields: dict[str, Any], semantics) -> str | None:
+def _read_purchase_unit(fields: dict[str, Any], semantics, pricing=None) -> str | None:
     """The per-row purchase unit, from the declared field or the packing text.
 
     Only for contracts that opted into per-row units (purchase_uom_source_field
@@ -1842,7 +1872,16 @@ def _read_purchase_unit(fields: dict[str, Any], semantics) -> str | None:
     """
     if not semantics.purchase_uom_source_field:
         return None
-    read = _purchase_unit_from_text(_source_field_value(fields, semantics.purchase_uom_source_field))
+    stated = _source_field_value(fields, semantics.purchase_uom_source_field)
+    if pricing is not None and pricing.price_basis_is_suffix_of_price:
+        # The price names the purchase unit — "$46.00 / bag" buys a bag. Where
+        # a cell carries two of them ("$46.00 / bag $828.00 / box") the FIRST is
+        # the one bought; _purchase_unit_from_text takes the last, which would
+        # make every such row a purchase of the case.
+        head = _first_price_and_basis(stated)
+        if head:
+            stated = f"x / {head[1]}"
+    read = _purchase_unit_from_text(stated)
     if read:
         return read
     if semantics.packaging_source_field and semantics.packaging_source_field != semantics.purchase_uom_source_field:
@@ -1984,7 +2023,7 @@ def _cost_proposal(value: Any, runtime_contract, evidence: dict[str, Any], field
     if fields is not None and packaging.price_basis_follows_purchase_unit:
         # $1,390 is per BOTTLE, not per piece. Leaving it as a fixed basis
         # divides every per-unit cost by the wrong denominator.
-        read_unit = _read_purchase_unit(fields, packaging)
+        read_unit = _read_purchase_unit(fields, packaging, pricing)
         if read_unit:
             basis = UnitOfMeasure(code=UnitCode(read_unit))
     if amount is None or basis is None or basis.code is None:
@@ -2100,15 +2139,27 @@ def _sellable_unit_from_text(value: Any) -> str | None:
 
 def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict[str, Any]) -> dict[str, Any] | None:
     semantics = runtime_contract.declaration.packaging
+    pricing = runtime_contract.declaration.pricing
     source_text = _source_field_value(fields, semantics.packaging_source_field) or _text(
         fields.get("pack_size") or fields.get("uom")
     )
+    if source_text and semantics.packaging_text_pattern:
+        # The pack is a phrase inside a longer description; read that phrase and
+        # nothing else. No match means the row states no pack at all, which is
+        # the same answer an empty column gives.
+        found = re.search(semantics.packaging_text_pattern, str(source_text))
+        source_text = found.group(1) if found else None
     if not source_text and not any(
         (
             semantics.purchase_uom,
             semantics.price_basis,
             semantics.sellable_unit_uom,
             semantics.break_pack_allowed is not None,
+            # A row can state its pack in the PRICE and nowhere else — United
+            # Italian's "$46.00 / 100's" is a hundred of something for that
+            # money. Returning early there would leave the row with no
+            # packaging at all, and a row without packaging cannot publish.
+            pricing.price_basis_count_unit,
         )
     ):
         return None
@@ -2119,7 +2170,7 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
             proposal[attribute] = uom.model_dump(mode="json")
     # A per-row purchase unit overrides the declared one; a row whose unit the
     # vocabulary does not know keeps whatever the contract declared.
-    read_unit = _read_purchase_unit(fields, semantics)
+    read_unit = _read_purchase_unit(fields, semantics, pricing)
     if read_unit:
         proposal["purchase_uom"] = {"code": read_unit, "label": None}
         if semantics.price_basis_follows_purchase_unit:
@@ -2137,6 +2188,12 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
             else {"code": uom}
         )
     sellable_source = _source_field_value(fields, semantics.sellable_units_per_purchase_unit_source_field)
+    if sellable_source and semantics.packaging_text_pattern:
+        # Same narrowing as the packaging text above, and for the same reason:
+        # read the pack phrase, not the description that surrounds it. Without
+        # this the drape's 41-inch width becomes its count per case.
+        found = re.search(semantics.packaging_text_pattern, str(sellable_source))
+        sellable_source = found.group(1) if found else None
     sellable_count = _leading_decimal(sellable_source)
     # A count is a count of units per PURCHASE — without a resolved purchase
     # unit the claim dangles ("10 per what?") and, worse, a bare measure like
@@ -2153,6 +2210,18 @@ def _packaging_proposal(fields: dict[str, Any], runtime_contract, evidence: dict
         and _content_measure(sellable_source)
     ):
         sellable_count = None
+    if sellable_count is None and pricing.price_basis_count_unit:
+        # "$46.00 / 100's" states the pack in the PRICE and nowhere else: a
+        # hundred of something, bought together, for that money. Read there
+        # only when the row prints no pack text, so a stated pack always wins.
+        priced = _first_price_and_basis(
+            _source_field_value(fields, pricing.price_basis_source_field)
+        )
+        if priced and _BARE_COUNT.fullmatch(priced[1].strip().casefold()):
+            sellable_count = _leading_decimal(priced[1])
+            read_unit = read_unit or pricing.price_basis_count_unit
+            proposal["purchase_uom"] = {"code": read_unit, "label": None}
+            proposal.setdefault("source_text", priced[1].strip())
     if sellable_count is not None and (read_unit or semantics.purchase_uom is not None):
         proposal["sellable_units_per_purchase_unit"] = str(sellable_count)
     # '30ml/ bot' names a MEASURE, not a countable — the count above is the

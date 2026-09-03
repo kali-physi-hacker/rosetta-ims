@@ -213,6 +213,10 @@ UNITED_ITALIAN_GP_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.PACKAGING,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Pack",
+                # Most rows have no Pack column and print the pack inside the
+                # description instead. The pattern below is what makes reading
+                # the description safe.
+                aliases=["Product"],
                 # Some tables print the pack in a column with NO heading at all;
                 # heading text cannot address those.
                 source_path="unlabeled_column",
@@ -299,12 +303,21 @@ UNITED_ITALIAN_GP_PRICE_LIST_V1 = register_supplier_source_contract(
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack",
+            # "(50's / case)", "(box of 24 rolls)", "(5's x 20pks / box)" — the
+            # parenthesised phrase, and only that. Reading a description whole
+            # takes its leading number, which on a drape is the width in inches.
+            packaging_text_pattern=r"\((\s*[^)]*?(?:[\u2019']s|\bof\b|\bper\b)[^)]*?)\)",
             purchase_uom=None,
-            # Deliberately NOT price_basis_follows_purchase_unit: the PRICING
-            # side already reads the basis out of the price cell, taking the
-            # first of the two units a merged cell can carry. Letting packaging
-            # re-read the same cell overrode that with the LAST unit, which
-            # priced a $100 bag of Plasma-Lyte as a $100 box of twelve.
+            # The price names what you buy: "$46.00 / bag" buys a bag. So the
+            # purchase unit is read from the same cell as the basis, and from
+            # the FIRST of the two pairs a merged cell can carry.
+            #
+            # Deliberately NOT price_basis_follows_purchase_unit, though: that
+            # would let packaging re-derive the BASIS as well, and it reads the
+            # LAST unit — which priced a $100 bag of Plasma-Lyte as a box of
+            # twelve. Packaging may say what you buy; pricing owns what the
+            # money is per.
+            purchase_uom_source_field="unit_price",
             content_measure_source_field=None,
             sellable_units_per_purchase_unit_source_field="pack",
             interpretation_rules=[

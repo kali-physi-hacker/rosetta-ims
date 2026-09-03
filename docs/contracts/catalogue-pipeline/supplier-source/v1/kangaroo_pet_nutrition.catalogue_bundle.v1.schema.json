@@ -283,6 +283,19 @@
           "description": "Field key containing printed packaging text.",
           "title": "Packaging Source Field"
         },
+        "packaging_text_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A regex whose FIRST group is the pack phrase inside a larger text. For sources that print the pack in the product description rather than a column of its own — United Italian write 'Brachial Angiography Drape, 41\" x 31\" (Sterile) (50's / case)'. Reading that text whole takes the leading number, which is the drape's WIDTH; the pack is the parenthesised phrase and only that. No match means the row states no pack, exactly as an empty column would.",
+          "title": "Packaging Text Pattern"
+        },
         "price_basis": {
           "anyOf": [
             {
