@@ -1,0 +1,433 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Dangerous Drugs and Psychotropics",
+   "columns": [
+    "Product Code",
+    "Description",
+    "List Price (HKD$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "FENT12",
+      "Fentanyl 12mcg/h Transdermal Patch 5s",
+      "$ 60.00"
+     ]
+    },
+    {
+     "cells": [
+      "FENT25",
+      "Fentanyl 25mcg/h Transdermal Patch 5s",
+      "$ 82.00"
+     ]
+    },
+    {
+     "cells": [
+      "FENT50",
+      "Fentanyl 50mcg/h Transdermal Patch 5s",
+      "$ 103.00"
+     ]
+    },
+    {
+     "cells": [
+      "METHONE",
+      "Methone (Methadone) 10mg/ml Injection 20ml",
+      "$ 493.00"
+     ]
+    },
+    {
+     "cells": [
+      "PAMLIN",
+      "Pamlin 5mg/ml Injection 20ml",
+      "$ 451.00"
+     ]
+    },
+    {
+     "cells": [
+      "DIAZELIX",
+      "Diazepam 10mg/10ml Elixir 100ml",
+      "$ 696.00"
+     ]
+    },
+    {
+     "cells": [
+      "DIAZEPAM",
+      "Ilium Diazepam 5mg/ml Injection 20ml",
+      "$ 419.00"
+     ]
+    },
+    {
+     "cells": [
+      "LETH250",
+      "Lethabarb 325mg/ml Injection 250ml",
+      "$ 1,089.00"
+     ]
+    },
+    {
+     "cells": [
+      "LETHABARB",
+      "Lethabarb 325mg/ml Injection 450ml",
+      "$ 1,908.00"
+     ]
+    },
+    {
+     "cells": [
+      "BUTOM10ML",
+      "Butomidor 10mg/ml Injection 10ml",
+      "$ 452.00"
+     ]
+    },
+    {
+     "cells": [
+      "BUTOR10ML",
+      "Butorgesic 10mg/ml Injection 10ml",
+      "$ 457.00"
+     ]
+    },
+    {
+     "cells": [
+      "BUTOR50ML",
+      "Butorgesic 10mg/ml Injection 50ml",
+      "$ 1,991.00"
+     ]
+    },
+    {
+     "cells": [
+      "PHENOBELX",
+      "Phenobarb (Phenobarbitone) 15mg/5ml Elixir 100ml",
+      "$ 373.00"
+     ]
+    },
+    {
+     "cells": [
+      "PHENOBINJ",
+      "Phenobarbitone Sodium 219mg/ml Injection 1ml 5s",
+      "$ 329.00"
+     ]
+    },
+    {
+     "cells": [
+      "PHENOM10",
+      "Phenomav 100mg Tablets 100s",
+      "$ 143.00"
+     ]
+    },
+    {
+     "cells": [
+      "PHENOM30",
+      "Phenomav 30mg Tablets 200s",
+      "$ 77.00"
+     ]
+    },
+    {
+     "cells": [
+      "TEMGSLTAB",
+      "Temgesic 0.2mg Sublingual Tablets 50s",
+      "$ 298.00"
+     ]
+    },
+    {
+     "cells": [
+      "TEMVET10",
+      "Temvet 300mcg/ml Injection 10ml ($162 for 12 or up)",
+      "$ 187.00"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Supplements",
+   "columns": [
+    "Product Code",
+    "Description",
+    "List Price (HKD$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "2800946",
+      "Cvet Pet Intestinal Formula Paste 15ml",
+      "$ 72.00"
+     ]
+    },
+    {
+     "cells": [
+      "2800947",
+      "Cvet Pet Intestinal Formula Paste 30ml",
+      "$ 82.00"
+     ]
+    },
+    {
+     "cells": [
+      "2800949",
+      "Cvet Pet Intestinal Formula Paste 60ml",
+      "$ 97.00"
+     ]
+    },
+    {
+     "cells": [
+      "AMINAVAST300",
+      "AminAvast Cats 300 mg",
+      "$ 230.00"
+     ]
+    },
+    {
+     "cells": [
+      "AMINAVAST1000",
+      "AminAvast Dogs 1000 mg",
+      "$ 320.00"
+     ]
+    },
+    {
+     "cells": [
+      "AMINAMEND300",
+      "AminAmend  Cats 300 mg",
+      "$ 235.00"
+     ]
+    },
+    {
+     "cells": [
+      "AMINAMEND1000",
+      "AminAmend  Dogs 1000 mg",
+      "$ 325.00"
+     ]
+    },
+    {
+     "cells": [
+      "ISOVETD50",
+      "EAC in-sideout for Dog (Vet) 50g",
+      "$ 181.00"
+     ]
+    },
+    {
+     "cells": [
+      "ISOVETD150",
+      "EAC in-sideout for Dogs (Vet) 150g",
+      "$ 399.00"
+     ]
+    },
+    {
+     "cells": [
+      "ISOVETC50",
+      "EAC in-sideout for Cats (Vet) 50g",
+      "$ 181.00"
+     ]
+    },
+    {
+     "cells": [
+      "ISOVETC150",
+      "EAC in-sideout for Cats (Vet) 150g",
+      "$ 399.00"
+     ]
+    },
+    {
+     "cells": [
+      "4CYTE100",
+      "4Cyte Canine 100g Sachet",
+      "$ 338.00"
+     ]
+    },
+    {
+     "cells": [
+      "4CYTE50",
+      "4Cyte Canine 50g Sachet",
+      "$ 189.00"
+     ]
+    },
+    {
+     "cells": [
+      "4CYTEG1L",
+      "4CYTE Epitalis Forte Equine Gel 1L",
+      "$ 2,534.00"
+     ]
+    },
+    {
+     "cells": [
+      "4CYTEG250ML",
+      "4CYTE Epitalis Forte Equine Gel 250ML",
+      "$ 633.50"
+     ]
+    }
+   ]
+  },
+  {
+   "section": "Normal Drugs",
+   "columns": [
+    "Product Code",
+    "Description",
+    "List Price (HKD$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "ACPINJ2",
+      "ACP 2mg/ml Injection 100ml",
+      "$ 143.00"
+     ]
+    },
+    {
+     "cells": [
+      "ACULARED",
+      "Acular 0.5% Eye Drops 5ml",
+      "$ 53.00"
+     ]
+    },
+    {
+     "cells": [
+      "ADREN1/1000",
+      "Adrenaline 1:1000 Injection 1ml 5s",
+      "$ 59.00"
+     ]
+    },
+    {
+     "cells": [
+      "ALUTAB600",
+      "Alutab 600mg Tablets 100s",
+      "$ 263.00"
+     ]
+    },
+    {
+     "cells": [
+      "ALUTAB600",
+      "Alutab 600mg Tablets 100s",
+      "$ 263.00"
+     ]
+    },
+    {
+     "cells": [
+      "AMOD125",
+      "Amodip 1.25mg Flavored Tablets for Cats 30s",
+      "$ 218.00"
+     ]
+    },
+    {
+     "cells": [
+      "APEXPMP15",
+      "Apex PMP Ear Suspension 15ml",
+      "$ 63.00"
+     ]
+    },
+    {
+     "cells": [
+      "APOMORP",
+      "Apomorphine 6.5mg Tablets 20s",
+      "$ 2,027.00"
+     ]
+    },
+    {
+     "cells": [
+      "APOQCW16",
+      "Apoquel 16mg Chewable Tablets 100s",
+      "$ 1,550.00"
+     ]
+    },
+    {
+     "cells": [
+      "APOQCW3.6",
+      "Apoquel 3.6mg Chewable Tablets 100s",
+      "$ 1,028.00"
+     ]
+    },
+    {
+     "cells": [
+      "APOQCW5.4",
+      "Apoquel 5.4mg Chewable Tablets 100s",
+      "$ 1,028.00"
+     ]
+    },
+    {
+     "cells": [
+      "ARANESP10",
+      "Aranesp 10mcg Injection 0.4ml x 4s",
+      "$ 1,624.00"
+     ]
+    },
+    {
+     "cells": [
+      "ATOPSOL17",
+      "Atopica 100mg/ml Cat Oral Solution 17ml",
+      "$ 782.00"
+     ]
+    },
+    {
+     "cells": [
+      "ATOPSOL5",
+      "Atopica 100mg/ml Cat Oral Solution 5ml",
+      "$ 290.00"
+     ]
+    },
+    {
+     "cells": [
+      "BAYT100INJ",
+      "Baytril 100mg/ml Injection 100ml",
+      "$ 918.00"
+     ]
+    },
+    {
+     "cells": [
+      "BAYTO10%",
+      "Baytril 100mg/ml Oral Solution 100ml",
+      "$ 646.00"
+     ]
+    },
+    {
+     "cells": [
+      "BAYTORAL",
+      "Baytril 25mg/ml Oral Solution 100ml",
+      "$ 495.00"
+     ]
+    },
+    {
+     "cells": [
+      "BERA10",
+      "Beransa 10mg/ml Solution for Injection for Dogs 1ml 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "BERA15",
+      "Beransa 15mg/ml Solution for Injection for Dogs 1ml 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "BERA20",
+      "Beransa 20mg/ml Solution for Injection for Dogs 1ml 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "BERA30",
+      "Beransa 30mg/ml Solution for Injection for Dogs 1ml 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "BERA05",
+      "Beransa 5mg/ml Solution for Injection for Dogs 1ml 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "BRICANINJ",
+      "Bricanyl 0.5mg/ml Injection 1ml 5s",
+      "$ 171.00"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "Lead time for the above Dangerous Drugs and Psychotropics is at least 3 months.",
+   "confidence": "0.95"
+  }
+ ]
+}

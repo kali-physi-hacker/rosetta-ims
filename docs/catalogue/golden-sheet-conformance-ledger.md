@@ -273,3 +273,34 @@ Left alone on purpose:
 - Five sheet rows carry **no product code** and two of those no price either
   ("Syringe 3ml" asserts nothing at all). They are untraceable to a page and are
   neither corrected nor removed.
+
+---
+
+# ProVet Kruuse — 2026-09-03
+
+`apps/api/tests/fixtures/catalogue_pipeline/provet_kruuse/golden_sheet_rows.csv`
+is a projection of the sheet filtered to supplier 62 (the sheet files these
+under "Kruuse Hong Kong Ltd"). One correction, verified against
+`Provet Hong Kong Price List - Year 2025 v2.pdf`:
+
+- **Prednefrin Forte Eye Drops 10ml** carried `N/A` as its product code. Page 3
+  prints it as **`PREDNEFRIN`** at $128.00, which is the price the sheet already
+  recorded. Code filled in; nothing else about the row changed.
+
+The other four uncoded rows are right to be uncoded — Atropt, Bactroban,
+Doxycycline paste and Panacur are genuinely not on this price list. ProVet issue
+a separate "Product list" of names carrying no codes and no prices which does
+name some of them, so a product missing here is a price we have not been given.
+
+Not corrected, and needing ProVet rather than a decision here:
+
+- **CERE60 (Cerenia 60mg Tablets 4s) is printed TWICE on page 2**, once at
+  $174.00 and once at $198.00, with the same description. Nothing on the page
+  says which supersedes. The sheet records $198.00 — which is one of the two,
+  so it is not wrong, but it is a record of somebody's choice rather than a
+  reading of the page. Both rows reach the desk deliberately; see
+  `PROVET_CODE_PRINTED_TWICE_AT_DIFFERENT_PRICES`.
+- The sheet's **price-basis column is malformed on these rows** — "1 Set",
+  "1 1 Set", "1 Tab", inconsistent case — and appears to have the quantity
+  leaking into the unit. It is not used: the page states no basis, and the
+  contract reads PACK on the 2026-09-03 ruling that a price buys the pack.

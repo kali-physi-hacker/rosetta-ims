@@ -1,0 +1,470 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "columns": [
+    "Code",
+    "Description",
+    "Price"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "LOSEC10",
+      "Losec 10mg Tablets 30s",
+      "$ 35.00"
+     ]
+    },
+    {
+     "cells": [
+      "LUBREG",
+      "Lubrithal Lubricating Eye Gel 15g",
+      "$ 85.00"
+     ]
+    },
+    {
+     "cells": [
+      "METACOSCAT15",
+      "Metacam 0.5mg/ml Oral Suspension for Cats 15ml",
+      "$ 106.00"
+     ]
+    },
+    {
+     "cells": [
+      "METACOSCAT3",
+      "Metacam 0.5mg/ml Oral Suspension for Cats 3ml",
+      "$ 56.00"
+     ]
+    },
+    {
+     "cells": [
+      "METOMIDE",
+      "Metomide 5mg/ml Anti-Emetic Injection 20ml",
+      "$ 147.00"
+     ]
+    },
+    {
+     "cells": [
+      "METRONIVP",
+      "Metronidazole 500mg IV Bag 100ml",
+      "$ 78.00"
+     ]
+    },
+    {
+     "cells": [
+      "MINIP1MG",
+      "Minipress 1mg Tablets 100s",
+      "$ 39.00"
+     ]
+    },
+    {
+     "cells": [
+      "NEOCORT50",
+      "Neocort Cream 50g",
+      "$ 41.00"
+     ]
+    },
+    {
+     "cells": [
+      "NEXGCCATS",
+      "Nexgard Combo Spot-On Solution for Cats <2.5kg (Small) 0.3ml 3s",
+      "$ 288.00"
+     ]
+    },
+    {
+     "cells": [
+      "NEXGCCATL",
+      "Nexgard Combo Spot-On Solution for Cats 2.5-7.5kg (Large) 0.9ml 3s",
+      "$ 309.00"
+     ]
+    },
+    {
+     "cells": [
+      "OMEP20SA",
+      "Omeprazole 20mg Tablets 30s",
+      "$ 48.00"
+     ]
+    },
+    {
+     "cells": [
+      "ONDAI4MG5S",
+      "Ondansetron 2mg/ml Injection 2ml 5s",
+      "$ 71.00"
+     ]
+    },
+    {
+     "cells": [
+      "ONSIORD10P30",
+      "Onsior 10mg Tablets for Dogs 30s Purple",
+      "$ 179.00"
+     ]
+    },
+    {
+     "cells": [
+      "ONSIORINJ",
+      "Onsior 20mg/ml Injection 20ml",
+      "$ 524.00"
+     ]
+    },
+    {
+     "cells": [
+      "ONSIORC6P",
+      "Onsior 6mg Tablets for Cats 30s Pink",
+      "$ 195.00"
+     ]
+    },
+    {
+     "cells": [
+      "OPTIS3ML5",
+      "Optisulin Insulin Glargine 100IU/ml 3ml Cartridge x 5s",
+      "$ 297.00"
+     ]
+    },
+    {
+     "cells": [
+      "OTOMAX17",
+      "Otomax Ointment 17ml",
+      "$ 166.00"
+     ]
+    },
+    {
+     "cells": [
+      "PALLAD10",
+      "Palladia 10mg Tablets 30s",
+      "$ 935.00"
+     ]
+    },
+    {
+     "cells": [
+      "PALLAD15",
+      "Palladia 15mg Tablets 30s",
+      "$ 1,117.00"
+     ]
+    },
+    {
+     "cells": [
+      "PALLAD50",
+      "Palladia 50mg Tablets 30s",
+      "$ 2,675.00"
+     ]
+    },
+    {
+     "cells": [
+      "PEXION100",
+      "Pexion 100mg Tablets 100s",
+      "$ 320.00"
+     ]
+    },
+    {
+     "cells": [
+      "POPAF10",
+      "Popantel F Flavoured Allwormer Tablets for Dogs 10kg 80s",
+      "$ 1,364.00"
+     ]
+    },
+    {
+     "cells": [
+      "POPAF35",
+      "Popantel F Flavoured Allwormer Tablets for Dogs 35kg 42s",
+      "$ 1,656.00"
+     ]
+    },
+    {
+     "cells": [
+      "PREDNEFRIN",
+      "Prednefrin Forte Eye Drops 10ml",
+      "$ 128.00"
+     ]
+    },
+    {
+     "cells": [
+      "PREDNIL",
+      "Prednil 5/2mg Tablets 1000s",
+      "$ 762.00"
+     ]
+    },
+    {
+     "cells": [
+      "PROPL01",
+      "Propofol Lipura 1% Injection 20ml 5s",
+      "$ 110.00"
+     ]
+    },
+    {
+     "cells": [
+      "REMCRG",
+      "Remend 0.75% Corneal Repair Gel 3ml 10s",
+      "$ 997.00"
+     ]
+    },
+    {
+     "cells": [
+      "RIMADINJ",
+      "Rimadyl 50mg/ml Injection 20ml",
+      "$ 399.00"
+     ]
+    },
+    {
+     "cells": [
+      "SEMINTRA100",
+      "Semintra 4mg/ml Oral solution for Cats 100ml",
+      "$ 932.00"
+     ]
+    },
+    {
+     "cells": [
+      "SEMINTRA30",
+      "Semintra 4mg/ml Oral Solution for Cats 30ml",
+      "$ 355.00"
+     ]
+    },
+    {
+     "cells": [
+      "SERESTDS",
+      "Seresto Collar for Dogs and Puppies (<8kg)",
+      "$ 297.00"
+     ]
+    },
+    {
+     "cells": [
+      "SERESTDL",
+      "Seresto Collar for Dogs (>8kg)",
+      "$ 297.00"
+     ]
+    },
+    {
+     "cells": [
+      "SILDE25MG4",
+      "Sildenafil 25mg Tablets 4s",
+      "$ 56.00"
+     ]
+    },
+    {
+     "cells": [
+      "SOLEC1ML2",
+      "Solensia 7mg/ml Solution for Injection for Cats 1ml 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "SOMACINJ",
+      "Somac 40mg Powder for Injection",
+      "$ 33.00"
+     ]
+    },
+    {
+     "cells": [
+      "SUPRE62S",
+      "Suprelorin 4.7mg Implants for 6 Months 2s",
+      "$ 946.00"
+     ]
+    },
+    {
+     "cells": [
+      "SUPRE12",
+      "Suprelorin 9.4mg Implants for 12 Months 1s",
+      "$ 812.00"
+     ]
+    },
+    {
+     "cells": [
+      "HARTSYK1L",
+      "SYKES Hartmann's Solution for IV Infusion 1000ml",
+      "$ 64.00"
+     ]
+    },
+    {
+     "cells": [
+      "TORB10",
+      "Torbugesic 1% Solution for Injection 10ml",
+      "$ 964.00"
+     ]
+    },
+    {
+     "cells": [
+      "TORB50",
+      "Torbugesic 1% Solution for Injection 50ml",
+      "$ 3,735.00"
+     ]
+    },
+    {
+     "cells": [
+      "TRALIE20",
+      "Tralieve 20mg Tablets For Dogs 100s",
+      "$ 213.00"
+     ]
+    },
+    {
+     "cells": [
+      "TRAMV50",
+      "Tramvetol 50mg Tablets for Dogs 100s",
+      "$ 262.00"
+     ]
+    },
+    {
+     "cells": [
+      "TRICIN",
+      "Tricin Ear & Eye Ointment 4g",
+      "$ 72.00"
+     ]
+    },
+    {
+     "cells": [
+      "TRUSOPT",
+      "Trusopt 2% Eye drop 5ml",
+      "$ 90.00"
+     ]
+    },
+    {
+     "cells": [
+      "UPCARD0.75",
+      "Upcard 0.75mg Tablets 100s",
+      "$ 598.00"
+     ]
+    },
+    {
+     "cells": [
+      "UPCARD3100",
+      "Upcard 3mg Tablets 100s",
+      "$ 876.00"
+     ]
+    },
+    {
+     "cells": [
+      "VERAF04",
+      "Veraflox 25mg/ml Cat Oral Suspension 15ml",
+      "$ 191.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETM1.25",
+      "Vetmedin 1.25mg Capsules 100s",
+      "$ 348.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETMCW1.25",
+      "Vetmedin 1.25mg Chewable Tablets 50s",
+      "$ 182.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETM2.5",
+      "Vetmedin 2.5mg Capsules 100s",
+      "$ 436.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETMCW2.5",
+      "Vetmedin 2.5mg Chewable Tablets 50s",
+      "$ 268.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETM5",
+      "Vetmedin 5mg Capsules 100s",
+      "$ 646.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETMCW5",
+      "Vetmedin 5mg Chewable Tablets 50s",
+      "$ 356.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETO10",
+      "Vetoryl 10mg Capsules 30s",
+      "$ 329.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETO120",
+      "Vetoryl 120mg Capsules 30s",
+      "$ 1,150.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETO30",
+      "Vetoryl 30mg Capsules 30s",
+      "$ 412.00"
+     ]
+    },
+    {
+     "cells": [
+      "VETO5",
+      "Vetoryl 5mg Capsules 30s",
+      "$ 194.00"
+     ]
+    },
+    {
+     "cells": [
+      "VIBRA100P",
+      "Vibravet 100 Paste 100mg/g 2.5g 20s",
+      "$ 2,215.00"
+     ]
+    },
+    {
+     "cells": [
+      "VITACINJ",
+      "Vitamin C 500mg/ml Injection 100ml",
+      "$ 109.00"
+     ]
+    },
+    {
+     "cells": [
+      "VIVIT100",
+      "Vivitonin 100mg Tablets 60s",
+      "$ 398.00"
+     ]
+    },
+    {
+     "cells": [
+      "VIVIT50",
+      "Vivitonin 50mg Tablets 60s",
+      "$ 222.00"
+     ]
+    },
+    {
+     "cells": [
+      "ZITHOS",
+      "Zithromax 200mg/5ml Powder for Oral Suspension 15ml",
+      "$ 115.00"
+     ]
+    },
+    {
+     "cells": [
+      "ZONEG100",
+      "Zonegran 100mg Capsules 56s",
+      "$ 322.00"
+     ]
+    },
+    {
+     "cells": [
+      "ZONEG25",
+      "Zonegran 25mg Capsules 56s",
+      "$ 121.00"
+     ]
+    },
+    {
+     "cells": [
+      "ZONEG50",
+      "Zonegran 50mg Capsules 56s",
+      "$ 161.00"
+     ]
+    }
+   ]
+  }
+ ],
+ "text_observations": []
+}
