@@ -533,13 +533,27 @@ function RunDeskPage() {
     groupOf(item) === 'ambiguous' ? 'pick'
       : groupOf(item) === 'unmatched' ? 'new'
       : check.includes(item) ? 'check' : 'clean'
+  // Every term must appear SOMEWHERE in the row — not all in one field, and not
+  // as one unbroken run of characters. A supplier abbreviates where we spell
+  // out: Royal Canin print "VHN DOG HYPOALLERGENIC 7KG" for what we call
+  // "Royal Canin - Veterinary Diet Hypoallergenic Dry Food for Dogs - 7KG". As
+  // one substring that matched nothing, so pasting a product title found
+  // nothing and the row was reported as untraceable while it sat in the lane.
+  //
+  // Terms are matched across the supplier's name, ours, the draft name, both
+  // SKUs, the barcode and the family key, so "hypoallergenic 7kg", the full
+  // title and "10008586" all land on the same row.
   const results = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (q.length < 2) return null
-    const hit = (v: string | null | undefined) => !!v && v.toLowerCase().includes(q)
-    return items.filter(i =>
-      hit(i.supplier_sku) || hit(i.canonical_sku) || hit(i.name) || hit(i.variant_name)
-      || hit(i.barcode) || hit(i.family_key) || hit(i.draft_name))
+    const terms = q.split(/\s+/).filter(Boolean)
+    return items.filter(i => {
+      const haystack = [
+        i.supplier_sku, i.canonical_sku, i.name, i.variant_name,
+        i.barcode, i.family_key, i.draft_name,
+      ].filter(Boolean).join(' ').toLowerCase()
+      return terms.every(term => haystack.includes(term))
+    })
   }, [items, search, check])
 
   // Where the focused row sits in its lane, remembered so a decision that moves
@@ -739,7 +753,7 @@ function RunDeskPage() {
               <circle cx="7" cy="7" r="4.3" /><path d="M10.5 10.5l3 3" strokeLinecap="round" />
             </svg>
             <input ref={searchRef} value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Find a row — supplier SKU, our SKU, name, barcode" aria-label="Search this run" />
+              placeholder="Find a row — paste a name or a SKU, ours or theirs" aria-label="Search this run" />
             {search && <button className="x" onClick={() => { setSearch(''); searchRef.current?.focus() }} aria-label="Clear search">×</button>}
           </span>
           <span className="kbd" title="Press / to search, Enter to open the next decision">/</span>
@@ -816,7 +830,7 @@ function RunDeskPage() {
                   )
                 })}
                 {results.length === 0 && (
-                  <Empty label={`Nothing in this run matches “${search.trim()}”. Searches supplier SKU, our SKU, name, barcode and family.`} />
+                  <Empty label={`Nothing in this run matches “${search.trim()}”. Every word has to appear somewhere in the row — try fewer.`} />
                 )}
               </div>
             </div>
