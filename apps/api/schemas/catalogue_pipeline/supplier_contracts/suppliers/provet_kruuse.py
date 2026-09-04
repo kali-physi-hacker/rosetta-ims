@@ -87,9 +87,11 @@ _EVIDENCE = [
         SupplierSourceEvidenceType.PARSER_BEHAVIOR,
         "golden:provet_kruuse",
         (
-            "The header is written two ways across the four pages — 'Product Code / "
-            "Description / List Price (HKD$)' on some, the shorter 'Code / Description "
-            "/ Price' on others — so both are declared. CERE60 appears TWICE on page 2 "
+            "The header is written THREE ways across four pages, and which way "
+            "depends on the reading: 'Product Code / Description / List Price (HKD$)', "
+            "the shorter 'Code / Description / Price', and 'Code / Product / Price' — "
+            "the last seen only on a live ingestion, where 71 rows lost their name "
+            "before it was declared. CERE60 appears TWICE on page 2 "
             "at two different prices; the recorded envelope keeps both rows rather than "
             "collapsing them, which is what lets a person see the contradiction."
         ),
@@ -121,7 +123,8 @@ PROVET_KRUUSE_HK_PRICE_LIST_V1 = register_supplier_source_contract(
             ],
             required_headers=[],
             optional_headers=[
-                "Product Code", "Code", "Description", "List Price (HKD$)", "Price",
+                "Product Code", "Code", "Description", "Product",
+                "List Price (HKD$)", "Price",
             ],
             row_eligibility_rules=[
                 "The ingestion supplier must be ProVet Kruuse HK (supplier ID 62).",
@@ -146,6 +149,14 @@ PROVET_KRUUSE_HK_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.PRODUCT_NAME,
                 requirement=SourceFieldRequirement.REQUIRED,
                 source_column="Description",
+                # THREE spellings of this heading have been seen across four
+                # pages of one document — "Description" on two, "Product" on a
+                # third, and the reading varies run to run. A live ingestion
+                # headed page 2 "Code | Product | Price" and, with only
+                # "Description" declared, all 71 rows on it lost their name and
+                # blocked as a missing required field. Matching is on the exact
+                # folded heading, so "Product" cannot capture "Product Code".
+                aliases=["Product", "Product Description", "Item Description", "產品"],
                 description=(
                     "The product, its strength and its pack, in one string: "
                     "'Cerenia 16mg Tablets 4s', 'Methone 10mg/ml Injection 20ml'."
@@ -166,6 +177,7 @@ PROVET_KRUUSE_HK_PRICE_LIST_V1 = register_supplier_source_contract(
                 role=SourceFieldRole.PACKAGING,
                 requirement=SourceFieldRequirement.OPTIONAL,
                 source_column="Description",
+                aliases=["Product", "Product Description", "Item Description"],
                 description=(
                     "The count at the end of the description — the '4s' of 'Tablets 4s'. "
                     "Only the count form is read; a measure is content, not a count."

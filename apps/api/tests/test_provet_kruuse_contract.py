@@ -348,3 +348,39 @@ def test_the_product_list_carries_no_price_to_read():
 
     assert columns == {("Product Name",)}
     assert sum(len(t["rows"]) for t in doc["tables"]) > 700
+
+
+def test_every_heading_this_document_has_used_is_declared():
+    """Three spellings of the same three columns, across four pages of one
+    document, and which you get depends on the reading:
+
+        Product Code | Description | List Price (HKD$)
+        Code         | Description | Price
+        Code         | Product     | Price
+
+    The third was seen only on a live ingestion. With just "Description"
+    declared, the whole page headed "Product" lost its name and 71 rows blocked
+    as a missing required field — the contract had been fitted to the two
+    spellings the recorded pages happened to show.
+
+    Matching is on the exact folded heading, which is what makes "Product" safe
+    to declare alongside "Product Code" rather than a way to put the code into
+    the name.
+    """
+    from services.catalogue_conformance import _column_keys
+
+    declaration = get_supplier_source_contract(CONTRACT, "v1").declaration
+    fields = {f.field_key: f for f in declaration.fields}
+
+    def declared(field):
+        return {k for name in (field.source_column, *field.aliases) if name for k in _column_keys(name)}
+
+    for heading in ("Product Code", "Code"):
+        assert set(_column_keys(heading)) & declared(fields["supplier_sku"]), heading
+    for heading in ("Description", "Product"):
+        assert set(_column_keys(heading)) & declared(fields["product_name"]), heading
+    for heading in ("List Price (HKD$)", "Price"):
+        assert set(_column_keys(heading)) & declared(fields["unit_price"]), heading
+
+    # The one that must NOT hold: the code column may never answer for the name.
+    assert not set(_column_keys("Product Code")) & declared(fields["product_name"])
