@@ -1,0 +1,311 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Scapel blades (Sterile)",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Surgical Scalpel Blades standard, #10, Sterile, 100 pcs/box (#98100710)",
+      "181.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgical Scalpel Blades standard, #11, Sterile, 100 pcs/box (#98100711)",
+      "181.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgical Scalpel Blades standard, #15, Sterile, 100 pcs/box (#98100715)",
+      "181.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgical Scalpel Blades standard, #20, Sterile, 100 pcs/box (#98100720)",
+      "181.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Skin Staple",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Ethicon PROXIMATE Plus MD Skin Stapler 35W, Sterile, 35 Staples/pack, 6packs/box (PMW35)",
+      "850.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgi-Close Staple Removal Forceps (J799R)",
+      "118.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Suction/Aspiration",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Suction Catheter 6Fr x 18\", Sterile, 5 pcs/pack (J695)",
+      "94.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Suction Catheter 8Fr x 18\", Sterile, 5 pcs/pack (J695A)",
+      "94.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Suction Catheter 10Fr x 18\", Sterile, 5 pcs/pack (J695B)",
+      "94.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Suction Catheter 14Fr x 18\", Sterile, 5 pcs/pack (J695C)",
+      "94.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Suction Hose 6 Feet, Sterile (J488)",
+      "67.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Suction Hose 12 Feet, Sterile (J488L)",
+      "70.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Suction Cannister 800cc (J459D1)",
+      "176.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Suction Cannister 1200cc (J459D1A)",
+      "217.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Biopsy Punch and Needles",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Jorvet Bone Marrow Needle, 16g (J116T)",
+      "234.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Osty Core Bone/Biopsy Needle, 16g x 7.5cm (J116C)",
+      "573.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Biopsy/Aspiration Bone Marrow Needle TRAP SET 8g x 4\" (J116K)",
+      "422.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Biopsy/Aspiration Bone Marrow Needle TRAP SET 11g x 4\" (J116M)",
+      "422.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Biopsy/Aspiration Bone Marrow Needle 13g x 4\" (J116S)",
+      "316.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Super Core Biopsy Needle, 14g x 9cm (J528)",
+      "351.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Super Core Biopsy Needle, 16g x 9cm (J528A)",
+      "351.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Super Core Biopsy Needle, 16g x 15cm (J528B)",
+      "351.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Super Core Biopsy Needle, 18g x 9cm (J528C)",
+      "351.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Disposable Skin Biopsy Punch 2mm, per pc (#179202)",
+      "33.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Disposable Skin Biopsy Punch 4mm, per pc (#179204)",
+      "33.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Disposable Skin Biopsy Punch 6mm, per pc (#179206)",
+      "33.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Disposable Skin Biopsy Punch 8mm, per pc (#179208)",
+      "33.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Intravenous Equipment",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Catheter Plug, 5pc/pack (J598)",
+      "95.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Reducing (Barbed) Connector with Female Luer Lock (J282D1)\n- connecting of syringe to catheter (i.e., Foley or feeding tube)",
+      "34.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Smaller Barbed Connector with Female Luer Lock, 2.8mm to 7mm (J282D4)",
+      "42.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Double Christmas Tree Connector, Connects tubing from 4mm to12mm i.d., 2pc/pack (J282D2)",
+      "40.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3-Way Stopcock, Sterile (J462)",
+      "15.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Injection Cap, per pc (IN219)",
+      "14.30"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Micro-Bore \"T\" Extension Set (J467Q)",
+      "35.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Standard Bore \"T\" Extension Set (J467T)",
+      "35.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Small bore T-Port Extension Set, with needle free one-way valve (J467E)",
+      "52.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Standard T-Port Extension Set, with needle free one-way valve (J467Z)",
+      "52.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "supplier_identity_text": "Asia Vet Medical (AVM) Consumable items list",
+ "text_observations": []
+}

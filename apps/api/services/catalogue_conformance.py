@@ -492,6 +492,15 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
         if key.startswith("source:")
     ):
         return None
+    # A document can mix a price list with something else, and the two can share
+    # a column. Covetrus print eleven price tables inside a picture catalogue,
+    # and its descriptive tables carry a Description like the priced ones do —
+    # so the contract names the fields a real row must have at least one of.
+    required_any = runtime_contract.declaration.source_structure.row_requires_any_field
+    if required_any and not any(
+        _text(fields.get(f"source:{key}")) is not None for key in required_any
+    ):
+        return None
     if observation.confidence is not None:
         fields.setdefault("confidence", str(observation.confidence))
     return fields
@@ -1847,6 +1856,15 @@ def _mapped_value(contract_field, value: Any) -> Any:
     is not true of a price basis — there an unmapped unit must hold the row,
     and that is enforced separately by the pricing semantics.
     """
+    pattern = getattr(contract_field, "source_pattern", None)
+    if pattern and value is not None:
+        # Two facts printed in one column; take the declared one and nothing
+        # else. No match means the row does not carry it — the same answer an
+        # empty column gives, and never a guess.
+        found = re.search(pattern, str(value))
+        value = found.group(1) if found else None
+        if value is None:
+            return None
     mapping = getattr(contract_field, "value_map", None)
     if not mapping:
         return value

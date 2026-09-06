@@ -1,0 +1,268 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Autoclave Bags",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Self-Sealing Sterilization Pouches, 60 x 130 mm (200pc/pack)",
+      "88.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Self-Sealing Sterilization Pouches, 70 x 260 mm (200pc/pack)",
+      "105.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Self-Sealing Sterilization Pouches, 90 x 170 mm (200pc/pack)",
+      "129.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Self-Sealing Sterilization Pouches, 90 x 260 mm (200pc/pack)",
+      "139.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Self-Sealing Sterilization Pouches, 135 x 290 mm (200pc/pack)",
+      "237.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Autoclave Rolls",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Eickemeyer Sterilization Reel 5 cm x 200 m, per roll (#502005)",
+      "388.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Eickemeyer Sterilization Reel 7.5 cm x 200 m, per roll (#502007)",
+      "484.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Eickemeyer Sterilization Reel 10 cm x 200 m, per roll (#502010)",
+      "560.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Eickemeyer Sterilization Reel 15 cm x 200 m, per roll (#502015)",
+      "738.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Eickemeyer Sterilization Reel 20 cm x 200 m, per roll (#502020)",
+      "827.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Eickemeyer Sterilization Reel 25 cm x 200 m, per roll (#502025)",
+      "1,530.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Collars",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "EickColl Dog Collar, Neck diam 7 to 8 cm, Length 7.5 cm, 10pc/pack (#220020)",
+      "251.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "EickColl Dog Collar, Neck diam 7 to 8 cm, Length 10 cm, 10pc/pack (#220021)",
+      "270.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "EickColl Dog Collar, Neck diam 9 to 10.5 cm, Length 12 cm, 10pc/pack (#220022)",
+      "310.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "EickColl Dog Collar, Neck diam 10 to 12 cm, Length 15 cm, 10pc/pack (#220023)",
+      "353.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "EickColl Dog Collar, Neck diam 12 to 14 cm, Length 20 cm, 10pc/pack (#220024)",
+      "386.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "EickColl Dog Collar, Neck diam 14 to 16 cm, Length 25 cm, 10pc/pack (#220025)",
+      "496.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "EickColl Dog Collar, Neck diam 15 to 18 cm, Length 30 cm, 10pc/pack (#220026)",
+      "602.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Pet Handling",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "ID Bands, Pre-Cut, White, 20\", 500/ box",
+      "601.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "ID Bands, Pre-Cut, Mix Colors, 20\", 500/ box",
+      "601.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Pet Piller, Pencil style, 12/pack (J384)",
+      "168.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JorVet Pet Piller, Long plastic barrel with plastic plunger, 10/pack (J384XN)",
+      "156.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Orthopedic",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Cruciate Repair Crimp tube 12mm, for 80lb (J710A)",
+      "68.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Cruciate Repair Crimp tube 10mm, for 50lb (J710B)",
+      "68.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "15mm X-Small Cruciate Needle. Swaged onto 50 lb Nylon Suture with 10mm crimp tube. 500mm L. (J710K)",
+      "151.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "20mm Small Cruciate Needle. Swaged onto 80 Lb Nylon leader line with 12mm crimp tube. 800mm L. (J710M)",
+      "151.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "25mm Medium Cruciate Needle. Swaged onto 100 lb Nylon Suture with 12mm crimp tube. 800mm L (J710P)",
+      "151.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Eickemeyer Soft splint, Roll of 11cm W x 1m (#951811)",
+      "140.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Veterinary Plastic Splint Small. 1” x 8\" (2.5 cm x 20 cm), per pc (J119A)",
+      "43.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Veterinary Plastic Splint Medium. 1-1/2” x 12\" (3.8 cm x 30 cm), per pc (J119B)",
+      "52.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Veterinary Plastic Splint Large. 2” x 16\" (5 cm x 40 cm), per pc (J119C)",
+      "60.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": []
+}

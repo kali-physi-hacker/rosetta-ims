@@ -1,0 +1,305 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "I.V. Catheters",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "JELCO I.V. Catheter 14/G x 2\", 50 pcs/box (#050000)",
+      "450.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JELCO I.V. Catheter 16/G x 2\", 50 pcs/box (#050001)",
+      "450.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JELCO I.V. Catheter 18/G x 1.25\", 50 pcs/box (#050002)",
+      "450.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JELCO I.V. Catheter 20/G x 1.25\", 50 pcs/box (#050003)",
+      "450.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JELCO I.V. Catheter 22/G x1\", 50 pcs/box (#050004)",
+      "450.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JELCO I.V. Catheter 24/G x 0.75\", 50 pcs/box (#050005)",
+      "450.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Deltaven I.V. Catheter 26G x 19mm, 50 pcs/box",
+      "1,530.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Blood Transfusion and Infusion Products",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Blood Transfusion and Infusion Set (J65M)",
+      "39.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Blood Bag Collection Unit 450ml (Prefilled CPDA-1 63ml) (J520)",
+      "82.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Blood Bag Collection Unit 250ml (Prefilled CPDA-1 35ml) (J520Q)",
+      "82.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Blood Bag 50ml-150ml (Dry) (J520A)",
+      "74.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Hemo Nate Blood Filtration (J522H)",
+      "86.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Hemo Tap Filter Spike with injection port (BF15)",
+      "86.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgicutt Bleeding Time Device - Junior (J522J)",
+      "99.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgicutt Bleeding Time Device - Adult (J522S)",
+      "99.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Jelly",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Parker Aquasonic Ultrasonic Gel, 5L",
+      "470.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Medline E-Z Lubricating Jelly 2.7 gram, sterile packet, 144 packs/box",
+      "235.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "SurgiLube Surgical Lubricant, 5oz/ tube",
+      "46.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Surgical Scrubbing",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "SB111 Vygon Surgical Scrub Brushes with 4% Chlorhexidine Gluconate, 25 pcs/box",
+      "525.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Hexadermal Alcohol Based Hand Disinfectant 500ml",
+      "77.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Cleaning and Disinfecting",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Midmark Speed-Clean Autoclave and Sterilizer Cleaner 16OZ",
+      "234.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Miltex Instrument Spray Lube 8OZ (ML-3-700)",
+      "141.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3M #70508 Biofilm Removal Multi-Enzyme Cleaner 5L",
+      "810.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3M #7340N Environmental Cleaning Wipe, 100pc per bag",
+      "182.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Autoclave Accessories",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "3M #1322-18MM Comply Lead Free Steam Indicator Tape (Autoclave Tape), 18mm x 55m",
+      "92.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "3M #1243A Comply (SteriGage) Chemical Integrator, 500 pcs/pack",
+      "958.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - White, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - Blue, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - Green, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - Red, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - Yellow, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - Orange, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - Neon Purple, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell Refill - Neon Pink, 10 feet per roll",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Tape N tell set of 8 colors\n- White, Blue, Green, Red, Yellow, Orange, Neon Purple, Neon Pink\n- 3 feet/each color",
+      "603.00"
+     ],
+     "confidence": "0.9"
+    }
+   ]
+  }
+ ],
+ "text_observations": []
+}

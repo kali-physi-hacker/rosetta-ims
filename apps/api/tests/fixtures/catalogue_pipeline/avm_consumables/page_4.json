@@ -1,0 +1,313 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Chest Tubes",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Mila Guidewire Inserted Chest Tube 14Ga x 20cm (8in) with 4cm of fenestrations (CT1404)",
+      "453.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Guidewire Inserted Chest Tube 14Ga x 20cm (8in) with 8cm of fenestrations (CT1410)",
+      "453.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Guidewire Inserted Chest Tube 12Ga x 20cm (8in) with 6cm of fenestrations (CT1206)",
+      "468.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Guidewire Inserted Chest Tube 12Ga x 30cm (12in) with 15cm of fenestrations (CT1210)",
+      "468.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Guidewire Inserted Chest Tube 12Fr x 30cm (12in) Fenestrated up to 16cm (CT12Fr16)",
+      "510.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Silicone Chest Tube - 12Fr x 38cm (15in) with 5cm of sideholes (CT1215)",
+      "375.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Silicone Chest Tube - 14Fr x 38cm (15in) with 7cm of sideholes (CT1415)",
+      "375.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Silicone Chest Tube - 20Fr x 38cm (15in) with 10cm of sideholes (CT2015)",
+      "375.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Silicone Chest Tube - 20Fr x 55cm (22in) with 10cm of sideholes (CT2022)",
+      "375.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Silicone Chest Tube - 30Fr x 55cm (22in) with 12cm of sideholes (CT3022)",
+      "375.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Urethral Catheters",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "JorVet Cat Catheter with side holes, with stylet, 3Fr, 1.0 x 130mm (J153JA)",
+      "45.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "JorVet Cat Catheter with side holes, with stylet, 4Fr, 1.3 x 130mm (J153JB)",
+      "45.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Male Canine Urinary Catheter, Sterile, 4fr x 50cm (J154XS)",
+      "51.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Male Canine Urinary Catheter, Sterile, 6fr x 50cm (J154S)",
+      "51.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Male Canine Urinary Catheter, Sterile, 8fr x 50cm (J154M)",
+      "51.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Male Canine Urinary Catheter, Sterile, 10fr x 50cm (J154L)",
+      "51.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "KatKath catheter 3.5fr x 11cm, per unit (#451100)",
+      "91.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "KatKath catheter 3.5fr x 14cm, per unit (#451101)",
+      "91.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "KatKath catheter 3.5fr x 18cm, Adjustable, 10/box (#451103)",
+      "1,064.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Little Herbert Luer Lock Adapter for Tomcat Catheter (#TCLLA)",
+      "70.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Tomcat Urethral Catheter, 3.5FR, 12cm, Silicone, Sterile, Closed End (#TM35)",
+      "312.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Tomcat Urethral Catheter, 3.5FR, 12cm, Silicone, Sterile, Open End (#TM35OE)",
+      "312.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 11cm, PTFE, Sterile, Closed End (#TTM3511)",
+      "273.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 14cm, PTFE, Sterile, Closed End (#TTM3514)",
+      "251.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Slippery Sam Tomcat Urethral Catheter, 3.0FR, 11cm, PTFE, Sterile, Open End (#TTM3011OE)",
+      "278.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 11cm, PTFE, Sterile, Open End (#TTM3511OE)",
+      "278.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 14cm, PTFE, Sterile, Open End (#TTM3514OE)",
+      "330.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 15cm (6in) (UC306)",
+      "166.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 15cm (6in) with stylet (UC306S)",
+      "193.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 25cm (10in) (UC310)",
+      "166.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 25cm (10in) with stylet (UC310S)",
+      "193.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 15cm (6in) (UC506)",
+      "193.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 15cm (6in) with stylet (UC506S)",
+      "236.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 25cm (10in) (UC510)",
+      "193.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 25cm (10in) with stylet (UC510S)",
+      "236.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Urine Collection",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Mila Closed Urine Collection Kits 600mL (UC600K)",
+      "350.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Closed Urine Collection Kits 1000mL (UC1000K)",
+      "350.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Closed Urine Collection Kits 2000mL (UC2000K)",
+      "350.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Closed Urine Collection bag 600mL, Bag only (UC600)",
+      "310.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Mila Closed Urine Collection bag 1000mL, Bag only (UC1000)",
+      "310.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": []
+}

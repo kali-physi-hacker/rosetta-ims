@@ -29,7 +29,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 EXPECTED_CONTRACT_IDS = [
     "alfamedic.price_list.v1",
+    "asia_vet_medical.consumables_price_list.v1",
     "asia_vet_medical.vetriscience_price_list.v1",
+    "covetrus.branded_products_catalogue.v1",
     "hills.price_list.v1",
     "idexx.order_portal_snapshot.v1",
     "kangaroo.earthz_pet_price_sheet.v1",
@@ -212,6 +214,14 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # AVM's VetriScience list: a real five-column table with an item code on
         # every row, read end to end from the captured page — 31 rows, nothing held.
         "asia_vet_medical.vetriscience_price_list.v1",
+        # AVM's third document — 460 consumables rows, the code and the pack
+        # both read out of the description because the page has no column for
+        # either. Verified 2026-09-06 across all thirteen pages.
+        "asia_vet_medical.consumables_price_list.v1",
+        # Supplier 62's second document: eleven price tables inside a 32-page
+        # picture catalogue. Verified 2026-09-06 — 122 priced rows conform and
+        # the 43 unpriced tables are kept out by row_requires_any_field.
+        "covetrus.branded_products_catalogue.v1",
         # IDEXX's catalogue is read from their ordering portal — AVM invoices it
         # but sends no file. The connector writes the snapshot's headings itself,
         # so the source shape is guaranteed rather than inferred. Verified

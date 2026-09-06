@@ -1,0 +1,607 @@
+{
+  "page_outcome": "evidence",
+  "supplier_identity_text": "KRUUSE HONG KONG LIMITED",
+  "tables": [
+    {
+      "section": "Maxicam™ — 5mg/ml Meloxicam Solution for Injection. For use in Dogs and Cats.",
+      "columns": ["Provet Code", "Description", "Pack Size", "Price"],
+      "rows": [
+        {"cells": ["PV-MAXINJ20", "Covetrus Maxicam™ Meloxicam Injection 5mg/mL", "20mL", "HKD$258"], "confidence": "0.98"},
+        {"cells": ["PV-MAXINJ100", "Covetrus Maxicam™ Meloxicam Injection 5mg/mL", "100mL", "HKD$828"], "confidence": "0.98"}
+      ]
+    },
+    {
+      "section": "Syringes — 3-part Syringe Luer Centric",
+      "columns": ["Item", "Description", "Quantity"],
+      "rows": [
+        {"cells": ["2800655", "Syringe Disposable 3-part 1 ml Luer Centric with Low Dead Space Plunger", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800545", "Syringe Disposable 3-part 1 ml Luer Centric", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800540", "Syringe Disposable 3-part 3 ml Luer Centric", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800541", "Syringe Disposable 3-part 5 ml Luer Centric", "100 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Syringes — 3-part Syringe Luer Eccentric",
+      "columns": ["Item", "Description", "Quantity"],
+      "rows": [
+        {"cells": ["2800546", "Syringe Disposable 3-part 5 ml Luer Eccentric", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800542", "Syringe Disposable 3-part 10 ml Luer Eccentric", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800543", "Syringe Disposable 3-part 20 ml Luer Eccentric", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800548", "Syringe Disposable 3-part 30 ml Luer Eccentric", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800544", "Syringe Disposable 3-part 50 ml Luer Excentric", "50 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Needle + Syringe Combination",
+      "columns": ["Item", "Description", "Syringe", "Dimensions (G x inch)", "Dimensions (mm)", "Colour", "Quantity"],
+      "rows": [
+        {"cells": ["2801951", "Disposable Syringe/Needle", "2-3 ml", "23G x 1\"", "0.6 x 25", "Blue", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2801950", "Disposable Syringe/Needle", "2-3 ml", "21G x 5/8\"", "0.8 x 16", "Green", "100 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Insulin Syringe",
+      "columns": ["Item", "Description", "Quantity"],
+      "rows": [
+        {"cells": ["2800656", "Insulin Syringe Disposable U100 30G x 1/2\" (0.3 x 12 mm) 1 ml", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800657", "Insulin Syringe Disposable U40 30G x 1/2\" (0.3 x 12 mm) 1 ml", "100 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Hypodermic Needles",
+      "columns": ["Item", "Description", "Dimensions (G x inch)", "Dimensions (mm)", "Colour", "Quantity"],
+      "rows": [
+        {"cells": ["2800653", "Hypodermic Needle Long Bevel Luer Lock", "27G x 3/4\"", "0.40 x 20", "Grey", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800650", "Hypodermic Needle Long Bevel Luer Lock", "25G x 5/8\"", "0.50 x 16", "Orange", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800649", "Hypodermic Needle Long Bevel Luer Lock", "24G x 1\"", "0.55 x 25", "Violet", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800648", "Hypodermic Needle Long Bevel Luer Lock", "23G x 1\"", "0.60 x 25", "Blue", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800647", "Hypodermic Needle Long Bevel Luer Lock", "23G x 1 1/4\"", "0.60 x 30", "Blue", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800645", "Hypodermic Needle Long Bevel Luer Lock", "23G x 3/4\"", "0.60 x 20", "Blue", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800643", "Hypodermic Needle Long Bevel Luer Lock", "22G x 3/4\"", "0.70 x 20", "Black", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800644", "Hypodermic Needle Long Bevel Luer Lock", "22G x 1 1/4\"", "0.70 x 30", "Black", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800642", "Hypodermic Needle Long Bevel Luer Lock", "21G x 1\"", "0.80 x 25", "Green", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800641", "Hypodermic Needle Long Bevel Luer Lock", "21G x 1 1/2\"", "0.80 x 40", "Green", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800639", "Hypodermic Needle Long Bevel Luer Lock", "20G x 1\"", "0.90 x 25", "Yellow", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800638", "Hypodermic Needle Long Bevel Luer Lock", "20G x 1 1/2\"", "0.90 x 40", "Yellow", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800637", "Hypodermic Needle Long Bevel Luer Lock", "19G x 1\"", "1.10 x 25", "Beige", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800635", "Hypodermic Needle Long Bevel Luer Lock", "18G x 1\"", "1.20 x 25", "Pink", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800636", "Hypodermic Needle Long Bevel Luer Lock", "18G x 1 1/2\"", "1.20 x 40", "Pink", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800633", "Hypodermic Needle Short Bevel Luer Lock", "16G x 1 1/2\"", "1.60 x 40", "White", "100 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "IV Catheters — IV Catheter without Port and without Wings",
+      "columns": ["Item", "Description", "Dimensions (G x inch)", "Dimensions (mm)", "Colour", "Quantity"],
+      "rows": [
+        {"cells": ["2800714", "IV Catheter without Port without Wings", "24G x 3/4\"", "0.75 x 19 mm", "Yellow", "50 pcs"], "confidence": "0.97"},
+        {"cells": ["2800713", "IV Catheter without Port without Wings", "22G x 1\"", "0.90 x 25 mm", "Blue", "50 pcs"], "confidence": "0.97"},
+        {"cells": ["2800712", "IV Catheter without Port without Wings", "20G x 1 1/4\"", "1.00 x 32 mm", "Rose", "50 pcs"], "confidence": "0.97"},
+        {"cells": ["2800710", "IV Catheter without Port without Wings", "18G x 1 1/4\"", "1.30 x 32 mm", "Green", "50 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Winged Needles",
+      "columns": ["Item", "Description", "Dimensions (G x inch)", "Dimensions (mm)", "Colour"],
+      "rows": [
+        {"cells": ["2800695", "Winged Needle Infusion Set", "23G x 3/4\"", "0.6 x 20 mm", "Blue"], "confidence": "0.97"},
+        {"cells": ["2800697", "Winged Needle Infusion Set", "21G x 3/4\"", "0.8 x 20 mm", "Green"], "confidence": "0.97"},
+        {"cells": ["2800698", "Winged Needle Infusion Set", "19G x 3/4\"", "1.1 x 20 mm", "Beige"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Infusion Set Accessories — 3-Way Stop Cock",
+      "columns": ["1 PCS", "Description"],
+      "rows": [
+        {"cells": ["2801829", "3-way Stop Cock Red"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Tape — Silk Adhesive Tape",
+      "columns": ["Item", "Description", "Dimensions", "Quantity"],
+      "rows": [
+        {"cells": ["2800846", "Silk Adhesive Wound Dressing on a Roll, White", "5 m x 2.50 cm", "12 roll"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Tape — Non-woven Paper Tape",
+      "columns": ["Item", "Description", "Dimensions", "Quantity"],
+      "rows": [
+        {"cells": ["2800848", "Non-woven Paper Tape, White", "5 m x 1.25 cm", "18 roll"], "confidence": "0.97"},
+        {"cells": ["2800849", "Non-woven Paper Tape, White", "5 m x 2.50 cm", "12 roll"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Tape — Sport Tape",
+      "columns": ["Item", "Description", "Dimensions", "Quantity"],
+      "rows": [
+        {"cells": ["2800851", "Sport Tape, White", "10 m x 2.5 cm", "1 roll"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Urinary Catheters — Urinary Catheter Cat — Without Stylet",
+      "columns": ["1pc", "Description"],
+      "rows": [
+        {"cells": ["2800035", "Cat Urinary Catheter Closed End without Stylet 3FG (1.00 x 130 mm)"], "confidence": "0.97"},
+        {"cells": ["2800036", "Cat Urinary Catheter Closed End without Stylet 4FG (1.33 x 130 mm)"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Urinary Catheters — Urinary Catheter Cat — With Stylet",
+      "columns": ["1pc", "Description"],
+      "rows": [
+        {"cells": ["2800037", "Cat Urinary Catheter Closed End with Stylet 3FG (1.00 x 130 mm)"], "confidence": "0.97"},
+        {"cells": ["2800038", "Cat Urinary Catheter Closed End with Stylet 4FG (1.33 x 130 mm)"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Urinary Catheters — Urinary Catheters Dog",
+      "columns": ["1pc", "Description"],
+      "rows": [
+        {"cells": ["2800047", "Dog Urinary Catheter 10FG (3.33 x 500 mm)"], "confidence": "0.97"},
+        {"cells": ["2800049", "Dog Urinary Catheter 6FG (2.00 x 500 mm)"], "confidence": "0.97"},
+        {"cells": ["2800050", "Dog Urinary Catheter 8FG (2.66 x 500 mm)"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Cohesive Bandage — Regular Cohesive Bandage",
+      "columns": ["Item", "Description", "Dimensions", "Quantity"],
+      "rows": [
+        {"cells": ["2800055", "Cohesive Bandages, Blue", "5.0 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800056", "Cohesive Bandages, Red", "5.0 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800057", "Cohesive Bandages, Green", "5.0 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800058", "Cohesive Bandages, Light Blue", "5.0 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800059", "Cohesive Bandages, Orange", "5.0 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800063", "Cohesive Bandages, Blue", "7.5 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800064", "Cohesive Bandages, Red", "7.5 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800065", "Cohesive Bandages, Green", "7.5 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800066", "Cohesive Bandages, Light Blue", "7.5 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800067", "Cohesive Bandages, Orange", "7.5 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800071", "Cohesive Bandages, Blue", "10 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800072", "Cohesive Bandages, Red", "10 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800073", "Cohesive Bandages, Green", "10 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800074", "Cohesive Bandages, Light Blue", "10 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800075", "Cohesive Bandages, Orange", "10 cm x 4.5 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800076", "Cohesive Bandages, White", "10 cm x 4.5 m", "1 roll"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Orthopedic Casting — Orthopedic Casting Tape",
+      "columns": ["Item", "Description", "Width", "Length", "Quantity"],
+      "rows": [
+        {"cells": ["2800585", "Orthopedic Casting Tape, White", "10 cm", "3.6 m", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800588", "Orthopedic Casting Tape, Blue", "7.5 cm", "3.6 m", "1 roll"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Orthopedic Casting — Synthetic Padding",
+      "columns": ["Item", "Description", "Dimensions", "Quantity"],
+      "rows": [
+        {"cells": ["2800859", "Synthetic Padding Bandage", "3 m x 6 cm", "1 pc"], "confidence": "0.97"},
+        {"cells": ["2801550", "Synthetic Padding Bandage", "3 m x 10 cm", "1 pc"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Orthopedic Casting — Elastic Adhesive Bandage",
+      "columns": ["Item", "Description", "Dimensions", "Quantity"],
+      "rows": [
+        {"cells": ["2800051", "Elastic Adhesive Bandage", "4.5 m x 2.5 cm (1\")", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800052", "Elastic Adhesive Bandage", "4.5 m x 5.0 cm (2\")", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800053", "Elastic Adhesive Bandage", "4.5 m x 7.5 cm (3\")", "1 roll"], "confidence": "0.97"},
+        {"cells": ["2800054", "Elastic Adhesive Bandage", "4.5 m x 10 cm (4\")", "1 roll"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Gauze Swabs — Non-woven — Non-sterile – 4 Layer",
+      "columns": ["Item", "Description", "Dimensions", "Ply", "Quantity"],
+      "rows": [
+        {"cells": ["2800215", "Gauze Swabs Non-Woven Non-sterile", "7.5 x 7.5 cm", "4ply", "200 / bag"], "confidence": "0.97"},
+        {"cells": ["2800216", "Gauze Swabs Non-Woven Non-sterile", "10 x 10 cm", "4ply", "200 / bag"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Gauze Swabs — Hydrophilic — Non-sterile",
+      "columns": ["Item", "Description", "Dimensions", "Ply", "Quantity"],
+      "rows": [
+        {"cells": ["2800220", "Gauze Swabs Hydrophilic Non-sterile", "7.5 x 7.5 cm", "8ply", "100 / pack"], "confidence": "0.97"},
+        {"cells": ["2800222", "Gauze Swabs Hydrophilic Non-sterile", "10 x 10 cm", "8ply", "100 / pack"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Gauze Swabs — Sterile X-ray",
+      "columns": ["Item", "Description", "Dimensions", "Ply", "Quantity"],
+      "rows": [
+        {"cells": ["2800226", "Gauze Swabs X-ray Hydrophilic Sterile", "5 x 5 cm", "12ply", "10 x 10 pcs"], "confidence": "0.97"},
+        {"cells": ["2800227", "Gauze Swabs X-ray Hydrophilic Sterile", "7.5 x 7.5 cm", "12ply", "10 x 10 pcs"], "confidence": "0.97"},
+        {"cells": ["2800228", "Gauze Swabs X-ray Hydrophilic Sterile", "10 x 10 cm", "12ply", "10 x 10 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Gloves — Latex Examination Gloves — Latex Powder-free Aloe Vera",
+      "columns": ["Item", "Description", "Size", "Quantity"],
+      "rows": [
+        {"cells": ["2800114", "Latex Examination Gloves Aloe Vera Powder-free, White", "XS", "100 / box"], "confidence": "0.97"},
+        {"cells": ["2800115", "Latex Examination Gloves Aloe Vera Powder-free White", "S", "100 / box"], "confidence": "0.97"},
+        {"cells": ["2800116", "Latex Examination Gloves Aloe Vera Powder-free White", "M", "100 / box"], "confidence": "0.97"},
+        {"cells": ["2800117", "Latex Examination Gloves Aloe Vera Powder-free White", "L", "100 / box"], "confidence": "0.97"},
+        {"cells": ["2800118", "Latex Examination Gloves Aloe Vera Powder-free White", "XL", "100 / box"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Gloves — Nitrile Examination Gloves — Nitrile Powder-free",
+      "columns": ["Item", "Description", "Size", "Quantity"],
+      "rows": [
+        {"cells": ["2800741", "Nitrile Examination Gloves Powder-free, Blue", "S", "200 / box"], "confidence": "0.97"},
+        {"cells": ["2800742", "Nitrile Examination Gloves Powder-free, Blue", "M", "200 / box"], "confidence": "0.97"},
+        {"cells": ["2800743", "Nitrile Examination Gloves Powder-free, Blue", "L", "200 / box"], "confidence": "0.97"},
+        {"cells": ["2800744", "Nitrile Examination Gloves Powder-free, Blue", "XL", "180 / box"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Surgical Gloves — Latex Powder-free",
+      "columns": ["Item", "Description", "Size", "Quantity"],
+      "rows": [
+        {"cells": ["2800902", "Sterile Surgeons Gloves - Latex Powder-free", "6", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800903", "Sterile Surgeons Gloves - Latex Powder-free", "6.5", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800904", "Sterile Surgeons Gloves - Latex Powder-free", "7", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800905", "Sterile Surgeons Gloves - Latex Powder-free", "7.5", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800906", "Sterile Surgeons Gloves - Latex Powder-free", "8", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800907", "Sterile Surgeons Gloves - Latex Powder-free", "8.5", "50 pairs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Surgical Gloves — Latex Powdered",
+      "columns": ["Item", "Description", "Size", "Quantity"],
+      "rows": [
+        {"cells": ["2800910", "Sterile Surgeons Gloves Latex Lightly Powdered", "6", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800911", "Sterile Surgeons Gloves Latex Lightly Powdered", "6.5", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800912", "Sterile Surgeons Gloves Latex Lightly Powdered", "7", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800913", "Sterile Surgeons Gloves Latex Lightly Powdered", "7.5", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800914", "Sterile Surgeons Gloves Latex Lightly Powdered", "8", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2800915", "Sterile Surgeons Gloves Latex Lightly Powdered", "8.5", "50 pairs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "NutriCareVet - Feline & Canine supplement - Intestinal formula paste",
+      "columns": ["Item", "Content", "Net Weight"],
+      "rows": [
+        {"cells": ["2800946", "Pet intestinal formula Paste", "15 ml"], "confidence": "0.97"},
+        {"cells": ["2800947", "Pet intestinal formula Paste", "30 ml"], "confidence": "0.97"},
+        {"cells": ["2800949", "Pet intestinal formula Paste", "60 ml"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Surgical Consumables — Scalpel Blades — Carbon Steel",
+      "columns": ["Carbon Steel", "Description", "Quantity"],
+      "rows": [
+        {"cells": ["2800987", "Scalpel Blades #10", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800988", "Scalpel Blades #11", "100 pcs"], "confidence": "0.97"},
+        {"cells": ["2800990", "Scalpel Blades #15", "100 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Surgical Consumables — Scalpel Handles — Scalpel Handle #3",
+      "columns": ["Item", "Description", "Size"],
+      "rows": [
+        {"cells": ["2801253", "Scalpel Handle #3, Suitable for 1 Blade", "3"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Surgical Consumables — Scalpel Handles — Scalpel Handle #4",
+      "columns": ["Item", "Description", "Size"],
+      "rows": [
+        {"cells": ["2801254", "Scalpel Handle #4", "4"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Self-seal Pouch",
+      "columns": ["Item", "Description", "Dimensions", "Quantity"],
+      "rows": [
+        {"cells": ["2800771", "Self-seal Pouch", "83 x 159 mm", "200 pcs"], "confidence": "0.97"},
+        {"cells": ["2800772", "Self-seal Pouch", "89 x 254 mm", "200 pcs"], "confidence": "0.97"},
+        {"cells": ["2800773", "Self-seal Pouch", "134 x 280 mm", "200 pcs"], "confidence": "0.97"},
+        {"cells": ["2800774", "Self-seal Pouch", "190 x 356 mm", "200 pcs"], "confidence": "0.97"},
+        {"cells": ["2800775", "Self-seal Pouch", "254 x 381 mm", "200 pcs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Autoclave Tape",
+      "columns": ["Item", "Description", "Dimensions"],
+      "rows": [
+        {"cells": ["2800888", "Autoclave Tape", "19 mm x 50 m"], "confidence": "0.97"},
+        {"cells": ["2800889", "Autoclave Tape", "25 mm x 50 m"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Instrument Tapes",
+      "columns": ["Item", "Description", "Size"],
+      "rows": [
+        {"cells": ["2801858", "Instrument ID Tape Kit Assorted Neon Colours", "8 x 1 m roll"], "confidence": "0.97"},
+        {"cells": ["2801859", "Instrument ID Tape Neon Blue", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801860", "Instrument ID Tape Neon Green", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801861", "Instrument ID Tape Red", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801862", "Instrument ID Tape White", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801863", "Instrument ID Tape Neon Yellow", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801864", "Instrument ID Tape Gray", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801865", "Instrument ID Tape Copper", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801914", "Instrument ID Tape Neon Orange", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801915", "Instrument ID Tape Neon Purple", "1 x 3 m roll"], "confidence": "0.97"},
+        {"cells": ["2801916", "Instrument ID Tape Neon Pink", "1 x 3 m roll"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Skin Stapler — Skin Staplers",
+      "columns": ["Item", "Description", "Size"],
+      "rows": [
+        {"cells": ["2800578", "35 Regular", "5.9 mm x 3.9 mm"], "confidence": "0.97"},
+        {"cells": ["2800576", "35 Wide", "7.2 mm x 4.9 mm"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Skin Stapler — Single Use Staple Remover",
+      "columns": ["Item", "Description", "Size", "Package"],
+      "rows": [
+        {"cells": ["2800577", "Staple Remover", "Universal", "1 Remover"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Adhesive Fenestrated Drape",
+      "columns": ["Item", "Description"],
+      "rows": [
+        {"cells": ["2800086", "Drape Sterile 30 x 45 cm Adhesive Fenestrated 5 x 10 cm"], "confidence": "0.97"},
+        {"cells": ["2800088", "Drape Sterile 45 x 75 cm Adhesive Fenestrated 9 x 20 cm"], "confidence": "0.97"},
+        {"cells": ["2800089", "Drape Sterile 45 x 75 cm Adhesive Fenestrated 8 x 25 cm"], "confidence": "0.97"},
+        {"cells": ["2800089", "Drape Sterile 88 x 75 cm Adhesive Fenestrated 27 x 13 cm"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Personal Protection Equipment (PPE) — Bouffant Caps",
+      "columns": ["Item", "Description", "Size"],
+      "rows": [
+        {"cells": ["2802012", "Bouffant Cap Non-woven, Blue", "61 cm"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Personal Protection Equipment (PPE) — Shoe Covering — Shoes",
+      "columns": ["Item", "Description", "Quantity"],
+      "rows": [
+        {"cells": ["2802013", "Shoe Covers Non-woven PP, Non-skid, Blue, One size", "50 pairs"], "confidence": "0.97"},
+        {"cells": ["2802027", "Shoe Covers, Non-woven PE, Blue, One size", "50 pairs"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Others — Pet Identification Chips — ISO 11784/11785 Standard",
+      "columns": ["Item", "Description", "Size", "Country code", "Quantity"],
+      "rows": [
+        {"cells": ["2800473", "Pet Identification Chip RTU", "Small (1.5 x 9 mm)", "Universal/manufacturer", "10 / box"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "NutriCareVet - CatLax Hairball Remover- Hairball support",
+      "columns": ["Item", "Content", "Net Weight"],
+      "rows": [
+        {"cells": ["2800628", "Paste", "60 g"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Diagnostics — Biopsy Punches — Biopsy Punch",
+      "columns": ["Item", "Description", "Size", "Quantity"],
+      "rows": [
+        {"cells": ["2800971", "Biopsy Punch Sterile", "2.0 mm", "10 / box"], "confidence": "0.97"},
+        {"cells": ["2800972", "Biopsy Punch Sterile", "3.0 mm", "10 / box"], "confidence": "0.97"},
+        {"cells": ["2800973", "Biopsy Punch Sterile", "4.0 mm", "10 / box"], "confidence": "0.97"},
+        {"cells": ["2800974", "Biopsy Punch Sterile", "5.0 mm", "10 / box"], "confidence": "0.97"},
+        {"cells": ["2800975", "Biopsy Punch Sterile", "6.0 mm", "10 / box"], "confidence": "0.97"},
+        {"cells": ["2800976", "Biopsy Punch Sterile", "7.0 mm", "10 / box"], "confidence": "0.97"},
+        {"cells": ["2800977", "Biopsy Punch Sterile", "8.0 mm", "10 / box"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Diagnostics — Urine Test Strips",
+      "columns": ["Item", "Description", "Quantity"],
+      "rows": [
+        {"cells": ["2800566", "Vet Urine Test Strips 10 Way", "100 strips"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Diagnostics — Thermometers — Digital Thermometer with Flexi Tip",
+      "columns": ["Item", "Description"],
+      "rows": [
+        {"cells": ["2800569", "Digital Thermometer with Flexi Tip"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Diagnostics — Thermometers — Thermometer Cover",
+      "columns": ["Item", "Description", "Quantity"],
+      "rows": [
+        {"cells": ["2800832", "Thermometer Cover", "50 / pk"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — SYRINGES",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800540", "Cvet 3-part Syringes Luer centre 3ml 100s", "$54.00", "7"], "confidence": "0.97"},
+        {"cells": ["CV-2800541", "Cvet 3-part Syringes Luer centre 5ml 100s", "$70.00", "7"], "confidence": "0.97"},
+        {"cells": ["CV-2800545", "Cvet 3-part Syringes Luer centre 1ml 100s", "$55.00", "7"], "confidence": "0.97"},
+        {"cells": ["CV-2800542", "Cvet 3-part Syringes Luer side 10ml 100s", "$95.00", "7"], "confidence": "0.97"},
+        {"cells": ["CV-2800543", "Cvet  3-part Syringes Luer side 20ml  100s", "$150.00", "7"], "confidence": "0.97"},
+        {"cells": ["CV-2800544", "Cvet 3-part Syringes Luer side 50ml 50s", "$240.00", "7"], "confidence": "0.97"},
+        {"cells": ["CV-2801950", "Cvet Syringe with Needle 2ml 21G x 5/8\" 100s", "$70.00", "8"], "confidence": "0.97"},
+        {"cells": ["CV-2801951", "Cvet Syringe with Needle 2ml 23G x 1\" 100s", "$70.00", "8"], "confidence": "0.97"},
+        {"cells": ["CV-2800656", "Cvet Insulin Syringe U100 30G x 1/2\" 1ml 100s", "$135.00", "8"], "confidence": "0.97"},
+        {"cells": ["CV-2800657", "Cvet Insulin Syringe U40 30G x 1/2\" 1ml 100s", "$135.00", "8"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — NEEDLES",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800642", "CVET Hypodermic Needle 21Gx1\" Green 100pk", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800644", "CVET Hypodermic Needle 22Gx1.25\" Black 100pk", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800649", "CVET Hypodermic Needle 24Gx1\" Purple 100pk", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800635", "Cvet Needle RW 18G Pink x 1\" / 1,20 x 25 mm 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800637", "Cvet Needle RW 19G Beige 1\" / 0,70 x 25 mm 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800639", "Cvet Needle RW 20G Yellow x1\" 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800638", "Cvet Needle RW 20G Yellow x1-1/2\" 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800641", "Cvet Needle RW 21G Green x1 1/2\" / 0,80 x 40mm 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800643", "Cvet Needle RW 22G Black x 3/4\" / 0,70 x 20 mm 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800648", "Cvet Needle RW 23G Blue 0,60 x 25mm (1 \") 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800647", "Cvet Needle RW 23G Blue x 1 1/4\" / 0,60 x 30 mm 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800645", "Cvet Needle RW 23G Blue x 3/4\" / 0,60 x 20 mm 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800650", "Cvet Needle RW 25G Orange 0,50 x 16mm (5/8 \") 100s", "$35.00", "9"], "confidence": "0.97"},
+        {"cells": ["CV-2800653", "Cvet Needle RW 27G Grey x 3/4\"  x 20 mm 100s", "$35.00", "9"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — IV INFUSION",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800710", "CVet I.V. Catheter 18G 32mm Green (w/o injection port & wings)", "$7.00", "10"], "confidence": "0.97"},
+        {"cells": ["CV-2800712", "CVet I.V. Catheter 20G 32mm Rose (w/o injection port & wings)", "$7.00", "10"], "confidence": "0.97"},
+        {"cells": ["CV-2800713", "CVet I.V. Catheter 22G 25mm Blue (w/o injection port & wings)", "$7.00", "10"], "confidence": "0.97"},
+        {"cells": ["CV-2800714", "CVet I.V. Catheter 24G 19mm Yellow (w/o injection port & wings)", "$7.00", "10"], "confidence": "0.97"},
+        {"cells": ["CV-2800698", "CVET Winged Needle Infusion Set 19G 20mm", "$4.00", "10"], "confidence": "0.97"},
+        {"cells": ["CV-2800697", "CVET Winged Needle Infusion Set 21G 20mm", "$4.00", "10"], "confidence": "0.97"},
+        {"cells": ["CV-2800695", "CVET Winged Needle Infusion Set 23G 20mm", "$4.00", "10"], "confidence": "0.97"},
+        {"cells": ["CV-2801829", "Cvet 3 Way Stop Cock", "$4.00", "11"], "confidence": "0.97"},
+        {"cells": ["CV-2800851", "Cvet IV Catheter Tape 2.5cm x 10m", "$15.00", "11"], "confidence": "0.97"},
+        {"cells": ["CV-2800848", "Cvet Micropore Tape 1.25cmx5m 18pk", "$108.00", "11"], "confidence": "0.97"},
+        {"cells": ["CV-2800849", "Cvet Micropore Tape 2.5cmx5m 12pk", "$238.00", "11"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — URINARY CATHETERS",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800047", "Cvet Dog Catheter 10FG (3.33 x 500mm)", "$33.00", "12"], "confidence": "0.97"},
+        {"cells": ["CV-2800049", "Cvet Dog Catheter 6FG (2.00 x 500mm)", "$33.00", "12"], "confidence": "0.97"},
+        {"cells": ["CV-2800050", "Cvet Dog Catheter 8FG (2.66 x 500mm)", "$33.00", "12"], "confidence": "0.97"},
+        {"cells": ["CV-2800037", "CV Cat Catheter With Stylet 3FG (1.00 x 130mm)", "$25.00", "12"], "confidence": "0.97"},
+        {"cells": ["CV-2800038", "CV Cat Catheter With Stylet 4FG (1.33 x 130mm)", "$25.00", "12"], "confidence": "0.97"},
+        {"cells": ["CV-2800035", "CV Cat Catheter Without Stylet 3FG (1.33 x 130mm)", "$20.00", "12"], "confidence": "0.97"},
+        {"cells": ["CV-2800036", "CV Cat Catheter Without Stylet 4FG (1.33 x 130mm)", "$20.00", "12"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — WOUND CARE AND BANDAGING",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800228", "Cvet Xray Detectable Gauze Sterile 10cm x 10cm 12ply 100s", "$56.00", "16"], "confidence": "0.97"},
+        {"cells": ["CV-2800227", "Cvet Xray Detectable Gauze Sterile 7.5cm x 7.5cm 12ply 100s", "$45.00", "16"], "confidence": "0.97"},
+        {"cells": ["CV-2800226", "Cvet Xray Detectable Gauze Sterile 5cm x 5cm 12ply 100s", "$30.00", "16"], "confidence": "0.97"},
+        {"cells": ["CV-2800055 ~ 2800059", "Cvet Cohesive Bandages 5cm Colour Ea (36 Rolls/Bx)", "$5.00", "13"], "confidence": "0.97"},
+        {"cells": ["CV-2800063 ~ 2800067", "Cvet Cohesive Bandages 7.5cm Colour Ea (24 Rolls/Bx)", "$7.50", "13"], "confidence": "0.97"},
+        {"cells": ["CV-2800071 ~ 2800076", "Cvet Cohesive Bandages 10cm Colours Ea (18 Rolls/Bx)", "$9.00", "13"], "confidence": "0.97"},
+        {"cells": ["CV-2800054", "Cvet Elastic Adhesive Bandage 10cm", "$28.00", "14"], "confidence": "0.97"},
+        {"cells": ["CV-2800851", "Cvet IV Catheter Tape 2.5cm x 10m", "$15.00", "11"], "confidence": "0.97"},
+        {"cells": ["CV-2800052", "Cvet Elastic Adhesive Bandage 5cm", "$18.00", "14"], "confidence": "0.97"},
+        {"cells": ["CV-2800053", "Cvet Elastic Adhesive Bandage 7.5cm", "$18.00", "14"], "confidence": "0.97"},
+        {"cells": ["CV-2800585", "Cvet Orthopedic Casting Tape 10cm White", "$85.00", "14"], "confidence": "0.97"},
+        {"cells": ["CV-2800588", "Cvet Orthopedic Casting Tape 7.5cm Blue", "$75.00", "14"], "confidence": "0.97"},
+        {"cells": ["CV-2801550", "CVet padding bandage 10cm", "$18.00", "14"], "confidence": "0.97"},
+        {"cells": ["CV-2800859", "CVet padding Bandage 6cm", "$13.00", "14"], "confidence": "0.97"},
+        {"cells": ["CV-2800215", "Covetrus Non-Woven Sponge NS - 7,5x7,5cm 200s", "$20.00", "15"], "confidence": "0.97"},
+        {"cells": ["CV-2800216", "Covetrus Non-Woven Sponge NS - 10x10cm 200s", "$28.00", "15"], "confidence": "0.97"},
+        {"cells": ["CV-2800220", "Covetrus Gauze swabs NS - 7,5x7,5cm - 8ply 100s", "$15.00", "15"], "confidence": "0.97"},
+        {"cells": ["CV-2800222", "Covetrus Gauze swabs NS - 10x10cm - 8ply 100s", "$23.00", "15"], "confidence": "0.97"},
+        {"cells": ["CV-2800846", "Cvet Silk Adh Wound Dressing on a roll 5m x 2.5cm WH", "$11.00", "11"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — EXAMINATION GLOVES",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800118", "Cvet Latex Exam Gloves with Aloe Vera Extra Large", "$75.00", "17 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800117", "Cvet Latex Exam Gloves with Aloe Vera Large", "$75.00", "17 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800116", "Cvet Latex Exam Gloves with Aloe Vera Medium", "$75.00", "17 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800115", "Cvet Latex Exam Gloves with Aloe Vera Small", "$75.00", "17 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800114", "Cvet Latex Exam Gloves with Aloe Vera Xtra Small", "$75.00", "17 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800741", "CVET Nitrile Exam Gloves PF S Blue 200s", "$75.00", "17 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800742", "CVET Nitrile Exam Gloves PF M Blue 200s", "$75.00", "17 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800743", "CVET Nitrile Exam Gloves PF L Blue 200s", "$75.00", "17 & 19"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — SURGICAL GLOVES",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800910", "CVET Surgical Gloves L/POW 6 50s", "$250.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800911", "CVET Surgical Gloves L/POW 6.5 50s", "$250.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800912", "CVET Surgical Gloves L/POW 7  50s", "$250.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800913", "CVET Surgical Gloves L/POW 7.5 50s", "$250.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800914", "CVET Surgical Gloves L/POW 8 50s", "$250.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800915", "CVET Surgical Gloves L/POW 8.5 50s", "$290.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800902", "CVET Surgical Gloves P/F 6 50'S", "$290.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800903", "CVET Surgical Gloves P/F 6.5 50'S", "$290.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800904", "CVET Surgical Gloves P/F 7 50'S", "$290.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800905", "CVET Surgical Gloves P/F 7.5 50'S", "$290.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800906", "CVET Surgical Gloves P/F 8 50'S", "$290.00", "18 & 19"], "confidence": "0.97"},
+        {"cells": ["CV-2800907", "CVET Surgical Gloves P/F 8.5 50'S", "$290.00", "18 & 19"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — SURGICAL CONSUMABLES",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800987", "Cvet Scalpel Blades # 10 Carbon Steel 100s", "$88.00", "21"], "confidence": "0.97"},
+        {"cells": ["CV-2800988", "Cvet Scalpel Blades # 11 Carbon Steel 100s", "$88.00", "21"], "confidence": "0.97"},
+        {"cells": ["CV-2800990", "Cvet Scalpel Blades # 15 Carbon Steel 100s", "$88.00", "21"], "confidence": "0.97"},
+        {"cells": ["CV-2801253", "Cvet Scalpel Handle #3", "$48.00", "21"], "confidence": "0.97"},
+        {"cells": ["CV-2801254", "Cvet Scalpel Handle #4", "$48.00", "21"], "confidence": "0.97"},
+        {"cells": ["CV-2800578", "Covetrus Skin Stapler, 35 Regular (5,9mm x 3,9mm)", "$70.00", "23"], "confidence": "0.97"},
+        {"cells": ["CV-2800576", "Covetrus Skin Stapler 35 Wide (7,2mm x 4,9 mm)", "$70.00", "23"], "confidence": "0.97"},
+        {"cells": ["CV-2800773", "Cvet Selfseal Pouch 134X280mm 200s", "$89.00", "22"], "confidence": "0.97"},
+        {"cells": ["CV-2800774", "Cvet Selfseal Pouch 190x356mm 200s", "$146.00", "22"], "confidence": "0.97"},
+        {"cells": ["CV-2800775", "Cvet Selfseal Pouch 254X381mm 200s", "$221.00", "22"], "confidence": "0.97"},
+        {"cells": ["CV-2800772", "Cvet Selfseal pouch 89 x 254mm 200pcs", "$63.00", "22"], "confidence": "0.97"},
+        {"cells": ["CV-2800771", "Cvet Selfseal pouch 83 x 159mm 200pcs", "$48.00", "22"], "confidence": "0.97"},
+        {"cells": ["CV-2800888", "Cvet Autoclave Tape 19mm x 50m", "$45.00", "22"], "confidence": "0.97"},
+        {"cells": ["CV-2800889", "Cvet Autoclave Tape 25mm 50M", "$60.00", "22"], "confidence": "0.97"},
+        {"cells": ["CV-2800086", "Cvet Drape Sterile 30 X 45cm adhesive fenestration 5 X 10cm", "$9.00", "23"], "confidence": "0.97"},
+        {"cells": ["CV-2800089", "Cvet Drape Sterile 45 X 75cm adhesive fenestration 8 X 25cm", "$16.00", "23"], "confidence": "0.97"},
+        {"cells": ["CV-2800088", "Cvet Drape Sterile 45 X 75cm adhesive fenestration 9X20cm", "$18.00", "23"], "confidence": "0.97"},
+        {"cells": ["CV-2800090", "Cvet Drape Sterile 88 X 75cm adhesive fenestration 27 X 13cm", "$19.00", "23"], "confidence": "0.97"},
+        {"cells": ["CV-2801858", "CVET Instrument ID Tape Kit 8 Neon colours assorted", "$340.00", "24"], "confidence": "0.97"},
+        {"cells": ["CV-2801864", "Cvet Instrument ID Tape Grey 3m", "$106.00", "24"], "confidence": "0.97"},
+        {"cells": ["CV-2801862", "Cvet Instrument ID Tape White 3m", "$106.00", "24"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — OTHER CONSUMABLE GOODS",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800473", "Cvet Pet Identification chip, small (1,5x9mm), RTU, 10s", "$450.00", "25"], "confidence": "0.97"},
+        {"cells": ["CV-2800569", "Cvet Digital Thermometer with flexi tip", "$33.00", "27"], "confidence": "0.97"},
+        {"cells": ["CV-2800832", "Cvet Thermometer Cover 50pk", "$19.00", "27"], "confidence": "0.97"},
+        {"cells": ["CV-2800566", "CVET Urine Strips 10 Way 100s", "$195.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2800628", "CVET CatLax Hairball Remover 60g", "$38.00", "25"], "confidence": "0.97"},
+        {"cells": ["CV-2800971", "Cvet Biopsy Punch Sterile 2mm", "$18.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2800972", "Cvet Biopsy Punch Sterile 3mm", "$18.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2800973", "Cvet Biopsy Punch Sterile 4mm", "$18.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2800974", "Cvet Biopsy Punch Sterile 5mm", "$18.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2800975", "Cvet Biopsy Punch Sterile 6mm", "$18.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2800976", "Cvet Biopsy Punch Sterile 7mm", "$18.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2800977", "Cvet Biopsy Punch Sterile 8mm", "$18.00", "26"], "confidence": "0.97"},
+        {"cells": ["CV-2802012", "Cvet Bouffant Cap Blue 100s", "$78.00", "24"], "confidence": "0.97"},
+        {"cells": ["CV-2802027", "Cvet Shoe Covers Blue 100s", "$48.00", "24"], "confidence": "0.97"},
+        {"cells": ["CV-2802013", "Cvet Shoe Covers Blue 100s - NON SLIP", "$95.00", "24"], "confidence": "0.97"}
+      ]
+    },
+    {
+      "section": "Price List — INTESTINAL FORMULA PASTE",
+      "columns": ["ItemNumber", "Description", "List Price HK$", "Page Number"],
+      "rows": [
+        {"cells": ["CV-2800946", "Cvet Pet Intestinal Formula Paste 15ml", "$72.00", "20"], "confidence": "0.97"},
+        {"cells": ["CV-2800947", "Cvet Pet Intestinal Formula Paste 30ml", "$82.00", "20"], "confidence": "0.97"},
+        {"cells": ["CV-2800949", "Cvet Pet Intestinal Formula Paste 60ml", "$97.00", "20"], "confidence": "0.97"}
+      ]
+    }
+  ],
+  "text_observations": [
+    {"text": "Pharmaceutical products shown above are unregistered in Hong Kong and can be imported only on behalf of registered Veterinary Practitioners for treatment of animals under their care.", "confidence": "0.99"},
+    {"text": "This is a non-stock product, to be ordered by request of the vet, lead time expected to be 2 weeks.", "confidence": "0.99"},
+    {"text": "The minimum amount for each order is HKD$500.", "confidence": "0.99"},
+    {"text": "ALL PRICES ARE SUBJECT TO CHANGE WITHOUT NOTICE", "confidence": "0.99"},
+    {"text": "© KRUUSE HONG KONG LIMITED 2023. ALL RIGHTS RESERVED.", "confidence": "0.99"}
+  ]
+}

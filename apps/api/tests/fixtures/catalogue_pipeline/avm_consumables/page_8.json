@@ -1,0 +1,315 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "Endotracheal Tube Stylette and Cleaning Brush",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Endotrach Tube Stylette (J149STA)\n- Fits tube sizes 2.0-3.5mm.",
+      "105.00"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "Endotrach Tube Stylette (J149STB)\n- Fits tube sizes 4.0-6.5mm.",
+      "105.00"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "Endotrach Tube Stylette (J149STC)\n- Fits tube sizes 7.0-10.0mm.",
+      "105.00"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "Endotube cleaning brush 4mm (J151Q)",
+      "71.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Endotube cleaning brush 8mm (J151S)",
+      "71.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Endotracheal Tube Rack  (J160)",
+      "1,180.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Endotracheal Tube Rack & Cover (J160A)",
+      "2,358.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Endotracheal Tube Rack Cover Only (J160C)",
+      "1,396.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Anesthesia Breathing Bags",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Latex Anesthesia Breathing Bag\n(size available: 0.5L, 1L, 2L, 3L)",
+      "143.00"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "Reusable Black Rubber Anesthesia Breathing Bag 0.5 LITER (J249Q)",
+      "232.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Reusable Black Rubber Anesthesia Breathing Bag 1 LITER (J249R)",
+      "232.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Reusable Black Rubber Anesthesia Breathing Bag 2 LITER (J249R2)",
+      "246.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Reusable Black Rubber Anesthesia Breathing Bag 3 LITER (J249S)",
+      "246.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Reusable Black Rubber Anesthesia Breathing Bag 4 LITER (J249T)",
+      "288.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Reusable Black Rubber Anesthesia Breathing Bag 5 LITER (J249V)",
+      "309.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Reusable Black Rubber Anesthesia Breathing Bag 15 LITER (J249W)",
+      "1,653.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Anesthesia Circuits",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Disposable Pediatric Anesthesia “Y” piece Circuit with 1L Bag (J248B)",
+      "152.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Universal \"F\" Anesthesia Circuit 40\" Hose with 2L bag (J248F)",
+      "291.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Universal \"F\" Anesthesia Circuit 60\" Hose with 2L bag (J248FL)",
+      "302.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Universal \"F\" Anesthesia Circuit 40\" Hose without bag (J248FA)",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Universal \"F\" Anesthesia Circuit 60\" Hose without bag (J248FLA)",
+      "280.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Pediatric Universal \"F\" Anesthesia Circuit 40\" Hose with 1L bag (J248K)",
+      "303.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Pediatric Universal \"F\" Anesthesia Circuit 60\" Hose with 1L bag (J248KL)",
+      "314.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Pediatric Universal \"F\" Anesthesia Circuit 40\" Hose without bag (J248KA)",
+      "290.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Pediatric Universal \"F\" Anesthesia Circuit 60\" Hose without bag (J248KLA)",
+      "302.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Unilimb Rebreathing Circuit 72\" (#91316432)",
+      "302.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jackson-Reese Circuit W/Thumb with 0.5L bag (J248GA)",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jackson-Reese Circuit W/Thumb with 1L bag (J248G)",
+      "279.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Anesthesia Masks",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Midmark Anesthesia Mask - Small Feline (#93805027)",
+      "477.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Midmark Anesthesia Mask - Medium Feline (#93805028)",
+      "477.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Midmark Anesthesia Mask - Large Feline (#93805029)",
+      "477.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Midmark Anesthesia Mask - Small Canine (#93815026)",
+      "510.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Midmark Anesthesia Mask - Large Canine (#93815028)",
+      "510.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Midmark Anesthesia Assorted Masks set (#91351400)\n(Set of 5 Masks, 2 Canine+ 3 Feline)",
+      "2,330.00"
+     ],
+     "confidence": "0.9"
+    },
+    {
+     "cells": [
+      "Diaphragm only for Small Feline mask (#91815014)",
+      "274.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Diaphragm only for Medium Feline mask (#91815015)",
+      "274.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Diaphragm only for Large Feline mask (#91815016)",
+      "274.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Diaphragm only for Small Canine mask (#91815017)",
+      "274.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Diaphragm only for Large Canine mask (#91815018)",
+      "274.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": []
+}
