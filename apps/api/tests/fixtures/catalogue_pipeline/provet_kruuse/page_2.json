@@ -1,0 +1,511 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "columns": [
+    "Code",
+    "Description",
+    "Price"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "BROMAV200",
+      "Bromav 200mg Tablets 200s",
+      "$ 281.00"
+     ]
+    },
+    {
+     "cells": [
+      "CARLXBF20",
+      "Carflexin 20mg Beef Flavoured Tablets 100s",
+      "$ 231.00"
+     ]
+    },
+    {
+     "cells": [
+      "CARTROVET10",
+      "Cartrophen 100mg/ml Injection 10ml",
+      "$ 179.00"
+     ]
+    },
+    {
+     "cells": [
+      "CEFAZ1G5S",
+      "Cefazolin Sodium 1g Injection 5s",
+      "$ 43.00"
+     ]
+    },
+    {
+     "cells": [
+      "CEFTRIAZ1G",
+      "Ceftriaxone 1g Injection (Single Vial)",
+      "$ 20.00"
+     ]
+    },
+    {
+     "cells": [
+      "CEPHAC200",
+      "Cephacin 200mg Tablets 100s",
+      "$ 275.00"
+     ]
+    },
+    {
+     "cells": [
+      "CEPHC600",
+      "Cephacin 600mg Tablets 300s",
+      "$ 1,675.00"
+     ]
+    },
+    {
+     "cells": [
+      "CEREINJ",
+      "Cerenia 10mg/ml Injection 20ml",
+      "$ 1,113.00"
+     ]
+    },
+    {
+     "cells": [
+      "CERE160",
+      "Cerenia 160mg Tablets 4s",
+      "$ 231.00"
+     ]
+    },
+    {
+     "cells": [
+      "CERE16",
+      "Cerenia 16mg Tablets 4s",
+      "$ 90.00"
+     ]
+    },
+    {
+     "cells": [
+      "CERE24",
+      "Cerenia 24mg Tablets 4s",
+      "$ 99.00"
+     ]
+    },
+    {
+     "cells": [
+      "CERE60",
+      "Cerenia 60mg Tablets 4s",
+      "$ 174.00"
+     ]
+    },
+    {
+     "cells": [
+      "CERE60",
+      "Cerenia 60mg Tablets 4s",
+      "$ 198.00"
+     ]
+    },
+    {
+     "cells": [
+      "CLAVULOX250",
+      "Clavulox Palatable 250mg Tablets 250s",
+      "$ 1,890.00"
+     ]
+    },
+    {
+     "cells": [
+      "CLAVULOX500",
+      "Clavulox Palatable 500mg Tablets 100s",
+      "$ 1,500.00"
+     ]
+    },
+    {
+     "cells": [
+      "CLAVULOX50",
+      "Clavulox Palatable 50mg Tablets 100s",
+      "$ 364.00"
+     ]
+    },
+    {
+     "cells": [
+      "CLAVUDROPS",
+      "Clavulox Palatable Drops 15ml",
+      "$ 153.00"
+     ]
+    },
+    {
+     "cells": [
+      "CLINDENE75",
+      "Clindene 75mg Tablet 100s",
+      "$ 437.00"
+     ]
+    },
+    {
+     "cells": [
+      "CLOMICALM20",
+      "Clomicalm 20mg Tablets 30s",
+      "$ 297.00"
+     ]
+    },
+    {
+     "cells": [
+      "CLOMICALM5",
+      "Clomicalm 5mg Tablets 30s",
+      "$ 275.00"
+     ]
+    },
+    {
+     "cells": [
+      "CONVENIA",
+      "Convenia 80mg/ml Injection 10ml",
+      "$ 2,842.00"
+     ]
+    },
+    {
+     "cells": [
+      "CORT76",
+      "Cortavance 0.584mg/ml Cutaneous Spray 76ml",
+      "$ 309.00"
+     ]
+    },
+    {
+     "cells": [
+      "COSDOR",
+      "Cosdor Eye Drops 5ml",
+      "$ 118.00"
+     ]
+    },
+    {
+     "cells": [
+      "CYTO10",
+      "Cytopoint 10mg/ml Injection 1ml x 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "CYTO20",
+      "Cytopoint 20mg/ml Injection 1ml x 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "CYTO30",
+      "Cytopoint 30mg/ml Injection 1ml x 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "CYTO40",
+      "Cytopoint 40mg/ml Injection 1ml x 2s",
+      "Please contact us"
+     ]
+    },
+    {
+     "cells": [
+      "DERMOTIC",
+      "Dermotic Ear & Skin Suspension 20ml",
+      "$ 75.00"
+     ]
+    },
+    {
+     "cells": [
+      "DOUXOCALM150",
+      "Douxo Calm Foam (Mousse) 150ml",
+      "$ 165.00"
+     ]
+    },
+    {
+     "cells": [
+      "DOUXOPYO150",
+      "Douxo Pyo Foam (Mousse) 150ml",
+      "$ 165.00"
+     ]
+    },
+    {
+     "cells": [
+      "DOUXOPAD30",
+      "Douxo Pyo Pads 30s",
+      "$ 103.00"
+     ]
+    },
+    {
+     "cells": [
+      "DOXYPAPEX",
+      "Doxy 100mg/g Paste 2.5g 6s",
+      "$ 448.00"
+     ]
+    },
+    {
+     "cells": [
+      "DUOXOPYOS",
+      "Duoxo Pyo 3% Shampoo 200ml",
+      "$ 159.00"
+     ]
+    },
+    {
+     "cells": [
+      "EPIBROM",
+      "Epibrom 200mg Tablets 200s",
+      "$ 337.00"
+     ]
+    },
+    {
+     "cells": [
+      "ERAD100",
+      "Eradia 125mg/ml Oral Suspension 100ml",
+      "$ 230.00"
+     ]
+    },
+    {
+     "cells": [
+      "FAMVIR125",
+      "Famvir 125mg Tablets 40s",
+      "$ 261.00"
+     ]
+    },
+    {
+     "cells": [
+      "FAMVIR250S",
+      "Famvir 250mg Tablets 21s",
+      "$ 274.00"
+     ]
+    },
+    {
+     "cells": [
+      "FAMVIR500",
+      "Famvir 500mg Tablets 30s",
+      "$ 294.00"
+     ]
+    },
+    {
+     "cells": [
+      "FELICYST30",
+      "Feliway Cystease 30 Caps",
+      "$ 121.00"
+     ]
+    },
+    {
+     "cells": [
+      "FELIREFILL",
+      "Feliway Diffuser Refill 48ml",
+      "$ 240.00"
+     ]
+    },
+    {
+     "cells": [
+      "FELIWSET",
+      "Feliway Diffuser Starter Pack",
+      "$ 269.00"
+     ]
+    },
+    {
+     "cells": [
+      "FELI1MHRF",
+      "Feliway Friends 1 Month Refill",
+      "$ 239.00"
+     ]
+    },
+    {
+     "cells": [
+      "FELIWFD",
+      "Feliway Friends Diffuser Starter Pack",
+      "$ 269.00"
+     ]
+    },
+    {
+     "cells": [
+      "FELOPTREF",
+      "Feliway Optimum Refill 48ml",
+      "$ 309.00"
+     ]
+    },
+    {
+     "cells": [
+      "FELOPT3S",
+      "Feliway Optimum Refill 48ml 3Pk",
+      "$ 786.00"
+     ]
+    },
+    {
+     "cells": [
+      "FENB1L",
+      "Fenbendazole 100g/L Liquid 1L",
+      "$ 478.00"
+     ]
+    },
+    {
+     "cells": [
+      "FERROSINJ",
+      "Ferrosig 50mg/ml Injection 2ml 5s",
+      "$ 170.00"
+     ]
+    },
+    {
+     "cells": [
+      "FLAGYLS",
+      "Flagyl 200mg/5ml Suspension 100ml",
+      "$ 90.00"
+     ]
+    },
+    {
+     "cells": [
+      "FLIXOINH125",
+      "Flixotide Inhaler 125mcg 120 dose",
+      "$ 163.00"
+     ]
+    },
+    {
+     "cells": [
+      "FLIXOINH50",
+      "Flixotide Inhaler 50mcg 120 Doses",
+      "$ 92.00"
+     ]
+    },
+    {
+     "cells": [
+      "FLUSAP",
+      "Flusapex 10mg/ml Drops 25ml",
+      "$ 90.00"
+     ]
+    },
+    {
+     "cells": [
+      "FORT0.4",
+      "Forthyron 0.4mg Flavoured Tablets 100s",
+      "$ 116.00"
+     ]
+    },
+    {
+     "cells": [
+      "FRUSEM20",
+      "Frusemide 20mg Tablets 100s",
+      "$ 53.00"
+     ]
+    },
+    {
+     "cells": [
+      "GABA100",
+      "Gabapentin 100mg Capsules 100s",
+      "$ 38.00"
+     ]
+    },
+    {
+     "cells": [
+      "GABA300",
+      "Gabapentin 300mg Capsules 100s",
+      "$ 126.00"
+     ]
+    },
+    {
+     "cells": [
+      "GALLIP20MG30",
+      "Galliprant 20mg Tablets 30s",
+      "$ 198.00"
+     ]
+    },
+    {
+     "cells": [
+      "GALLIP60MG30",
+      "Galliprant 60mg Tablets 30s",
+      "$ 272.00"
+     ]
+    },
+    {
+     "cells": [
+      "GENT100",
+      "Gentamax 100mg/ml Injection 100ml",
+      "$ 246.00"
+     ]
+    },
+    {
+     "cells": [
+      "HEXARINSE237",
+      "Hexarinse Solution 0.12%/0.05% w/v 237ml",
+      "$ 113.00"
+     ]
+    },
+    {
+     "cells": [
+      "HYPOKAL78",
+      "Hypokal 78mg Tablets for Cats 100s",
+      "$ 150.00"
+     ]
+    },
+    {
+     "cells": [
+      "ILIUMED",
+      "Ilium Ear Drops 20ml",
+      "$ 39.00"
+     ]
+    },
+    {
+     "cells": [
+      "MELOXOSCAT10",
+      "Ilium Meloxicam 0.5mg/ml Oral Suspension for Cats 10ml",
+      "$ 46.00"
+     ]
+    },
+    {
+     "cells": [
+      "MELOXOSCAT30",
+      "Ilium Meloxicam 0.5mg/ml Oral Suspension for Cats 30ml",
+      "$ 112.00"
+     ]
+    },
+    {
+     "cells": [
+      "INTUS10",
+      "Intubeaze 20 mg/mL Oromucosal Spray for Cats 10ml",
+      "$ 128.00"
+     ]
+    },
+    {
+     "cells": [
+      "KAMI120",
+      "Kaminox Liquid 120ml",
+      "$ 282.00"
+     ]
+    },
+    {
+     "cells": [
+      "KAMI60",
+      "Kaminox Liquid 60ml",
+      "$ 181.00"
+     ]
+    },
+    {
+     "cells": [
+      "KEPPRAT250",
+      "Keppra 250mg Tablets 60s",
+      "$ 102.00"
+     ]
+    },
+    {
+     "cells": [
+      "KEPPRA500",
+      "Keppra 500mg Tablets 60s",
+      "$ 168.00"
+     ]
+    },
+    {
+     "cells": [
+      "LASIXINJ20MG",
+      "Lasix 10mg/ml Injection 2ml 5s",
+      "$ 29.00"
+     ]
+    },
+    {
+     "cells": [
+      "-LEUKERAN2MG",
+      "Leukeran FC 2mg Tablets 25s",
+      "$ 272.00"
+     ]
+    },
+    {
+     "cells": [
+      "LEVETINJ",
+      "Levetiracetam 500mg/5ml Injection 10s (Apotex)",
+      "$ 1,603.00"
+     ]
+    }
+   ]
+  }
+ ]
+}

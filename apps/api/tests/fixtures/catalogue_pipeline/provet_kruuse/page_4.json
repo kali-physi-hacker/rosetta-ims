@@ -1,0 +1,30 @@
+{
+ "page_outcome": "evidence",
+ "tables": [],
+ "text_observations": [
+  {
+   "text": "1. Pharmaceutical products shown above are unregistered in Hong Kong and can be imported only on behalf of registered Veterinary Practitioners for treatment of animals under their care.",
+   "confidence": "0.95"
+  },
+  {
+   "text": "2. The price is valid until 31 Dec, 2025 and subject to change without notice. Please contact us to confirm the update prices.",
+   "confidence": "0.95"
+  },
+  {
+   "text": "3. Special Price could be offered by case, please contact us for details.",
+   "confidence": "0.95"
+  },
+  {
+   "text": "4. Minium Order Quantity for pharmaceutical products is HKD $1000.",
+   "confidence": "0.95"
+  },
+  {
+   "text": "5. All rights reserved by Kruuse Hong Kong Limited.",
+   "confidence": "0.95"
+  },
+  {
+   "text": "6. Provet carry over 14,000 items so if there is anything you need, let us know and we should be able to source it for you.",
+   "confidence": "0.95"
+  }
+ ]
+}

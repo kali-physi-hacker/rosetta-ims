@@ -40,6 +40,7 @@ EXPECTED_CONTRACT_IDS = [
     "kpn_trading.case_only_price_list.v1",
     "kpn_trading.catalogue_bundle.v1",
     "kpn_trading.pack_price_list.v1",
+    "provet_kruuse.hk_price_list.v1",
     "queens_pharma.zoetis_price_list.v1",
     "royal_canin.non_vet_webshop_snapshot.v1",
     "royal_canin.vet_webshop_snapshot.v1",
@@ -228,6 +229,11 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # against eleven recorded pages — 282 rows conform with nothing held,
         # and eleven of the sheet's thirteen coded rows agree to the cent.
         "united_italian.gp_price_list.v1",
+        # ProVet Kruuse's Hong Kong list: three columns, one price a line, and
+        # the one document that contradicts itself. Verified 2026-09-03 against
+        # all four pages — 192 rows conform, nothing held, and all eleven coded
+        # sheet rows agree to the cent.
+        "provet_kruuse.hk_price_list.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):

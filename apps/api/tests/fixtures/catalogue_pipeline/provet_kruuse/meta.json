@@ -1,0 +1,12 @@
+{
+ "source": "Provet Hong Kong Price List - Year 2025 v2.pdf",
+ "recorded_from": "live anthropic claude-sonnet-5 extraction via scripts/record_golden_envelopes.py",
+ "provider": "anthropic",
+ "model": "claude-sonnet-5",
+ "pages": [
+  1,
+  2,
+  3,
+  4
+ ]
+}
