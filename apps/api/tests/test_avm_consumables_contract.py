@@ -159,3 +159,113 @@ def test_this_list_and_the_vetriscience_list_are_separate_contracts():
         "asia_vet_medical.consumables_price_list.v1",
         "asia_vet_medical.vetriscience_price_list.v1",
     } <= avm
+
+
+# --- the same list, read a second time and a different way -------------------
+#
+# `whole_document.json` is a BizOps extraction of all thirteen pages in one
+# envelope, against the thirteen per-page envelopes recorded here from the
+# production path. They agree on every product and disagree about one thing the
+# recordings never exercised: theirs STATES the page identity.
+
+
+def _conform_whole_document():
+    from _pytest.monkeypatch import MonkeyPatch
+
+    patch = MonkeyPatch()
+    try:
+        patch.setenv("CATALOGUE_VISION_PROVIDER", "anthropic")
+        patch.setenv("ANTHROPIC_API_KEY", "replay-only")
+        _install_golden_replay(patch, [FIXTURES / "whole_document.json"])
+        result = extract_evidence(_blank_pdf(1), "avm-consumables.pdf", "application/pdf")
+        runtime = SupplierSourceRuntimeContract(
+            declaration=get_supplier_source_contract(CONTRACT, "v1").declaration
+        )
+        return conform_observations(
+            result.observations, tuple(uuid4() for _ in result.observations), runtime
+        )
+    finally:
+        patch.undo()
+
+
+@pytest.fixture(scope="module")
+def whole_document():
+    return _conform_whole_document()
+
+
+#: The two readings render the SAME description differently — a newline where
+#: the other has a space before "(Sizes available: …)", a curly quote where the
+#: other has a straight one in '2" x 16"'. That is typography, not disagreement,
+#: and comparing raw strings would report it as one.
+_TYPOGRAPHY = str.maketrans({"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'"})
+
+
+def _same_text(value: str) -> str:
+    return " ".join(str(value or "").translate(_TYPOGRAPHY).split()).casefold()
+
+
+def test_both_readings_agree_on_every_product(whole_document, conformed):
+    """Thirteen per-page envelopes against one whole-document extraction.
+
+    The codes are pulled out of prose by pattern and the packs likewise, so how
+    the page was read is exactly where either could drift. It does not: both
+    yield 460 products, the same code on the same product and the same price.
+    They differ only in whitespace and quote characters inside the description,
+    which is why the comparison normalises those and nothing else.
+    """
+    def facts(outcome):
+        return {
+            _same_text(row.raw_fields.get("product_name")): (
+                str(row.raw_fields.get("cost")),
+                (row.raw_fields.get("supplier_sku") or ""),
+                str((row.normalized_fields.get("packaging") or {}).get("sellable_units_per_purchase_unit")),
+            )
+            for row in _products(outcome)
+        }
+
+    mine, theirs = facts(conformed), facts(whole_document)
+
+    assert len(mine) == len(theirs) == 460
+    assert set(mine) == set(theirs)
+    assert mine == theirs
+
+
+def test_the_two_readings_really_are_different_envelopes():
+    """Guards the test above from becoming a tautology. These are independent
+    readings of one document, and they do differ — in typography, and in
+    whether the page identity is stated at all."""
+    import json
+
+    mine = json.loads((FIXTURES / "page_1.json").read_text(encoding="utf-8"))
+    theirs = json.loads((FIXTURES / "whole_document.json").read_text(encoding="utf-8"))
+
+    assert mine.get("supplier_identity_text") != theirs.get("supplier_identity_text")
+    assert len(theirs["tables"]) > len(mine["tables"])
+
+
+def test_the_page_identity_is_read_when_the_source_states_it(whole_document):
+    """This reading states 'Asia Vet Medical (AVM) Consumable items list' where
+    the recorded pages leave identity null — so the identity check had never
+    run against this contract at all.
+
+    It is not a formality: 'medical' and 'limited' are both identity stopwords,
+    so the match rests on 'Asia' alone, and the supplier code AVM answers for
+    it too. Worth pinning, because a contract that only ever saw a null
+    identity would discover this the first time a live read stated one.
+    """
+    import json
+
+    from services.catalogue_conformance import _identity_names_overlap
+
+    stated = json.loads((FIXTURES / "whole_document.json").read_text(encoding="utf-8"))
+    identity = stated.get("supplier_identity_text")
+    assert identity, "the fixture no longer states an identity"
+
+    supplier = get_supplier_source_contract(CONTRACT, "v1").declaration.supplier
+    assert _identity_names_overlap(identity, supplier.supplier_name)
+    assert _identity_names_overlap(identity, supplier.supplier_code)
+
+    blocking = [
+        i.issue_code for r in whole_document.items for i in r.issues if i.severity == "BLOCKING"
+    ]
+    assert blocking == []

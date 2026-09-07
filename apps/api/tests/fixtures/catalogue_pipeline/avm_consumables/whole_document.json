@@ -1,0 +1,757 @@
+{
+  "page_outcome": "evidence",
+  "supplier_identity_text": "Asia Vet Medical (AVM) Consumable items list",
+  "tables": [
+    {
+      "section": "Clinical Laboratory Consumables",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Citrate Coagulation 3.2% Micro Tube (Blue), 1.3ml, 20 pcs/pack", "218.00"], "confidence": "0.95"},
+        {"cells": ["Lithium Heparin Tube (Orange), 1.3ml, 100 pcs/pack", "270.00"], "confidence": "0.95"},
+        {"cells": ["EDTA Tube (Red), 1.3ml, 100 pcs/pack", "212.00"], "confidence": "0.95"},
+        {"cells": ["Serum Tube (Black), 1.3ml, 100 pcs/pack", "212.00"], "confidence": "0.95"},
+        {"cells": ["Urine Microcentrifuge Tube, Plain, 1.5ml, 500 pcs/pack", "208.00"], "confidence": "0.95"},
+        {"cells": ["Pretreatment Vials 2.0ml, 100 pcs/pack", "188.00"], "confidence": "0.95"},
+        {"cells": ["Transfer Pipette 1ml, 500 pcs/pack", "318.00"], "confidence": "0.95"},
+        {"cells": ["Pipette Tip for Eppendor 201-1000ul (Neutral), 500 pcs/pack", "129.00"], "confidence": "0.95"},
+        {"cells": ["Pipette Tip for Eppendor 200ul (Yellow), 1000 pcs/pack", "235.00"], "confidence": "0.95"},
+        {"cells": ["Urine Jar Sample Container 70ml, 50 pcs/pack", "110.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Microscopic Examination",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Dip Quick Stain (Fixative) 500ml (Methanol)", "265.00"], "confidence": "0.95"},
+        {"cells": ["Dip Quick Eosin Stain (Red) 500ml (J322a2)", "279.00"], "confidence": "0.95"},
+        {"cells": ["Dip Quick Counter Stain (Blue) 500ml (J322a3)", "279.00"], "confidence": "0.95"},
+        {"cells": ["Urine Sediment Stain, 15ml (J326U)", "194.00"], "confidence": "0.95"},
+        {"cells": ["New Methlyene Blue, 2oz (J324A)", "290.00"], "confidence": "0.95"},
+        {"cells": ["Kimwipes EX-L Delicate Task Wipers, 280 pcs/box", "32.00"], "confidence": "0.95"},
+        {"cells": ["Microscope Cover Glass 20x20mm, 100 pcs/pack", "44.00"], "confidence": "0.95"},
+        {"cells": ["Microscope Slides Frosted End (with writing area), 25 x 76mm, 72 pcs/pack (J335F)", "52.00"], "confidence": "0.95"},
+        {"cells": ["Plastic 5-Slide Mailer, Assorted colors, 5 pcs/pack (J816X)", "71.00"], "confidence": "0.95"},
+        {"cells": ["Coplin Staining Jar (J814)", "150.00"], "confidence": "0.95"},
+        {"cells": ["Coplin Glass Jar (J814X)", "188.00"], "confidence": "0.95"},
+        {"cells": ["Microscope Lens Cleaning Solution, 1oz (J869S)", "130.00"], "confidence": "0.95"},
+        {"cells": ["Immersion Oil, 15ml", "118.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Veterinary Diagnostic Tests",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Fecalyzer Tests Kit, 50 pcs/box", "365.00"], "confidence": "0.95"},
+        {"cells": ["Dermatophyte Test Media (DTM), Glass Vial, 10 Vials/Package", "305.00"], "confidence": "0.95"},
+        {"cells": ["Multistix Urine Strip 10 SG, 100 strips/box\n(Glucose, Bilirubin, Ketone, Specific Gravity, Blood, pH, Protein, Urobilinogen, Nitrate, Leukocyte)", "467.00"], "confidence": "0.95"},
+        {"cells": ["AlphaTRAK 3 Blood Glucose Test Strip 50s", "648.00"], "confidence": "0.95"},
+        {"cells": ["Alvedia Lab Test - Feline Crossmatch Test XM, 5 tests/box", "348.00"], "confidence": "0.95"},
+        {"cells": ["Alvedia Quick Test - Canine Crossmatch Test XM, per test", "348.00"], "confidence": "0.95"},
+        {"cells": ["Alvedia Quick Test - Feline DAT (Direct Antiglobulin Test), per test", "228.00"], "confidence": "0.95"},
+        {"cells": ["Alvedia Quick Test - Canine DAT (Direct Antiglobulin Test), per test", "228.00"], "confidence": "0.95"},
+        {"cells": ["Alvedia Quick Test - Feline (A+B) Blood Typing Test, per test", "212.00"], "confidence": "0.95"},
+        {"cells": ["Alvedia Quick Test - Canine (DEA1.1) Blood Typing Test, per test", "212.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Centrifuge Accessories",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["StatSpin Microhematocrit Capillary Tube 40mm, Ammonium Heparin, red, 100 tubes/vial", "240.00"], "confidence": "0.95"},
+        {"cells": ["StatSpin Microhematocrit Capillary Tube 40mm, Untreated, blue, 100 tubes/vial", "230.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Microhematocrit Capillary Tube 75mm, Sodium Heparinized, red, 100 tubes/vial (J543)", "187.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Microhematocrit Capillary Tube 75mm, Plain, blue, 100 tubes/vial (J544)", "153.00"], "confidence": "0.95"},
+        {"cells": ["Capillary Tube Sealant (Sealing Material for Microhaematocrit tubes) (#714907)", "69.00"], "confidence": "0.95"},
+        {"cells": ["Microhematocrit Reader for PCV Determination (J501EZ)", "397.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Ophthalmology",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Disposable Probe for Tonovet/Tonovet Plus, 100 pcs/box", "1,165.00"], "confidence": "0.95"},
+        {"cells": ["Bausch & Lomb Fluorescein Sodium Ophthalmic Strips, 100 strips/box", "333.00"], "confidence": "0.95"},
+        {"cells": ["MERCK Schirmer Tear Strips, 50 pairs/box", "710.00"], "confidence": "0.95"},
+        {"cells": ["Vetrix BioSIS Ocular Disc Plus, 4ply, 15mm (4/pack)", "1,947.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Surgical Drape Material",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["3M #6640EU Ioban 2 Antimicrobial Film Incise Drape Area 34cm x 35cm (10/pcs/box)", "1,085.00"], "confidence": "0.95"},
+        {"cells": ["3M #6648EU Ioban 2 Antimicrobial Film Incise Drape Area 56cm x 60cm, 10 pcs/box", "1,630.00"], "confidence": "0.95"},
+        {"cells": ["3M #6635 Ioban 2 Antimicrobial Film Incise Drape Area 10 cm x 20 cm, 10 pcs/box", "819.00"], "confidence": "0.95"},
+        {"cells": ["3M #6650EU Ioban 2 Antimicrobial Film Incise Drape Area 60 cm x 45 cm, 10 pcs/box", "1,410.00"], "confidence": "0.95"},
+        {"cells": ["3M #6651EU Ioban 2 Antimicrobial Film Incise Drape Area 60 cm x 85 cm, 10 pcs/box", "2,320.00"], "confidence": "0.95"},
+        {"cells": ["Avian/Exotic Adhesive Drape 44\" x 44\" with 5\" x 5\" square area of adhesive, Sterile, 5 pcs/pack (J259X)", "320.00"], "confidence": "0.95"},
+        {"cells": ["Avian/Exotic Adhesive Drape 24\" x 24\" with 5\" x 5\" square area of adhesive, Sterile, 5 pcs/pack (J259XS)", "285.00"], "confidence": "0.95"},
+        {"cells": ["Disposable Surgical Drape, 36\" x 100yds, per roll (J258)", "1,330.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Drape 20\"X28\" (51cm x 71cm) with 4\"X3/4\" (10cm x 2cm) Opening (J256A)", "120.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Drape 24\"X32\" (61cm x 81cm) with 2\"X1\" (5cm x 2.5cm) Opening (J256B)", "120.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Drape 30\"X36\" (76cm x91cm) with 7\"X1 1/4\" (18cm x 3cm) Opening (J256C)", "139.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Drape 40\"X40\" (101cm x 101cm) with 9\"X1\" (23cm x 2.5cm) Opening (J256D)", "162.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Drape 40\"X40\" (101cm x 101cm) with 4\"X3/4\" (10cm x 2cm) Opening (J256E)", "162.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Drape 20\"X20\" (51cm x 51cm) with 2\" (5cm) Circular Opening (J256F)", "130.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Leg Drape 20\"X24\" (51cm x 61cm) with 6\"X9\" (15cm x 23cm) Opening (J256G)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Leg Drape 24\"X30\" (61cm x 76cm) with 9\"X12\" (23cm x 30cm) Opening (J256H)", "160.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Drape 27\"X27\" (69cm x 69cm) Surgical Drape, Nonfenestrated (J256J)", "126.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Pack Wrapper 18\"X18\" (45cm x 45cm), Double-layered (J257A)", "123.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Pack Wrapper 27\"X27\" (69cm x 69cm), Double-layered (J257B)", "139.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Pack Wrapper 24\"X24\" (61cm x 61cm), Double-layered (J257E)", "136.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Pack Wrapper 30\"X30\" (76cm x 76cm), Double-layered (J257F)", "143.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgical Pack Wrapper 10\"X12\" (25cm x30cm), Single-ply (J257C)", "98.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Surgery Towel, Size 17\" x 31\", 12/Pack (J257D)", "390.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Wound Management",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["3M #1469SB Vetbond Tissue Adhesive 3ml/bot", "174.00"], "confidence": "0.95"},
+        {"cells": ["Deroyal Surgical Skin Marker Pen Fine Tip with ruler Gentian Violet", "47.00"], "confidence": "0.95"},
+        {"cells": ["3M #1622W Tegaderm Transparent Dressing 4.4 x 4.4cm, 100 pcs/box", "408.00"], "confidence": "0.95"},
+        {"cells": ["3M #3582 Tegaderm Transparent Dressing with Pad 5 x 7cm, 50 pcs/box", "267.00"], "confidence": "0.95"},
+        {"cells": ["3M #3584 Tegaderm Transparent Dressing with Pad 6 x 10cm, 50 pcs/box", "441.00"], "confidence": "0.95"},
+        {"cells": ["3M #3586 Tegaderm Transparent Dressing with Pad 9 x 10cm, 25 pcs/box", "317.00"], "confidence": "0.95"},
+        {"cells": ["3M #1527-0 Transpore Surgical Tape, 1/2\" x 10 yds, 24 rolls/box", "247.00"], "confidence": "0.95"},
+        {"cells": ["3M #1527-1 Transpore Surgical Tape, 1\" x 10 yds, 12 rolls/box", "247.00"], "confidence": "0.95"},
+        {"cells": ["3M #1530-0 Micropore Surgical Tape, 1/2 inches x 10yds, 24 rolls/box", "89.00"], "confidence": "0.95"},
+        {"cells": ["3M #1530-1 Micropore Surgical Tape, 1 inches x 10yds,12 rolls/box", "89.00"], "confidence": "0.95"},
+        {"cells": ["3M #1538-0 Durapore Surgical Tape 1/2 inches x 10yds, 24 rolls/box", "380.00"], "confidence": "0.95"},
+        {"cells": ["3M #1538-1 Durapore Surgical Tape 1 inches x10yds, 12 rolls/box", "380.00"], "confidence": "0.95"},
+        {"cells": ["3M #1538-2 Durapore Surgical Tape 2 inches x10yds, 6 rolls/box", "380.00"], "confidence": "0.95"},
+        {"cells": ["3M #1538-3 Durapore Surgical Tape 3 inches x10yds, 4 rolls/box", "380.00"], "confidence": "0.95"},
+        {"cells": ["Actimove Zonas Athletic Porous Adhesive Strapping Tape 1.5 inches, 32 rolls/box", "1,664.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Bandages",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["3M Scothcast Plus Casting Tape White, 2 inches x 4yds, per roll", "84.00"], "confidence": "0.95"},
+        {"cells": ["3M Scothcast Plus Casting Tape White, 3 inches x 4yds, per roll", "97.00"], "confidence": "0.95"},
+        {"cells": ["3M Scothcast Plus Casting Tape White, 4 inches x 4yds, per roll", "118.00"], "confidence": "0.95"},
+        {"cells": ["Vetlite Cast 2 inches, 70\"L, per roll (J758A)", "82.00"], "confidence": "0.95"},
+        {"cells": ["Vetlite Cast 3 inches, 70\"L, per roll (J758B)", "116.00"], "confidence": "0.95"},
+        {"cells": ["Pro-Flex Cohesive bandage II 2 inches, 24 rolls/box", "180.00"], "confidence": "0.95"},
+        {"cells": ["Pro-Flex Cohesive bandage II 3 inches, 12 rolls/box", "146.40"], "confidence": "0.95"},
+        {"cells": ["ElastoPlus 2 inches x 5yds, per roll", "36.00"], "confidence": "0.95"},
+        {"cells": ["ElastoPlus 3 inches x 5yds, per roll", "36.00"], "confidence": "0.95"},
+        {"cells": ["Conform Roll Gauze 2 inches, 12 rolls/pack", "28.00"], "confidence": "0.95"},
+        {"cells": ["Conform Roll Gauze 3 inches, 12 rolls/pack", "32.00"], "confidence": "0.95"},
+        {"cells": ["Conform Roll Gauze 4 inches, 12 rolls/pack", "42.00"], "confidence": "0.95"},
+        {"cells": ["BSN Soffban Natural 2 inches, 12 rolls/pack", "212.00"], "confidence": "0.95"},
+        {"cells": ["BSN Soffban Natural 3 inches, 12 rolls/pack", "240.00"], "confidence": "0.95"},
+        {"cells": ["BSN Specialist Cast Padding 2\", 24 rolls/bag", "355.00"], "confidence": "0.95"},
+        {"cells": ["BSN Specialist Cast Padding 3\", 12 rolls/bag", "268.00"], "confidence": "0.95"},
+        {"cells": ["BSN Specialist Cast Padding 4\", 12 rolls/bag", "310.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Sponges/Gauze",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Ethicon #1972 Surgifoam Sponge Absorbable, 6cm x 2cm x 7mm, 12 pcs/box", "2,198.00"], "confidence": "0.95"},
+        {"cells": ["Laparotomy Sponges, 18 x 18 inches, Non-Sterile, 5 pcs/pack (J490A)", "51.00"], "confidence": "0.95"},
+        {"cells": ["Laparotomy Sponges, 4 x 18 inches, Non-Sterile, 5 pcs/pack (J490B)", "50.00"], "confidence": "0.95"},
+        {"cells": ["Laparotomy Sponges, 18 x 18 inches, Sterile, 2 pcs/pack (J490AS)", "58.00"], "confidence": "0.95"},
+        {"cells": ["Laparotomy Sponges, 4 x 18 inches, Sterile, 2 pcs/pack (J490BS)", "57.00"], "confidence": "0.95"},
+        {"cells": ["Medicom Non-Woven Sponges, 3 x 3 inches, 200 pcs/bag", "56.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Surgical Drains",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Surgivet Pneumothorax Set, 8.3FR, 35cm, Sterile (#TPT815)", "588.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Pneumothorax Set, 10FR, 40cm, Sterile (#TPT1020)", "588.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Thoracic Drainage Catheter with Trocar, 12FR, 30cm, Sterile (#TPTL1230)", "753.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Thoracic Drainage Catheter with Trocar, 16FR, 30cm, Sterile (#TPTL1630)", "753.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Flexi-Drain Multi-Purpose Wound Drain, 3mm lumens (12), 40cm, Silicone, Sterile (#WD1240)", "99.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Closed Wound Drainage Kit, 100cc Round tubing 10Fr (J790)", "232.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Closed Wound Drainage Kit, 200cc Round tubing 14Fr (J790A)", "232.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Closed Wound Drainage Kit, 100cc Flat tubing 4.5mm (J790B)", "232.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Closed Wound Drainage Kit, 200cc Flat tubing 4.5mm (J790C)", "232.00"], "confidence": "0.95"},
+        {"cells": ["Penrose Tubing - 1/4\" (6mm) x 12\"L (300mm)", "23.00"], "confidence": "0.95"},
+        {"cells": ["Penrose Tubing - 3/8\" (10mm) x 12\"L (300mm)", "23.00"], "confidence": "0.95"},
+        {"cells": ["Penrose Tubing - 1/2\" (13mm) x 12\"L (300mm)", "23.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Chest Tubes",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Mila Guidewire Inserted Chest Tube 14Ga x 20cm (8in) with 4cm of fenestrations (CT1404)", "453.00"], "confidence": "0.95"},
+        {"cells": ["Mila Guidewire Inserted Chest Tube 14Ga x 20cm (8in) with 8cm of fenestrations (CT1410)", "453.00"], "confidence": "0.95"},
+        {"cells": ["Mila Guidewire Inserted Chest Tube 12Ga x 20cm (8in) with 6cm of fenestrations (CT1206)", "468.00"], "confidence": "0.95"},
+        {"cells": ["Mila Guidewire Inserted Chest Tube 12Ga x 30cm (12in) with 15cm of fenestrations (CT1210)", "468.00"], "confidence": "0.95"},
+        {"cells": ["Mila Guidewire Inserted Chest Tube 12Fr x 30cm (12in) Fenestrated up to 16cm (CT12Fr16)", "510.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Chest Tube - 12Fr x 38cm (15in) with 5cm of sideholes (CT1215)", "375.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Chest Tube - 14Fr x 38cm (15in) with 7cm of sideholes (CT1415)", "375.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Chest Tube - 20Fr x 38cm (15in) with 10cm of sideholes (CT2015)", "375.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Chest Tube - 20Fr x 55cm (22in) with 10cm of sideholes (CT2022)", "375.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Chest Tube - 30Fr x 55cm (22in) with 12cm of sideholes (CT3022)", "375.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Urethral Catheters",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["JorVet Cat Catheter with side holes, with stylet, 3Fr, 1.0 x 130mm (J153JA)", "45.00"], "confidence": "0.95"},
+        {"cells": ["JorVet Cat Catheter with side holes, with stylet, 4Fr, 1.3 x 130mm (J153JB)", "45.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Male Canine Urinary Catheter, Sterile, 4fr x 50cm (J154XS)", "51.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Male Canine Urinary Catheter, Sterile, 6fr x 50cm (J154S)", "51.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Male Canine Urinary Catheter, Sterile, 8fr x 50cm (J154M)", "51.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Male Canine Urinary Catheter, Sterile, 10fr x 50cm (J154L)", "51.00"], "confidence": "0.95"},
+        {"cells": ["KatKath catheter 3.5fr x 11cm, per unit (#451100)", "91.00"], "confidence": "0.95"},
+        {"cells": ["KatKath catheter 3.5fr x 14cm, per unit (#451101)", "91.00"], "confidence": "0.95"},
+        {"cells": ["KatKath catheter 3.5fr x 18cm, Adjustable, 10/box (#451103)", "1,064.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Little Herbert Luer Lock Adapter for Tomcat Catheter (#TCLLA)", "70.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Tomcat Urethral Catheter, 3.5FR, 12cm, Silicone, Sterile, Closed End (#TM35)", "312.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Tomcat Urethral Catheter, 3.5FR, 12cm, Silicone, Sterile, Open End (#TM35OE)", "312.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 11cm, PTFE, Sterile, Closed End (#TTM3511)", "273.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 14cm, PTFE, Sterile, Closed End (#TTM3514)", "251.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Slippery Sam Tomcat Urethral Catheter, 3.0FR, 11cm, PTFE, Sterile, Open End (#TTM3011OE)", "278.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 11cm, PTFE, Sterile, Open End (#TTM3511OE)", "278.00"], "confidence": "0.95"},
+        {"cells": ["Surgivet Slippery Sam Tomcat Urethral Catheter, 3.5FR, 14cm, PTFE, Sterile, Open End (#TTM3514OE)", "330.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 15cm (6in) (UC306)", "166.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 15cm (6in) with stylet (UC306S)", "193.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 25cm (10in) (UC310)", "166.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 3.5Fr - adjustable up to 25cm (10in) with stylet (UC310S)", "193.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 15cm (6in) (UC506)", "193.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 15cm (6in) with stylet (UC506S)", "236.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 25cm (10in) (UC510)", "193.00"], "confidence": "0.95"},
+        {"cells": ["Mila Tomcat/Small Animal Catheter - 5Fr - adjustable up to 25cm (10in) with stylet (UC510S)", "236.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Urine Collection",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Mila Closed Urine Collection Kits 600mL (UC600K)", "350.00"], "confidence": "0.95"},
+        {"cells": ["Mila Closed Urine Collection Kits 1000mL (UC1000K)", "350.00"], "confidence": "0.95"},
+        {"cells": ["Mila Closed Urine Collection Kits 2000mL (UC2000K)", "350.00"], "confidence": "0.95"},
+        {"cells": ["Mila Closed Urine Collection bag 600mL, Bag only (UC600)", "310.00"], "confidence": "0.95"},
+        {"cells": ["Mila Closed Urine Collection bag 1000mL, Bag only (UC1000)", "310.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Foley Catheters",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Silicon Foley Catheter 5fr x 30cm long (J693)", "388.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 6fr x 30cm long with 1.5cc balloon (J693A)", "162.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 8fr x 30cm long with 3cc balloon (J693B)", "115.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 10fr x 30cm long with 3cc balloon (J693C)", "115.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 12fr x 40cm long with 5cc balloon (J693D)", "115.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 14fr x 40cm long with 5cc balloon (J693E)", "115.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 16fr x 40cm long with 5cc balloon (J693F)", "115.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 18fr x 40cm long with 5cc balloon (J693G)", "115.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 20fr x 40cm long with 5cc balloon (J693H)", "115.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 5fr x 55cm long with 2cc balloon (J693W)", "406.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 8fr x 55cm long with 3cc balloon (J693X)", "406.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 10fr x 55cm long with 3cc balloon (J693Y)", "406.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 6fr x 90cm long with 1.5cc balloon (J693WL)", "383.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 8fr x 90cm long with 3cc balloon (J693XL)", "383.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Foley Catheter 10fr x 90cm long with 3cc balloon (J693YL)", "383.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Feeding Tubes Jorvet",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Sovereign Sterile Red Rubber Feeding Tubes And Urethral Catheters\n(size available: 3.5fr, 5fr, 8fr, 10fr, 12fr, 14fr)", "33.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Sterile Red Rubber Multipurpose Catheters\n(size available: 16fr, 18fr, 20fr, 24fr, 28fr)", "35.00"], "confidence": "0.95"},
+        {"cells": ["Small Animal Nasogastric Feeding Tube 3.5fr x 15\", 5 pcs/pack (J348)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Small Animal Nasogastric Feeding Tube 5fr x 15\", 5 pcs/pack (J348A)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Small Animal Nasogastric Feeding Tube 8fr x 15\", 5 pcs/pack (J348B)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Small Animal Nasogastric Feeding Tube 5fr x 39\", 5 pcs/pack (J348C)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Small Animal Nasogastric Feeding Tube 8fr x 42\", 5 pcs/pack (J348D)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Gastric Feeding Tube 6fr x 40cm (J385D)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Gastric Feeding Tube 8fr x 70cm (J385)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Gastric Feeding Tube 12fr x 120cm (J385A)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Gastric Feeding Tube 16fr x 120cm (J385B)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Gastric Feeding Tube 20fr x 120cm (J385C)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 3.5fr x 20cm L. (J386)", "423.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 5.0fr x 20cm L. (J386A)", "427.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 5.0fr x 35cm L. (J386B)", "292.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 6.0fr x 55cm L. (J386C)", "292.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 8.0fr x 55cm L. (J386E)", "292.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 8.0fr x75cm L. (J386F)", "292.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 8.0fr x 120cm L. (J386G)", "292.00"], "confidence": "0.95"},
+        {"cells": ["Silicon Nasogastric Feeding Tube 10.0fr x 150cm L. (J386K)", "400.00"], "confidence": "0.95"},
+        {"cells": ["Esophagostomy Tube, 14fr x 9\" (J390)", "83.00"], "confidence": "0.95"},
+        {"cells": ["Esophagostomy Tube, 19fr x 15\" (J390L)", "88.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Feeding Tubes Mila",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Mila Length-Adjustable Esophagostomy Feeding Tube 10Fr x 75cm (E1030)", "365.00"], "confidence": "0.95"},
+        {"cells": ["Mila Length-Adjustable Esophagostomy Feeding Tube 14Fr x 33cm (E1413)", "360.00"], "confidence": "0.95"},
+        {"cells": ["Mila Length-Adjustable Esophagostomy Feeding Tube 14Fr x 75cm (E1430)", "360.00"], "confidence": "0.95"},
+        {"cells": ["Mila Length-Adjustable Esophagostomy Feeding Tube with Stylet - 14Fr to 125cm (E1450)", "420.00"], "confidence": "0.95"},
+        {"cells": ["Mila Length-Adjustable Esophagostomy Feeding Tube 18Fr x 75cm (E1830)", "389.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 3Fr x 25cm (10in) - Sterile (NG310S)", "200.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 5Fr x 55cm (22in) - Sterile (NG522S)", "310.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 6Fr x 55cm (22in) (NG622)", "270.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 6Fr x 90cm (36in) (NG636)", "270.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 8Fr x 108cm (43in) (NG843)", "270.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 8Fr x 140cm (55in) (NG855)", "280.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 10Fr x 90cm (36in) (NG1036)", "305.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 10Fr x 108cm (43in) (NG1043)", "310.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 10Fr x 140cm (55in) (NG1055)", "315.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 12Fr x 108cm (43in) (NG1243)", "320.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 14Fr x 125cm (50in-length adjustable) includes 13Fr wing (NG1450)", "415.00"], "confidence": "0.95"},
+        {"cells": ["Mila Nasogastric Feeding Tube 18Fr x 250cm (100in-length adjustable) includes nose piece (NG18100)", "445.00"], "confidence": "0.95"},
+        {"cells": ["Mila Large Bore Feeding Tube Extension Set with Rotating Male Luer Lock, Clamp and Female Luer - 13Ga x 152cm (FTE60)", "102.00"], "confidence": "0.95"},
+        {"cells": ["Mila Enteral Feeding Bag with Spike Port (500mL Bag) (FB500)", "122.00"], "confidence": "0.95"},
+        {"cells": ["Mila Enteral Feeding Bag with Spike Port (1000mL Bag) (FB1000)", "122.00"], "confidence": "0.95"},
+        {"cells": ["Mila Weighted Nasogastric Feeding Tube with Flushing Stylet 6Fr x 56cm (22in) 1 Gram Weight (NG622W)", "313.00"], "confidence": "0.95"},
+        {"cells": ["Mila Weighted Nasogastric Feeding Tube with Flushing Stylet 8Fr x 109cm (43in) 3 Gram Weight (NG843W-3)", "318.00"], "confidence": "0.95"},
+        {"cells": ["Mila Weighted Nasogastric Feeding Tube with Flushing Stylet 8Fr x 109cm (43in) 7 Gram Weight (NG843W-7)", "325.00"], "confidence": "0.95"},
+        {"cells": ["Mila Weighted Nasogastric Feeding Tube with Flushing Stylet 10Fr x 91cm (36in) 3 Gram Weight (NG1036W)", "376.00"], "confidence": "0.95"},
+        {"cells": ["Mila Weighted Nasogastric Feeding Tube with Flushing Stylet 10Fr x 109cm (43in) 3 Gram Weight (NG1043W)", "389.00"], "confidence": "0.95"},
+        {"cells": ["Mila Weighted Nasogastric Feeding Tube with Flushing Stylet 12Fr x 109cm (43in) 3 Gram Weight (NG1243W)", "395.00"], "confidence": "0.95"},
+        {"cells": ["Mila UV Blocking Extension Set with Clamp, Rotating Male Luer Lock and Female Luer Lock - 23Ga x 152cm (UVB60)", "117.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Esophagostomy Feeding Tube 12Fr x 38cm (15in) with 2 side holes (.90cm) (SE1215)", "313.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Esophagostomy Feeding Tube 14Fr x 38cm (15in) with 2 side holes (.96cm) (SE1415)", "313.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Esophagostomy Feeding Tube 20Fr x 38cm (15in) with 2 side holes (1.27cm) (SE2015)", "313.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Esophagostomy Feeding Tube 20Fr x 55cm (22in) with 2 side holes (1.27cm) (SE2022)", "313.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Esophagostomy Feeding Tube 20Fr x 76cm (30in) with 2 side holes (1.27cm) (SE2030)", "340.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Esophagostomy Feeding Tube 30Fr x 55cm (22in) with 2 side holes (1.82cm) (SE3022)", "375.00"], "confidence": "0.95"},
+        {"cells": ["Mila Silicone Esophagostomy Feeding Tube 30Fr x 110cm (44in) with 2 side holes (1.82cm) (SE3044)", "393.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Kitty Kollar E-Tube protective collar",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Kitt \"E\" Kollar - X small (J1085X)", "338.00"], "confidence": "0.95"},
+        {"cells": ["Kitt \"E\" Kollar - Petite Feline (J1085)", "354.00"], "confidence": "0.95"},
+        {"cells": ["Kitt \"E\" Kollar - Feline Small (J1085A)", "366.00"], "confidence": "0.95"},
+        {"cells": ["Kanine Kollar - Medium (J1085B)", "397.00"], "confidence": "0.95"},
+        {"cells": ["Kanine Kollar - Large (J1085C)", "450.00"], "confidence": "0.95"},
+        {"cells": ["Kanine Kollar - X-Large (J1085D)", "493.00"], "confidence": "0.95"},
+        {"cells": ["Kitt \"E\" Kollar Replacement Protector Pads, Pack of 24 (J1085P)", "72.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Dental",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["iM3 iC Plaque Disclosing Solution, Box of 72 (H1001)", "396.00"], "confidence": "0.95"},
+        {"cells": ["iM3 HP Lubricant for Advantage HP's 30ml (MD30)", "196.00"], "confidence": "0.95"},
+        {"cells": ["iM3 R&R Oscilating Prophy Angle Disposable, 100 pcs/box (L7466)", "898.00"], "confidence": "0.95"},
+        {"cells": ["iM3 iClean R&R Prophy Paste 2g x 100 units with finger ring, 100 pcs/bag (L7510)", "226.00"], "confidence": "0.95"},
+        {"cells": ["iClean iM3 Prophy paste Fruit flavour with Fluoride, Fine Grit - Tub 9oz 255g (L7500)", "149.00"], "confidence": "0.95"},
+        {"cells": ["iM3 CLS Solution 250ml concentration (C3150)", "114.00"], "confidence": "0.95"},
+        {"cells": ["iM3 Wedge Dental Sharpening Stone (A3110)", "189.00"], "confidence": "0.95"},
+        {"cells": ["Oxyfresh Water Additive - 250ml (OF250)", "99.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Anesthetic Accessories",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Breath Fresh Anesthesia Gas Filter, Activated charcoal 180g, per Canister (J304)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Breath Fresh Anesthesia Gas Filter Refill (J304R)", "90.00"], "confidence": "0.95"},
+        {"cells": ["Soda Lime, 4.5kg", "445.00"], "confidence": "0.95"},
+        {"cells": ["Feline Breathe Easy Inhalant Delivery System (J843)", "395.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Resuscitation Bag Large (J247)", "615.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Resuscitation Bag Medium (J247A)", "580.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Resuscitation Bag Small (J247B)", "580.00"], "confidence": "0.95"},
+        {"cells": ["Oesophageal Stethoscope\n(size available: 2mm (9Fr), 4mm (12Fr), 6mm (18Fr), 8mm (24Fr)", "221.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Endotracheal Tubes",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Eickemeyer Uncuffed PVC Endotrach Tube\n(size available: 2.0mm, 2.5mm, 3mm, 3.5mm, 4mm, 4.5mm)", "45.00"], "confidence": "0.95"},
+        {"cells": ["Eickemeyer Cuffed PVC Endotrach Tube\n(size available: 2.5mm, 3mm, 3.5mm, 4mm, 4.5mm, 5mm, 5.5mm, 6mm, 6.5mm, 7mm, 7.5mm, 8mm, 8.5mm, 9mm, 9.5mm, 10mm)", "45.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Cuffed PVC Endotrach Tube\n(size available:10.5mm, 11mm)", "70.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Cuffed PVC Endotracheal Tube\n(size available: 12mm, 13mm)", "112.00"], "confidence": "0.95"},
+        {"cells": ["JorVet Red Rubber Endotracheal Tube with inflatable cuff\n(size available: 2.5mm, 3mm, 3.5mm, 4mm, 4.5mm, 5mm, 5.5mm, 6mm, 6.5mm, 7mm, 7.5mm, 8mm, 8.5mm, 9mm, 9.5mm, 10mm, 10.5mm,11mm)", "265.00"], "confidence": "0.95"},
+        {"cells": ["Endotracheal Tube Connector\n(size available: 2.5mm, 3mm, 3.5mm, 4mm, 4.5mm, 5mm, 5.5mm, 6mm, 6.5mm, 7mm, 7.5mm, 8mm, 8.5mm, 9mm, 9.5mm, 10mm, 10.5mm,11mm)", "38.00"], "confidence": "0.95"},
+        {"cells": ["JorVet Red Rubber Endotracheal Tube with inflatable cuff and adaptor 12mm x 19\" L (J148S)", "1,306.00"], "confidence": "0.95"},
+        {"cells": ["JorVet Red Rubber Endotracheal Tube with inflatable cuff and adaptor 13mm x 19.5\" L (J148T)", "1,306.00"], "confidence": "0.95"},
+        {"cells": ["JorVet Red Rubber Endotracheal Tube with inflatable cuff and adaptor 14mm x 20\" L (J148U)", "1,319.00"], "confidence": "0.95"},
+        {"cells": ["JorVet Red Rubber Endotracheal Tube with inflatable cuff and adaptor 16mm x 26\" L (J148V)", "1,319.00"], "confidence": "0.95"},
+        {"cells": ["Avian/Small of Small Exotic Endotracheal Tube\n(size available: 1mm, 1.5mm, 2.0mm, 2.5mm, 3mm, 4mm, 5mm, 6mm)", "254.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Endotracheal Tube Stylette and Cleaning Brush",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Endotrach Tube Stylette (J149STA)\n- Fits tube sizes 2.0-3.5mm.", "105.00"], "confidence": "0.95"},
+        {"cells": ["Endotrach Tube Stylette (J149STB)\n- Fits tube sizes 4.0-6.5mm.", "105.00"], "confidence": "0.95"},
+        {"cells": ["Endotrach Tube Stylette (J149STC)\n- Fits tube sizes 7.0-10.0mm.", "105.00"], "confidence": "0.95"},
+        {"cells": ["Endotube cleaning brush 4mm (J151Q)", "71.00"], "confidence": "0.95"},
+        {"cells": ["Endotube cleaning brush 8mm (J151S)", "71.00"], "confidence": "0.95"},
+        {"cells": ["Endotracheal Tube Rack (J160)", "1,180.00"], "confidence": "0.95"},
+        {"cells": ["Endotracheal Tube Rack & Cover (J160A)", "2,358.00"], "confidence": "0.95"},
+        {"cells": ["Endotracheal Tube Rack Cover Only (J160C)", "1,396.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Anesthesia Breathing Bags",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Latex Anesthesia Breathing Bag\n(size available: 0.5L, 1L, 2L, 3L)", "143.00"], "confidence": "0.95"},
+        {"cells": ["Reusable Black Rubber Anesthesia Breathing Bag 0.5 LITER (J249Q)", "232.00"], "confidence": "0.95"},
+        {"cells": ["Reusable Black Rubber Anesthesia Breathing Bag 1 LITER (J249R)", "232.00"], "confidence": "0.95"},
+        {"cells": ["Reusable Black Rubber Anesthesia Breathing Bag 2 LITER (J249R2)", "246.00"], "confidence": "0.95"},
+        {"cells": ["Reusable Black Rubber Anesthesia Breathing Bag 3 LITER (J249S)", "246.00"], "confidence": "0.95"},
+        {"cells": ["Reusable Black Rubber Anesthesia Breathing Bag 4 LITER (J249T)", "288.00"], "confidence": "0.95"},
+        {"cells": ["Reusable Black Rubber Anesthesia Breathing Bag 5 LITER (J249V)", "309.00"], "confidence": "0.95"},
+        {"cells": ["Reusable Black Rubber Anesthesia Breathing Bag 15 LITER (J249W)", "1,653.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Anesthesia Circuits",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Disposable Pediatric Anesthesia \"Y\" piece Circuit with 1L Bag (J248B)", "152.00"], "confidence": "0.95"},
+        {"cells": ["Universal \"F\" Anesthesia Circuit 40\" Hose with 2L bag (J248F)", "291.00"], "confidence": "0.95"},
+        {"cells": ["Universal \"F\" Anesthesia Circuit 60\" Hose with 2L bag (J248FL)", "302.00"], "confidence": "0.95"},
+        {"cells": ["Universal \"F\" Anesthesia Circuit 40\" Hose without bag (J248FA)", "279.00"], "confidence": "0.95"},
+        {"cells": ["Universal \"F\" Anesthesia Circuit 60\" Hose without bag (J248FLA)", "280.00"], "confidence": "0.95"},
+        {"cells": ["Pediatric Universal \"F\" Anesthesia Circuit 40\" Hose with 1L bag (J248K)", "303.00"], "confidence": "0.95"},
+        {"cells": ["Pediatric Universal \"F\" Anesthesia Circuit 60\" Hose with 1L bag (J248KL)", "314.00"], "confidence": "0.95"},
+        {"cells": ["Pediatric Universal \"F\" Anesthesia Circuit 40\" Hose without bag (J248KA)", "290.00"], "confidence": "0.95"},
+        {"cells": ["Pediatric Universal \"F\" Anesthesia Circuit 60\" Hose without bag (J248KLA)", "302.00"], "confidence": "0.95"},
+        {"cells": ["Unilimb Rebreathing Circuit 72\" (#91316432)", "302.00"], "confidence": "0.95"},
+        {"cells": ["Jackson-Reese Circuit W/Thumb with 0.5L bag (J248GA)", "279.00"], "confidence": "0.95"},
+        {"cells": ["Jackson-Reese Circuit W/Thumb with 1L bag (J248G)", "279.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Anesthesia Masks",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Midmark Anesthesia Mask - Small Feline (#93805027)", "477.00"], "confidence": "0.95"},
+        {"cells": ["Midmark Anesthesia Mask - Medium Feline (#93805028)", "477.00"], "confidence": "0.95"},
+        {"cells": ["Midmark Anesthesia Mask - Large Feline (#93805029)", "477.00"], "confidence": "0.95"},
+        {"cells": ["Midmark Anesthesia Mask - Small Canine (#93815026)", "510.00"], "confidence": "0.95"},
+        {"cells": ["Midmark Anesthesia Mask - Large Canine (#93815028)", "510.00"], "confidence": "0.95"},
+        {"cells": ["Midmark Anesthesia Assorted Masks set (#91351400)\n(Set of 5 Masks, 2 Canine+ 3 Feline)", "2,330.00"], "confidence": "0.95"},
+        {"cells": ["Diaphragm only for Small Feline mask (#91815014)", "274.00"], "confidence": "0.95"},
+        {"cells": ["Diaphragm only for Medium Feline mask (#91815015)", "274.00"], "confidence": "0.95"},
+        {"cells": ["Diaphragm only for Large Feline mask (#91815016)", "274.00"], "confidence": "0.95"},
+        {"cells": ["Diaphragm only for Small Canine mask (#91815017)", "274.00"], "confidence": "0.95"},
+        {"cells": ["Diaphragm only for Large Canine mask (#91815018)", "274.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "V-Gel Supraglottic Airway Device",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["V-Gel Rabbit Supraglottic Airway - Single Use R1", "199.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Rabbit Supraglottic Airway - Single Use R2", "201.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Rabbit Supraglottic Airway - Single Use R3", "203.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Rabbit Supraglottic Airway - Single Use R4", "214.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Rabbit Supraglottic Airway - Single Use R5", "225.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Rabbit Supraglottic Airway - Single Use R6", "225.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Cat Supraglottic Airway - Single Use C0", "203.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Cat Supraglottic Airway - Single Use C1", "205.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Cat Supraglottic Airway - Single Use C2", "208.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Cat Supraglottic Airway - Single Use C3", "216.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Cat Supraglottic Airway - Single Use C4", "230.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Cat Supraglottic Airway - Single Use C5", "240.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Canine Supraglottic Airway - Single Use D3", "299.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Canine Supraglottic Airway - Single Use D4", "315.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Canine Supraglottic Airway - Single Use D5", "327.00"], "confidence": "0.95"},
+        {"cells": ["V-Gel Canine Supraglottic Airway - Single Use D6", "349.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Suture Needles",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["J7011 Reverse Cutting Needle, 3/8 circle, 12 pcs/pack\n(Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)", "140.00"], "confidence": "0.95"},
+        {"cells": ["J6017 Taper Point Needle, 3/8 circle, 12 pcs/pack\n(Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)", "140.00"], "confidence": "0.95"},
+        {"cells": ["J7031 Reverse Cutting Needle 1/2 Circle, 12 pcs/pack\n(Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)", "140.00"], "confidence": "0.95"},
+        {"cells": ["J6037 Taper Point Needle, 1/2 circle, 12 pcs/pack\n(Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)", "140.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Sutures (cassette)",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Catgut Chrom USP 3/0 100m cassette (CC30100)", "789.00"], "confidence": "0.95"},
+        {"cells": ["Catgut Chrom USP 2/0 100m cassette (CC20100)", "847.00"], "confidence": "0.95"},
+        {"cells": ["Catgut Chrom USP 0 100m cassette (CC00100)", "847.00"], "confidence": "0.95"},
+        {"cells": ["Catgut Chrom USP 1 75m cassette (CC0175)", "825.00"], "confidence": "0.95"},
+        {"cells": ["Supramid White in cassette USP 3/0 100m (SW30100)", "282.00"], "confidence": "0.95"},
+        {"cells": ["Supramid White in cassette USP 2/0 100m (SW20100)", "306.00"], "confidence": "0.95"},
+        {"cells": ["Supramid White in cassette USP 0 100m (SW00100)", "335.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 3/0, 25m cassette (PL3025)", "458.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 2/0, 25m cassette (PL2025)", "458.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 0, 25m cassette (PL0025)", "458.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 1, 25m cassette (PL0125)", "458.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 3/0, 15m cassette (PD3015)", "454.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 2/0, 15m cassette (PD2015)", "454.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 0, 15m cassette (PD0015)", "454.00"], "confidence": "0.95"},
+        {"cells": ["Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 1, 15m cassette (PD0115)", "482.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Sutures",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Monosyn 2/0, 70cm, 26mm 1/2 Circle Needle Taper Point HR26, 12 pcs/pack (JG22026)", "544.00"], "confidence": "0.95"},
+        {"cells": ["Monosyn 3/0, 70cm, 26mm 1/2 Circle Needle Taper Point HR26, 12 pcs/pack (JG22025)", "544.00"], "confidence": "0.95"},
+        {"cells": ["Monosyn 4/0, 45cm, 19mm 3/8 Circle Reverse Cutting DS19, 12 pcs/pack (JG22504)", "544.00"], "confidence": "0.95"},
+        {"cells": ["Monosyn 5/0, 45cm, 16mm 3/8 Circle Reverse Cutting DS16, 12 pcs/pack (JG22419)", "544.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Scapel blades (Sterile)",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Surgical Scalpel Blades standard, #10, Sterile, 100 pcs/box (#98100710)", "181.00"], "confidence": "0.95"},
+        {"cells": ["Surgical Scalpel Blades standard, #11, Sterile, 100 pcs/box (#98100711)", "181.00"], "confidence": "0.95"},
+        {"cells": ["Surgical Scalpel Blades standard, #15, Sterile, 100 pcs/box (#98100715)", "181.00"], "confidence": "0.95"},
+        {"cells": ["Surgical Scalpel Blades standard, #20, Sterile, 100 pcs/box (#98100720)", "181.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Skin Staple",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Ethicon PROXIMATE Plus MD Skin Stapler 35W, Sterile, 35 Staples/pack, 6packs/box (PMW35)", "850.00"], "confidence": "0.95"},
+        {"cells": ["Surgi-Close Staple Removal Forceps (J799R)", "118.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Suction/Aspiration",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Suction Catheter 6Fr x 18\", Sterile, 5 pcs/pack (J695)", "94.00"], "confidence": "0.95"},
+        {"cells": ["Suction Catheter 8Fr x 18\", Sterile, 5 pcs/pack (J695A)", "94.00"], "confidence": "0.95"},
+        {"cells": ["Suction Catheter 10Fr x 18\", Sterile, 5 pcs/pack (J695B)", "94.00"], "confidence": "0.95"},
+        {"cells": ["Suction Catheter 14Fr x 18\", Sterile, 5 pcs/pack (J695C)", "94.00"], "confidence": "0.95"},
+        {"cells": ["Suction Hose 6 Feet, Sterile (J488)", "67.00"], "confidence": "0.95"},
+        {"cells": ["Suction Hose 12 Feet, Sterile (J488L)", "70.00"], "confidence": "0.95"},
+        {"cells": ["Suction Cannister 800cc (J459D1)", "176.00"], "confidence": "0.95"},
+        {"cells": ["Suction Cannister 1200cc (J459D1A)", "217.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Biopsy Punch and Needles",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Jorvet Bone Marrow Needle, 16g (J116T)", "234.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Osty Core Bone/Biopsy Needle, 16g x 7.5cm (J116C)", "573.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Biopsy/Aspiration Bone Marrow Needle TRAP SET 8g x 4\" (J116K)", "422.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Biopsy/Aspiration Bone Marrow Needle TRAP SET 11g x 4\" (J116M)", "422.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Biopsy/Aspiration Bone Marrow Needle 13g x 4\" (J116S)", "316.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Super Core Biopsy Needle, 14g x 9cm (J528)", "351.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Super Core Biopsy Needle, 16g x 9cm (J528A)", "351.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Super Core Biopsy Needle, 16g x 15cm (J528B)", "351.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Super Core Biopsy Needle, 18g x 9cm (J528C)", "351.00"], "confidence": "0.95"},
+        {"cells": ["Disposable Skin Biopsy Punch 2mm, per pc (#179202)", "33.00"], "confidence": "0.95"},
+        {"cells": ["Disposable Skin Biopsy Punch 4mm, per pc (#179204)", "33.00"], "confidence": "0.95"},
+        {"cells": ["Disposable Skin Biopsy Punch 6mm, per pc (#179206)", "33.00"], "confidence": "0.95"},
+        {"cells": ["Disposable Skin Biopsy Punch 8mm, per pc (#179208)", "33.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Intravenous Equipment",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Catheter Plug, 5pc/pack (J598)", "95.00"], "confidence": "0.95"},
+        {"cells": ["Reducing (Barbed) Connector with Female Luer Lock (J282D1)\n- connecting of syringe to catheter (i.e., Foley or feeding tube)", "34.00"], "confidence": "0.95"},
+        {"cells": ["Smaller Barbed Connector with Female Luer Lock, 2.8mm to 7mm (J282D4)", "42.00"], "confidence": "0.95"},
+        {"cells": ["Double Christmas Tree Connector, Connects tubing from 4mm to12mm i.d., 2pc/pack (J282D2)", "40.00"], "confidence": "0.95"},
+        {"cells": ["3-Way Stopcock, Sterile (J462)", "15.00"], "confidence": "0.95"},
+        {"cells": ["Injection Cap, per pc (IN219)", "14.30"], "confidence": "0.95"},
+        {"cells": ["Micro-Bore \"T\" Extension Set (J467Q)", "35.00"], "confidence": "0.95"},
+        {"cells": ["Standard Bore \"T\" Extension Set (J467T)", "35.00"], "confidence": "0.95"},
+        {"cells": ["Small bore T-Port Extension Set, with needle free one-way valve (J467E)", "52.00"], "confidence": "0.95"},
+        {"cells": ["Standard T-Port Extension Set, with needle free one-way valve (J467Z)", "52.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "I.V. Catheters",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["JELCO I.V. Catheter 14/G x 2\", 50 pcs/box (#050000)", "450.00"], "confidence": "0.95"},
+        {"cells": ["JELCO I.V. Catheter 16/G x 2\", 50 pcs/box (#050001)", "450.00"], "confidence": "0.95"},
+        {"cells": ["JELCO I.V. Catheter 18/G x 1.25\", 50 pcs/box (#050002)", "450.00"], "confidence": "0.95"},
+        {"cells": ["JELCO I.V. Catheter 20/G x 1.25\", 50 pcs/box (#050003)", "450.00"], "confidence": "0.95"},
+        {"cells": ["JELCO I.V. Catheter 22/G x1\", 50 pcs/box (#050004)", "450.00"], "confidence": "0.95"},
+        {"cells": ["JELCO I.V. Catheter 24/G x 0.75\", 50 pcs/box (#050005)", "450.00"], "confidence": "0.95"},
+        {"cells": ["Deltaven I.V. Catheter 26G x 19mm, 50 pcs/box", "1,530.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Blood Transfusion and Infusion Products",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Blood Transfusion and Infusion Set (J65M)", "39.00"], "confidence": "0.95"},
+        {"cells": ["Blood Bag Collection Unit 450ml (Prefilled CPDA-1 63ml) (J520)", "82.00"], "confidence": "0.95"},
+        {"cells": ["Blood Bag Collection Unit 250ml (Prefilled CPDA-1 35ml) (J520Q)", "82.00"], "confidence": "0.95"},
+        {"cells": ["Blood Bag 50ml-150ml (Dry) (J520A)", "74.00"], "confidence": "0.95"},
+        {"cells": ["Hemo Nate Blood Filtration (J522H)", "86.00"], "confidence": "0.95"},
+        {"cells": ["Hemo Tap Filter Spike with injection port (BF15)", "86.00"], "confidence": "0.95"},
+        {"cells": ["Surgicutt Bleeding Time Device - Junior (J522J)", "99.00"], "confidence": "0.95"},
+        {"cells": ["Surgicutt Bleeding Time Device - Adult (J522S)", "99.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Jelly",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Parker Aquasonic Ultrasonic Gel, 5L", "470.00"], "confidence": "0.95"},
+        {"cells": ["Medline E-Z Lubricating Jelly 2.7 gram, sterile packet, 144 packs/box", "235.00"], "confidence": "0.95"},
+        {"cells": ["SurgiLube Surgical Lubricant, 5oz/ tube", "46.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Surgical Scrubbing",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["SB111 Vygon Surgical Scrub Brushes with 4% Chlorhexidine Gluconate, 25 pcs/box", "525.00"], "confidence": "0.95"},
+        {"cells": ["Hexadermal Alcohol Based Hand Disinfectant 500ml", "77.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Cleaning and Disinfecting",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Midmark Speed-Clean Autoclave and Sterilizer Cleaner 16OZ", "234.00"], "confidence": "0.95"},
+        {"cells": ["Miltex Instrument Spray Lube 8OZ (ML-3-700)", "141.00"], "confidence": "0.95"},
+        {"cells": ["3M #70508 Biofilm Removal Multi-Enzyme Cleaner 5L", "810.00"], "confidence": "0.95"},
+        {"cells": ["3M #7340N Environmental Cleaning Wipe, 100pc per bag", "182.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Autoclave Accessories",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["3M #1322-18MM Comply Lead Free Steam Indicator Tape (Autoclave Tape), 18mm x 55m", "92.00"], "confidence": "0.95"},
+        {"cells": ["3M #1243A Comply (SteriGage) Chemical Integrator, 500 pcs/pack", "958.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - White, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - Blue, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - Green, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - Red, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - Yellow, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - Orange, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - Neon Purple, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell Refill - Neon Pink, 10 feet per roll", "279.00"], "confidence": "0.95"},
+        {"cells": ["Tape N tell set of 8 colors\n- White, Blue, Green, Red, Yellow, Orange, Neon Purple, Neon Pink\n- 3 feet/each color", "603.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Autoclave Bags",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Self-Sealing Sterilization Pouches, 60 x 130 mm (200pc/pack)", "88.00"], "confidence": "0.95"},
+        {"cells": ["Self-Sealing Sterilization Pouches, 70 x 260 mm (200pc/pack)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Self-Sealing Sterilization Pouches, 90 x 170 mm (200pc/pack)", "129.00"], "confidence": "0.95"},
+        {"cells": ["Self-Sealing Sterilization Pouches, 90 x 260 mm (200pc/pack)", "139.00"], "confidence": "0.95"},
+        {"cells": ["Self-Sealing Sterilization Pouches, 135 x 290 mm (200pc/pack)", "237.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Autoclave Rolls",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Eickemeyer Sterilization Reel 5 cm x 200 m, per roll (#502005)", "388.00"], "confidence": "0.95"},
+        {"cells": ["Eickemeyer Sterilization Reel 7.5 cm x 200 m, per roll (#502007)", "484.00"], "confidence": "0.95"},
+        {"cells": ["Eickemeyer Sterilization Reel 10 cm x 200 m, per roll (#502010)", "560.00"], "confidence": "0.95"},
+        {"cells": ["Eickemeyer Sterilization Reel 15 cm x 200 m, per roll (#502015)", "738.00"], "confidence": "0.95"},
+        {"cells": ["Eickemeyer Sterilization Reel 20 cm x 200 m, per roll (#502020)", "827.00"], "confidence": "0.95"},
+        {"cells": ["Eickemeyer Sterilization Reel 25 cm x 200 m, per roll (#502025)", "1,530.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Collars",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["EickColl Dog Collar, Neck diam 7 to 8 cm, Length 7.5 cm, 10pc/pack (#220020)", "251.00"], "confidence": "0.95"},
+        {"cells": ["EickColl Dog Collar, Neck diam 7 to 8 cm, Length 10 cm, 10pc/pack (#220021)", "270.00"], "confidence": "0.95"},
+        {"cells": ["EickColl Dog Collar, Neck diam 9 to 10.5 cm, Length 12 cm, 10pc/pack (#220022)", "310.00"], "confidence": "0.95"},
+        {"cells": ["EickColl Dog Collar, Neck diam 10 to 12 cm, Length 15 cm, 10pc/pack (#220023)", "353.00"], "confidence": "0.95"},
+        {"cells": ["EickColl Dog Collar, Neck diam 12 to 14 cm, Length 20 cm, 10pc/pack (#220024)", "386.00"], "confidence": "0.95"},
+        {"cells": ["EickColl Dog Collar, Neck diam 14 to 16 cm, Length 25 cm, 10pc/pack (#220025)", "496.00"], "confidence": "0.95"},
+        {"cells": ["EickColl Dog Collar, Neck diam 15 to 18 cm, Length 30 cm, 10pc/pack (#220026)", "602.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Pet Handling",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["ID Bands, Pre-Cut, White, 20\", 500/ box", "601.00"], "confidence": "0.95"},
+        {"cells": ["ID Bands, Pre-Cut, Mix Colors, 20\", 500/ box", "601.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Pet Piller, Pencil style, 12/pack (J384)", "168.00"], "confidence": "0.95"},
+        {"cells": ["JorVet Pet Piller, Long plastic barrel with plastic plunger, 10/pack (J384XN)", "156.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Orthopedic",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Cruciate Repair Crimp tube 12mm, for 80lb (J710A)", "68.00"], "confidence": "0.95"},
+        {"cells": ["Cruciate Repair Crimp tube 10mm, for 50lb (J710B)", "68.00"], "confidence": "0.95"},
+        {"cells": ["15mm X-Small Cruciate Needle. Swaged onto 50 lb Nylon Suture with 10mm crimp tube. 500mm L. (J710K)", "151.00"], "confidence": "0.95"},
+        {"cells": ["20mm Small Cruciate Needle. Swaged onto 80 Lb Nylon leader line with 12mm crimp tube. 800mm L. (J710M)", "151.00"], "confidence": "0.95"},
+        {"cells": ["25mm Medium Cruciate Needle. Swaged onto 100 lb Nylon Suture with 12mm crimp tube. 800mm L (J710P)", "151.00"], "confidence": "0.95"},
+        {"cells": ["Eickemeyer Soft splint, Roll of 11cm W x 1m (#951811)", "140.00"], "confidence": "0.95"},
+        {"cells": ["Veterinary Plastic Splint Small. 1\" x 8\" (2.5 cm x 20 cm), per pc (J119A)", "43.00"], "confidence": "0.95"},
+        {"cells": ["Veterinary Plastic Splint Medium. 1-1/2\" x 12\" (3.8 cm x 30 cm), per pc (J119B)", "52.00"], "confidence": "0.95"},
+        {"cells": ["Veterinary Plastic Splint Large. 2\" x 16\" (5 cm x 40 cm), per pc (J119C)", "60.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "X-Ray Accessories",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["X-ray Markers with Graduations (J1185)\n- set of two x-ray markers (L and R)", "168.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet GI Magic Beads Small Pack, 5 doses/box(J1146)", "324.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet GI Magic Beads Large Pack, 5 doses/box(J1146A)", "324.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "X-Ray Protection",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["X-Ray Apron with Quick Release buckle – Small (J676M)", "1,980.00"], "confidence": "0.95"},
+        {"cells": ["X-Ray Apron with Quick Release buckle – Large (J676ML)", "1,980.00"], "confidence": "0.95"},
+        {"cells": ["Thyroid X-ray Collar (J678N)", "590.00"], "confidence": "0.95"},
+        {"cells": ["Open Palm X-ray Mitt, per pair (J677P)", "1,300.00"], "confidence": "0.95"},
+        {"cells": ["Lead Gloves-Vinyl, per pair (J677X)", "2,250.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Warming Air Blankets",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Disposable Warming Air Blanket 1450 x 1020 mm, per pack", "56.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Reusable Warming Air Blanket Small 30\"L x 20\"W (J1034)", "527.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Reusable Warming Air Blanket Medium 36\"L x 24\"W (J1034A)", "584.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Reusable Warming Air Blanket Large 48\"L x 24\"W (J1034B)", "643.00"], "confidence": "0.95"},
+        {"cells": ["Jorvet Reusable Warming Air Blanket - Set Of 3 (J1034S)", "1,720.00"], "confidence": "0.95"}
+      ]
+    },
+    {
+      "section": "Other",
+      "columns": ["Item Description", "Unit Price (HK$)"],
+      "rows": [
+        {"cells": ["Braided Umbilical Tape 1/8\" X 20yds (J25UA)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Braided Umbilical Tape 3/8\" X 20yds (J25UB)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Braided Umbilical Tape 1/4\" X 20yds (J25UC)", "105.00"], "confidence": "0.95"},
+        {"cells": ["Bulb Syringe 60ml capacity Sterile (J487B)", "49.00"], "confidence": "0.95"},
+        {"cells": ["ESSP Sterile Disposable Electrosurgical Scratch Pad (Box of 40)", "860.00"], "confidence": "0.95"}
+      ]
+    }
+  ],
+  "text_observations": [
+    {"text": "AVM also offers Ethicon sutures. Please enquire for more information.", "confidence": "0.95"}
+  ]
+}
