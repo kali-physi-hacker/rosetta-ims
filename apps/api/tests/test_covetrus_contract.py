@@ -151,3 +151,58 @@ def test_the_catalogue_page_reference_is_kept_but_never_counted(conformed):
         packaging = row.normalized_fields.get("packaging") or {}
         page = str((row.raw_fields["additional_fields"])["catalogue_page"])
         assert str(packaging.get("sellable_units_per_purchase_unit") or "") != page
+
+
+def test_the_picture_pages_callout_column_is_read_but_claims_nothing():
+    """Page 16 prints six values under five headings.
+
+    The leading number keys each row to the photograph above it and the page
+    never labels that column. Refusing the row used to fail the envelope, the
+    page, and every page after it — the whole 32-page document over three rows
+    of gauze. The row is now kept with no heading claimed for any value, and
+    since it answers no column this contract names it is evidence, not a row:
+    skipped, exactly as the same gauze row is when the callout is absent.
+
+    The recorded whole_document.json omits the callout — the provider dropped
+    it the day it was recorded — so this shape is asserted against the live
+    reading of page 16 instead.
+    """
+    from services.catalogue_evidence_extraction import ExtractedEvidence, RawCell, SourceLocation
+    from schemas.catalogue_pipeline.enums import ExtractionMethod
+
+    def _row(cells, columns):
+        return ExtractedEvidence(
+            observation_key="page-16",
+            source_location=SourceLocation(page_number=16, source_object_key="page-16"),
+            raw_cells=tuple(
+                RawCell(
+                    cell_reference=None,
+                    row_number=None,
+                    column_name=(columns[i] if columns else None),
+                    column_index=i + 1,
+                    raw_value=value,
+                )
+                for i, value in enumerate(cells)
+            ),
+            extraction_method=ExtractionMethod.MODEL_VISION,
+            provider="anthropic",
+            model="test",
+        )
+
+    headings = ["Item", "Description", "Dimensions", "Ply", "Quantity"]
+    verbatim = ["1", "2800226", "Gauze Swabs X-ray Hydrophilic Sterile", "5 x  5 cm", "12ply", "10 x 10 pcs"]
+    runtime = SupplierSourceRuntimeContract(
+        declaration=get_supplier_source_contract(CONTRACT, "v1").declaration
+    )
+
+    with_callout = _row(verbatim, None)          # six values, no heading claimed
+    without_callout = _row(verbatim[1:], headings)  # the same row as recorded
+
+    outcome = conform_observations(
+        (with_callout, without_callout), (uuid4(), uuid4()), runtime
+    )
+
+    assert _products(outcome) == [], "an unpriced picture row is not a product"
+    assert not [i for i in outcome.items if i.issues], (
+        "the callout row must be skipped like its aligned twin, not blocked"
+    )

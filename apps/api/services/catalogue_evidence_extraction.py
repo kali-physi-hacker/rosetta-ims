@@ -214,7 +214,11 @@ class _VisionRow(BaseModel):
 
     Tabular rows carry ``cells`` — verbatim values aligned by position to the
     page-level ``columns`` array (null for an empty cell; a short tail is
-    padded as empty). Non-tabular lines carry ``text``. Emitting the column
+    padded as empty). A row may also carry MORE values than there are
+    headings, where the page prints a column it does not label; the position
+    of that column is not recoverable from the payload, so such a row keeps
+    its values and claims no heading for any of them. Non-tabular lines carry
+    ``text``. Emitting the column
     headings once per page instead of once per cell cuts provider output
     tokens roughly in half on dense bilingual tables — the dominant cost.
     """
@@ -259,7 +263,7 @@ class _VisionTable(BaseModel):
     section: str | None = None
 
     @model_validator(mode="after")
-    def _rows_match_columns(self):
+    def _align_rows_to_columns(self):
         # Columns with no rows is a heading whose rows are on the next page —
         # common once a table is emitted per section banner. It carries no
         # evidence, so the envelope drops it; refusing the whole page over it
@@ -269,8 +273,23 @@ class _VisionTable(BaseModel):
         for row in self.rows:
             if row.text is not None:
                 raise ValueError("table rows must use cells; document text belongs in text_observations")
-            if len(row.cells) > len(self.columns):
-                raise ValueError("a row cannot carry more cells than its table columns")
+        # A row CAN carry more cells than the table has headings: a column may
+        # simply not be labelled. Covetrus prints its picture pages with a
+        # leading callout number keying each row to the photograph above it —
+        # six values under five headings. Refusing the row (and, because the
+        # envelope is validated whole, the entire page and every page after it)
+        # loses a document over a shape the page is entitled to print.
+        #
+        # Where the surplus is only an over-long empty tail the provider padded,
+        # trimming it back is lossless and the row aligns normally.
+        trimmed = tuple(
+            row.model_copy(update={"cells": row.cells[: len(self.columns)]})
+            if len(row.cells) > len(self.columns)
+            and not any(c is not None and c.strip() for c in row.cells[len(self.columns) :])
+            else row
+            for row in self.rows
+        )
+        self.rows = trimmed
         return self
 
 
@@ -1182,11 +1201,23 @@ def _vision_observations(
             # page-level heading array becomes each cell's column_name, so
             # everything downstream (persistence, contract conformance,
             # replay idempotency) is untouched by the wire-format change.
+            # Which heading answers which value is only knowable while the two
+            # arrays are the same length. A row carrying MORE values than the
+            # table has headings has an unlabelled column somewhere, and
+            # nothing in the payload says where: reading left-to-right would
+            # file Covetrus's callout number under "Item" and shunt every real
+            # value one heading to the right — a code recorded as a name.
+            # So the row is kept verbatim with NO heading claimed for any of
+            # its values. The evidence survives for a human to read; no
+            # contract can silently mis-map it, since heading-keyed matching
+            # never sees an unlabelled cell and the unlabeled_column source
+            # already refuses to resolve where more than one is on offer.
+            aligned = len(row.cells) <= len(columns)
             raw_cells = tuple(
                 RawCell(
                     cell_reference=None,
                     row_number=None,
-                    column_name=columns[index],
+                    column_name=columns[index] if aligned else None,
                     column_index=index + 1,
                     raw_value=value,
                 )

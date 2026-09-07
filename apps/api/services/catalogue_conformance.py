@@ -336,7 +336,14 @@ def _fields_from_cells(observation: ExtractedEvidence, runtime_contract) -> dict
         else:
             unlabeled_values.append(str(cell.raw_value))
     if not cell_by_key:
-        return {}
+        # Not one value sits under a heading, so the row has answered no column
+        # this contract names — the same judgement row_requires_any_field makes
+        # below, reached earlier because there is nothing to test it against.
+        # It is evidence, not a row. Reached by a row whose cell count did not
+        # match its headings: extraction keeps such a row verbatim but claims no
+        # heading for any value (see catalogue_evidence_extraction), rather than
+        # guess where the unlabelled column sits.
+        return None
 
     def _lookup(*column_names: str) -> str | None:
         for column_name in column_names:

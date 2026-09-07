@@ -741,6 +741,101 @@ def test_vision_envelope_preserves_multiple_tables_and_document_level_text():
     assert observations[3].raw_text == "Minimum order: 12 cases"
 
 
+def test_row_with_an_unlabeled_column_keeps_the_page_and_claims_no_headings():
+    """Covetrus page 16: a leading picture callout under five headings.
+
+    The page is entitled to print a column it does not label. Rejecting the
+    row failed the whole envelope, and with it a 32-page document. The row is
+    kept — but no heading is claimed for any of its values, because nothing in
+    the payload says WHERE the unlabelled column sits, and reading
+    left-to-right would file the callout under "Item" and record the code
+    2800226 as the description.
+    """
+    response = evidence_service._VisionResponse(
+        text=json.dumps(
+            {
+                "page_outcome": "evidence",
+                "tables": [
+                    {
+                        "columns": ["Item", "Description", "Dimensions", "Ply", "Quantity"],
+                        "rows": [
+                            {
+                                "cells": [
+                                    "1",
+                                    "2800226",
+                                    "Gauze Swabs X-ray Hydrophilic Sterile",
+                                    "5 x 5 cm",
+                                    "12ply",
+                                    "10 x 10 pcs",
+                                ]
+                            },
+                            {"cells": ["2800300", "Cotton Wool", "10 cm", "8ply", "5 x 5 pcs"]},
+                        ],
+                    }
+                ],
+            }
+        ),
+        request_id="covetrus-page-16",
+    )
+
+    observations, outcome = evidence_service._vision_observations(
+        response,
+        extraction_method=ExtractionMethod.MODEL_VISION,
+        unit_key="page:16",
+        page_number=16,
+    )
+
+    assert outcome == "evidence"
+    assert len(observations) == 2
+    # Verbatim, in print order, with every heading withheld.
+    assert [(cell.column_name, cell.raw_value) for cell in observations[0].raw_cells] == [
+        (None, "1"),
+        (None, "2800226"),
+        (None, "Gauze Swabs X-ray Hydrophilic Sterile"),
+        (None, "5 x 5 cm"),
+        (None, "12ply"),
+        (None, "10 x 10 pcs"),
+    ]
+    # The aligned row on the same table is unaffected.
+    assert [(cell.column_name, cell.raw_value) for cell in observations[1].raw_cells] == [
+        ("Item", "2800300"),
+        ("Description", "Cotton Wool"),
+        ("Dimensions", "10 cm"),
+        ("Ply", "8ply"),
+        ("Quantity", "5 x 5 pcs"),
+    ]
+
+
+def test_over_long_empty_tail_is_padding_and_is_trimmed_into_alignment():
+    """Surplus cells that are all blank claim nothing, so trimming is lossless."""
+    response = evidence_service._VisionResponse(
+        text=json.dumps(
+            {
+                "page_outcome": "evidence",
+                "tables": [
+                    {
+                        "columns": ["Product Code", "Wholesale"],
+                        "rows": [{"cells": ["10447", "HK$13.10", None, "   "]}],
+                    }
+                ],
+            }
+        ),
+        request_id="padded-tail",
+    )
+
+    observations, _ = evidence_service._vision_observations(
+        response,
+        extraction_method=ExtractionMethod.MODEL_VISION,
+        unit_key="page:1",
+        page_number=1,
+    )
+
+    assert [(cell.column_name, cell.raw_value) for cell in observations[0].raw_cells] == [
+        ("Product Code", "10447"),
+        ("Wholesale", "HK$13.10"),
+    ]
+
+
 def test_pdf_retries_only_the_transiently_failed_page(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "configured-for-test")
     calls = 0
