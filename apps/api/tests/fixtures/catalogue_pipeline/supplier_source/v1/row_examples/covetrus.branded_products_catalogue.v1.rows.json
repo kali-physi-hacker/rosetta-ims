@@ -1,0 +1,72 @@
+{
+ "contract_id": "covetrus.branded_products_catalogue.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 62,
+ "supplier_name": "ProVet Kruuse HK",
+ "notes": "Read from the whole-document extraction at tests/fixtures/catalogue_pipeline/covetrus/: 122 priced rows out of a 32-page catalogue, all conforming with nothing held (tests/test_covetrus_contract.py). Supplier 62's SECOND document — ProVet's price list is the first.\n\nSTILL OPEN at the time this was marked SUPPORTED:\n  * NO GOLDEN COVERAGE. The sample sheet's fifteen rows for this supplier are all from ProVet's price list; not one of these 122 appears on it. The read rests on the document alone, which is weaker footing than every other SUPPORTED contract has.\n  * THE 43 UNPRICED TABLES SHARE A COLUMN WITH THE PRICED ONES. Nothing about a row's headings tells a picture-page entry from a price-table entry — both carry Description — so they are excluded by row_requires_any_field, which asks for an item number or a price. Many of them describe products priced elsewhere in the same file, so reading them would duplicate the catalogue against its own prices.\n  * The page states no basis; PACK on the 2026-09-03 ruling.\n  * The document is dated 2025 and was produced in 2022. Whether these are current prices is a question for Kruuse, not for the reader.",
+ "examples": [
+  {
+   "example_id": "covetrus-syringe-price-buys-the-box-of-a-hundred",
+   "source": {
+    "sample_reference": "external-sample:Covetrus Catalogue 2025.pdf",
+    "page_number": 7,
+    "extraction_method": "whole-document extraction (covetrus/whole_document.json, Price List — SYRINGES)",
+    "text_excerpt": "CV-2800540 | Cvet 3-part Syringes Luer centre 3ml 100s | $54.00 | 7"
+   },
+   "raw_row": {
+    "ItemNumber": "CV-2800540",
+    "Description": "Cvet 3-part Syringes Luer centre 3ml 100s",
+    "List Price HK$": "$54.00",
+    "Page Number": "7"
+   },
+   "runtime_input": {
+    "supplier_sku": "CV-2800540",
+    "product_name": "Cvet 3-part Syringes Luer centre 3ml 100s",
+    "unit_price": "$54.00",
+    "pack": "Cvet 3-part Syringes Luer centre 3ml 100s",
+    "catalogue_page": "7"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "100",
+    "break_pack_allowed": null,
+    "reason": "$54.00 buys the box of a hundred syringes — 54 cents each — and the count is at the end of the description because the page has no column for it. The '3ml' in the same string is the syringe's capacity and is not read: a hundred syringes and a three-millilitre barrel are different facts in one sentence. Page Number 7 points at the illustrated entry and is kept for a reviewer, never counted."
+   }
+  },
+  {
+   "example_id": "covetrus-maxicam-the-other-table-shape",
+   "source": {
+    "sample_reference": "external-sample:Covetrus Catalogue 2025.pdf",
+    "page_number": 4,
+    "extraction_method": "whole-document extraction (covetrus/whole_document.json, Maxicam)",
+    "text_excerpt": "PV-MAXINJ20 | Covetrus Maxicam™ Meloxicam Injection 5mg/mL | 20mL | HKD$258"
+   },
+   "raw_row": {
+    "Provet Code": "PV-MAXINJ20",
+    "Description": "Covetrus Maxicam™ Meloxicam Injection 5mg/mL",
+    "Pack Size": "20mL",
+    "Price": "HKD$258"
+   },
+   "runtime_input": {
+    "supplier_sku": "PV-MAXINJ20",
+    "product_name": "Covetrus Maxicam™ Meloxicam Injection 5mg/mL",
+    "unit_price": "HKD$258",
+    "content_measure": "20mL"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": null,
+    "break_pack_allowed": null,
+    "reason": "The second of the two priced shapes, and the only table using 'Provet Code' and 'Price' rather than 'ItemNumber' and 'List Price HK$' — a contract declaring one spelling would lose the injection entirely. Its Pack Size is a MEASURE: twenty millilitres is what the bottle holds, and read as a count it would price the injection at a twentieth of HK$258. The PV- prefix is ProVet's own range beside the CV- Cvet range; one supplier, two brands."
+   }
+  }
+ ],
+ "technical_debt": []
+}

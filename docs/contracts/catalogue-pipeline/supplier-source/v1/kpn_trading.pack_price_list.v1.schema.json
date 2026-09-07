@@ -741,6 +741,19 @@
           "description": "Section, banner, or document path when not a table column.",
           "title": "Source Path"
         },
+        "source_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A regex whose FIRST group is the part of the cell this field wants. For a source that prints two facts in one column — Asia Vet Medical's consumables list writes the manufacturer's code in brackets at the end of the product name, 'Mila Nasogastric Feeding Tube 6Fr x 55cm (NG622)' — so the code can be read without inventing a column the page does not have. No match leaves the field empty, exactly as an absent column would; the value is never guessed at.",
+          "title": "Source Pattern"
+        },
         "tier_minimum_spend": {
           "anyOf": [
             {
@@ -922,6 +935,14 @@
             "type": "string"
           },
           "title": "Row Identity Fields",
+          "type": "array"
+        },
+        "row_requires_any_field": {
+          "description": "Field keys of which a real row must resolve AT LEAST ONE. For documents that mix a price list with something else — Covetrus print eleven price tables inside a 32-page picture catalogue, and the descriptive tables share the Description column with the priced ones, so a row from either looks the same by column alone. A row resolving none of these is not a row of the table this contract describes and is skipped, not blocked: it was never ours to read. Empty by default, so a contract that does not declare it behaves as before.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Row Requires Any Field",
           "type": "array"
         },
         "skip_rules": {

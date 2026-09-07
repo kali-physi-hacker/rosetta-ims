@@ -1,0 +1,321 @@
+{
+ "page_outcome": "evidence",
+ "supplier_identity_text": "Asia Vet Medical (AVM)",
+ "tables": [
+  {
+   "section": "V-Gel Supraglottic Airway Device",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "V-Gel Rabbit Supraglottic Airway - Single Use R1",
+      "199.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Rabbit Supraglottic Airway - Single Use R2",
+      "201.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Rabbit Supraglottic Airway - Single Use R3",
+      "203.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Rabbit Supraglottic Airway - Single Use R4",
+      "214.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Rabbit Supraglottic Airway - Single Use R5",
+      "225.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Rabbit Supraglottic Airway - Single Use R6",
+      "225.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Cat Supraglottic Airway - Single Use C0",
+      "203.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Cat Supraglottic Airway - Single Use C1",
+      "205.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Cat Supraglottic Airway - Single Use C2",
+      "208.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Cat Supraglottic Airway - Single Use C3",
+      "216.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Cat Supraglottic Airway - Single Use C4",
+      "230.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Cat Supraglottic Airway - Single Use C5",
+      "240.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Canine Supraglottic Airway - Single Use D3",
+      "299.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Canine Supraglottic Airway - Single Use D4",
+      "315.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Canine Supraglottic Airway - Single Use D5",
+      "327.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "V-Gel Canine Supraglottic Airway - Single Use D6",
+      "349.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Suture Needles",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "J7011 Reverse Cutting Needle, 3/8 circle, 12 pcs/pack (Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)",
+      "140.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "J6017 Taper Point Needle, 3/8 circle, 12 pcs/pack (Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)",
+      "140.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "J7031 Reverse Cutting Needle 1/2 Circle, 12 pcs/pack (Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)",
+      "140.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "J6037 Taper Point Needle, 1/2 circle, 12 pcs/pack (Sizes available: #2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18, 20)",
+      "140.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Sutures (cassette)",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Catgut Chrom USP 3/0 100m cassette (CC30100)",
+      "789.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Catgut Chrom USP 2/0 100m cassette (CC20100)",
+      "847.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Catgut Chrom USP 0 100m cassette (CC00100)",
+      "847.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Catgut Chrom USP 1 75m cassette (CC0175)",
+      "825.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Supramid White in cassette USP 3/0 100m (SW30100)",
+      "282.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Supramid White in cassette USP 2/0 100m (SW20100)",
+      "306.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Supramid White in cassette USP 0 100m (SW00100)",
+      "335.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 3/0, 25m cassette (PL3025)",
+      "458.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 2/0, 25m cassette (PL2025)",
+      "458.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 0, 25m cassette (PL0025)",
+      "458.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl 910 Polyglactine Monofilament, Violet (PGA), USP 1, 25m cassette (PL0125)",
+      "458.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 3/0, 15m cassette (PD3015)",
+      "454.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 2/0, 15m cassette (PD2015)",
+      "454.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 0, 15m cassette (PD0015)",
+      "454.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Luxcryl PDO Monofilament Polydioxanone absorbable, Violet, USP 1, 15m cassette (PD0115)",
+      "482.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Sutures",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Monosyn 2/0, 70cm, 26mm 1/2 Circle Needle Taper Point HR26, 12 pcs/pack (JG22026)",
+      "544.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Monosyn 3/0, 70cm, 26mm 1/2 Circle Needle Taper Point HR26, 12 pcs/pack (JG22025)",
+      "544.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Monosyn 4/0, 45cm, 19mm 3/8 Circle Reverse Cutting DS19, 12 pcs/pack (JG22504)",
+      "544.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Monosyn 5/0, 45cm, 16mm 3/8 Circle Reverse Cutting DS16, 12 pcs/pack (JG22419)",
+      "544.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": [
+  {
+   "text": "AVM also offers Ethicon sutures. Please enquire for more information.",
+   "confidence": "0.95"
+  }
+ ]
+}

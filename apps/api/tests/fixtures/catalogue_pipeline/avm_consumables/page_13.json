@@ -1,0 +1,168 @@
+{
+ "page_outcome": "evidence",
+ "tables": [
+  {
+   "section": "X-Ray Accessories",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "X-ray Markers with Graduations (J1185)\n- set of two x-ray markers (L and R)",
+      "168.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet GI Magic Beads Small Pack, 5 doses/box(J1146)",
+      "324.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet GI Magic Beads Large Pack, 5 doses/box(J1146A)",
+      "324.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "X-Ray Protection",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "X-Ray Apron with Quick Release buckle – Small (J676M)",
+      "1,980.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "X-Ray Apron with Quick Release buckle – Large (J676ML)",
+      "1,980.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Thyroid X-ray Collar (J678N)",
+      "590.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Open Palm X-ray Mitt, per pair (J677P)",
+      "1,300.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Lead Gloves-Vinyl, per pair (J677X)",
+      "2,250.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Warming Air Blankets",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Disposable Warming Air Blanket 1450 x 1020 mm, per pack",
+      "56.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Reusable Warming Air Blanket Small 30\"L x 20\"W (J1034)",
+      "527.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Reusable Warming Air Blanket Medium 36\"L x 24\"W (J1034A)",
+      "584.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Reusable Warming Air Blanket Large 48\"L x 24\"W (J1034B)",
+      "643.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Jorvet Reusable Warming Air Blanket - Set Of 3 (J1034S)",
+      "1,720.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  },
+  {
+   "section": "Other",
+   "columns": [
+    "Item Description",
+    "Unit Price (HK$)"
+   ],
+   "rows": [
+    {
+     "cells": [
+      "Braided Umbilical Tape 1/8\" X 20yds (J25UA)",
+      "105.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Braided Umbilical Tape 3/8\" X 20yds (J25UB)",
+      "105.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Braided Umbilical Tape 1/4\" X 20yds (J25UC)",
+      "105.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "Bulb Syringe 60ml capacity Sterile (J487B)",
+      "49.00"
+     ],
+     "confidence": "0.95"
+    },
+    {
+     "cells": [
+      "ESSP Sterile Disposable Electrosurgical Scratch Pad (Box of 40)",
+      "860.00"
+     ],
+     "confidence": "0.95"
+    }
+   ]
+  }
+ ],
+ "text_observations": []
+}

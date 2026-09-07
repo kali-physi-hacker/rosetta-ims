@@ -1,0 +1,67 @@
+{
+ "contract_id": "asia_vet_medical.consumables_price_list.v1",
+ "contract_version": "v1",
+ "row_evidence_status": "CONFIRMED",
+ "supplier_id": 3,
+ "supplier_name": "Asia Vet Medical Limited",
+ "notes": "Read from all thirteen pages at tests/fixtures/catalogue_pipeline/avm_consumables/: 460 rows across 48 sections, all conforming with nothing held (tests/test_avm_consumables_contract.py). AVM's THIRD document, and the one originally asked for on 2026-09-01 before the VetriScience list took its place.\n\nSTILL OPEN at the time this was marked SUPPORTED:\n  * NO GOLDEN COVERAGE. The sample sheet's eighteen AVM rows are VetriScience supplements; not one of these 460 appears on it. The read rests on the document alone.\n  * THE CODE IS THE MANUFACTURER'S, not necessarily AVM's. It is printed in brackets at the end of the description — NG622 is Mila's, J322a2 is the stain maker's — and 267 of the 460 rows carry one. Good enough to match on; worth confirming with AVM before it is trusted as the identifier on an invoice, which is exactly what a three-way match would rely on.\n  * 193 rows carry no code at all and take their identity at the match, per the 2026-08-26 ruling.\n  * Only a bracketed token containing a DIGIT is read as a code. The same brackets hold colours and dimensions — (Blue), (Orange), (22in) — and a tube whose supplier code read 'Blue' would match confidently against nothing.\n  * The page states no basis; PACK on the 2026-09-03 ruling.\n  * Dated 20 October 2025 and read on 2026-09-06. Whether these are current prices is a question for AVM.",
+ "examples": [
+  {
+   "example_id": "avm-consumables-code-read-out-of-the-description",
+   "source": {
+    "sample_reference": "external-sample:Price List_(AVM) Consumable items list_20Oct2025.pdf",
+    "page_number": 6,
+    "extraction_method": "recorded vision envelope (avm_consumables/page_6.json)",
+    "text_excerpt": "Mila Nasogastric Feeding Tube 6Fr x 55cm (22in) (NG622) | 270.00"
+   },
+   "raw_row": {
+    "Item Description": "Mila Nasogastric Feeding Tube 6Fr x 55cm (22in) (NG622)",
+    "Unit Price (HK$)": "270.00"
+   },
+   "runtime_input": {
+    "supplier_sku": "Mila Nasogastric Feeding Tube 6Fr x 55cm (22in) (NG622)",
+    "product_name": "Mila Nasogastric Feeding Tube 6Fr x 55cm (22in) (NG622)",
+    "unit_price": "270.00",
+    "pack": "Mila Nasogastric Feeding Tube 6Fr x 55cm (22in) (NG622)"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": null,
+    "break_pack_allowed": null,
+    "reason": "Three facts in one column, and the contract reads two of them out. The code NG622 comes from the brackets at the end; only a bracketed token carrying a digit qualifies, which is what stops '(22in)' in the same row becoming the code. No pack is stated, so this is one tube — and '6Fr x 55cm' is the tube's gauge and length, never a quantity of tubes."
+   }
+  },
+  {
+   "example_id": "avm-consumables-a-colour-is-not-a-code",
+   "source": {
+    "sample_reference": "external-sample:Price List_(AVM) Consumable items list_20Oct2025.pdf",
+    "page_number": 1,
+    "extraction_method": "recorded vision envelope (avm_consumables/page_1.json)",
+    "text_excerpt": "Lithium Heparin Tube (Orange), 1.3ml, 100 pcs/pack | 270.00"
+   },
+   "raw_row": {
+    "Item Description": "Lithium Heparin Tube (Orange), 1.3ml, 100 pcs/pack",
+    "Unit Price (HK$)": "270.00"
+   },
+   "runtime_input": {
+    "supplier_sku": "Lithium Heparin Tube (Orange), 1.3ml, 100 pcs/pack",
+    "product_name": "Lithium Heparin Tube (Orange), 1.3ml, 100 pcs/pack",
+    "unit_price": "270.00",
+    "pack": "Lithium Heparin Tube (Orange), 1.3ml, 100 pcs/pack"
+   },
+   "expected_runtime_item": {},
+   "expected_semantics": {
+    "price_basis": "PACK",
+    "currency": "HKD",
+    "purchase_uom": "PACK",
+    "sellable_units_per_purchase_unit": "100",
+    "break_pack_allowed": null,
+    "reason": "The row that shows why the code pattern demands a digit. '(Orange)' is the cap colour and must not become this tube's supplier code — a wrong code matches confidently against the wrong thing, which is worse than no code, and this row correctly yields none. The pack does read: HK$270.00 buys a hundred tubes, HK$2.70 each. The '1.3ml' beside it is what one tube holds and is not a count."
+   }
+  }
+ ],
+ "technical_debt": []
+}

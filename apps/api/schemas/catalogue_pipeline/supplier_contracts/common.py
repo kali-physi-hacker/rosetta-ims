@@ -184,6 +184,18 @@ class SourceStructure(SupplierSourceModel):
     table_regions: list[SourceTableRegion] = Field(default_factory=list, description="Expected source table regions.")
     required_headers: list[str] = Field(default_factory=list, description="Headers required before interpretation.")
     optional_headers: list[str] = Field(default_factory=list, description="Headers that may be present.")
+    row_requires_any_field: tuple[str, ...] = Field(
+        default_factory=tuple,
+        description=(
+            "Field keys of which a real row must resolve AT LEAST ONE. For documents that "
+            "mix a price list with something else — Covetrus print eleven price tables "
+            "inside a 32-page picture catalogue, and the descriptive tables share the "
+            "Description column with the priced ones, so a row from either looks the same "
+            "by column alone. A row resolving none of these is not a row of the table this "
+            "contract describes and is skipped, not blocked: it was never ours to read. "
+            "Empty by default, so a contract that does not declare it behaves as before."
+        ),
+    )
     row_eligibility_rules: list[str] = Field(default_factory=list, description="Rules for deciding whether a source row is a catalogue item.")
     discontinued_markers: list[str] = Field(
         default_factory=list,
@@ -223,6 +235,17 @@ class SourceFieldContract(SupplierSourceModel):
     source_path: str | None = Field(None, description="Section, banner, or document path when not a table column.")
     composed_from: list[str] = Field(default_factory=list, description="Source columns joined to form this field.")
     constant_value: str | None = Field(None, description="Supplier-format constant value, if not printed per row.")
+    source_pattern: str | None = Field(
+        None,
+        description=(
+            "A regex whose FIRST group is the part of the cell this field wants. For a "
+            "source that prints two facts in one column — Asia Vet Medical's consumables "
+            "list writes the manufacturer's code in brackets at the end of the product "
+            "name, 'Mila Nasogastric Feeding Tube 6Fr x 55cm (NG622)' — so the code can be "
+            "read without inventing a column the page does not have. No match leaves the "
+            "field empty, exactly as an absent column would; the value is never guessed at."
+        ),
+    )
     value_map: dict[str, str] = Field(
         default_factory=dict,
         description=(
