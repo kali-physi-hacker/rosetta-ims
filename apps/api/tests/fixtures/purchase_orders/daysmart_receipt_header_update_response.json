@@ -1,0 +1,43 @@
+{
+  "response": {
+    "resources": {
+      "id": 829054,
+      "index": 495,
+      "status": 0,
+      "date": {
+        "date": "2026-08-16 16:00:00.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "invoice_number": "888046260817",
+      "amount": "1.00",
+      "tax": 2,
+      "tax_percentage": null,
+      "tax_type": 0,
+      "shipping": "1",
+      "notes": "Test Receipt",
+      "is_active": true,
+      "is_with_order": 1,
+      "purchase_order_id": null,
+      "supplier_id": "3cd1ace0-ddd6-4a",
+      "business_id": "9be52b5b-092d-45",
+      "post_by": null,
+      "post_at": null,
+      "create_by": "385eaec8-2ba3-4e",
+      "create_at": {
+        "date": "2026-09-02 08:49:49.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "update_by": "385eaec8-2ba3-4e",
+      "update_at": {
+        "date": "2026-09-02 08:52:52.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      }
+    },
+    "message": {
+      "code": 200
+    }
+  }
+}

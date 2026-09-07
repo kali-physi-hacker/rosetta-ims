@@ -1,0 +1,352 @@
+{
+  "response": {
+    "resources": {
+      "id": 793009,
+      "index": 524,
+      "supplier_id": "3cd1ace0-ddd6-4a",
+      "account_no": "-",
+      "order_date": {
+        "date": "2026-08-28 07:59:37.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "ship_to_id": 861040,
+      "bill_to_id": 861040,
+      "sub_total": "3078.00",
+      "shipping": "0.00",
+      "tax": "0.00",
+      "total": "3078.00",
+      "payment_terms": "",
+      "notes": "For 59999969 - Azodyl Capsule - (1 bot - $650.00; 6 bots - $560.00; 12 bots - $510.00)",
+      "status": 1,
+      "source_catalog": null,
+      "catalog_basket_guid": null,
+      "order_name": null,
+      "is_active": true,
+      "business_id": "9be52b5b-092d-45",
+      "create_by": "385eaec8-2ba3-4e",
+      "create_at": {
+        "date": "2026-08-28 08:00:14.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "update_by": "385eaec8-2ba3-4e",
+      "update_at": {
+        "date": "2026-08-31 03:28:29.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "status_label": "Open",
+      "mwi_order_name": null,
+      "ship_to_address": {
+        "id": 861040,
+        "name": "Ohana Animal Hospital",
+        "address": "2A Wing Hing Street",
+        "city": "Tin Hau",
+        "county": null,
+        "state": "HK",
+        "country": "",
+        "zipcode": "",
+        "phone": null,
+        "fax": null,
+        "is_primary": 1,
+        "is_active": true,
+        "is_show_address": 1,
+        "business_id": "9be52b5b-092d-45",
+        "create_by": null,
+        "create_at": {
+          "date": "2026-03-21 01:49:10.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": null,
+        "update_at": {
+          "date": "2026-03-21 01:51:20.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        }
+      },
+      "bill_to_address": {
+        "id": 861040,
+        "name": "Ohana Animal Hospital",
+        "address": "2A Wing Hing Street",
+        "city": "Tin Hau",
+        "county": null,
+        "state": "HK",
+        "country": "",
+        "zipcode": "",
+        "phone": null,
+        "fax": null,
+        "is_primary": 1,
+        "is_active": true,
+        "is_show_address": 1,
+        "business_id": "9be52b5b-092d-45",
+        "create_by": null,
+        "create_at": {
+          "date": "2026-03-21 01:49:10.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": null,
+        "update_at": {
+          "date": "2026-03-21 01:51:20.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        }
+      },
+      "supplier": {
+        "id": "3cd1ace0-ddd6-4a",
+        "name": "Alfamedic",
+        "address": "",
+        "city": null,
+        "state": null,
+        "zipcode": null,
+        "phone": "",
+        "phone_country_code": 852,
+        "fax": "",
+        "fax_country_code": 852,
+        "email": "",
+        "twitter": null,
+        "facebook": null,
+        "website": "",
+        "operation_hour": null,
+        "photo": "assets/img/no_avatar.png",
+        "isactive": true,
+        "create_by": "72e664fb-098b-47",
+        "create_at": {
+          "date": "2025-08-04 06:54:59.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": "72e664fb-098b-47",
+        "update_at": {
+          "date": "2025-08-04 06:54:59.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "description": null,
+        "verified_email": null,
+        "county": null,
+        "country": null,
+        "account_no": "",
+        "relation_type": 2,
+        "instance_type": null,
+        "api_key": null,
+        "external_id": null,
+        "zuora_update_at": null,
+        "registration_number": null,
+        "legal_name": null,
+        "registration_type": null,
+        "registration_country": null,
+        "registration_authority": null,
+        "dea_number": null,
+        "pharmacy_permit_license_number": null,
+        "privacy_policy_url": null,
+        "terms_conditions_url": null,
+        "ci_contact_url": "/apps/index.php/contact/company/view/ZWZrdlc1eXNlQjQ4ZU1UbDMycFkycWFKcU0zNWJBNDlDT0k1ZkFxbU5PWT06Otq-OMCRRgQXtFczFGGOCnk",
+        "encoded_id": "TlVYbFVrUFFyN2s2anZPK2V3cGphVzNyUjQxcGVhOG5LenBVbGxJKzJ4bz06OkFstiFIKqWEQkO4BOAzw3A",
+        "business_full_address": "",
+        "label": "Alfamedic",
+        "primary_business_address": [
+          {
+            "id": 794946,
+            "name": "Alfamedic",
+            "address": "",
+            "city": null,
+            "county": null,
+            "state": null,
+            "country": null,
+            "zipcode": null,
+            "phone": null,
+            "fax": "",
+            "is_primary": 1,
+            "is_active": true,
+            "is_show_address": 1,
+            "business_id": "3cd1ace0-ddd6-4a",
+            "create_by": null,
+            "create_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "update_by": null,
+            "update_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            }
+          },
+          {
+            "id": 794947,
+            "name": "Alfamedic",
+            "address": "",
+            "city": null,
+            "county": null,
+            "state": null,
+            "country": null,
+            "zipcode": null,
+            "phone": null,
+            "fax": "",
+            "is_primary": 1,
+            "is_active": true,
+            "is_show_address": 1,
+            "business_id": "3cd1ace0-ddd6-4a",
+            "create_by": null,
+            "create_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "update_by": null,
+            "update_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            }
+          }
+        ]
+      },
+      "purchase_order_items": [
+        {
+          "id": 3969381,
+          "item_id": "DIT-ebbd2f4c-6e6",
+          "master_item_id": null,
+          "source_catalog": null,
+          "source_product_id": "",
+          "catalog_basket_guid": null,
+          "unit_quantity": 0,
+          "quantity_ordered": 240,
+          "quantity_received": 0,
+          "unit": 0,
+          "price": 2.5083333333333,
+          "line_total": 602,
+          "notes": "",
+          "container_type_id": null,
+          "catalog_unit": null,
+          "back_ordered": 0,
+          "is_active": true,
+          "purchase_order_id": 793009,
+          "business_id": "9be52b5b-092d-45",
+          "create_by": "385eaec8-2ba3-4e",
+          "create_at": {
+            "date": "2026-08-31 03:25:11.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "update_by": "385eaec8-2ba3-4e",
+          "update_at": {
+            "date": "2026-08-31 03:25:11.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "item_name": "50010313 - Cephalexin (Cephacin) Tablet 200mg"
+        },
+        {
+          "id": 3969382,
+          "item_id": "DIT-ebd58324-6e6",
+          "master_item_id": null,
+          "source_catalog": null,
+          "source_product_id": "",
+          "catalog_basket_guid": null,
+          "unit_quantity": 0,
+          "quantity_ordered": 100,
+          "quantity_received": 0,
+          "unit": 0,
+          "price": 6.25,
+          "line_total": 625,
+          "notes": "",
+          "container_type_id": null,
+          "catalog_unit": null,
+          "back_ordered": 0,
+          "is_active": true,
+          "purchase_order_id": 793009,
+          "business_id": "9be52b5b-092d-45",
+          "create_by": "385eaec8-2ba3-4e",
+          "create_at": {
+            "date": "2026-08-31 03:25:40.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "update_by": "385eaec8-2ba3-4e",
+          "update_at": {
+            "date": "2026-08-31 03:25:40.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "item_name": "50010321 - Bova - Gabapentin 50mg - Beef Flavour - 1TAB"
+        },
+        {
+          "id": 3969383,
+          "item_id": "DIT-ebf3f8da-6e6",
+          "master_item_id": null,
+          "source_catalog": null,
+          "source_product_id": "",
+          "catalog_basket_guid": null,
+          "unit_quantity": 0,
+          "quantity_ordered": 100,
+          "quantity_received": 0,
+          "unit": 0,
+          "price": 5.51,
+          "line_total": 551,
+          "notes": "",
+          "container_type_id": null,
+          "catalog_unit": null,
+          "back_ordered": 0,
+          "is_active": true,
+          "purchase_order_id": 793009,
+          "business_id": "9be52b5b-092d-45",
+          "create_by": "385eaec8-2ba3-4e",
+          "create_at": {
+            "date": "2026-08-31 03:25:59.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "update_by": "385eaec8-2ba3-4e",
+          "update_at": {
+            "date": "2026-08-31 03:25:59.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "item_name": "50010359 - Omeprazole Tablet 5mg Chicken Flavour"
+        },
+        {
+          "id": 3969384,
+          "item_id": "DIT-ebb298c7-6e6",
+          "master_item_id": null,
+          "source_catalog": null,
+          "source_product_id": "",
+          "catalog_basket_guid": null,
+          "unit_quantity": 0,
+          "quantity_ordered": 2,
+          "quantity_received": 0,
+          "unit": 0,
+          "price": 650,
+          "line_total": 1300,
+          "notes": "1 bot - $650.00; 6 bots - $560.00; 12 bots - $510.00",
+          "container_type_id": null,
+          "catalog_unit": null,
+          "back_ordered": 0,
+          "is_active": true,
+          "purchase_order_id": 793009,
+          "business_id": "9be52b5b-092d-45",
+          "create_by": "385eaec8-2ba3-4e",
+          "create_at": {
+            "date": "2026-08-31 03:27:32.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "update_by": "385eaec8-2ba3-4e",
+          "update_at": {
+            "date": "2026-08-31 03:28:07.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "item_name": "59999969 - Azodyl Capsule"
+        }
+      ]
+    },
+    "message": {
+      "code": 200
+    }
+  }
+}

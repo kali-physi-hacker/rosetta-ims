@@ -1,0 +1,31 @@
+{
+  "response": {
+    "resources": [
+      {
+        "id": 3936614,
+        "order_id": 795607,
+        "item_name": "10009870 - Hills F9 c/d 6kg",
+        "post_to_id": "DIT-ed47392c-6e6",
+        "post_to": "10009870 - Hills F9 c/d 6kg",
+        "reference": "Order #529",
+        "quantity_received": 1,
+        "quantity_in_stock": 1,
+        "item_uom": "Bag(s)",
+        "stock_uom": "Bag(s)",
+        "cost": 1,
+        "manufacturer": null,
+        "lot_number": null,
+        "expiration_date": null,
+        "tax": "0.00",
+        "ndc_code": null,
+        "item_encoded_id": "YW0wRk91UldaRjZ6aDNKR1E4OVpMZz09Ojq9jZcOaCpjLO-4yppEWJkN",
+        "post_to_encoded_id": "eEQ0a1RQVGxZY1lVbitPdXJTVmcwL2VWejNZMkFqM3ArWG9yNXVQOStNdz06OqPcEfbfznX_P74Rmy1-Mzs",
+        "reference_encoded_id": "UXBqREV3ckN4UGRYRS9pbTZlTThLZz09Ojr1guNevdp0nzY238bIG-8d",
+        "show_tax": true
+      }
+    ],
+    "message": {
+      "code": 200
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "response": {
+    "resources": {
+      "id": 828867,
+      "index": 494,
+      "status": 0,
+      "date": {
+        "date": "2026-09-01 21:05:42.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "invoice_number": "",
+      "amount": "1.00",
+      "tax": "0.50",
+      "tax_percentage": null,
+      "tax_type": 0,
+      "shipping": null,
+      "notes": "Test-ignore",
+      "is_active": false,
+      "is_with_order": 1,
+      "purchase_order_id": null,
+      "supplier_id": "3cd1ace0-ddd6-4a",
+      "business_id": "9be52b5b-092d-45",
+      "post_by": null,
+      "post_at": null,
+      "create_by": "385eaec8-2ba3-4e",
+      "create_at": {
+        "date": "2026-09-01 21:07:01.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "update_by": "385eaec8-2ba3-4e",
+      "update_at": {
+        "date": "2026-09-01 21:07:56.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      }
+    },
+    "message": {
+      "code": 200
+    }
+  }
+}

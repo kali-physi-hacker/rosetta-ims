@@ -1,0 +1,14 @@
+{
+  "supplier_id": "3cd1ace0-ddd6-4a",
+  "supplier_name": "Alfamedic",
+  "date": 1788296742,
+  "order_id": [
+    "795607"
+  ],
+  "invoice_number": "",
+  "amount": null,
+  "shipping": null,
+  "notes": "Test-ignore",
+  "tax": null,
+  "tax_type": 0
+}
