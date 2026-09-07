@@ -1,22 +1,131 @@
 {
   "contract_id": "vetapet.non_vet_price_list.v1",
   "contract_version": "v1",
-  "row_evidence_status": "NEEDS_CONFIRMATION",
+  "row_evidence_status": "CONFIRMED",
   "supplier_id": 90,
   "supplier_name": "Vetapet (Non-Vet)",
-  "notes": "The supplier ID is known, but representative non-vet rows still need confirmation before price basis or packaging semantics can be promoted.",
-  "examples": [],
-  "technical_debt": [
+  "notes": "Read from the non-vet catalogue itself on 2026-09-07 — 90 of 90 pages, 319 of 325 rows priced, 6 held for review. This contract had NO row evidence for six weeks because it was written against the wrong document: its only sample was the 177-page VET catalogue, whose later Chinese sections carry the same headings. The non-vet catalogue is a separate 90-page file.\n\nThe document cannot be read from its text layer — digits arrive as replacement characters and several pages carry none at all — which is why this stalled in July. Every PDF page now goes to vision, so that is no longer an obstacle.\n\nSTILL OPEN:\n  * NO GOLDEN COVERAGE. The sample sheet's Vetapet rows are all from the vet catalogue. This read rests on the document alone.\n  * THREE ROWS PRINT A BARE 'price' COLUMN (page 76) with no retail beside it. Left unclaimed: in a wholesale catalogue it is probably wholesale, but probably is not a basis for putting a figure in the cost field.\n  * THREE ROWS PRICE THEMSELVES DIFFERENTLY — '折實價 HK$950.00', '折實1包 HK$65.00' — a net-of-discount price, and on the pads an explicit per-pack basis against a product sold as 1箱8包. They are held for a human rather than guessed at.\n\nRESOLVED 2026-09-07 (was VETAPET-NON-VET-ROW-EVIDENCE): Wholesale/retail mapping confirmed on the document. Basis is per single item, proved by a priced pair that differs only by a case note. Size text is content measure. Brand is not inferred: the index pages that would carry it are navigation and are excluded by row_requires_any_field.",
+  "examples": [
     {
-      "debt_id": "VETAPET-NON-VET-ROW-EVIDENCE",
-      "status": "OPEN",
-      "summary": "Capture representative non-vet Chinese/retail section rows.",
-      "needed_confirmation": [
-        "Wholesale/Retail column mapping for non-vet rows.",
-        "Whether wholesale prices are per sellable unit, pack, case, or another basis.",
-        "Whether size text is content measure only or also packaging configuration.",
-        "Whether category/brand can be inferred from section headers without review."
-      ]
+      "example_id": "non-vet-the-case-note-does-not-move-the-price",
+      "source": {
+        "sample_reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+        "page_number": 5,
+        "extraction_method": "whole-document vision reading, 2026-09-07",
+        "text_excerpt": "11002 | Eyes So Bright ... 4fl oz | HKD$90 | HKD$140   /   11003 | Ears All Right ... 4fl oz (一盒12支) | HKD$90 | HKD$140"
+      },
+      "raw_row": {
+        "編號": "11003",
+        "產品": "Ears All Right Gentle Ear Cleanser 4fl oz\n天然草本洗耳水 (一盒12支)",
+        "批發價": "HKD$90",
+        "建議零售價": "HKD$140"
+      },
+      "runtime_input": {
+        "supplier_sku": "11003",
+        "product_name": "Ears All Right Gentle Ear Cleanser 4fl oz\n天然草本洗耳水 (一盒12支)",
+        "cost": "HKD$90",
+        "rrp": "HKD$140"
+      },
+      "expected_runtime_item": {},
+      "expected_semantics": {
+        "price_basis": "UNIT",
+        "currency": "HKD",
+        "purchase_uom": "UNIT",
+        "sellable_units_per_purchase_unit": null,
+        "break_pack_allowed": null,
+        "reason": "THE row that settles the basis. 11002 on the same page prints no case note and 11003 prints 一盒12支 — a box of twelve — and both are HKD$90 against HKD$140 retail. One price cannot buy one bottle on one row and twelve on the next while both quote the same retail. 一盒12支 is therefore the case configuration, not what the price buys, and no sellable count is read from it."
+      }
+    },
+    {
+      "example_id": "non-vet-a-colour-is-the-only-thing-telling-two-beds-apart",
+      "source": {
+        "sample_reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+        "page_number": 74,
+        "extraction_method": "whole-document vision reading, 2026-09-07",
+        "text_excerpt": "黑色 | 70202936 | 49x36x17.5cm | HK$68.00"
+      },
+      "raw_row": {
+        "顏色": "黑色",
+        "CODE": "70202936",
+        "SIZE": "49x36x17.5cm",
+        "批發價": "HK$68.00"
+      },
+      "runtime_input": {
+        "variant": "黑色",
+        "supplier_sku": "70202936",
+        "pack_size": "49x36x17.5cm",
+        "cost": "HK$68.00"
+      },
+      "expected_runtime_item": {},
+      "expected_semantics": {
+        "price_basis": "UNIT",
+        "currency": "HKD",
+        "purchase_uom": "UNIT",
+        "sellable_units_per_purchase_unit": null,
+        "break_pack_allowed": null,
+        "reason": "A bed table: five colours, one size, one price, a different code each. The page names the product once in its heading and never in the row, so 顏色 carries the whole distinction — without it these rows differ only by code. 49x36x17.5cm is the bed's dimensions, a content measure, and not a count of anything."
+      }
+    },
+    {
+      "example_id": "non-vet-a-capacity-is-not-a-count",
+      "source": {
+        "sample_reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+        "page_number": 76,
+        "extraction_method": "whole-document vision reading, 2026-09-07",
+        "text_excerpt": "PT2 | 0.2 L | ●●● | HK$12.00"
+      },
+      "raw_row": {
+        "code no.": "PT2",
+        "capacity": "0.2 L",
+        "顏色": "●●●",
+        "批發價": "HK$12.00"
+      },
+      "runtime_input": {
+        "supplier_sku": "PT2",
+        "pack_size": "0.2 L",
+        "variant": "●●●",
+        "cost": "HK$12.00"
+      },
+      "expected_runtime_item": {},
+      "expected_semantics": {
+        "price_basis": "UNIT",
+        "currency": "HKD",
+        "purchase_uom": "UNIT",
+        "sellable_units_per_purchase_unit": null,
+        "break_pack_allowed": null,
+        "reason": "0.2 L is how much the container holds. The colours are printed as filled circles rather than words, and are kept verbatim — reading them as a quantity would turn a swatch into a number."
+      }
+    },
+    {
+      "example_id": "non-vet-the-headings-appear-in-both-languages",
+      "source": {
+        "sample_reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+        "page_number": 78,
+        "extraction_method": "whole-document vision reading, 2026-09-07",
+        "text_excerpt": "75700017 | 伸縮圓拖 AMIGO CORD 黑色 - SS | $95.00 | $152"
+      },
+      "raw_row": {
+        "貨品編號 Code no.": "75700017",
+        "貨品名稱 Name": "伸縮圓拖 AMIGO CORD 黑色 - SS (INNER 1-3 m - Max 12kg)",
+        "批發價 Wholesale price": "$95.00",
+        "建議零售價 Recommended Retail price": "$152"
+      },
+      "runtime_input": {
+        "supplier_sku": "75700017",
+        "product_name": "伸縮圓拖 AMIGO CORD 黑色 - SS (INNER 1-3 m - Max 12kg)",
+        "cost": "$95.00",
+        "rrp": "$152"
+      },
+      "expected_runtime_item": {},
+      "expected_semantics": {
+        "price_basis": "UNIT",
+        "currency": "HKD",
+        "purchase_uom": "UNIT",
+        "sellable_units_per_purchase_unit": null,
+        "break_pack_allowed": null,
+        "reason": "The same four columns, printed with their English beside the Chinese. Heading matching already normalises this, so no separate alias is needed per page. The retail column beside the wholesale is what confirms both are per single item."
+      }
     }
-  ]
+  ],
+  "technical_debt": []
 }

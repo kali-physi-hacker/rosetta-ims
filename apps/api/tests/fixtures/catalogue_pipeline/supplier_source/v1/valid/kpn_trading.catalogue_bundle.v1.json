@@ -10,7 +10,7 @@
   "document_type": "CATALOGUE",
   "format_name": "K.P.N. Trading catalogue bundle",
   "source_format": "PDF_TABLE",
-  "support_status": "PARTIALLY_VERIFIED",
+  "support_status": "DEPRECATED",
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
@@ -480,6 +480,7 @@
     "sample_reference": "KPN_Kangaroo.pdf",
     "observed_brands": "Stella & Chewy's, Canidae, NOW FRESH",
     "superseded_by_layout_specific_contracts": "kpn_trading.pack_price_list.v1 (incl. pack+case bulk rows), kpn_trading.case_only_price_list.v1",
-    "layout_specific_contracts_note": "This bundle contract remains the correct choice only when a source's table layout has not been pre-sorted. Once a page's layout is identified, prefer the matching layout-specific contract above, which has a resolved price_basis."
+    "deprecated_on": "2026-09-07",
+    "deprecated_reason": "Superseded by the layout-specific contracts above. Retained as a declaration so the contract_id in historical runs still resolves; it is not selectable and cannot be promoted, because a bundle spanning several price bases has no single price_basis to verify."
   }
 }

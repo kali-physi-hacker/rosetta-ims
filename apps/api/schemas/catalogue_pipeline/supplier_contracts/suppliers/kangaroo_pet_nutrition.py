@@ -64,7 +64,13 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
         document_type=SupplierDocumentType.CATALOGUE,
         format_name="Kangaroo Pet Nutrition catalogue bundle",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        # RETIRED 2026-09-07. Its stated fallback role is genuinely covered:
+        # unit_price_list.v1 merged all three of the layouts this bundle was
+        # holding open — unit, case-only and vet-clinic — into one contract
+        # carrying a basis per price column, and that contract is SUPPORTED.
+        # Nothing reads a Kangaroo page better through the bundle, and the
+        # bundle's own UNRESOLVED price_basis barred it from promotion.
+        support_status=SupplierContractSupportStatus.DEPRECATED,
         evidence=_KANGAROO_PET_NUTRITION_EVIDENCE,
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
@@ -288,10 +294,11 @@ KANGAROO_PET_NUTRITION_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
             "superseded_by_layout_specific_contracts": (
                 "kangaroo_pet_nutrition.unit_price_list.v1 (merged: unit + case-only + vet-clinic)"
             ),
-            "layout_specific_contracts_note": (
-                "This bundle remains the fallback for un-sorted layouts. Once a page's "
-                "layout is identified, prefer the layout-specific contract above, which "
-                "has a resolved price_basis."
+            "deprecated_on": "2026-09-07",
+            "deprecated_reason": (
+                "Superseded by unit_price_list.v1, which merged every layout this bundle "
+                "covered and resolves a basis per price column. Retained as a declaration "
+                "so the contract_id in historical runs still resolves; not selectable."
             ),
         },
     )

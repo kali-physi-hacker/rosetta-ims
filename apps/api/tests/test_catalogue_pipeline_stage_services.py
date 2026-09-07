@@ -301,12 +301,14 @@ def test_raw_capture_uses_supported_contract_and_is_idempotent(db):
 
 
 def test_raw_capture_rejects_unverified_supplier_contract(db):
-    # Non-vet is the PARTIALLY_VERIFIED example now — vet earned SUPPORTED
-    # with the vetapet_vet golden set.
+    # The still-unverified example. This has moved twice: vet earned
+    # SUPPORTED on its golden set, then non-vet earned it on the non-vet
+    # catalogue (2026-09-07). K.P.N.'s case-only list is next in line, so
+    # expect to move it again when that one is confirmed.
     _seed_context(
         db,
-        supplier_id=90,
-        contract_id="vetapet.non_vet_price_list.v1",
+        supplier_id=15,
+        contract_id="kpn_trading.case_only_price_list.v1",
         contract_version="v1",
     )
 
@@ -316,7 +318,7 @@ def test_raw_capture_rejects_unverified_supplier_contract(db):
                 ingestion_run_id=RUN_ID,
                 supplier_catalogue_id=SOURCE_ID,
                 source_file_id=FILE_ID,
-                supplier_id=90,
+                supplier_id=15,
                 observations=(_raw_input(),),
             )
         )

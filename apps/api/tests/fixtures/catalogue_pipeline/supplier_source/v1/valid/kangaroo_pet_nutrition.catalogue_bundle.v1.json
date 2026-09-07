@@ -10,7 +10,7 @@
   "document_type": "CATALOGUE",
   "format_name": "Kangaroo Pet Nutrition catalogue bundle",
   "source_format": "PDF_TABLE",
-  "support_status": "PARTIALLY_VERIFIED",
+  "support_status": "DEPRECATED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
@@ -486,6 +486,7 @@
     "sample_reference": "KPN_Kangaroo.pdf",
     "observed_brands": "ZIWI Peak, Ecuphar",
     "superseded_by_layout_specific_contracts": "kangaroo_pet_nutrition.unit_price_list.v1 (merged: unit + case-only + vet-clinic)",
-    "layout_specific_contracts_note": "This bundle remains the fallback for un-sorted layouts. Once a page's layout is identified, prefer the layout-specific contract above, which has a resolved price_basis."
+    "deprecated_on": "2026-09-07",
+    "deprecated_reason": "Superseded by unit_price_list.v1, which merged every layout this bundle covered and resolves a basis per price column. Retained as a declaration so the contract_id in historical runs still resolves; not selectable."
   }
 }

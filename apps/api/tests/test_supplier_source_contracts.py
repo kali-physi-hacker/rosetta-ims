@@ -177,12 +177,18 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
     # Vet is SUPPORTED on the strength of the vetapet_vet golden set; non-vet
     # has no golden evidence and stays out of production's reach.
     assert statuses["vetapet.vet_price_list.v1"] == SupplierContractSupportStatus.SUPPORTED
-    assert statuses["vetapet.non_vet_price_list.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    # Non-vet earned SUPPORTED on 2026-09-07, read against the non-vet
+    # catalogue rather than its vet sibling.
+    assert statuses["vetapet.non_vet_price_list.v1"] == SupplierContractSupportStatus.SUPPORTED
     assert statuses["kangaroo.mixed_price_catalogue.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
     assert statuses["kangaroo.purina_proplan_veterinary_diets.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
     assert statuses["kangaroo.earthz_pet_price_sheet.v1"] == SupplierContractSupportStatus.UNVERIFIED
-    assert statuses["kpn_trading.catalogue_bundle.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
-    assert statuses["kangaroo_pet_nutrition.catalogue_bundle.v1"] == SupplierContractSupportStatus.PARTIALLY_VERIFIED
+    # Both bundles were retired on 2026-09-07: the 2026-08-13 layout split
+    # replaced them, and a bundle spanning several price bases has no single
+    # price_basis to verify, so neither could ever have been promoted. They
+    # remain declared so the contract_id in historical runs still resolves.
+    assert statuses["kpn_trading.catalogue_bundle.v1"] == SupplierContractSupportStatus.DEPRECATED
+    assert statuses["kangaroo_pet_nutrition.catalogue_bundle.v1"] == SupplierContractSupportStatus.DEPRECATED
 
     assert get_supported_supplier_source_contract("hills.price_list.v1", "v1").contract_id == "hills.price_list.v1"
     assert get_supported_supplier_source_contract("alfamedic.price_list.v1", "v1").contract_id == "alfamedic.price_list.v1"
@@ -244,6 +250,11 @@ def test_non_supported_contracts_cannot_be_selected_for_production_interpretatio
         # all four pages — 192 rows conform, nothing held, and all eleven coded
         # sheet rows agree to the cent.
         "provet_kruuse.hk_price_list.v1",
+        # The non-vet catalogue, read end to end on 2026-09-07: 319 of 325
+        # rows priced, six held for review. Unverified until then only because
+        # the declaration's sample was its VET sibling, never the document it
+        # describes.
+        "vetapet.non_vet_price_list.v1",
     }
     for contract_id in set(EXPECTED_CONTRACT_IDS) - supported_ids:
         with pytest.raises(ValueError, match="not SUPPORTED"):
@@ -259,13 +270,23 @@ def test_packaging_content_measure_is_not_sellable_unit_count():
     assert any("content measure" in rule for rule in hills.packaging.interpretation_rules)
 
 
-def test_ambiguous_cost_basis_remains_unresolved_for_unverified_vetapet_non_vet():
+def test_vetapet_non_vet_cost_basis_was_resolved_on_its_own_catalogue():
+    """Unresolved for six weeks because the declaration's only sample was the
+    VET catalogue. Read against the non-vet catalogue on 2026-09-07 the basis
+    is per single item, and the ambiguity that recorded the gap is gone."""
     non_vet = get_supplier_source_contract("vetapet.non_vet_price_list.v1", "v1").declaration
 
-    assert non_vet.support_status == SupplierContractSupportStatus.PARTIALLY_VERIFIED
-    assert non_vet.pricing.price_basis is None
-    assert non_vet.pricing.price_basis_status == SemanticResolutionStatus.UNRESOLVED
-    assert any(issue.issue_code == "VETAPET_NON_VET_PRICE_BASIS_UNRESOLVED" for issue in non_vet.known_ambiguities)
+    assert non_vet.support_status == SupplierContractSupportStatus.SUPPORTED
+    assert non_vet.pricing.price_basis.code == "UNIT"
+    assert non_vet.pricing.price_basis_status == SemanticResolutionStatus.VERIFIED
+    assert not any(
+        issue.issue_code == "VETAPET_NON_VET_PRICE_BASIS_UNRESOLVED"
+        for issue in non_vet.known_ambiguities
+    )
+    assert not [a.issue_code for a in non_vet.known_ambiguities if a.blocks_supported_status]
+    assert any(
+        "NON-VET" in item.reference for item in non_vet.evidence
+    ), "the declaration must cite the catalogue it is actually about"
 
 
 def test_kangaroo_contracts_use_supplier_code_without_fabricated_numeric_id():

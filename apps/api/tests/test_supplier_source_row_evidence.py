@@ -117,11 +117,18 @@ def test_vetapet_vet_row_evidence_is_confirmed_by_the_golden_set():
     assert "golden" in fixture["notes"]
 
 
-def test_vetapet_non_vet_row_evidence_requires_confirmation_before_runtime_support():
-    fixtures = _fixtures_by_contract_id()
+def test_vetapet_non_vet_row_evidence_is_confirmed_on_the_non_vet_catalogue():
+    """Non-vet was unconfirmed for six weeks because its only sample was the
+    VET catalogue — the sibling document, whose later Chinese sections carry
+    the same headings. Read against the non-vet catalogue itself on
+    2026-09-07 it confirms, so the fixture must name that document and carry
+    no open debt."""
+    fixture = _fixtures_by_contract_id()["vetapet.non_vet_price_list.v1"]
 
-    for contract_id in {"vetapet.non_vet_price_list.v1"}:
-        fixture = fixtures[contract_id]
-        assert fixture["row_evidence_status"] == "NEEDS_CONFIRMATION"
-        assert fixture["examples"] == []
-        assert fixture["technical_debt"][0]["status"] == "OPEN"
+    assert fixture["row_evidence_status"] == "CONFIRMED"
+    assert fixture["examples"]
+    assert fixture["technical_debt"] == []
+    assert all(
+        "NON-VET" in example["source"]["sample_reference"]
+        for example in fixture["examples"]
+    ), "the evidence must come from the non-vet catalogue, not its vet sibling"

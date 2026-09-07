@@ -336,10 +336,16 @@ def test_vetapet_by_quote_rows_carry_no_cost_and_flag_for_review():
     assert any(i.issue_code == "CONTRACT_NULL_COST_REQUIRES_REVIEW" for i in item.issues)
 
 
-def test_vetapet_retail_price_basis_stays_a_human_decision():
-    """The retail section's carton note ('一箱6盒') is packaging info with an
-    unconfirmed price basis — the row must keep its verbatim values and route
-    to review rather than have a basis assumed for it."""
+def test_vetapet_retail_carton_note_is_configuration_and_never_a_count():
+    """'一箱6盒' — a carton of six boxes — is how the supplier ships them, not
+    what HK$64.00 buys.
+
+    This row used to route to review because the non-vet basis was unresolved.
+    It was resolved on 2026-09-07 against the non-vet catalogue: a page that
+    prints a retail price beside the wholesale is quoting both per single item,
+    proved there by a pair of rows at the same HK$90/HK$140 where only one
+    carries a case note. So the price now resolves — and the six must still
+    not become a sellable count, which is what this test has always been for."""
     item = _conform_one(
         "vetapet.non_vet_price_list.v1",
         _observation(
@@ -353,7 +359,16 @@ def test_vetapet_retail_price_basis_stays_a_human_decision():
     )
     assert item.raw_fields["cost"] == "HK$64.00"
     assert item.raw_fields["product_name"] == "海藻粉 500g (一箱6盒)"
-    assert any(i.issue_code == "CONTRACT_PRICE_BASIS_UNRESOLVED" for i in item.issues)
+    assert not any(i.issue_code == "CONTRACT_PRICE_BASIS_UNRESOLVED" for i in item.issues)
+
+    cost = item.normalized_fields.get("cost") or {}
+    assert str(cost.get("amount")) == "64.00"
+    assert (cost.get("price_basis") or {}).get("code") == "UNIT"
+
+    packaging = item.normalized_fields.get("packaging") or {}
+    assert str(packaging.get("sellable_units_per_purchase_unit") or "") != "6", (
+        "the carton count must never be read as a sellable count"
+    )
 
 
 def test_identity_matching_survives_real_letterheads():

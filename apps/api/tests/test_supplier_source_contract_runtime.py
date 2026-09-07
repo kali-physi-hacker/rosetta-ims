@@ -70,7 +70,11 @@ def test_selects_only_supported_supplier_source_contracts():
     vetapet_vet = runtime.load_contract(91)
     assert vetapet_vet is not None
     assert vetapet_vet.slug == "vetapet.vet_price_list.v1"
-    assert runtime.load_contract(90) is None
+    # Non-vet resolves on its own now (2026-09-07), so BOTH halves of Vetapet
+    # reach production — each through its own document's contract.
+    vetapet_non_vet = runtime.load_contract(90)
+    assert vetapet_non_vet is not None
+    assert vetapet_non_vet.slug == "vetapet.non_vet_price_list.v1"
     assert runtime.load_contract(999) is None
     assert runtime.load_contract(None) is None
 
@@ -123,8 +127,8 @@ def test_exact_resolution_rejects_unverified_or_partial_contracts_without_fallba
 
     with pytest.raises(runtime.SupplierContractUnsupportedError, match="not SUPPORTED"):
         runtime.resolve_supplier_contract(
-            supplier_id=90,
-            contract_id="vetapet.non_vet_price_list.v1",
+            supplier_id=15,
+            contract_id="kpn_trading.case_only_price_list.v1",
             contract_version="v1",
         )
 
@@ -139,13 +143,13 @@ def test_exact_resolution_rejects_unverified_or_partial_contracts_without_fallba
 
 
 def test_supplier_only_resolution_errors_are_specific(monkeypatch):
-    partial = _registration(get_supplier_source_contract("vetapet.non_vet_price_list.v1", "v1").declaration)
+    partial = _registration(get_supplier_source_contract("kpn_trading.case_only_price_list.v1", "v1").declaration)
     monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: (partial,))
 
     with pytest.raises(runtime.SupplierContractUnsupportedError, match="no SUPPORTED"):
-        runtime.resolve_supplier_contract(supplier_id=90)
+        runtime.resolve_supplier_contract(supplier_id=15)
 
-    assert runtime.load_contract(90) is None
+    assert runtime.load_contract(15) is None
 
     monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: ())
 
@@ -190,7 +194,7 @@ def test_supplier_only_resolution_is_independent_of_registry_order(monkeypatch):
             document_type=SupplierDocumentType.PRICE_LIST,
         )
     )
-    partial = _registration(get_supplier_source_contract("vetapet.non_vet_price_list.v1", "v1").declaration)
+    partial = _registration(get_supplier_source_contract("kpn_trading.case_only_price_list.v1", "v1").declaration)
     monkeypatch.setattr(runtime, "iter_supplier_source_contracts", lambda: (other_supplier, partial, supported))
 
     resolved = runtime.resolve_supplier_contract(supplier_id=778)

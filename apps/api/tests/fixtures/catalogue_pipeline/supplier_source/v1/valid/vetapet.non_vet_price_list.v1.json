@@ -10,14 +10,19 @@
   "document_type": "PRICE_LIST",
   "format_name": "Vetapet Non-Vet PDF price list",
   "source_format": "PDF_TABLE",
-  "support_status": "PARTIALLY_VERIFIED",
+  "support_status": "SUPPORTED",
   "effective_from": null,
   "effective_to": null,
   "evidence": [
     {
       "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+      "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+      "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+    },
+    {
+      "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
       "reference": "external-sample:Vetapet.pdf",
-      "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+      "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
     }
   ],
   "source_structure": {
@@ -43,6 +48,10 @@
       "重量 / SIZE",
       "零售價 / RETAIL PRICE"
     ],
+    "row_requires_any_field": [
+      "supplier_sku",
+      "cost"
+    ],
     "row_eligibility_rules": [
       "One product row per code/price entry when a real sample confirms this shape."
     ],
@@ -65,6 +74,8 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [
         "CODE NO",
         "編號",
@@ -76,8 +87,13 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -98,6 +114,8 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [
         "PRODUCT NAME",
         "產品名稱",
@@ -112,8 +130,13 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -134,13 +157,20 @@
       "source_path": "page_brand",
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [],
       "description": "Product brand, read from the brand mark heading the page (e.g. the zoetis or Dermoscent wordmark) — never from the table banner, which names a category.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -161,17 +191,28 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [
         "重量",
         "SIZE",
-        "包裝"
+        "包裝",
+        "重量 WEIGHT",
+        "WEIGHT 重量",
+        "尺寸",
+        "capacity"
       ],
       "description": "Raw size/packaging text; may express content measure, pack description, or both. The vet sections print it as PACKING PER UNIT (verified on the sample's diagnostics pages); retail sections use 重量/SIZE.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -192,6 +233,8 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [
         "批發價",
         "WHOLESALE PRICE"
@@ -200,8 +243,13 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -222,6 +270,8 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [
         "SUGGESTED RETAIL PRICE",
         "RETAIL PRICE",
@@ -236,8 +286,13 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -258,13 +313,20 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [],
       "description": "Treat-layout box configuration ('1盒20條' — one box of twenty pieces). A purchase-format statement, never a deal: no term is emitted without a printed per-piece rate at box quantity (case-total ruling), and on the sample the box price is exactly the piece price times the count.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -285,13 +347,20 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [],
       "description": "Treat-layout box wholesale total (prints as '批發價$392' — the heading leaks into the cell). Evidence for reviewers beside box_quantity; the per-piece 批發價 1 remains the row's cost.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -312,6 +381,8 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [
         "TERMS",
         "REMARKS",
@@ -321,8 +392,13 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -343,13 +419,20 @@
       "source_path": "product_name",
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [],
       "description": "Species cue from product name when present.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -370,13 +453,20 @@
       "source_path": null,
       "composed_from": [],
       "constant_value": "non_vet",
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [],
       "description": "Vetapet catalogue segment split.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -397,13 +487,20 @@
       "source_path": "section_header",
       "composed_from": [],
       "constant_value": null,
+      "source_pattern": null,
+      "value_map": {},
       "aliases": [],
       "description": "Brand/section-derived category remains supplier-specific and reviewable.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -420,17 +517,28 @@
       "field_key": "variant",
       "role": "VARIANT",
       "requirement": "OPTIONAL",
-      "source_column": null,
+      "source_column": "顏色",
       "source_path": "unlabeled_column",
       "composed_from": [],
       "constant_value": null,
-      "aliases": [],
-      "description": "Colour/variant label printed in an unlabeled first column on variant tables (e.g. Ferplast beds: 黑色/灰色/杏色 each with its own CODE). Claimed via the unlabeled_column sentinel — resolves only when the row carries exactly one non-empty unlabeled value.",
+      "source_pattern": null,
+      "value_map": {},
+      "aliases": [
+        "顏色",
+        "COLOUR",
+        "COLOR"
+      ],
+      "description": "Colour/variant label on variant tables (e.g. Ferplast beds: 黑色/灰色/杏色, each its own CODE and price at one size). The 2026-09-07 reading of the non-vet catalogue found the column HEADED 顏色, so it is claimed by name first; the unlabeled_column sentinel remains as the fallback for the pages that print the colours without a heading, where it resolves only when the row carries exactly one unlabeled value. Without this the bed rows differ only by code: same size, same price, no readable distinction.",
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ],
       "tier_minimum_spend": null,
@@ -448,32 +556,44 @@
     "cost_source_field": "cost",
     "rrp_source_field": "rrp",
     "currency": "HKD",
-    "price_basis": null,
-    "price_basis_status": "UNRESOLVED",
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
+    "price_basis_status": "VERIFIED",
     "autoswap_cost_rrp_allowed": true,
     "null_cost_markers": [],
     "price_basis_per_column": false,
-    "notes": "The supplied source confirms wholesale/retail labels, but the price basis remains unresolved without row-level business confirmation."
+    "price_basis_source_field": null,
+    "price_basis_value_map": {},
+    "price_basis_is_suffix_of_price": false,
+    "price_basis_count_unit": null,
+    "notes": "批發價 buys ONE sellable item. Resolved 2026-09-07 on the non-vet catalogue itself, on the same footing as the vet contract's 2026-08-25 ruling: a retail column beside the wholesale confirms the per-unit basis, even where the product text names a case.\n\nThe page proves it directly. 11002 (Eyes So Bright, 4fl oz) prints NO case note; 11003 (Ears All Right, 4fl oz) prints 一盒12支 — a box of twelve. Both are HKD$90 wholesale against HKD$140 retail. One price cannot buy one bottle on one row and twelve on the next while both quote the same retail. Wholesale sits at 0.62–0.67 of retail across every priced row, which is a trade margin on a single item; against a box of twelve it would be a twelvefold one.\n\nSo 一盒N支 is the case CONFIGURATION — how the supplier ships them — and never what the price buys. It is not read as a sellable count."
   },
   "packaging": {
+    "packaging_text_pattern": null,
     "packaging_source_field": "pack_size",
     "purchase_uom": null,
-    "price_basis": null,
+    "price_basis": {
+      "code": "UNIT",
+      "label": null
+    },
     "sellable_unit_uom": null,
     "sellable_units_per_purchase_unit_source_field": null,
     "content_measure_source_field": "pack_size",
     "content_measure_uom": null,
     "purchase_uom_source_field": null,
     "price_basis_follows_purchase_unit": false,
+    "sellable_count_excludes_measures": false,
     "order_increment_source_field": null,
     "minimum_order_source_field": null,
     "break_pack_allowed": null,
     "interpretation_rules": [
-      "Treat weight/size text as content measure only after a real sample confirms row semantics."
+      "重量/SIZE/尺寸/capacity is content measure — a bottle's 4fl oz, a bed's 49x36x17.5cm — never a count of sellable units.",
+      "一盒N支 / 一盒N包 in the product text is the case configuration the supplier ships in. It is not a sellable count and never redefines what the price buys.",
+      "A row that prints a retail price beside the wholesale is quoting both per single item."
     ],
-    "unresolved_semantics": [
-      "Price basis, purchase UOM, sellable unit, order increment, and break-pack rules are unresolved."
-    ]
+    "unresolved_semantics": []
   },
   "mbb": {
     "source_fields": [
@@ -510,23 +630,22 @@
       "evidence": [
         {
           "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
+          "reference": "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+          "note": "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, every heading family below observed on it. Its text layer is unusable — digits come through as replacement characters and several pages carry no text at all — so it is read by vision, which is now how every PDF page is read."
+        },
+        {
+          "evidence_type": "REAL_SOURCE_CATALOGUE_SAMPLE",
           "reference": "external-sample:Vetapet.pdf",
-          "note": "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review."
+          "note": "The 177-page VET catalogue, which is what this declaration was originally written from: its later Chinese/retail sections carry the same weight/wholesale/retail labels. Kept because the column families came from here, but it is the sibling contract's source, not this one's — which is why no non-vet row fixture existed."
         }
       ]
     }
   ],
   "known_ambiguities": [
     {
-      "issue_code": "VETAPET_NON_VET_ROW_FIXTURE_MISSING",
-      "condition": "The supplied PDF has relevant labels, but no representative extracted non-vet row fixture has been committed.",
-      "review_guidance": "Create representative row fixtures from the source PDF and confirm wholesale, retail, size, and category semantics.",
-      "blocks_supported_status": true
-    },
-    {
-      "issue_code": "VETAPET_NON_VET_PRICE_BASIS_UNRESOLVED",
-      "condition": "A numeric wholesale price does not prove the supplier price basis.",
-      "review_guidance": "Confirm whether the wholesale price is per sellable unit, pack, case, or another basis.",
+      "issue_code": "VETAPET_NON_VET_UNCLAIMED_COLUMNS",
+      "condition": "The catalogue prints columns this contract does not claim: 編號2 (a second code), a bare 'price' on three rows, and the supplement pages' 每日劑量 / INGREDIENTS / per-tablet dosage. The index pages print PAGE 頁碼 / BRAND 品牌 / LOGO 商標, which are navigation, not products.",
+      "review_guidance": "Leave unclaimed. A bare 'price' beside no retail column cannot be told from a wholesale one, and guessing which it is would put a retail figure in the cost field. Raise with the supplier if those rows matter.",
       "blocks_supported_status": false
     }
   ],

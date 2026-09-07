@@ -64,7 +64,18 @@ KPN_TRADING_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
         document_type=SupplierDocumentType.CATALOGUE,
         format_name="K.P.N. Trading catalogue bundle",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        # RETIRED 2026-09-07. The bundle was the original single contract for
+        # KPN_Kangaroo.pdf; the 2026-08-13 layout split replaced it, and its
+        # own metadata has recorded the successors ever since. It could never
+        # be promoted as written — a bundle that mixes unit, pack and case
+        # bases has no single price_basis to verify, and SUPPORTED requires a
+        # VERIFIED one. The modern answer to a mixed-basis page is
+        # price_basis_per_column, which is a property of a layout contract,
+        # not of a bundle: Kangaroo folded three layouts into one contract
+        # that way on 2026-08-25 and it is SUPPORTED today. Should a K.P.N.
+        # source ever print several bases on one page, the fix is to give
+        # pack_price_list per-column bases, not to revive this.
+        support_status=SupplierContractSupportStatus.DEPRECATED,
         evidence=_KPN_TRADING_EVIDENCE,
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
@@ -318,10 +329,12 @@ KPN_TRADING_CATALOGUE_BUNDLE_V1 = register_supplier_source_contract(
                 "kpn_trading.pack_price_list.v1 (incl. pack+case bulk rows), "
                 "kpn_trading.case_only_price_list.v1"
             ),
-            "layout_specific_contracts_note": (
-                "This bundle contract remains the correct choice only when a source's table "
-                "layout has not been pre-sorted. Once a page's layout is identified, prefer "
-                "the matching layout-specific contract above, which has a resolved price_basis."
+            "deprecated_on": "2026-09-07",
+            "deprecated_reason": (
+                "Superseded by the layout-specific contracts above. Retained as a "
+                "declaration so the contract_id in historical runs still resolves; it is "
+                "not selectable and cannot be promoted, because a bundle spanning several "
+                "price bases has no single price_basis to verify."
             ),
         },
     )

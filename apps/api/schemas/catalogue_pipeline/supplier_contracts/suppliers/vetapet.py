@@ -39,8 +39,19 @@ _VET_COMMON_EVIDENCE = [
 _NON_VET_EVIDENCE = [
     evidence(
         SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
+        "external-sample:VETAPET NON-VET AA Catalogue [20260513].pdf",
+        "The non-vet catalogue itself, read end to end on 2026-09-07: 90 of 90 pages, "
+        "every heading family below observed on it. Its text layer is unusable — digits "
+        "come through as replacement characters and several pages carry no text at all — "
+        "so it is read by vision, which is now how every PDF page is read.",
+    ),
+    evidence(
+        SupplierSourceEvidenceType.REAL_SOURCE_CATALOGUE_SAMPLE,
         "external-sample:Vetapet.pdf",
-        "I supplied a 177-page PDF that includes later Chinese/retail sections with weight, wholesale, and retail price labels, but rows require supplier-format review.",
+        "The 177-page VET catalogue, which is what this declaration was originally written "
+        "from: its later Chinese/retail sections carry the same weight/wholesale/retail "
+        "labels. Kept because the column families came from here, but it is the sibling "
+        "contract's source, not this one's — which is why no non-vet row fixture existed.",
     ),
 ]
 
@@ -118,7 +129,7 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
             aliases=(
                 ["PACKING PER UNIT", "SIZE", "PACK", "重量", "重量 1 (Weight)", "包裝"]
                 if segment == "vet"
-                else ["重量", "SIZE", "包裝"]
+                else ["重量", "SIZE", "包裝", "重量 WEIGHT", "WEIGHT 重量", "尺寸", "capacity"]
             ),
             description=(
                 "Raw size/packaging text; may express content measure, pack description, or "
@@ -267,12 +278,18 @@ def _vetapet_fields(*, segment: str, evidence_items: list) -> list[SourceFieldCo
                 field_key="variant",
                 role=SourceFieldRole.VARIANT,
                 requirement=SourceFieldRequirement.OPTIONAL,
+                source_column="顏色",
+                aliases=["顏色", "COLOUR", "COLOR"],
                 source_path="unlabeled_column",
                 description=(
-                    "Colour/variant label printed in an unlabeled first column on variant "
-                    "tables (e.g. Ferplast beds: 黑色/灰色/杏色 each with its own CODE). "
-                    "Claimed via the unlabeled_column sentinel — resolves only when the row "
-                    "carries exactly one non-empty unlabeled value."
+                    "Colour/variant label on variant tables (e.g. Ferplast beds: "
+                    "黑色/灰色/杏色, each its own CODE and price at one size). The 2026-09-07 "
+                    "reading of the non-vet catalogue found the column HEADED 顏色, so it is "
+                    "claimed by name first; the unlabeled_column sentinel remains as the "
+                    "fallback for the pages that print the colours without a heading, where "
+                    "it resolves only when the row carries exactly one unlabeled value. "
+                    "Without this the bed rows differ only by code: same size, same price, "
+                    "no readable distinction."
                 ),
                 evidence=evidence_items,
             )
@@ -484,11 +501,18 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         document_type=SupplierDocumentType.PRICE_LIST,
         format_name="Vetapet Non-Vet PDF price list",
         source_format=SourceFormat.PDF_TABLE,
-        support_status=SupplierContractSupportStatus.PARTIALLY_VERIFIED,
+        support_status=SupplierContractSupportStatus.SUPPORTED,
         evidence=_NON_VET_EVIDENCE,
         source_structure=SourceStructure(
             source_format=SourceFormat.PDF_TABLE,
             expected_sections=["multi-brand non-vet sections"],
+            # The catalogue opens with two index pages listing every brand
+            # against the page it starts on — PAGE 頁碼 | BRAND 品牌 | LOGO 商標.
+            # It is a table, so it arrives as rows, and it shares no heading
+            # with any product table. Without this it lands as twenty rows
+            # blocked for missing everything, which is a navigation aid
+            # reported as twenty broken products.
+            row_requires_any_field=("supplier_sku", "cost"),
             table_regions=[
                 SourceTableRegion(
                     name="non_vet_brand_sections",
@@ -505,20 +529,37 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         pricing=PricingSourceSemantics(
             cost_source_field="cost",
             rrp_source_field="rrp",
-            price_basis=None,
-            price_basis_status=SemanticResolutionStatus.UNRESOLVED,
+            price_basis=UnitOfMeasure(code=UnitCode.UNIT),
+            price_basis_status=SemanticResolutionStatus.VERIFIED,
             autoswap_cost_rrp_allowed=True,
-            notes="The supplied source confirms wholesale/retail labels, but the price basis remains unresolved without row-level business confirmation.",
+            notes=(
+                "批發價 buys ONE sellable item. Resolved 2026-09-07 on the non-vet "
+                "catalogue itself, on the same footing as the vet contract's 2026-08-25 "
+                "ruling: a retail column beside the wholesale confirms the per-unit basis, "
+                "even where the product text names a case.\n\n"
+                "The page proves it directly. 11002 (Eyes So Bright, 4fl oz) prints NO case "
+                "note; 11003 (Ears All Right, 4fl oz) prints 一盒12支 — a box of twelve. "
+                "Both are HKD$90 wholesale against HKD$140 retail. One price cannot buy one "
+                "bottle on one row and twelve on the next while both quote the same retail. "
+                "Wholesale sits at 0.62–0.67 of retail across every priced row, which is a "
+                "trade margin on a single item; against a box of twelve it would be a "
+                "twelvefold one.\n\n"
+                "So 一盒N支 is the case CONFIGURATION — how the supplier ships them — and "
+                "never what the price buys. It is not read as a sellable count."
+            ),
         ),
         packaging=PackagingSourceSemantics(
             packaging_source_field="pack_size",
             content_measure_source_field="pack_size",
+            price_basis=UnitOfMeasure(code=UnitCode.UNIT),
             break_pack_allowed=None,
             interpretation_rules=[
-                "Treat weight/size text as content measure only after a real sample confirms row semantics.",
-            ],
-            unresolved_semantics=[
-                "Price basis, purchase UOM, sellable unit, order increment, and break-pack rules are unresolved.",
+                "重量/SIZE/尺寸/capacity is content measure — a bottle's 4fl oz, a bed's "
+                "49x36x17.5cm — never a count of sellable units.",
+                "一盒N支 / 一盒N包 in the product text is the case configuration the supplier "
+                "ships in. It is not a sellable count and never redefines what the price buys.",
+                "A row that prints a retail price beside the wholesale is quoting both per "
+                "single item.",
             ],
         ),
         mbb=MbbSourceSemantics(
@@ -544,15 +585,18 @@ VETAPET_NON_VET_PRICE_LIST_V1 = register_supplier_source_contract(
         ],
         known_ambiguities=[
             AmbiguityRule(
-                issue_code="VETAPET_NON_VET_ROW_FIXTURE_MISSING",
-                condition="The supplied PDF has relevant labels, but no representative extracted non-vet row fixture has been committed.",
-                review_guidance="Create representative row fixtures from the source PDF and confirm wholesale, retail, size, and category semantics.",
-                blocks_supported_status=True,
-            ),
-            AmbiguityRule(
-                issue_code="VETAPET_NON_VET_PRICE_BASIS_UNRESOLVED",
-                condition="A numeric wholesale price does not prove the supplier price basis.",
-                review_guidance="Confirm whether the wholesale price is per sellable unit, pack, case, or another basis.",
+                issue_code="VETAPET_NON_VET_UNCLAIMED_COLUMNS",
+                condition=(
+                    "The catalogue prints columns this contract does not claim: 編號2 (a "
+                    "second code), a bare 'price' on three rows, and the supplement pages' "
+                    "每日劑量 / INGREDIENTS / per-tablet dosage. The index pages print "
+                    "PAGE 頁碼 / BRAND 品牌 / LOGO 商標, which are navigation, not products."
+                ),
+                review_guidance=(
+                    "Leave unclaimed. A bare 'price' beside no retail column cannot be told "
+                    "from a wholesale one, and guessing which it is would put a retail figure "
+                    "in the cost field. Raise with the supplier if those rows matter."
+                ),
             ),
         ],
         pipeline_mapping=pipeline_mapping("supplier_sku", "description", "brand", "pack_size", "cost", "rrp", "promotion_text", "species", "segment", "category", "variant"),
