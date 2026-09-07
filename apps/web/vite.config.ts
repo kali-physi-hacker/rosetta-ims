@@ -30,7 +30,10 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
-          secure: true,
+          // The local stack terminates TLS at Caddy with a self-signed cert
+          // for localhost, so verifying it would refuse every local request.
+          // Anything else — a real deployment — is still verified.
+          secure: !/\/\/(localhost|127\.0\.0\.1)(:|$|\/)/.test(proxyTarget),
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },

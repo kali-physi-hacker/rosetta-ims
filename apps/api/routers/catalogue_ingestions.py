@@ -122,6 +122,13 @@ class MasteringReviewRequest(BaseModel):
     decided_at: datetime | None = None
 
 
+class ReviewReversalRequest(BaseModel):
+    """Undo a review decision. The reason is not optional anywhere here."""
+
+    reason: str = Field(..., min_length=1)
+    at: datetime | None = None
+
+
 class EvidenceCorrectionRequest(BaseModel):
     """Human correction of misread cells on one extracted-evidence observation.
 
@@ -901,6 +908,101 @@ def correct_catalogue_evidence(
         "source_raw_observation_id": result.source_raw_observation_id,
         "next_step": "re-parse the run (or retrigger its dead-lettered rows) to re-read the corrected evidence",
     }
+
+
+@router.post(
+    "/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/reopen",
+    response_model=PipelineActionResponse,
+)
+def reopen_catalogue_mastering_candidate(
+    run_uuid: UUID,
+    mastering_candidate_id: UUID,
+    body: ReviewReversalRequest,
+    request: Request,
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Send a wrongly decided row back to the review queue.
+
+    For a row that was rejected, or held for clarification, in error. The
+    original decision stays in the log; this is appended after it, and the row
+    is decided again from scratch through the same gates. An approved row must
+    be withdrawn first — see the withdraw endpoint.
+    """
+    _load_run_or_404(db, run_uuid)
+    _load_run_candidate_or_404(db, run_uuid, mastering_candidate_id)
+    try:
+        result = stages.ReviewReversalService(db, commit=False).reopen(
+            stages.ReopenCandidateCommand(
+                mastering_candidate_id=mastering_candidate_id,
+                actor_id=_actor_id(user),
+                reason=body.reason,
+                reopened_at=body.at,
+                idempotency_key=idempotency_key,
+            )
+        )
+        _audit_pipeline_action(
+            db,
+            request=request,
+            user=user,
+            action="catalogue.pipeline_candidate_reopen",
+            entity_type="catalogue_mastering_candidate",
+            entity_id=mastering_candidate_id,
+            result=result,
+        )
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise _stage_http_error(exc) from exc
+    return _action_response(result)
+
+
+@router.post(
+    "/ingestions/{run_uuid}/mastering-candidates/{mastering_candidate_id}/withdraw",
+    response_model=PipelineActionResponse,
+)
+def withdraw_catalogue_serving_publication(
+    run_uuid: UUID,
+    mastering_candidate_id: UUID,
+    body: ReviewReversalRequest,
+    request: Request,
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
+    db: Session = Depends(database.get_db),
+    user: models.User = Depends(require_capability("catalogue_onboard")),
+):
+    """Take a published row back out of the serving layer.
+
+    The cost it displaced becomes current again, so the sheet returns to what
+    it said before rather than to nothing. Once withdrawn the row is staged,
+    and can be rejected or reopened like any other staged row.
+    """
+    _load_run_or_404(db, run_uuid)
+    _load_run_candidate_or_404(db, run_uuid, mastering_candidate_id)
+    try:
+        result = stages.ReviewReversalService(db, commit=False).withdraw(
+            stages.WithdrawPublicationCommand(
+                mastering_candidate_id=mastering_candidate_id,
+                actor_id=_actor_id(user),
+                reason=body.reason,
+                withdrawn_at=body.at,
+                idempotency_key=idempotency_key,
+            )
+        )
+        _audit_pipeline_action(
+            db,
+            request=request,
+            user=user,
+            action="catalogue.pipeline_publication_withdraw",
+            entity_type="catalogue_mastering_candidate",
+            entity_id=mastering_candidate_id,
+            result=result,
+        )
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise _stage_http_error(exc) from exc
+    return _action_response(result)
 
 
 @router.post(

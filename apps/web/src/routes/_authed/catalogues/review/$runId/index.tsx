@@ -21,6 +21,7 @@ import {
   isDecided, isApproved, isStaged, sampleIds, suggestTerms,
   approveCandidate, decideCandidate, correctVariantMatch, applyCandidate, publishCandidate,
   correctToNewProduct, correctRowDetails, checkDuplicates, fetchSkuCategories, willCreate, openSourceFile, unstageCandidate,
+  reopenCandidate, withdrawPublication,
   resolveRunIssue, fanOut, fmtDelta, marginPct, per,
   fetchRunStatus, fetchDeadLetters, retryRun, reparseRun, failureInfo, TERMINAL_RUN_STATUSES,
   REASON_CHIPS, PULL_THRESHOLD_PCT,
@@ -582,6 +583,15 @@ function RunDeskPage() {
 
   // ── quick single stage from a lane row ──
   const [rowBusy, setRowBusy] = useState<string | null>(null)
+  // Live rows are done, so they are folded away by default — but a row that
+  // went out wrong has to be findable without knowing its code.
+  const [liveOpen, setLiveOpen] = useState(false)
+  const liveRef = useRef<HTMLDivElement>(null)
+  const showLive = () => {
+    setLiveOpen(true)
+    setSearch('')
+    requestAnimationFrame(() => liveRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
   async function stageOne(item: SummaryItem) {
     setRowBusy(item.mastering_candidate_id)
     try {
@@ -593,6 +603,58 @@ function RunDeskPage() {
       }))
       queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
       toast.success(`${item.supplier_sku ?? 'Row'} staged — publish from the dock when ready`)
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    } finally {
+      setRowBusy(null)
+    }
+  }
+
+  /**
+   * Send a wrongly decided row back to the queue.
+   *
+   * The mistaken decision stays in the log — this is appended after it — and
+   * the row is decided again from scratch rather than jumping to approved.
+   */
+  async function reopenOne(item: SummaryItem) {
+    const label = item.supplier_sku ?? item.canonical_sku ?? 'This row'
+    const reason = await promptDialog({
+      title: `Send ${label} back to the queue?`,
+      message: 'It returns to undecided and is reviewed again from scratch. The earlier decision '
+        + 'stays on the record — this is added after it, not instead of it.',
+      prompt: { placeholder: 'Why was the earlier decision wrong?' },
+      confirmLabel: 'Send back to queue',
+    })
+    if (!reason?.trim()) return
+    setRowBusy(item.mastering_candidate_id)
+    try {
+      await reopenCandidate(runFor(item, runId), item.mastering_candidate_id, reason.trim())
+      queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
+      toast.success(`${label} is back in the queue`)
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    } finally {
+      setRowBusy(null)
+    }
+  }
+
+  /** Take a published row back out — the cost it replaced becomes current again. */
+  async function withdrawOne(item: SummaryItem) {
+    const label = item.supplier_sku ?? item.canonical_sku ?? 'This row'
+    const reason = await promptDialog({
+      title: `Withdraw ${label} from live?`,
+      message: 'The cost this row replaced becomes current again, so the sheet goes back to what '
+        + 'it said before rather than to nothing. The row returns to staged.',
+      prompt: { placeholder: 'Why is this coming back off?' },
+      confirmLabel: 'Withdraw from live',
+      danger: true,
+    })
+    if (!reason?.trim()) return
+    setRowBusy(item.mastering_candidate_id)
+    try {
+      await withdrawPublication(runFor(item, runId), item.mastering_candidate_id, reason.trim())
+      queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
+      toast.success(`${label} withdrawn — the previous cost is current again`)
     } catch (e: any) {
       toast.error(String(e?.message ?? e))
     } finally {
@@ -823,8 +885,18 @@ function RunDeskPage() {
                         {isDecided(item) ? decidedLabel(item)
                           : item.canonical_sku ? `→ ${item.canonical_sku}` : 'no match yet'}
                       </>}
-                      action={!isDecided(item) && canApprove(item) && !isPulled(item)
-                        ? <button className="btn sm" disabled={rowBusy === item.mastering_candidate_id} onClick={() => stageOne(item)}>✓ Stage</button>
+                      action={
+                        // Search is how a reviewer finds the row they got
+                        // wrong, so the undo lives here rather than only in
+                        // focus: paste the name, see the decision, take it back.
+                        item.published
+                          ? <button className="btn sm" disabled={rowBusy === item.mastering_candidate_id}
+                              onClick={() => withdrawOne(item)}>↩ Withdraw</button>
+                        : isDecided(item) && !isApproved(item)
+                          ? <button className="btn sm" disabled={rowBusy === item.mastering_candidate_id}
+                              onClick={() => reopenOne(item)}>↩ Send back</button>
+                        : !isDecided(item) && canApprove(item) && !isPulled(item)
+                          ? <button className="btn sm" disabled={rowBusy === item.mastering_candidate_id} onClick={() => stageOne(item)}>✓ Stage</button>
                         : undefined}
                       onOpen={() => openFocus(lane, item.mastering_candidate_id)} />
                   )
@@ -969,6 +1041,35 @@ function RunDeskPage() {
             )}
           </div>
           </>)}
+
+          {/* Live — already published. Not a queue: these rows are finished.
+              The lane exists so a row that went out wrong can be found and
+              taken back off without having to know its code, which was the
+              only way to reach it before. Folded away by default so it never
+              competes with the work still waiting. */}
+          {published.length > 0 && (
+            <div className="lane" ref={liveRef}>
+              <div className="laneh" style={{ borderBottom: liveOpen ? undefined : 'none' }}>
+                <span className="ln">Live · {published.length}</span>
+                <span className="lc">published to the catalogue — withdrawing puts the previous cost back</span>
+                <span className="lnk" style={{ fontSize: 11.5, marginLeft: 'auto', whiteSpace: 'nowrap' }}
+                  onClick={() => setLiveOpen(open => !open)}>
+                  {liveOpen ? 'hide' : 'show live rows'}
+                </span>
+              </div>
+              {liveOpen && (
+                <div className="lanebody">
+                  {published.map(item => (
+                    <LaneRow key={item.mastering_candidate_id} item={item}
+                      why={<>live ✓{item.cost_amount != null && <> · {fm(item.cost_amount)}{per(item.uom)}</>}</>}
+                      action={<button className="btn sm" disabled={rowBusy === item.mastering_candidate_id}
+                        onClick={() => withdrawOne(item)}>↩ Withdraw</button>}
+                      onOpen={() => openFocus(laneOf(item), item.mastering_candidate_id)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── dock ── */}
@@ -977,7 +1078,7 @@ function RunDeskPage() {
           ringStops={ringStops}
           centerPct={pct(decidedCount)}
           stats={[
-            { n: published.length, label: 'live', color: '#22A55E' },
+            { n: published.length, label: 'live', color: '#22A55E', onClick: published.length ? showLive : undefined },
             { n: staged.length, label: 'staged for publish', color: '#4F46E5' },
             { n: cleanPending, label: 'clean, awaiting sweep', color: '#B9C2F2' },
             { n: needsYou, label: 'need you', color: '#E9A23B' },
@@ -1272,7 +1373,7 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
   runId: string
   ringStops: string
   centerPct: number
-  stats: { n: number; label: string; color: string }[]
+  stats: { n: number; label: string; color: string; onClick?: () => void }[]
   staged: SummaryItem[]
   onPublished: () => void
 }) {
@@ -1302,8 +1403,8 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
     const label = item.supplier_sku ?? item.canonical_sku ?? 'This row'
     const reason = await promptDialog({
       title: `Remove ${label} from staged?`,
-      message: 'It will not publish. The decision is recorded against the row and cannot be undone — '
-        + 'a reviewed row never goes back to unreviewed.',
+      message: 'It will not publish. The decision is recorded against the row — if it turns out '
+        + 'to be the wrong call, the row can be sent back to the queue and decided again.',
       prompt: { placeholder: 'Why is this not going live?' },
       confirmLabel: 'Remove from staged',
       danger: true,
@@ -1365,7 +1466,15 @@ function Dock({ runId, ringStops, centerPct, stats, staged, onPublished }: {
         <span className="ring" style={{ background: `conic-gradient(${ringStops})` }}><b>{centerPct}%</b></span>
         <span style={{ minWidth: 0 }}>
           {stats.filter(s => s.n > 0 || s.label === 'need you').map(s => (
-            <span key={s.label} className="dstat"><i style={{ background: s.color }} />{s.n} {s.label}</span>
+            <span key={s.label} className="dstat"
+              onClick={s.onClick}
+              role={s.onClick ? 'button' : undefined}
+              tabIndex={s.onClick ? 0 : undefined}
+              onKeyDown={s.onClick ? (e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); s.onClick!() } }) : undefined}
+              title={s.onClick ? 'Show the live rows' : undefined}
+              style={s.onClick ? { cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 } : undefined}>
+              <i style={{ background: s.color }} />{s.n} {s.label}
+            </span>
           ))}
         </span>
       </div>
@@ -1548,6 +1657,29 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
         && groupOf(i) === 'unmatched' && !isDecided(i)
         && i.family_key != null && i.family_key === current.family_key)
     : []
+
+  /** Take this row back off the catalogue. The cost it replaced comes back. */
+  async function withdrawCurrent() {
+    if (!current) return
+    const label = current.supplier_sku ?? current.canonical_sku ?? 'This row'
+    const reason = await promptDialog({
+      title: `Withdraw ${label} from live?`,
+      message: 'The cost this row replaced becomes current again, so the sheet goes back to what '
+        + 'it said before rather than to nothing. The row returns to staged.',
+      prompt: { placeholder: 'Why is this coming back off?' },
+      confirmLabel: 'Withdraw from live',
+      danger: true,
+    })
+    if (!reason?.trim()) return
+    try {
+      await withdrawPublication(runFor(current, runId), current.mastering_candidate_id, reason.trim())
+      queryClient.invalidateQueries({ queryKey: ['review-summary', runId] })
+      queryClient.invalidateQueries({ queryKey: ['review-detail', runFor(current, runId), current.mastering_candidate_id] })
+      toast.success(`${label} withdrawn — the previous cost is current again`)
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    }
+  }
 
   async function decide(statusValue: SummaryItem['review_status']) {
     if (!current) return
@@ -1832,7 +1964,17 @@ function FocusOverlay({ runId, lane, queue, currentId, allItems, sourceFile, sup
                   Not in the catalogue…
                 </button>
               )}
-              <button className="btn" disabled={isDecided(current)} style={{ color: 'var(--red)', borderColor: '#F1CDC9' }} onClick={() => decide('REJECTED')}>Reject</button>
+              {/* A live row cannot be rejected — the server refuses it while a
+                  publication stands, and rightly: the catalogue is quoting it.
+                  Withdrawing is the operation that applies, so that is the
+                  button a reviewer is given. */}
+              {current.published ? (
+                <button className="btn" style={{ color: 'var(--red)', borderColor: '#F1CDC9' }}
+                  title="Take this off the catalogue — the cost it replaced becomes current again"
+                  onClick={withdrawCurrent}>↩ Withdraw from live</button>
+              ) : (
+                <button className="btn" disabled={isDecided(current)} style={{ color: 'var(--red)', borderColor: '#F1CDC9' }} onClick={() => decide('REJECTED')}>Reject</button>
+              )}
               <span style={{ fontSize: 10, color: 'var(--faint)', marginLeft: 'auto' }}>append-only · corrections = new revision</span>
             </div>
           </div>

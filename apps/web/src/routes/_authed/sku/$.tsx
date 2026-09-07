@@ -20,7 +20,7 @@ import { EditSkuModal } from '@/components/EditSkuModal'
 import { ChangeSkuModal } from '@/components/ChangeSkuModal'
 import { toast } from '@/lib/toast'
 import { openSourceFile } from '@/lib/review'
-import { confirmDialog } from '@/lib/confirm'
+import { confirmDialog, promptDialog } from '@/lib/confirm'
 import type { CatalogueBulkTerm, CompetitorPrice, MbbTerm, Product } from '@/lib/types'
 
 export const Route = createFileRoute('/_authed/sku/$')({ component: SkuInstrumentRoute })
@@ -59,8 +59,14 @@ interface OfferingEntry {
   } | null
   legacy: { basic_cost: number | null; units_per_pack: number | null; cost_source: string | null; cost_updated_at: string | null }
 }
+interface LivePublication {
+  mastering_candidate_id: string
+  ingestion_run_id: string
+  published_cost: number | null
+}
 interface SupFull {
   id: number
+  live_publication?: LivePublication | null
   effective_unit_cost: number | null
   order_increment_qty: number | null
   order_increment_uom: string | null
@@ -250,6 +256,48 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
   const goBack = () => { if (typeof window !== 'undefined' && window.history.length > 1) router.history.back(); else navigate({ to: '/' as never }) }
   const path = skuToPath(sku)
   const editable = can('product_edit')
+
+  const skuQueryClient = useQueryClient()
+
+  /**
+   * Take a published catalogue cost back off this product.
+   *
+   * The cost shown here can come from a catalogue publication, and until now
+   * the only way to undo one was to find its run in the review desk. The cost
+   * this publication replaced becomes current again, so the product falls back
+   * to what it charged before rather than to no cost at all.
+   */
+  async function withdrawLive(link: SupplierLinkRow, pub: LivePublication) {
+    const who = link.name ?? 'this supplier'
+    const reason = await promptDialog({
+      title: `Withdraw the published cost from ${who}?`,
+      message: 'The cost this one replaced becomes current again — the product goes back to what '
+        + 'it charged before, not to nothing. The row returns to staged in its catalogue run.',
+      prompt: { placeholder: 'Why is this coming back off?' },
+      confirmLabel: 'Withdraw cost',
+      danger: true,
+    })
+    if (!reason?.trim()) return
+    try {
+      const res = await fetch(
+        `${API}/catalogues/ingestions/${pub.ingestion_run_id}/mastering-candidates/${pub.mastering_candidate_id}/withdraw`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ reason: reason.trim() }) },
+      )
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}))
+        const detail = (payload as { detail?: unknown })?.detail
+        throw new Error(typeof detail === 'string' ? detail : `HTTP ${res.status}`)
+      }
+      skuQueryClient.invalidateQueries({ queryKey: ['sku-v2', sku] })
+      skuQueryClient.invalidateQueries({ queryKey: ['sku-v2-offerings', sku] })
+      skuQueryClient.invalidateQueries({ queryKey: ['sku-v2-supfull', sku] })
+      skuQueryClient.invalidateQueries({ queryKey: ['sku-v2-audit', sku] })
+      toast.success(`Withdrawn — ${who}'s previous cost is current again`)
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e))
+    }
+  }
 
   // dialogs & panels
   const [openId, setOpenId] = useState<number | 'auto'>('auto')
@@ -694,6 +742,15 @@ function Instrument({ sku, p, offeringRows, offeringsLoading, fullRows, events, 
                           <button className="btn" style={{ padding: '5px 11px', fontSize: 11.5 }} onClick={() => setDrawerFor(l)}>Edit offering</button>
                           <button className="btn" style={{ padding: '5px 11px', fontSize: 11.5 }} onClick={() => setAvailFor(l)}>Availability</button>
                           <button className="btn" style={{ padding: '5px 11px', fontSize: 11.5 }} onClick={() => setTermsFor(l.id)}>Terms</button>
+                          {/* This cost came from a catalogue that is still live.
+                              Reaching the publication used to mean finding the
+                              run by hand; withdrawing here puts back whatever
+                              cost this one replaced. */}
+                          {full?.live_publication && (
+                            <button className="btn" style={{ padding: '5px 11px', fontSize: 11.5, color: 'var(--red)', borderColor: '#F1CDC9' }}
+                              title="This cost is published from a catalogue — take it off and restore the previous one"
+                              onClick={() => withdrawLive(l, full.live_publication!)}>↩ Withdraw cost</button>
+                          )}
                         </div>
                       )}
                     </div>

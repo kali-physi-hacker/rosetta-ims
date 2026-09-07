@@ -1844,3 +1844,254 @@ def test_mastering_task_batch_is_atomic_on_mid_batch_failure(db, monkeypatch):
 
     db.expire_all()
     assert db.query(models.CatalogueMasteringCandidate).count() == 0  # nothing partially committed
+
+
+def _approve_apply_publish(db, candidate_id, *, key, at="2026-07-23T00:10:00+00:00"):
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            decided_at="2026-07-23T00:05:00+00:00",
+            reason="Approved fixture candidate.",
+            idempotency_key=f"approve-{key}",
+        )
+    )
+    stages.ApprovedCommercialStateService(db).apply_approved_candidate(
+        stages.ApplyApprovedCandidateCommand(
+            mastering_candidate_id=candidate_id, applied_at="2026-07-23T00:06:00+00:00"
+        )
+    )
+    return stages.ServingPublicationService(db).publish(
+        stages.PublishServingItemCommand(
+            mastering_candidate_id=candidate_id,
+            publication_version=at.replace("+00:00", "Z"),
+            published_at=at,
+            idempotency_key=f"publish-{key}",
+        )
+    )
+
+
+def test_a_wrongly_rejected_row_goes_back_to_the_queue(db):
+    """Rejection used to be the end of the road.
+
+    A reviewer who rejects the wrong row had no way back: REJECTED was
+    terminal, and the row was lost for that run. Reopening returns it to the
+    queue rather than straight to approved, so the second decision passes the
+    same gates the first one did — and the mistaken rejection stays in the log,
+    because it happened.
+    """
+    _seed_context(db)
+    _seed_product(db)
+    candidate_id = _prepare_candidate(db, _build_claim(db, _capture_raw(db)))
+
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.REJECTED,
+            reason="Wrong product, or so I thought.",
+            idempotency_key="reject-by-mistake",
+        )
+    )
+    candidate = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(candidate_id)
+    ).one()
+    assert candidate.review_status == ReviewStatus.REJECTED.value
+
+    stages.ReviewReversalService(db).reopen(
+        stages.ReopenCandidateCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            reason="Rejected the wrong row; the code does match.",
+            idempotency_key="reopen-1",
+        )
+    )
+
+    db.refresh(candidate)
+    assert candidate.review_status == ReviewStatus.PENDING_REVIEW.value
+    assert candidate.reviewed_by is None
+    assert candidate.review_decision_uuid is None
+
+    # Nothing was rewritten: both the mistake and its reversal are on record.
+    log = db.query(models.CatalogueReviewDecision).filter_by(
+        mastering_candidate_uuid=str(candidate_id)
+    ).order_by(models.CatalogueReviewDecision.id).all()
+    assert [d.decision_type for d in log] == ["mastering_review", "mastering_reopen"]
+    assert log[0].review_status == ReviewStatus.REJECTED.value
+
+    # And it can now be decided again.
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            reason="Second look: it matches.",
+            idempotency_key="approve-after-reopen",
+        )
+    )
+    db.refresh(candidate)
+    assert candidate.review_status == ReviewStatus.APPROVED.value
+
+
+def test_a_row_held_for_clarification_is_not_a_dead_end(db):
+    """NEEDS_CLARIFICATION exists to park a row until someone answers a
+    question. It used to be a one-way door — no transition out of it was
+    permitted — so the answer arriving changed nothing."""
+    _seed_context(db)
+    _seed_product(db)
+    candidate_id = _prepare_candidate(db, _build_claim(db, _capture_raw(db)))
+    review = stages.ReviewDecisionService(db)
+
+    review.record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.NEEDS_CLARIFICATION,
+            reason="Is this the 24-can case or the single?",
+            idempotency_key="hold-for-clarification",
+        )
+    )
+
+    with pytest.raises(stages.InvalidStageTransition, match="requires a reason"):
+        review.record_decision(
+            stages.RecordReviewDecisionCommand(
+                mastering_candidate_id=candidate_id,
+                actor_id="reviewer@example.com",
+                review_status=ReviewStatus.APPROVED,
+                idempotency_key="approve-with-no-answer",
+            )
+        )
+
+    review.record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.APPROVED,
+            reason="Supplier confirmed: the case of 24.",
+            idempotency_key="approve-after-clarification",
+        )
+    )
+    candidate = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(candidate_id)
+    ).one()
+    assert candidate.review_status == ReviewStatus.APPROVED.value
+
+
+def test_withdrawing_a_publication_brings_the_previous_cost_back(db):
+    """The whole point of a withdrawal: the sheet returns to what it said
+    before, not to nothing.
+
+    A cost that simply disappears breaks margins silently — nobody notices a
+    number that is absent. The displaced row is still on the table, and it is
+    identifiable exactly rather than by guesswork: publishing stamps the old
+    row's superseded_at with the same instant as the new row's effective_from.
+    """
+    from uuid import uuid4 as _uuid4
+
+    _seed_context(db)
+    _seed_product(db)
+    candidate_id = _prepare_candidate(db, _build_claim(db, _capture_raw(db)))
+    _approve_apply_publish(db, candidate_id, key="first")
+
+    offering = db.query(models.SupplierOffering).one()
+    first = db.query(models.CatalogueSupplierPrice).one()
+    first_amount, first_id = first.amount, first.id
+
+    # A second document prices the same product higher and publishes over it,
+    # exactly as _persist_supplier_price does.
+    published_at = "2026-07-24T00:10:00+00:00"
+    first.is_current = 0
+    first.superseded_at = published_at
+    first.effective_to = published_at
+    newer_uuid = str(_uuid4())
+    newer = models.CatalogueSupplierPrice(
+        supplier_product_id=offering.id,
+        amount=Decimal("99.9900"),
+        currency=first.currency,
+        price_basis_uom_code=first.price_basis_uom_code,
+        effective_from=published_at,
+        mastering_candidate_uuid=newer_uuid,
+        is_current=1,
+        created_at=published_at,
+    )
+    db.add(newer)
+    live = db.query(models.CatalogueServingPublication).one()
+    live.mastering_candidate_uuid = newer_uuid
+    db.flush()
+
+    candidate = db.query(models.CatalogueMasteringCandidate).filter_by(
+        mastering_candidate_uuid=str(candidate_id)
+    ).one()
+    candidate.mastering_candidate_uuid = newer_uuid
+    db.flush()
+
+    stages.ReviewReversalService(db).withdraw(
+        stages.WithdrawPublicationCommand(
+            mastering_candidate_id=UUID(newer_uuid),
+            actor_id="reviewer@example.com",
+            reason="Published the wrong document's price.",
+            withdrawn_at="2026-07-25T00:00:00+00:00",
+            idempotency_key="withdraw-1",
+        )
+    )
+
+    db.refresh(live)
+    assert live.is_current == 0, "the serving snapshot must stop being live"
+
+    current = db.query(models.CatalogueSupplierPrice).filter_by(is_current=1).all()
+    assert len(current) == 1, "exactly one price is current after a withdrawal"
+    assert current[0].id == first_id, "the price it displaced is the one that comes back"
+    assert current[0].amount == first_amount
+    assert current[0].superseded_at is None
+    assert current[0].effective_to is None
+
+    withdrawal = db.query(models.CatalogueReviewDecision).filter_by(
+        decision_type="serving_publication_withdrawal"
+    ).one()
+    assert withdrawal.reason == "Published the wrong document's price."
+
+
+def test_an_approved_row_must_be_withdrawn_before_it_can_be_reopened(db):
+    """Reopening an approved row would leave the serving layer quoting
+    something that is back in the queue."""
+    _seed_context(db)
+    _seed_product(db)
+    candidate_id = _prepare_candidate(db, _build_claim(db, _capture_raw(db)))
+    _approve_apply_publish(db, candidate_id, key="approved-row")
+
+    with pytest.raises(stages.InvalidStageTransition, match="withdraw it before reopening"):
+        stages.ReviewReversalService(db).reopen(
+            stages.ReopenCandidateCommand(
+                mastering_candidate_id=candidate_id,
+                actor_id="reviewer@example.com",
+                reason="Changed my mind.",
+                idempotency_key="reopen-approved",
+            )
+        )
+
+
+def test_a_reversal_without_a_reason_is_refused(db):
+    """A row that changes state with no explanation is the thing nobody can
+    account for three weeks later."""
+    _seed_context(db)
+    _seed_product(db)
+    candidate_id = _prepare_candidate(db, _build_claim(db, _capture_raw(db)))
+    stages.ReviewDecisionService(db).record_decision(
+        stages.RecordReviewDecisionCommand(
+            mastering_candidate_id=candidate_id,
+            actor_id="reviewer@example.com",
+            review_status=ReviewStatus.REJECTED,
+            reason="Not this one.",
+            idempotency_key="reject-for-reason-test",
+        )
+    )
+
+    with pytest.raises(stages.InvalidStageTransition, match="Reopening requires a reason"):
+        stages.ReviewReversalService(db).reopen(
+            stages.ReopenCandidateCommand(
+                mastering_candidate_id=candidate_id,
+                actor_id="reviewer@example.com",
+                reason="   ",
+            )
+        )

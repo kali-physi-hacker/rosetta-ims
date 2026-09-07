@@ -731,6 +731,43 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
     sups = list(product.product_suppliers)
     costed = [s for s in sups if get_unit_cost(s) is not None]
     pref_id = min(costed, key=lambda s: get_unit_cost(s)).id if costed else None
+    # Where a cost came from the catalogue pipeline and is still live, hand back
+    # the lineage that lets this page take it off again. Without it the SKU page
+    # can show a published cost but offers no way to reach the publication that
+    # set it — the reviewer has to go and find the run by hand.
+    live_publication: dict[int, dict] = {}
+    if sups:
+        rows = (
+            db.query(
+                models.SupplierOffering.legacy_product_supplier_id,
+                models.CatalogueServingPublication.mastering_candidate_uuid,
+                models.CatalogueServingPublication.current_approved_cost_amount,
+                models.CatalogueMasteringCandidate.ingestion_run_uuid,
+            )
+            .join(
+                models.CatalogueServingPublication,
+                models.CatalogueServingPublication.supplier_product_id == models.SupplierOffering.id,
+            )
+            .join(
+                models.CatalogueMasteringCandidate,
+                models.CatalogueMasteringCandidate.mastering_candidate_uuid
+                == models.CatalogueServingPublication.mastering_candidate_uuid,
+            )
+            .filter(
+                models.SupplierOffering.legacy_product_supplier_id.in_([s.id for s in sups]),
+                models.CatalogueServingPublication.is_current == 1,
+            )
+            .all()
+        )
+        live_publication = {
+            link_id: {
+                "mastering_candidate_id": candidate_uuid,
+                "ingestion_run_id": run_uuid,
+                "published_cost": float(cost) if cost is not None else None,
+            }
+            for link_id, candidate_uuid, cost, run_uuid in rows
+            if link_id is not None
+        }
     return {
         "sku_code": product.sku_code, "uom": product.uom,
         "suppliers": [{
@@ -746,6 +783,7 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
             "cost_source": s.cost_source, "cost_source_ref": s.cost_source_ref, "pack_source": s.pack_source,
             "cost_updated_at": s.cost_updated_at, "uom_verified_at": s.uom_verified_at,
             "is_primary": bool(s.is_primary), "is_preferred": s.id == pref_id, "stock_status": s.stock_status,
+            "live_publication": live_publication.get(s.id),
         } for s in sups],
     }
 

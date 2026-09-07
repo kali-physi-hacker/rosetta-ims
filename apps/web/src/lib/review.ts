@@ -236,11 +236,43 @@ export const decideCandidate = (runId: string, id: string, review_status: Summar
  * not yet published. The reason is required — the decision outlives the
  * session, and "why isn't this live?" is the question it has to answer.
  *
- * There is deliberately no way back to PENDING_REVIEW: the server refuses it,
- * because once a person has decided, the record says they decided.
+ * It is not the end of the road: a row taken out in error can be sent back to
+ * the queue with reopenCandidate. The rejection stays in the log either way —
+ * reopening appends to the record rather than erasing it.
  */
 export const unstageCandidate = (runId: string, id: string, reason: string) =>
   decideCandidate(runId, id, 'REJECTED', reason)
+
+/**
+ * Send a wrongly decided row back to the review queue.
+ *
+ * For a row rejected, or held for clarification, by mistake. It returns to
+ * PENDING_REVIEW and is decided again from scratch — not straight to approved,
+ * so the second decision passes the same checks the first one did. The
+ * original decision is not erased; this is appended after it.
+ *
+ * An approved row must be withdrawn first: reopening one would leave the
+ * serving layer quoting a row that is back in the queue.
+ */
+export const reopenCandidate = (runId: string, id: string, reason: string) =>
+  reviewApi(`/catalogues/ingestions/${runId}/mastering-candidates/${id}/reopen`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  })
+
+/**
+ * Take a published row back out of the serving layer.
+ *
+ * The cost it displaced becomes current again, so the sheet returns to what it
+ * said before rather than to nothing — a cost that simply vanishes breaks
+ * margins quietly. Afterwards the row is staged, and can be removed or sent
+ * back like any other staged row.
+ */
+export const withdrawPublication = (runId: string, id: string, reason: string) =>
+  reviewApi(`/catalogues/ingestions/${runId}/mastering-candidates/${id}/withdraw`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  })
 
 /** Correct the variant match — creates an immutable revision that supersedes this candidate. */
 export const correctVariantMatch = (

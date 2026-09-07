@@ -258,6 +258,35 @@ class RecordReviewDecisionCommand:
 
 
 @dataclass(frozen=True)
+class ReopenCandidateCommand:
+    """Return a decided Mastering Candidate to the review queue.
+
+    Not a review decision: a decision answers "is this right?", and reopening
+    says "the answer we recorded was wrong, ask again". record_decision
+    refuses to set PENDING_REVIEW for exactly that reason, so reopening is its
+    own operation — but it is still appended to the same log, because the
+    mistaken decision is part of the row's history and must survive.
+    """
+
+    mastering_candidate_id: UUID
+    actor_id: str
+    reason: str
+    reopened_at: datetime | None = None
+    idempotency_key: str | None = None
+
+
+@dataclass(frozen=True)
+class WithdrawPublicationCommand:
+    """Take a published candidate back out of the serving layer."""
+
+    mastering_candidate_id: UUID
+    actor_id: str
+    reason: str
+    withdrawn_at: datetime | None = None
+    idempotency_key: str | None = None
+
+
+@dataclass(frozen=True)
 class ApplyApprovedCandidateCommand:
     """Apply an approved Mastering Candidate to supplier commercial state."""
 
@@ -930,7 +959,18 @@ class ReviewDecisionService(_TransactionalService):
             #
             # Once published the row has left staging, and taking it back is a
             # different operation on the publication, not on the decision.
-            if (
+            #
+            # NEEDS_CLARIFICATION is the other decision that may be followed:
+            # it exists to park a row until someone answers a question, so a
+            # row that can never move once the answer arrives makes the status
+            # a trap rather than a queue.
+            if candidate.review_status == ReviewStatus.NEEDS_CLARIFICATION.value:
+                if not (command.reason or "").strip():
+                    raise InvalidStageTransition(
+                        "Deciding a row that was held for clarification requires a reason — "
+                        "it records what the clarification actually said"
+                    )
+            elif (
                 candidate.review_status in _APPROVED_STATES
                 and command.review_status == ReviewStatus.REJECTED
             ):
@@ -979,6 +1019,187 @@ class ReviewDecisionService(_TransactionalService):
             stage="review_decision",
             output_ids=(decision_id,),
             metrics=StageMetrics(input_count=1, created_count=1),
+        )
+
+
+class ReviewReversalService(_TransactionalService):
+    """Undo a review decision that turned out to be wrong.
+
+    Two operations, because a decision and a publication are different things
+    and the codebase already treats them that way. Reopening returns a decided
+    row to the queue; withdrawing takes a published row back out of the
+    serving layer. Neither rewrites anything: the mistaken decision stays in
+    the log and the reversal is appended after it, so the row's history reads
+    as what happened rather than as what we wish had happened.
+
+    Anyone holding the review capability may reverse, including the person who
+    made the original call — a reviewer who spots their own misclick should not
+    have to find a second pair of eyes to undo it.
+    """
+
+    def reopen(self, command: ReopenCandidateCommand) -> StageResult:
+        if not (command.reason or "").strip():
+            raise InvalidStageTransition(
+                "Reopening requires a reason — it is the record of why a decided row "
+                "went back to the queue"
+            )
+
+        candidate = _candidate_row(self.db, command.mastering_candidate_id)
+        if candidate.superseded_by_uuid:
+            raise InvalidStageTransition(
+                f"Mastering Candidate {command.mastering_candidate_id} was superseded by correction "
+                f"{candidate.superseded_by_uuid}; reopen the revision instead"
+            )
+        if candidate.review_status == ReviewStatus.PENDING_REVIEW.value:
+            return StageResult(
+                stage="review_reopen",
+                output_ids=(),
+                metrics=StageMetrics(input_count=1, reused_count=1),
+            )
+        # An approved row still has a live publication or a staged application
+        # behind it. Withdrawing is the operation that unwinds those; reopening
+        # would leave the serving layer quoting a row that is back in the queue.
+        if candidate.review_status in _APPROVED_STATES:
+            raise InvalidStageTransition(
+                f"Mastering Candidate {command.mastering_candidate_id} is "
+                f"{candidate.review_status}; withdraw it before reopening"
+            )
+
+        reopened_at = command.reopened_at or _now()
+        decision_id = _stable_uuid(
+            "mastering-review-reopen",
+            {
+                "candidate": str(command.mastering_candidate_id),
+                "idempotency_key": command.idempotency_key
+                or f"reopen:{command.actor_id}:{_iso(reopened_at)}",
+            },
+        )
+        if self.db.query(models.CatalogueReviewDecision).filter_by(review_decision_uuid=str(decision_id)).first():
+            return StageResult(
+                stage="review_reopen",
+                output_ids=(decision_id,),
+                metrics=StageMetrics(input_count=1, reused_count=1),
+            )
+
+        snapshot = persistence.mastering_candidate_to_contract(candidate).model_dump(mode="json")
+        self.db.add(
+            models.CatalogueReviewDecision(
+                review_decision_uuid=str(decision_id),
+                mastering_candidate_uuid=str(command.mastering_candidate_id),
+                decision_type="mastering_reopen",
+                review_status=ReviewStatus.PENDING_REVIEW.value,
+                actor_id=command.actor_id,
+                actor_display_name=command.actor_id,
+                decided_at=_iso(reopened_at),
+                reason=command.reason,
+                override_reason=None,
+                details_json=_json_dumps(
+                    {"candidate_snapshot": snapshot, "reopened_from": candidate.review_status}
+                ),
+                created_at=_iso(reopened_at),
+            )
+        )
+        candidate.review_status = ReviewStatus.PENDING_REVIEW.value
+        candidate.reviewed_by = None
+        candidate.reviewed_at = None
+        candidate.override_reason = None
+        candidate.review_decision_uuid = None
+        staging = _normalized_row_row(self.db, UUID(candidate.catalogue_item_uuid))
+        staging.stage_status = "NEEDS_REVIEW"
+        self._finish()
+        return StageResult(
+            stage="review_reopen",
+            output_ids=(decision_id,),
+            metrics=StageMetrics(input_count=1, created_count=1),
+        )
+
+    def withdraw(self, command: WithdrawPublicationCommand) -> StageResult:
+        if not (command.reason or "").strip():
+            raise InvalidStageTransition(
+                "Withdrawing a published row requires a reason — a cost disappearing from "
+                "the sheet with no explanation is worse than the wrong cost"
+            )
+
+        candidate = _candidate_row(self.db, command.mastering_candidate_id)
+        candidate_uuid = candidate.mastering_candidate_uuid
+        publication = (
+            self.db.query(models.CatalogueServingPublication)
+            .filter_by(mastering_candidate_uuid=candidate_uuid, is_current=1)
+            .first()
+        )
+        if publication is None:
+            raise InvalidStageTransition(
+                f"Mastering Candidate {command.mastering_candidate_id} has no live publication to withdraw"
+            )
+
+        withdrawn_at = command.withdrawn_at or _now()
+        price = (
+            self.db.query(models.CatalogueSupplierPrice)
+            .filter_by(mastering_candidate_uuid=candidate_uuid, is_current=1)
+            .first()
+        )
+
+        publication.is_current = 0
+        restored = 0
+        if price is not None:
+            # The previous cost comes back. It is still on the table — a
+            # publication supersedes rather than deletes — and the row it
+            # superseded is identifiable exactly: _persist_supplier_price
+            # stamps the old row's superseded_at with the same instant it
+            # stamps the new row's effective_from. Matching on that pairs the
+            # withdrawal with what it displaced instead of guessing at "the
+            # most recent one", which would pick the wrong row whenever two
+            # documents priced the same product.
+            price.is_current = 0
+            price.superseded_at = _iso(withdrawn_at)
+            price.effective_to = price.effective_to or _iso(withdrawn_at)
+            for previous in (
+                self.db.query(models.CatalogueSupplierPrice)
+                .filter(
+                    models.CatalogueSupplierPrice.supplier_product_id == price.supplier_product_id,
+                    models.CatalogueSupplierPrice.superseded_at == price.effective_from,
+                    models.CatalogueSupplierPrice.id != price.id,
+                )
+                .all()
+            ):
+                previous.is_current = 1
+                previous.superseded_at = None
+                previous.effective_to = None
+                restored += 1
+
+        decision_id = _stable_uuid(
+            "serving-publication-withdrawal",
+            {
+                "candidate": str(command.mastering_candidate_id),
+                "idempotency_key": command.idempotency_key
+                or f"withdraw:{command.actor_id}:{_iso(withdrawn_at)}",
+            },
+        )
+        self.db.add(
+            models.CatalogueReviewDecision(
+                review_decision_uuid=str(decision_id),
+                mastering_candidate_uuid=str(command.mastering_candidate_id),
+                decision_type="serving_publication_withdrawal",
+                review_status=None,
+                actor_id=command.actor_id,
+                actor_display_name=command.actor_id,
+                decided_at=_iso(withdrawn_at),
+                reason=command.reason,
+                override_reason=None,
+                details_json=_json_dumps(
+                    {
+                        "serving_item_uuid": publication.serving_item_uuid,
+                        "restored_previous_prices": restored,
+                    }
+                ),
+                created_at=_iso(withdrawn_at),
+            )
+        )
+        self._finish()
+        return StageResult(
+            stage="serving_publication_withdrawal",
+            output_ids=(decision_id,),
+            metrics=StageMetrics(input_count=1, created_count=1, reused_count=restored),
         )
 
 
