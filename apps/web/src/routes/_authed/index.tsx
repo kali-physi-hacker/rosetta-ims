@@ -1,5 +1,5 @@
 import { C } from '@/lib/tokens'
-import { useState, useMemo, useEffect, useCallback, useRef, useSyncExternalStore, Suspense, type CSSProperties } from 'react'
+import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef, useSyncExternalStore, Suspense, type CSSProperties } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import type { Product, SummaryResponse, Supplier } from '@/lib/types'
 import { authHeaders, can } from '@/lib/auth'
@@ -280,26 +280,32 @@ const IMS_CSS = `
 .ims-pop .mbb-row:first-child{border-top:none}
 .ims-pop .mbb-k{color:#334155}
 .ims-pop .mbb-v{font-weight:700;color:#3730A3;font-variant-numeric:tabular-nums}
-.exp-wrap{position:relative;display:inline-block}
+.exp-wrap{display:inline-block}
 .exp-backdrop{position:fixed;inset:0;z-index:90}
-.exp-pop{position:absolute;top:calc(100% + 6px);right:0;z-index:100;background:#FFFFFF;border:1px solid #E7EAEF;border-radius:12px;box-shadow:0 18px 46px rgba(15,23,42,.20);width:452px;max-width:92vw;padding:12px 14px;color:#0F172A;text-align:left}
-.exp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+/* Fixed and placed from JS, not absolute. The panel is wider than the gap
+   between the Export button and the left edge of the scrolling <main>, so as an
+   absolutely-positioned child its leading ~110px were clipped away by that
+   scroller's overflow at every window width — which read as the panel hiding
+   behind the sidebar. Fixed positioning is outside the clip; the effect below
+   supplies the coordinates and keeps it inside the content column. */
+.exp-pop{position:fixed;z-index:100;display:flex;flex-direction:column;background:#FFFFFF;border:1px solid #E7EAEF;border-radius:12px;box-shadow:0 18px 46px rgba(15,23,42,.20);width:452px;max-width:92vw;padding:12px 14px;color:#0F172A;text-align:left}
+.exp-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
 .exp-head b{font-size:12.5px;color:#0F172A}
 .exp-reset{border:none;background:none;color:#6366F1;font-size:11.5px;font-weight:600;cursor:pointer;padding:0}
 .exp-reset:hover{text-decoration:underline}
-.exp-body{max-height:52vh;overflow:auto;margin:0 -4px;padding:0 4px}
+.exp-body{flex:1 1 auto;min-height:0;overflow:auto;margin:0 -4px;padding:0 4px}
 .exp-grp{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;margin:10px 0 4px}
 .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px 14px}
 .exp-opt{display:flex;align-items:center;gap:7px;font-size:12px;color:#334155;padding:3px 4px;border-radius:6px;cursor:pointer;user-select:none}
 .exp-opt:hover{background:#F5F7FA}
 .exp-opt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .exp-opt input{accent-color:#6366F1;cursor:pointer;flex:none;margin:0}
-.exp-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid #EEF1F5}
+.exp-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid #EEF1F5}
 .exp-foot span{font-size:11px;color:#8A93A2;font-variant-numeric:tabular-nums}
 .exp-foot .btn.primary{background:#6366F1;color:#fff;border-color:#6366F1}
 .exp-foot .btn.primary:hover{background:#4F46E5}
 .exp-foot .btn.primary:disabled{opacity:.5;cursor:not-allowed}
-.exp-bulk{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#334155;padding:7px 9px;margin:4px 0 2px;background:#F5F7FA;border:1px solid #EEF1F5;border-radius:8px;cursor:pointer;user-select:none}
+.exp-bulk{flex:none;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#334155;padding:7px 9px;margin:4px 0 2px;background:#F5F7FA;border:1px solid #EEF1F5;border-radius:8px;cursor:pointer;user-select:none}
 .exp-bulk input{accent-color:#6366F1;cursor:pointer;flex:none;margin:0}
 .exp-note{font-size:11.5px;line-height:1.55;color:#64748B;padding:12px 2px 2px}
 .exp-note code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;background:#EEF2FF;color:#3730A3;padding:1px 5px;border-radius:4px}
@@ -338,9 +344,10 @@ const csvEsc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
 const csvHkd = (v: number | null | undefined) => (v != null ? v.toFixed(2) : '')
 const csvPct = (v: number | null | undefined) => (v != null ? `${(v * 100).toFixed(1)}%` : '')
 const csvYN  = (v: unknown) => (v ? 'yes' : 'no')
-// Bulk-update export: emit the value EXACTLY as stored in the DB (blank for null) — no
-// rounding, %, or HKD formatting, so the file re-imports without lossy coercion.
-const csvRaw = (v: unknown) => (v == null ? '' : String(v))
+// Retired with BULK_UPDATE_COLUMNS below — emitted the value EXACTLY as stored
+// (blank for null), no rounding or formatting, so the file re-imported without
+// lossy coercion. Comes back with that block if it ever has to.
+// const csvRaw = (v: unknown) => (v == null ? '' : String(v))
 
 type ExportRow = {
   item: Product
@@ -409,8 +416,10 @@ const EXPORT_COLUMNS: ExportCol[] = [
   // Platform-recorded costs + provenance
   { key: 'weight_unit',     label: 'Weight Unit',       group: 'extra', value: r => csvEsc(r.item.weight_unit ?? '') },
   { key: 'shopify_cost',    label: 'Shopify Cost',      group: 'extra', value: r => csvHkd(r.item.shopify_cost) },
-  { key: 'daysmart_avg_cost', label: 'DaySmart Avg Cost', group: 'extra', value: r => csvHkd(r.item.daysmart_avg_cost) },
-  { key: 'hktv_cost',       label: 'HKTV Cost',         group: 'extra', value: r => csvHkd(r.item.hktv_cost) },
+  // DaySmart Avg Cost and HKTV Cost went with products.daysmart_cost and
+  // products.hktv_cost. The API still answers with the keys so nothing breaks
+  // mid-deploy, but they are null now, and an export column that can only be
+  // blank is worse than one that is not offered.
   { key: 'cost_source_ref', label: 'Cost Source Ref',   group: 'extra', value: r => csvEsc(r.item.cost_source_ref ?? '') },
   { key: 'cost_updated_at', label: 'Cost Updated At',   group: 'extra', value: r => csvEsc((r.item.cost_updated_at ?? '').slice(0, 10)) },
   // Pack-size verification + edit provenance
@@ -433,38 +442,51 @@ const DEFAULT_EXPORT_KEYS = EXPORT_COLUMNS.filter(c => c.group === 'default').ma
 // `unit_cost_in` — the COMPUTED per-sell-unit alias (inverse of get_unit_cost), not a stored
 // column; basic_cost already carries the raw cost. Keep this list in lock-step with
 // _CSV_EDITABLE.
-const _primarySupplier = (r: ExportRow) => r.item.all_suppliers.find(s => s.is_primary) ?? r.item.all_suppliers[0]
-const BULK_UPDATE_COLUMNS: ExportCol[] = [
-  { key: 'sku_code',         label: 'sku_code',         group: 'default', value: r => csvEsc(r.item.sku_code) },
-  { key: 'name',             label: 'name',             group: 'default', value: r => csvEsc(r.item.name) },
-  { key: 'brand',            label: 'brand',            group: 'default', value: r => csvEsc(r.item.brand ?? '') },
-  { key: 'category',         label: 'category',         group: 'default', value: r => csvEsc(r.item.category) },
-  { key: 'subcategory',      label: 'subcategory',      group: 'default', value: r => csvEsc(r.item.subcategory ?? '') },
-  { key: 'segment',          label: 'segment',          group: 'default', value: r => csvEsc(r.item.segment ?? '') },
-  { key: 'species',          label: 'species',          group: 'default', value: r => csvEsc(r.item.species ?? '') },
-  { key: 'status',           label: 'status',           group: 'default', value: r => csvEsc(r.item.status) },
-  { key: 'storage_rule',     label: 'storage_rule',     group: 'default', value: r => csvEsc(r.item.storage_rule) },
-  { key: 'hero_sku',         label: 'hero_sku',         group: 'default', value: r => (r.item.hero_sku ? 1 : 0) },
-  { key: 'uom',              label: 'uom',              group: 'default', value: r => csvEsc(r.item.uom ?? '') },
-  { key: 'pack_unit',        label: 'pack_unit',        group: 'default', value: r => csvEsc(r.item.pack_unit ?? '') },
-  { key: 'units_per_pack',   label: 'units_per_pack',   group: 'default', value: r => csvRaw(r.item.units_per_pack) },
-  { key: 'min_purchase_qty', label: 'min_purchase_qty', group: 'default', value: r => csvRaw(r.item.min_purchase_qty) },
-  { key: 'min_sellable_qty', label: 'min_sellable_qty', group: 'default', value: r => csvRaw(r.item.min_sellable_qty) },
-  { key: 'weight_g',         label: 'weight_g',         group: 'default', value: r => csvRaw(r.item.weight_g) },
-  { key: 'weight_unit',      label: 'weight_unit',      group: 'default', value: r => csvEsc(r.item.weight_unit ?? '') },
-  { key: 'supplier_name',    label: 'supplier_name',    group: 'default', value: r => csvEsc(r.item.supplier_name ?? '') },
-  { key: 'supplier_sku',     label: 'supplier_sku',     group: 'default', value: r => csvEsc(r.item.supplier_sku ?? '') },
-  { key: 'barcode',          label: 'barcode',          group: 'default', value: r => csvEsc(_primarySupplier(r)?.barcode ?? '') },
-  { key: 'basic_cost',       label: 'basic_cost',       group: 'default', value: r => csvRaw(r.item.primary_cost) },
-  { key: 'order_increment_qty',  label: 'order_increment_qty',  group: 'default', value: r => csvRaw(r.item.order_increment_qty) },
-  { key: 'order_increment_uom',  label: 'order_increment_uom',  group: 'default', value: r => csvEsc(r.item.order_increment_uom ?? '') },
-  { key: 'minimum_order_qty',    label: 'minimum_order_qty',    group: 'default', value: r => csvRaw(r.item.minimum_order_qty) },
-  { key: 'minimum_order_uom',    label: 'minimum_order_uom',    group: 'default', value: r => csvEsc(r.item.minimum_order_uom ?? '') },
-  { key: 'minimum_order_source', label: 'minimum_order_source', group: 'default', value: r => csvEsc(r.item.minimum_order_source ?? '') },
-  { key: 'pricing_note',         label: 'pricing_note',         group: 'default', value: r => csvEsc(r.item.pricing_note ?? '') },
-  { key: 'rrp',              label: 'rrp',              group: 'default', value: r => csvRaw(r.item.rrp) },
-  { key: 'notes',            label: 'notes',            group: 'default', value: r => csvEsc(r.item.notes ?? '') },
-]
+// const _primarySupplier = (r: ExportRow) => r.item.all_suppliers.find(s => s.is_primary) ?? r.item.all_suppliers[0]
+/* RETIRED 2026-09-09 — superseded by the upload workbook.
+ *
+ * This wrote the raw DB fields as a flat CSV for Batch update. The workbook
+ * does the same job better: it carries the same editable fields plus the deals
+ * sheet, and every closed field is a dropdown rather than free text — which is
+ * what let sixty-one spellings of about twenty units into the catalogue, `#N/A`
+ * among them on 1,187 products.
+ *
+ * Kept commented rather than deleted until the workbook's importer ships
+ * (DEV-406). Batch update still accepts this file's shape, so if the workbook
+ * path has to be pulled, this comes back by uncommenting.
+ *
+ * const BULK_UPDATE_COLUMNS: ExportCol[] = [
+ *   { key: 'sku_code',         label: 'sku_code',         group: 'default', value: r => csvEsc(r.item.sku_code) },
+ *   { key: 'name',             label: 'name',             group: 'default', value: r => csvEsc(r.item.name) },
+ *   { key: 'brand',            label: 'brand',            group: 'default', value: r => csvEsc(r.item.brand ?? '') },
+ *   { key: 'category',         label: 'category',         group: 'default', value: r => csvEsc(r.item.category) },
+ *   { key: 'subcategory',      label: 'subcategory',      group: 'default', value: r => csvEsc(r.item.subcategory ?? '') },
+ *   { key: 'segment',          label: 'segment',          group: 'default', value: r => csvEsc(r.item.segment ?? '') },
+ *   { key: 'species',          label: 'species',          group: 'default', value: r => csvEsc(r.item.species ?? '') },
+ *   { key: 'status',           label: 'status',           group: 'default', value: r => csvEsc(r.item.status) },
+ *   { key: 'storage_rule',     label: 'storage_rule',     group: 'default', value: r => csvEsc(r.item.storage_rule) },
+ *   { key: 'hero_sku',         label: 'hero_sku',         group: 'default', value: r => (r.item.hero_sku ? 1 : 0) },
+ *   { key: 'uom',              label: 'uom',              group: 'default', value: r => csvEsc(r.item.uom ?? '') },
+ *   { key: 'pack_unit',        label: 'pack_unit',        group: 'default', value: r => csvEsc(r.item.pack_unit ?? '') },
+ *   { key: 'units_per_pack',   label: 'units_per_pack',   group: 'default', value: r => csvRaw(r.item.units_per_pack) },
+ *   { key: 'min_purchase_qty', label: 'min_purchase_qty', group: 'default', value: r => csvRaw(r.item.min_purchase_qty) },
+ *   { key: 'min_sellable_qty', label: 'min_sellable_qty', group: 'default', value: r => csvRaw(r.item.min_sellable_qty) },
+ *   { key: 'weight_g',         label: 'weight_g',         group: 'default', value: r => csvRaw(r.item.weight_g) },
+ *   { key: 'weight_unit',      label: 'weight_unit',      group: 'default', value: r => csvEsc(r.item.weight_unit ?? '') },
+ *   { key: 'supplier_name',    label: 'supplier_name',    group: 'default', value: r => csvEsc(r.item.supplier_name ?? '') },
+ *   { key: 'supplier_sku',     label: 'supplier_sku',     group: 'default', value: r => csvEsc(r.item.supplier_sku ?? '') },
+ *   { key: 'barcode',          label: 'barcode',          group: 'default', value: r => csvEsc(_primarySupplier(r)?.barcode ?? '') },
+ *   { key: 'basic_cost',       label: 'basic_cost',       group: 'default', value: r => csvRaw(r.item.primary_cost) },
+ *   { key: 'order_increment_qty',  label: 'order_increment_qty',  group: 'default', value: r => csvRaw(r.item.order_increment_qty) },
+ *   { key: 'order_increment_uom',  label: 'order_increment_uom',  group: 'default', value: r => csvEsc(r.item.order_increment_uom ?? '') },
+ *   { key: 'minimum_order_qty',    label: 'minimum_order_qty',    group: 'default', value: r => csvRaw(r.item.minimum_order_qty) },
+ *   { key: 'minimum_order_uom',    label: 'minimum_order_uom',    group: 'default', value: r => csvEsc(r.item.minimum_order_uom ?? '') },
+ *   { key: 'minimum_order_source', label: 'minimum_order_source', group: 'default', value: r => csvEsc(r.item.minimum_order_source ?? '') },
+ *   { key: 'pricing_note',         label: 'pricing_note',         group: 'default', value: r => csvEsc(r.item.pricing_note ?? '') },
+ *   { key: 'rrp',              label: 'rrp',              group: 'default', value: r => csvRaw(r.item.rrp) },
+ *   { key: 'notes',            label: 'notes',            group: 'default', value: r => csvEsc(r.item.notes ?? '') },
+ * ]
+ */
 
 function InventoryPage() {
   return (
@@ -488,7 +510,9 @@ function InventoryView() {
   const [fetchingComp, setFetchingComp] = useState(false)
   const [showExportCols, setShowExportCols] = useState(false)
   const [exportCols, setExportCols] = useState<Set<string>>(() => new Set(DEFAULT_EXPORT_KEYS))
-  const [bulkExport, setBulkExport] = useState(false)   // export the raw DB-field set for Batch update (not remembered)
+  const exportBtnRef = useRef<HTMLButtonElement>(null)
+  const exportPopRef = useRef<HTMLDivElement>(null)
+  const [exportAt, setExportAt] = useState<{ top: number; left: number; maxHeight: number } | null>(null)
   const [loading, setLoading]     = useState(() => !(_invCache && _invCache.items.length))
   const [error, setError]         = useState<string | null>(null)
   // Filters seed from the URL query so a filtered/searched view is shareable and
@@ -778,14 +802,85 @@ function InventoryView() {
     }
   }
 
+  // Place the export panel: right-aligned under its button, then pulled back
+  // inside the content column if that would push it under the sidebar, and
+  // capped to the room actually left below the button. Runs before paint, and
+  // again on resize/scroll so the panel stays with the button it belongs to.
+  useLayoutEffect(() => {
+    if (!showExportCols) { setExportAt(null); return }
+    const place = () => {
+      const btn = exportBtnRef.current
+      const pop = exportPopRef.current
+      if (!btn || !pop) return
+      const b = btn.getBoundingClientRect()
+      const gutter = 10
+      const width = pop.offsetWidth
+      const top = b.bottom + 6
+      // Never past the right of the window, never left of the content column;
+      // if those two ever conflict, the window wins — off-screen is worse.
+      const rightMost = window.innerWidth - width - gutter
+      const leftMost = (btn.closest('main')?.getBoundingClientRect().left ?? 0) + gutter
+      setExportAt({
+        top,
+        left: Math.max(Math.min(b.right - width, rightMost), Math.min(leftMost, rightMost)),
+        maxHeight: Math.max(180, window.innerHeight - top - gutter),
+      })
+    }
+    place()
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [showExportCols])
+
   const toggleExportCol = (key: string) => setExportCols(prev => {
     const next = new Set(prev)
     if (next.has(key)) next.delete(key); else next.add(key)
     return next
   })
 
+  /**
+   * The upload workbook, for the rows currently on screen.
+   *
+   * Built on the server because a .xlsx with dropdowns, a hidden lists sheet
+   * and conditional formatting cannot be made in a browser — and the dropdowns
+   * are the whole point. The filtering, though, only exists here: search,
+   * supplier, collection, channel, category, pinned. So the page sends the
+   * SKUs it is showing rather than asking the server to guess at them.
+   */
+  const [workbookBusy, setWorkbookBusy] = useState(false)
+  async function downloadWorkbook() {
+    setWorkbookBusy(true)
+    try {
+      const res = await fetch(`${API}/products/upload-workbook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ skus: sorted.map(i => i.sku_code) }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const date = new Date().toISOString().slice(0, 10)
+      const a = Object.assign(document.createElement('a'), { href: url, download: `rosetta_products_${date}.xlsx` })
+      a.click()
+      URL.revokeObjectURL(url)
+      // Report what came back, not what was asked for — a filtered export that
+      // quietly returned everything would be worse than one that failed.
+      const products = res.headers.get('X-Rosetta-Products')
+      const deals = res.headers.get('X-Rosetta-Deals')
+      toast.success(products ? `Workbook: ${products} rows, ${deals} deals` : 'Workbook downloaded')
+      setShowExportCols(false)
+    } catch (e: any) {
+      toast.error(`Could not build the workbook — ${String(e?.message ?? e)}`)
+    } finally {
+      setWorkbookBusy(false)
+    }
+  }
+
   function handleExport() {
-    const cols = bulkExport ? BULK_UPDATE_COLUMNS : EXPORT_COLUMNS.filter(c => exportCols.has(c.key))
+    const cols = EXPORT_COLUMNS.filter(c => exportCols.has(c.key))
     if (!cols.length) return
 
     const lines = [cols.map(c => csvEsc(c.label)).join(',')]
@@ -805,7 +900,7 @@ function InventoryView() {
     const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' })
     const url  = URL.createObjectURL(blob)
     const date = new Date().toISOString().slice(0, 10)
-    const name = bulkExport ? `ims_bulk_update_${date}.csv` : `ims_${date}.csv`
+    const name = `ims_${date}.csv`
     const a    = Object.assign(document.createElement('a'), { href: url, download: name })
     a.click()
     URL.revokeObjectURL(url)
@@ -1202,25 +1297,35 @@ function InventoryView() {
             </div>
             {marginMode && <a className="btn" href={`${API}/products/export-margins.csv`} download title="Download every margin field as CSV (matches the verification sheet)">⤓ Margins CSV</a>}
             <div className="exp-wrap">
-              <button className="btn" onClick={() => setShowExportCols(v => !v)} aria-expanded={showExportCols}>↓ Export {sorted.length.toLocaleString()}</button>
+              <button ref={exportBtnRef} className="btn" onClick={() => setShowExportCols(v => !v)} aria-expanded={showExportCols}>↓ Export {sorted.length.toLocaleString()}</button>
               {showExportCols && (
                 <>
                   <div className="exp-backdrop" onClick={() => setShowExportCols(false)} />
-                  <div className="exp-pop" role="dialog" aria-label="Choose export columns">
+                  {/* Hidden for the one layout pass before `place()` has measured
+                      it — the panel has to exist to be measured, and a fixed
+                      element with no coordinates would flash at the top left. */}
+                  <div ref={exportPopRef} className="exp-pop" role="dialog" aria-label="Choose export columns"
+                    style={exportAt ? { top: exportAt.top, left: exportAt.left, maxHeight: exportAt.maxHeight } : { visibility: 'hidden' }}>
                     <div className="exp-head">
                       <b>Columns to export</b>
-                      {!bulkExport && <button className="exp-reset" onClick={() => setExportCols(new Set(DEFAULT_EXPORT_KEYS))}>Reset to default</button>}
+                      <button className="exp-reset" onClick={() => setExportCols(new Set(DEFAULT_EXPORT_KEYS))}>Reset to default</button>
                     </div>
-                    <label className="exp-bulk" title="Exact DB fields only — round-trips through Batch update with no computed values">
-                      <input type="checkbox" checked={bulkExport} onChange={() => setBulkExport(v => !v)} />
-                      <span>For bulk update — raw DB fields only</span>
-                    </label>
+                    {/* Editing is a different job from reporting, so it gets its
+                        own action rather than a mode the column picker hides
+                        behind. The workbook carries every editable field and the
+                        deals sheet; the CSV below is for reading. */}
+                    <div className="exp-bulk" style={{ display: 'block' }}>
+                      <button className="btn" style={{ width: '100%', justifyContent: 'center' }}
+                        onClick={downloadWorkbook} disabled={workbookBusy || sorted.length === 0}>
+                        {workbookBusy ? 'Building…' : `↓ Edit in Sheets — workbook of ${sorted.length.toLocaleString()}`}
+                      </button>
+                      <div className="exp-note" style={{ padding: '7px 0 0' }}>
+                        An <b>.xlsx</b> of these {sorted.length.toLocaleString()} rows and their deals, with dropdowns
+                        on every fixed field. Open it in Google Sheets, edit, and upload it back.
+                      </div>
+                    </div>
                     <div className="exp-body">
-                      {bulkExport ? (
-                        <div className="exp-note">
-                          Exports the {BULK_UPDATE_COLUMNS.length} editable database fields exactly as stored — raw <code>basic_cost</code> (whole-pack) and <code>units_per_pack</code>, no computed values. Keyed by <code>sku_code</code>; re-imports via <b>Batch update</b>.
-                        </div>
-                      ) : (
+                      {(
                         <>
                           <div className="exp-grp">Default columns</div>
                           <div className="exp-grid">
@@ -1244,8 +1349,8 @@ function InventoryView() {
                       )}
                     </div>
                     <div className="exp-foot">
-                      <span>{bulkExport ? `${BULK_UPDATE_COLUMNS.length} DB fields` : `${exportCols.size} column${exportCols.size === 1 ? '' : 's'}`} · {sorted.length.toLocaleString()} rows</span>
-                      <button className="btn primary" onClick={handleExport} disabled={!bulkExport && exportCols.size === 0}>Download CSV</button>
+                      <span>{exportCols.size} column{exportCols.size === 1 ? '' : 's'} · {sorted.length.toLocaleString()} rows</span>
+                      <button className="btn primary" onClick={handleExport} disabled={exportCols.size === 0}>Download CSV</button>
                     </div>
                   </div>
                 </>
