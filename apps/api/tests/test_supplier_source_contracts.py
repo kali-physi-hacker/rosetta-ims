@@ -24,8 +24,9 @@ from schemas.catalogue_pipeline.supplier_contracts.common import SemanticResolut
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "catalogue_pipeline" / "supplier_source" / "v1"
 VALID_FIXTURES = sorted((FIXTURE_ROOT / "valid").glob("*.json"))
 INVALID_FIXTURES = sorted((FIXTURE_ROOT / "invalid").glob("*.json"))
-BACKEND_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from repo_paths import BACKEND_ROOT, docs_root
+
+REPO_ROOT = docs_root()
 
 EXPECTED_CONTRACT_IDS = [
     "alfamedic.price_list.v1",

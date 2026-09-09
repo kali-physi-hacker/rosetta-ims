@@ -37,8 +37,9 @@ from schemas.catalogue_pipeline.enums import IssueSeverity, UnitCode
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "catalogue_pipeline" / "v1"
 VALID_FIXTURES = sorted((FIXTURE_ROOT / "valid").glob("*.json"))
 INVALID_FIXTURES = sorted((FIXTURE_ROOT / "invalid").glob("*.json"))
-BACKEND_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from repo_paths import BACKEND_ROOT, docs_root
+
+REPO_ROOT = docs_root()
 
 MODEL_BY_NAME = {
     "ExtractionProfileV1": ExtractionProfileV1,

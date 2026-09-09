@@ -8,9 +8,12 @@ import sys
 from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+
+from repo_paths import docs_root  # noqa: E402
+
+REPO_ROOT = docs_root()
 
 from schemas.catalogue_pipeline.supplier_contracts import (  # noqa: E402
     SupplierSourceContractV1,
