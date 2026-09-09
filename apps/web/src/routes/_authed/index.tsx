@@ -288,18 +288,9 @@ const IMS_CSS = `
    scroller's overflow at every window width — which read as the panel hiding
    behind the sidebar. Fixed positioning is outside the clip; the effect below
    supplies the coordinates and keeps it inside the content column. */
-.exp-pop{position:fixed;z-index:100;display:flex;flex-direction:column;background:#FFFFFF;border:1px solid #E7EAEF;border-radius:12px;box-shadow:0 18px 46px rgba(15,23,42,.20);width:452px;max-width:92vw;padding:12px 14px;color:#0F172A;text-align:left}
+.exp-pop{position:fixed;z-index:100;display:flex;flex-direction:column;overflow:auto;background:#FFFFFF;border:1px solid #E7EAEF;border-radius:12px;box-shadow:0 18px 46px rgba(15,23,42,.20);width:452px;max-width:92vw;padding:12px 14px;color:#0F172A;text-align:left}
 .exp-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
 .exp-head b{font-size:12.5px;color:#0F172A}
-.exp-reset{border:none;background:none;color:#6366F1;font-size:11.5px;font-weight:600;cursor:pointer;padding:0}
-.exp-reset:hover{text-decoration:underline}
-.exp-body{flex:1 1 auto;min-height:0;overflow:auto;margin:0 -4px;padding:0 4px}
-.exp-grp{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;margin:10px 0 4px}
-.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px 14px}
-.exp-opt{display:flex;align-items:center;gap:7px;font-size:12px;color:#334155;padding:3px 4px;border-radius:6px;cursor:pointer;user-select:none}
-.exp-opt:hover{background:#F5F7FA}
-.exp-opt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.exp-opt input{accent-color:#6366F1;cursor:pointer;flex:none;margin:0}
 .exp-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid #EEF1F5}
 .exp-foot span{font-size:11px;color:#8A93A2;font-variant-numeric:tabular-nums}
 .exp-foot .btn.primary{background:#6366F1;color:#fff;border-color:#6366F1}
@@ -354,83 +345,84 @@ type ExportRow = {
   ch: Record<string, { selling_price: number | null; gp_pct: number | null }>
   issues: string
 }
-type ExportCol = { key: string; label: string; group: 'default' | 'extra'; value: (r: ExportRow) => string | number }
+type ExportCol = { key: string; label: string; value: (r: ExportRow) => string | number }
 
+// Every one of these is written, in this order. The first two dozen are the
+// set Export wrote while the column picker existed, kept first so a file
+// anyone already reads still starts the way it always did.
 const EXPORT_COLUMNS: ExportCol[] = [
-  // ---- default: exactly what Export writes today, in the same order ----
-  { key: 'sku_code',        label: 'SKU',             group: 'default', value: r => csvEsc(r.item.sku_code) },
-  { key: 'name',            label: 'Name',            group: 'default', value: r => csvEsc(r.item.name) },
-  { key: 'brand',           label: 'Brand',           group: 'default', value: r => csvEsc(r.item.brand ?? '') },
-  { key: 'category',        label: 'Category',        group: 'default', value: r => csvEsc(r.item.category) },
-  { key: 'status',          label: 'Status',          group: 'default', value: r => csvEsc(r.item.status) },
-  { key: 'storage_rule',    label: 'Storage Rule',    group: 'default', value: r => csvEsc(r.item.storage_rule) },
-  { key: 'supplier',        label: 'Supplier',        group: 'default', value: r => csvEsc(r.item.supplier_name ?? '') },
-  { key: 'units_per_pack',  label: 'Units Per Pack',  group: 'default', value: r => r.item.units_per_pack ?? '' },
-  { key: 'unit_cost',       label: 'Unit Cost (HKD)', group: 'default', value: r => csvHkd(r.item.unit_cost) },
-  { key: 'clinic_price',    label: 'Clinic Price',    group: 'default', value: r => csvHkd(r.ch['clinic']?.selling_price) },
-  { key: 'shopify_price',   label: 'Shopify Price',   group: 'default', value: r => csvHkd(r.ch['shopify']?.selling_price) },
-  { key: 'hktv_price',      label: 'HKTV Price',      group: 'default', value: r => csvHkd(r.ch['hktv']?.selling_price) },
-  { key: 'clinic_gp',       label: 'Clinic GP%',      group: 'default', value: r => csvPct(r.ch['clinic']?.gp_pct) },
-  { key: 'shopify_gp',      label: 'Shopify GP%',     group: 'default', value: r => csvPct(r.ch['shopify']?.gp_pct) },
-  { key: 'hktv_gp',         label: 'HKTV GP%',        group: 'default', value: r => csvPct(r.ch['hktv']?.gp_pct) },
-  { key: 'gp_floor',        label: 'GP Floor',        group: 'default', value: r => csvPct(r.item.gp_floor) },
-  { key: 'clinic_qty',      label: 'Clinic Qty',      group: 'default', value: r => r.item.clinic_qty },
-  { key: 'warehouse_qty',   label: 'Warehouse Qty',   group: 'default', value: r => r.item.warehouse_qty },
-  { key: 'total_qty',       label: 'Total Qty',       group: 'default', value: r => r.item.total_qty },
-  { key: 'sales_120d',      label: '120d Sales',      group: 'default', value: r => r.item.sales_120d },
-  { key: 'data_grade',      label: 'Data Grade',      group: 'default', value: r => r.item.data_grade },
-  { key: 'issues',          label: 'Issues',          group: 'default', value: r => csvEsc(r.issues) },
-  { key: 'rrp',             label: 'RRP',             group: 'default', value: r => csvHkd(r.item.rrp) },
+  { key: 'sku_code',        label: 'SKU',             value: r => csvEsc(r.item.sku_code) },
+  { key: 'name',            label: 'Name',            value: r => csvEsc(r.item.name) },
+  { key: 'brand',           label: 'Brand',           value: r => csvEsc(r.item.brand ?? '') },
+  { key: 'category',        label: 'Category',        value: r => csvEsc(r.item.category) },
+  { key: 'status',          label: 'Status',          value: r => csvEsc(r.item.status) },
+  { key: 'storage_rule',    label: 'Storage Rule',    value: r => csvEsc(r.item.storage_rule) },
+  { key: 'supplier',        label: 'Supplier',        value: r => csvEsc(r.item.supplier_name ?? '') },
+  { key: 'units_per_pack',  label: 'Units Per Pack',  value: r => r.item.units_per_pack ?? '' },
+  { key: 'unit_cost',       label: 'Unit Cost (HKD)', value: r => csvHkd(r.item.unit_cost) },
+  { key: 'clinic_price',    label: 'Clinic Price',    value: r => csvHkd(r.ch['clinic']?.selling_price) },
+  { key: 'shopify_price',   label: 'Shopify Price',   value: r => csvHkd(r.ch['shopify']?.selling_price) },
+  { key: 'hktv_price',      label: 'HKTV Price',      value: r => csvHkd(r.ch['hktv']?.selling_price) },
+  { key: 'clinic_gp',       label: 'Clinic GP%',      value: r => csvPct(r.ch['clinic']?.gp_pct) },
+  { key: 'shopify_gp',      label: 'Shopify GP%',     value: r => csvPct(r.ch['shopify']?.gp_pct) },
+  { key: 'hktv_gp',         label: 'HKTV GP%',        value: r => csvPct(r.ch['hktv']?.gp_pct) },
+  { key: 'gp_floor',        label: 'GP Floor',        value: r => csvPct(r.item.gp_floor) },
+  { key: 'clinic_qty',      label: 'Clinic Qty',      value: r => r.item.clinic_qty },
+  { key: 'warehouse_qty',   label: 'Warehouse Qty',   value: r => r.item.warehouse_qty },
+  { key: 'total_qty',       label: 'Total Qty',       value: r => r.item.total_qty },
+  { key: 'sales_120d',      label: '120d Sales',      value: r => r.item.sales_120d },
+  { key: 'data_grade',      label: 'Data Grade',      value: r => r.item.data_grade },
+  { key: 'issues',          label: 'Issues',          value: r => csvEsc(r.issues) },
+  { key: 'rrp',             label: 'RRP',             value: r => csvHkd(r.item.rrp) },
   // ---- extra: opt-in ----
-  { key: 'supplier_sku',    label: 'Supplier SKU',      group: 'extra', value: r => csvEsc(r.item.supplier_sku ?? '') },
-  { key: 'supplier_code',   label: 'Supplier Code',     group: 'extra', value: r => csvEsc(r.item.supplier_code ?? '') },
-  { key: 'subcategory',     label: 'Subcategory',       group: 'extra', value: r => csvEsc(r.item.subcategory ?? '') },
-  { key: 'species',         label: 'Species',           group: 'extra', value: r => csvEsc(r.item.species ?? '') },
-  { key: 'uom',             label: 'UOM',               group: 'extra', value: r => csvEsc(r.item.uom ?? '') },
-  { key: 'pack_unit',       label: 'Pack Unit',         group: 'extra', value: r => csvEsc(r.item.pack_unit ?? '') },
-  { key: 'min_purchase_qty', label: 'Min Purchase Qty', group: 'extra', value: r => r.item.min_purchase_qty ?? '' },
-  { key: 'min_sellable_qty', label: 'Min Sellable Qty', group: 'extra', value: r => r.item.min_sellable_qty ?? '' },
-  { key: 'weight_g',        label: 'Weight (g)',        group: 'extra', value: r => r.item.weight_g ?? '' },
-  { key: 'weekly_demand',   label: 'Weekly Demand',     group: 'extra', value: r => (r.item.weekly_demand != null ? r.item.weekly_demand.toFixed(1) : '') },
-  { key: 'woc',             label: 'WOC (weeks)',       group: 'extra', value: r => (r.item.woc != null ? r.item.woc.toFixed(1) : '') },
-  { key: 'basic_cost',      label: 'Basic Cost',        group: 'extra', value: r => csvHkd(r.item.primary_cost) },
-  { key: 'mbb_unit_cost',   label: 'MBB Unit Cost',     group: 'extra', value: r => csvHkd(r.item.mbb_unit_cost) },
-  { key: 'landed_unit_cost', label: 'Landed Unit Cost', group: 'extra', value: r => csvHkd(r.item.landed_unit_cost) },
-  { key: 'cost_source',     label: 'Cost Source',       group: 'extra', value: r => csvEsc(r.item.cost_source ?? '') },
-  { key: 'cost_last_updated', label: 'Cost Last Updated', group: 'extra', value: r => csvEsc((r.item.cost_last_updated ?? '').slice(0, 10)) },
-  { key: 'cost_is_stale',   label: 'Cost Stale?',       group: 'extra', value: r => csvYN(r.item.cost_is_stale) },
-  { key: 'shopify_status',  label: 'Shopify Status',    group: 'extra', value: r => csvEsc(r.item.shopify_status ?? '') },
-  { key: 'daysmart_status', label: 'DaySmart Status',   group: 'extra', value: r => csvEsc(r.item.daysmart_status ?? '') },
-  { key: 'hktv_status',     label: 'HKTV Status',       group: 'extra', value: r => csvEsc(r.item.hktv_status ?? '') },
-  { key: 'hero_sku',        label: 'Hero SKU',          group: 'extra', value: r => csvYN(r.item.hero_sku) },
-  { key: 'cross_channel',   label: 'Cross-channel',     group: 'extra', value: r => csvYN(r.item.cross_channel_flag) },
-  { key: 'notes',           label: 'Notes',             group: 'extra', value: r => csvEsc(r.item.notes ?? '') },
-  { key: 'segment',         label: 'Segment',           group: 'extra', value: r => csvEsc(r.item.segment ?? '') },
+  { key: 'supplier_sku',    label: 'Supplier SKU',      value: r => csvEsc(r.item.supplier_sku ?? '') },
+  { key: 'supplier_code',   label: 'Supplier Code',     value: r => csvEsc(r.item.supplier_code ?? '') },
+  { key: 'subcategory',     label: 'Subcategory',       value: r => csvEsc(r.item.subcategory ?? '') },
+  { key: 'species',         label: 'Species',           value: r => csvEsc(r.item.species ?? '') },
+  { key: 'uom',             label: 'UOM',               value: r => csvEsc(r.item.uom ?? '') },
+  { key: 'pack_unit',       label: 'Pack Unit',         value: r => csvEsc(r.item.pack_unit ?? '') },
+  { key: 'min_purchase_qty', label: 'Min Purchase Qty', value: r => r.item.min_purchase_qty ?? '' },
+  { key: 'min_sellable_qty', label: 'Min Sellable Qty', value: r => r.item.min_sellable_qty ?? '' },
+  { key: 'weight_g',        label: 'Weight (g)',        value: r => r.item.weight_g ?? '' },
+  { key: 'weekly_demand',   label: 'Weekly Demand',     value: r => (r.item.weekly_demand != null ? r.item.weekly_demand.toFixed(1) : '') },
+  { key: 'woc',             label: 'WOC (weeks)',       value: r => (r.item.woc != null ? r.item.woc.toFixed(1) : '') },
+  { key: 'basic_cost',      label: 'Basic Cost',        value: r => csvHkd(r.item.primary_cost) },
+  { key: 'mbb_unit_cost',   label: 'MBB Unit Cost',     value: r => csvHkd(r.item.mbb_unit_cost) },
+  { key: 'landed_unit_cost', label: 'Landed Unit Cost', value: r => csvHkd(r.item.landed_unit_cost) },
+  { key: 'cost_source',     label: 'Cost Source',       value: r => csvEsc(r.item.cost_source ?? '') },
+  { key: 'cost_last_updated', label: 'Cost Last Updated', value: r => csvEsc((r.item.cost_last_updated ?? '').slice(0, 10)) },
+  { key: 'cost_is_stale',   label: 'Cost Stale?',       value: r => csvYN(r.item.cost_is_stale) },
+  { key: 'shopify_status',  label: 'Shopify Status',    value: r => csvEsc(r.item.shopify_status ?? '') },
+  { key: 'daysmart_status', label: 'DaySmart Status',   value: r => csvEsc(r.item.daysmart_status ?? '') },
+  { key: 'hktv_status',     label: 'HKTV Status',       value: r => csvEsc(r.item.hktv_status ?? '') },
+  { key: 'hero_sku',        label: 'Hero SKU',          value: r => csvYN(r.item.hero_sku) },
+  { key: 'cross_channel',   label: 'Cross-channel',     value: r => csvYN(r.item.cross_channel_flag) },
+  { key: 'notes',           label: 'Notes',             value: r => csvEsc(r.item.notes ?? '') },
+  { key: 'segment',         label: 'Segment',           value: r => csvEsc(r.item.segment ?? '') },
   // Ordering terms (order multiple / MOQ) — the PR-A fields
-  { key: 'order_increment_qty',   label: 'Order Increment Qty',   group: 'extra', value: r => r.item.order_increment_qty ?? '' },
-  { key: 'order_increment_uom',   label: 'Order Increment UOM',   group: 'extra', value: r => csvEsc(r.item.order_increment_uom ?? '') },
-  { key: 'minimum_order_qty',     label: 'Minimum Order Qty',     group: 'extra', value: r => r.item.minimum_order_qty ?? '' },
-  { key: 'minimum_order_uom',     label: 'Minimum Order UOM',     group: 'extra', value: r => csvEsc(r.item.minimum_order_uom ?? '') },
-  { key: 'minimum_order_source',  label: 'Minimum Order Source',  group: 'extra', value: r => csvEsc(r.item.minimum_order_source ?? '') },
-  { key: 'pricing_note',          label: 'Pricing Note',          group: 'extra', value: r => csvEsc(r.item.pricing_note ?? '') },
+  { key: 'order_increment_qty',   label: 'Order Increment Qty',   value: r => r.item.order_increment_qty ?? '' },
+  { key: 'order_increment_uom',   label: 'Order Increment UOM',   value: r => csvEsc(r.item.order_increment_uom ?? '') },
+  { key: 'minimum_order_qty',     label: 'Minimum Order Qty',     value: r => r.item.minimum_order_qty ?? '' },
+  { key: 'minimum_order_uom',     label: 'Minimum Order UOM',     value: r => csvEsc(r.item.minimum_order_uom ?? '') },
+  { key: 'minimum_order_source',  label: 'Minimum Order Source',  value: r => csvEsc(r.item.minimum_order_source ?? '') },
+  { key: 'pricing_note',          label: 'Pricing Note',          value: r => csvEsc(r.item.pricing_note ?? '') },
   // Platform-recorded costs + provenance
-  { key: 'weight_unit',     label: 'Weight Unit',       group: 'extra', value: r => csvEsc(r.item.weight_unit ?? '') },
-  { key: 'shopify_cost',    label: 'Shopify Cost',      group: 'extra', value: r => csvHkd(r.item.shopify_cost) },
+  { key: 'weight_unit',     label: 'Weight Unit',       value: r => csvEsc(r.item.weight_unit ?? '') },
+  { key: 'shopify_cost',    label: 'Shopify Cost',      value: r => csvHkd(r.item.shopify_cost) },
   // DaySmart Avg Cost and HKTV Cost went with products.daysmart_cost and
   // products.hktv_cost. The API still answers with the keys so nothing breaks
   // mid-deploy, but they are null now, and an export column that can only be
   // blank is worse than one that is not offered.
-  { key: 'cost_source_ref', label: 'Cost Source Ref',   group: 'extra', value: r => csvEsc(r.item.cost_source_ref ?? '') },
-  { key: 'cost_updated_at', label: 'Cost Updated At',   group: 'extra', value: r => csvEsc((r.item.cost_updated_at ?? '').slice(0, 10)) },
+  { key: 'cost_source_ref', label: 'Cost Source Ref',   value: r => csvEsc(r.item.cost_source_ref ?? '') },
+  { key: 'cost_updated_at', label: 'Cost Updated At',   value: r => csvEsc((r.item.cost_updated_at ?? '').slice(0, 10)) },
   // Pack-size verification + edit provenance
-  { key: 'uom_verified_at', label: 'UOM Verified At',   group: 'extra', value: r => csvEsc((r.item.uom_verified_at ?? '').slice(0, 10)) },
-  { key: 'uom_verified_by', label: 'UOM Verified By',   group: 'extra', value: r => csvEsc(r.item.uom_verified_by ?? '') },
-  { key: 'catalogue_reviewed', label: 'Catalogue Reviewed', group: 'extra', value: r => csvYN(r.item.catalogue_reviewed) },
-  { key: 'last_manual_edit_at', label: 'Last Manual Edit At', group: 'extra', value: r => csvEsc((r.item.last_manual_edit_at ?? '').slice(0, 10)) },
-  { key: 'last_manual_edit_by', label: 'Last Manual Edit By', group: 'extra', value: r => csvEsc(r.item.last_manual_edit_by ?? '') },
+  { key: 'uom_verified_at', label: 'UOM Verified At',   value: r => csvEsc((r.item.uom_verified_at ?? '').slice(0, 10)) },
+  { key: 'uom_verified_by', label: 'UOM Verified By',   value: r => csvEsc(r.item.uom_verified_by ?? '') },
+  { key: 'catalogue_reviewed', label: 'Catalogue Reviewed', value: r => csvYN(r.item.catalogue_reviewed) },
+  { key: 'last_manual_edit_at', label: 'Last Manual Edit At', value: r => csvEsc((r.item.last_manual_edit_at ?? '').slice(0, 10)) },
+  { key: 'last_manual_edit_by', label: 'Last Manual Edit By', value: r => csvEsc(r.item.last_manual_edit_by ?? '') },
   // Sheet-sync shadow values + conflict flags
 ]
-const DEFAULT_EXPORT_KEYS = EXPORT_COLUMNS.filter(c => c.group === 'default').map(c => c.key)
 
 // ── Bulk-update export ────────────────────────────────────────────────────────
 // The FULL set of raw DB fields that round-trip through POST /products/import-csv (the
@@ -456,35 +448,35 @@ const DEFAULT_EXPORT_KEYS = EXPORT_COLUMNS.filter(c => c.group === 'default').ma
  * path has to be pulled, this comes back by uncommenting.
  *
  * const BULK_UPDATE_COLUMNS: ExportCol[] = [
- *   { key: 'sku_code',         label: 'sku_code',         group: 'default', value: r => csvEsc(r.item.sku_code) },
- *   { key: 'name',             label: 'name',             group: 'default', value: r => csvEsc(r.item.name) },
- *   { key: 'brand',            label: 'brand',            group: 'default', value: r => csvEsc(r.item.brand ?? '') },
- *   { key: 'category',         label: 'category',         group: 'default', value: r => csvEsc(r.item.category) },
- *   { key: 'subcategory',      label: 'subcategory',      group: 'default', value: r => csvEsc(r.item.subcategory ?? '') },
- *   { key: 'segment',          label: 'segment',          group: 'default', value: r => csvEsc(r.item.segment ?? '') },
- *   { key: 'species',          label: 'species',          group: 'default', value: r => csvEsc(r.item.species ?? '') },
- *   { key: 'status',           label: 'status',           group: 'default', value: r => csvEsc(r.item.status) },
- *   { key: 'storage_rule',     label: 'storage_rule',     group: 'default', value: r => csvEsc(r.item.storage_rule) },
- *   { key: 'hero_sku',         label: 'hero_sku',         group: 'default', value: r => (r.item.hero_sku ? 1 : 0) },
- *   { key: 'uom',              label: 'uom',              group: 'default', value: r => csvEsc(r.item.uom ?? '') },
- *   { key: 'pack_unit',        label: 'pack_unit',        group: 'default', value: r => csvEsc(r.item.pack_unit ?? '') },
- *   { key: 'units_per_pack',   label: 'units_per_pack',   group: 'default', value: r => csvRaw(r.item.units_per_pack) },
- *   { key: 'min_purchase_qty', label: 'min_purchase_qty', group: 'default', value: r => csvRaw(r.item.min_purchase_qty) },
- *   { key: 'min_sellable_qty', label: 'min_sellable_qty', group: 'default', value: r => csvRaw(r.item.min_sellable_qty) },
- *   { key: 'weight_g',         label: 'weight_g',         group: 'default', value: r => csvRaw(r.item.weight_g) },
- *   { key: 'weight_unit',      label: 'weight_unit',      group: 'default', value: r => csvEsc(r.item.weight_unit ?? '') },
- *   { key: 'supplier_name',    label: 'supplier_name',    group: 'default', value: r => csvEsc(r.item.supplier_name ?? '') },
- *   { key: 'supplier_sku',     label: 'supplier_sku',     group: 'default', value: r => csvEsc(r.item.supplier_sku ?? '') },
- *   { key: 'barcode',          label: 'barcode',          group: 'default', value: r => csvEsc(_primarySupplier(r)?.barcode ?? '') },
- *   { key: 'basic_cost',       label: 'basic_cost',       group: 'default', value: r => csvRaw(r.item.primary_cost) },
- *   { key: 'order_increment_qty',  label: 'order_increment_qty',  group: 'default', value: r => csvRaw(r.item.order_increment_qty) },
- *   { key: 'order_increment_uom',  label: 'order_increment_uom',  group: 'default', value: r => csvEsc(r.item.order_increment_uom ?? '') },
- *   { key: 'minimum_order_qty',    label: 'minimum_order_qty',    group: 'default', value: r => csvRaw(r.item.minimum_order_qty) },
- *   { key: 'minimum_order_uom',    label: 'minimum_order_uom',    group: 'default', value: r => csvEsc(r.item.minimum_order_uom ?? '') },
- *   { key: 'minimum_order_source', label: 'minimum_order_source', group: 'default', value: r => csvEsc(r.item.minimum_order_source ?? '') },
- *   { key: 'pricing_note',         label: 'pricing_note',         group: 'default', value: r => csvEsc(r.item.pricing_note ?? '') },
- *   { key: 'rrp',              label: 'rrp',              group: 'default', value: r => csvRaw(r.item.rrp) },
- *   { key: 'notes',            label: 'notes',            group: 'default', value: r => csvEsc(r.item.notes ?? '') },
+ *   { key: 'sku_code',         label: 'sku_code',         value: r => csvEsc(r.item.sku_code) },
+ *   { key: 'name',             label: 'name',             value: r => csvEsc(r.item.name) },
+ *   { key: 'brand',            label: 'brand',            value: r => csvEsc(r.item.brand ?? '') },
+ *   { key: 'category',         label: 'category',         value: r => csvEsc(r.item.category) },
+ *   { key: 'subcategory',      label: 'subcategory',      value: r => csvEsc(r.item.subcategory ?? '') },
+ *   { key: 'segment',          label: 'segment',          value: r => csvEsc(r.item.segment ?? '') },
+ *   { key: 'species',          label: 'species',          value: r => csvEsc(r.item.species ?? '') },
+ *   { key: 'status',           label: 'status',           value: r => csvEsc(r.item.status) },
+ *   { key: 'storage_rule',     label: 'storage_rule',     value: r => csvEsc(r.item.storage_rule) },
+ *   { key: 'hero_sku',         label: 'hero_sku',         value: r => (r.item.hero_sku ? 1 : 0) },
+ *   { key: 'uom',              label: 'uom',              value: r => csvEsc(r.item.uom ?? '') },
+ *   { key: 'pack_unit',        label: 'pack_unit',        value: r => csvEsc(r.item.pack_unit ?? '') },
+ *   { key: 'units_per_pack',   label: 'units_per_pack',   value: r => csvRaw(r.item.units_per_pack) },
+ *   { key: 'min_purchase_qty', label: 'min_purchase_qty', value: r => csvRaw(r.item.min_purchase_qty) },
+ *   { key: 'min_sellable_qty', label: 'min_sellable_qty', value: r => csvRaw(r.item.min_sellable_qty) },
+ *   { key: 'weight_g',         label: 'weight_g',         value: r => csvRaw(r.item.weight_g) },
+ *   { key: 'weight_unit',      label: 'weight_unit',      value: r => csvEsc(r.item.weight_unit ?? '') },
+ *   { key: 'supplier_name',    label: 'supplier_name',    value: r => csvEsc(r.item.supplier_name ?? '') },
+ *   { key: 'supplier_sku',     label: 'supplier_sku',     value: r => csvEsc(r.item.supplier_sku ?? '') },
+ *   { key: 'barcode',          label: 'barcode',          value: r => csvEsc(_primarySupplier(r)?.barcode ?? '') },
+ *   { key: 'basic_cost',       label: 'basic_cost',       value: r => csvRaw(r.item.primary_cost) },
+ *   { key: 'order_increment_qty',  label: 'order_increment_qty',  value: r => csvRaw(r.item.order_increment_qty) },
+ *   { key: 'order_increment_uom',  label: 'order_increment_uom',  value: r => csvEsc(r.item.order_increment_uom ?? '') },
+ *   { key: 'minimum_order_qty',    label: 'minimum_order_qty',    value: r => csvRaw(r.item.minimum_order_qty) },
+ *   { key: 'minimum_order_uom',    label: 'minimum_order_uom',    value: r => csvEsc(r.item.minimum_order_uom ?? '') },
+ *   { key: 'minimum_order_source', label: 'minimum_order_source', value: r => csvEsc(r.item.minimum_order_source ?? '') },
+ *   { key: 'pricing_note',         label: 'pricing_note',         value: r => csvEsc(r.item.pricing_note ?? '') },
+ *   { key: 'rrp',              label: 'rrp',              value: r => csvRaw(r.item.rrp) },
+ *   { key: 'notes',            label: 'notes',            value: r => csvEsc(r.item.notes ?? '') },
  * ]
  */
 
@@ -509,7 +501,6 @@ function InventoryView() {
   const [pushing, setPushing]     = useState(false)
   const [fetchingComp, setFetchingComp] = useState(false)
   const [showExportCols, setShowExportCols] = useState(false)
-  const [exportCols, setExportCols] = useState<Set<string>>(() => new Set(DEFAULT_EXPORT_KEYS))
   const exportBtnRef = useRef<HTMLButtonElement>(null)
   const exportPopRef = useRef<HTMLDivElement>(null)
   const [exportAt, setExportAt] = useState<{ top: number; left: number; maxHeight: number } | null>(null)
@@ -835,11 +826,6 @@ function InventoryView() {
     }
   }, [showExportCols])
 
-  const toggleExportCol = (key: string) => setExportCols(prev => {
-    const next = new Set(prev)
-    if (next.has(key)) next.delete(key); else next.add(key)
-    return next
-  })
 
   /**
    * The upload workbook, for the rows currently on screen.
@@ -880,8 +866,13 @@ function InventoryView() {
   }
 
   function handleExport() {
-    const cols = EXPORT_COLUMNS.filter(c => exportCols.has(c.key))
-    if (!cols.length) return
+    // Every column. The picker used to default to the first two dozen and let
+    // anyone add the rest; with the picker gone, narrowing the file would just
+    // make thirty reporting fields — demand, weeks of cover, MBB and landed
+    // cost, per-platform status — unreachable. They are still in the order the
+    // picker showed them, so the columns the file always had are still the
+    // ones it starts with.
+    const cols = EXPORT_COLUMNS
 
     const lines = [cols.map(c => csvEsc(c.label)).join(',')]
     for (const item of sorted) {
@@ -1304,11 +1295,10 @@ function InventoryView() {
                   {/* Hidden for the one layout pass before `place()` has measured
                       it — the panel has to exist to be measured, and a fixed
                       element with no coordinates would flash at the top left. */}
-                  <div ref={exportPopRef} className="exp-pop" role="dialog" aria-label="Choose export columns"
+                  <div ref={exportPopRef} className="exp-pop" role="dialog" aria-label="Export"
                     style={exportAt ? { top: exportAt.top, left: exportAt.left, maxHeight: exportAt.maxHeight } : { visibility: 'hidden' }}>
                     <div className="exp-head">
-                      <b>Columns to export</b>
-                      <button className="exp-reset" onClick={() => setExportCols(new Set(DEFAULT_EXPORT_KEYS))}>Reset to default</button>
+                      <b>Export</b>
                     </div>
                     {/* Editing is a different job from reporting, so it gets its
                         own action rather than a mode the column picker hides
@@ -1324,33 +1314,9 @@ function InventoryView() {
                         on every fixed field. Open it in Google Sheets, edit, and upload it back.
                       </div>
                     </div>
-                    <div className="exp-body">
-                      {(
-                        <>
-                          <div className="exp-grp">Default columns</div>
-                          <div className="exp-grid">
-                            {EXPORT_COLUMNS.filter(c => c.group === 'default').map(c => (
-                              <label key={c.key} className="exp-opt" title={c.label}>
-                                <input type="checkbox" checked={exportCols.has(c.key)} onChange={() => toggleExportCol(c.key)} />
-                                <span>{c.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                          <div className="exp-grp">Additional columns</div>
-                          <div className="exp-grid">
-                            {EXPORT_COLUMNS.filter(c => c.group === 'extra').map(c => (
-                              <label key={c.key} className="exp-opt" title={c.label}>
-                                <input type="checkbox" checked={exportCols.has(c.key)} onChange={() => toggleExportCol(c.key)} />
-                                <span>{c.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
                     <div className="exp-foot">
-                      <span>{exportCols.size} column{exportCols.size === 1 ? '' : 's'} · {sorted.length.toLocaleString()} rows</span>
-                      <button className="btn primary" onClick={handleExport} disabled={exportCols.size === 0}>Download CSV</button>
+                      <span>{EXPORT_COLUMNS.length} columns · {sorted.length.toLocaleString()} rows</span>
+                      <button className="btn primary" onClick={handleExport} disabled={sorted.length === 0}>Download CSV</button>
                     </div>
                   </div>
                 </>
