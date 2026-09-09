@@ -658,8 +658,12 @@ def product_to_dict(product: ProductVariant, cat_rules: dict[str, CategoryRule],
         "daysmart_status":  product.daysmart_status,
         "hktv_status":      product.hktv_status,
         "shopify_cost":     product.shopify_cost,
-        "daysmart_avg_cost": product.daysmart_cost,   # platform avg unit cost (DaySmart balances API); distinct from the supplier-link daysmart_cost (last invoice)
-        "hktv_cost":        product.hktv_cost,
+        # daysmart_avg_cost and hktv_cost were dropped 2026-09-08. The keys stay
+        # so the response shape does not change under clients mid-deploy; they
+        # were only ever a pass-through, and the columns behind them held one
+        # value (0.0) and no rows respectively.
+        "daysmart_avg_cost": None,
+        "hktv_cost":        None,
         "uom":                product.uom,
         "pack_unit":          product.pack_unit,
         "last_manual_edit_at": product.last_manual_edit_at,

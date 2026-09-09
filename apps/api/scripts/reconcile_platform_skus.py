@@ -156,8 +156,8 @@ if APPLY:
             status="ACTIVE" if e["available"] else "INACTIVE", hero_sku=0,
             shopify_status=e["statuses"].get("shopify"),
             shopify_cost=e["costs"].get("shopify"),
-            daysmart_cost=e["costs"].get("daysmart"),
-            hktv_cost=e["costs"].get("hktv"),
+            # daysmart_cost / hktv_cost dropped 2026-09-08 — every value the
+            # platform ever wrote was 0.0, or nothing at all.
             daysmart_status=e["statuses"].get("daysmart"),
             hktv_status=e["statuses"].get("hktv"),
             notes=f"Imported via platform consolidation (LIVE {'+'.join(sorted(set(e['sources'])))}, "

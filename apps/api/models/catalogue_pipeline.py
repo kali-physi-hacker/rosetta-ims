@@ -427,7 +427,9 @@ class ProductFamily(Base):
     created_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=True)
 
-    variants = relationship("ProductVariant", back_populates="product_family")
+    # The variants back-reference went with products.product_family_id on
+    # 2026-09-08: the column was never populated and nothing read either side.
+    # A family reaches its variants through the catalogue offering today.
 
 
 class SupplierOffering(Base):

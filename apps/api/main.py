@@ -45,6 +45,14 @@ _retirement = _legacy_cost_retirement.retire_legacy_cost(database.engine)
 if _retirement["status"] != "already_retired":
     print(f"[startup] legacy cost retirement: {_retirement}")
 
+# Three products columns that never carried information — measured, not assumed.
+# Same one-shot shape; a column that turns out to hold data is kept and reported.
+from services import product_identity_retirement as _product_identity_retirement
+
+_identity_retirement = _product_identity_retirement.retire_empty_product_columns(database.engine)
+if _identity_retirement["status"] != "already_retired":
+    print(f"[startup] product identity retirement: {_identity_retirement}")
+
 # Config-driven transformation engine (Phase A): seed the registry + default config version so
 # the engine reproduces the previously hard-coded formulas. Idempotent; behaviour-neutral.
 from services import transform_engine

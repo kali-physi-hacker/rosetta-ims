@@ -165,7 +165,6 @@ class ProductVariant(Base):
     )
 
     id           = Column(Integer, primary_key=True, autoincrement=True)
-    product_family_id = Column(Integer, ForeignKey("catalogue_product_families.id"), nullable=True)
     sku_code     = Column(String, unique=True, nullable=False, index=True)
     name         = Column(String, nullable=False)
     brand        = Column(String)
@@ -179,12 +178,16 @@ class ProductVariant(Base):
     # Per-platform listing status, refreshed by the platform reconciliation.
     # NULL = not listed on that platform.
     shopify_status   = Column(String, nullable=True)   # active | archived | draft
-    daysmart_status  = Column(String, nullable=True)   # active
     hktv_status      = Column(String, nullable=True)   # online | offline
     # Platform-recorded cost of goods (merchant-entered / computed on each platform).
+    #: Presence, not content: every value is 'active', but NULL vs set is what
+    #: says whether the SKU is listed on DaySmart at all, and the clinic channel
+    #: filter reads it that way. Kept for that reason, not for the string.
+    daysmart_status  = Column(String, nullable=True)
+    # daysmart_cost / hktv_cost / product_family_id were dropped 2026-09-08:
+    # never populated, or every populated value identical AND nothing read the
+    # null/set distinction. See services/product_identity_retirement.py.
     shopify_cost     = Column(Float, nullable=True)    # Shopify InventoryItem unitCost
-    daysmart_cost    = Column(Float, nullable=True)    # DaySmart avg unit cost (balances API)
-    hktv_cost        = Column(Float, nullable=True)    # HKTV product template Cost column
     uom          = Column(String)           # sell UOM: tablet, ml, g — the unit you sell one of
     pack_unit    = Column(String)           # buy UOM: box, bottle, strip — the supplier packaging unit
     storage_rule = Column(String, nullable=False, default='any')   # 'clinic_only' | 'any'
@@ -209,7 +212,6 @@ class ProductVariant(Base):
     tag_links         = relationship("ProductTag", back_populates="product", cascade="all, delete-orphan")
     inventory_items   = relationship("InventoryItem", back_populates="product_variant")
     selling_items     = relationship("SellingItem", back_populates="product_variant")
-    product_family    = relationship("ProductFamily")
 
 
 class InventoryItem(Base):
