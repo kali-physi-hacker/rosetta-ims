@@ -93,7 +93,9 @@ MEASURE_CODES = {"ML", "L", "G", "KG", "OZ", "LB"}
 # price beside a $7.22 capsule cost.
 GENERIC_UNITS = {"UNIT", "PIECE", "EACH", "PCS", "PC"}
 
-_GRAMS_PER = {"g": Decimal(1), "kg": Decimal(1000), "lb": Decimal("453.59237"), "oz": Decimal("28.349523")}
+# Shared with the upload workbook, which shows a weight in the unit it was
+# printed in. Two tables of grams-per-pound is one table too many.
+from services.uom_vocabulary import GRAMS_PER as _GRAMS_PER  # noqa: E402
 
 
 def _dec(value):

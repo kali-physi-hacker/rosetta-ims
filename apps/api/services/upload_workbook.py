@@ -41,7 +41,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side  # noqa: 
 from openpyxl.utils import get_column_letter  # noqa: E402
 from openpyxl.worksheet.datavalidation import DataValidation  # noqa: E402
 
-from services.uom_vocabulary import CANONICAL_UOMS  # noqa: E402
+from services.uom_vocabulary import CANONICAL_UOMS, WEIGHT_UNITS, weight_in  # noqa: E402
 
 # ── the vocabularies ────────────────────────────────────────────────────────
 
@@ -49,7 +49,6 @@ STATUSES = ["ACTIVE", "INACTIVE", "DISCONTINUED"]
 STORAGE = ["any", "clinic_only"]
 SPECIES = ["dog", "cat", "both", "other"]
 SEGMENTS = ["vet", "non_vet"]
-WEIGHT_UNITS = ["kg", "lb", "oz", "g"]
 COST_PER = ["pack", "unit"]
 DEAL_KINDS = ["flat_unit_cost", "tier", "buy_x_get_y", "spend_discount"]
 CHANNELS = ["clinic", "shopify", "hktv"]
@@ -68,8 +67,8 @@ PRODUCT_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("unit",             "uoms",        13, "Required. What ONE of the thing is — every number resolves to it."),
     ("status",           "statuses",    14, ""),
     ("storage",          "storage",     13, ""),
-    ("weight_g",         None,          10, "Grams. Delivery cost is computed from this."),
-    ("weight_unit",      "weight_units", 12, "How the supplier printed it. Grams stays canonical."),
+    ("weight",           None,          10, "Exactly as the supplier prints it. Do not convert anything."),
+    ("weight_unit",      "weight_units", 12, "Which unit that number is in. Blank means grams."),
     ("notes",            None,          28, ""),
     ("buy.supplier",     "suppliers",   24, "Must already exist. Unknown names are reported, never created."),
     ("buy.sku",          None,          16, "Their code for it."),
@@ -115,7 +114,7 @@ REQUIRED = {
 #: legitimate value here — it is how the sheet says "clear this" — and a
 #: numeric validation would refuse it.
 NUMERIC_COLUMNS = {
-    "weight_g", "buy.per_pack", "buy.cost", "buy.rrp", "buy.min_qty", "buy.multiple",
+    "weight", "buy.per_pack", "buy.cost", "buy.rrp", "buy.min_qty", "buy.multiple",
     "min_qty", "min_spend", "free_qty", "discount_pct", "unit_cost",
 } | {f"sell.{c}.{f}" for c in CHANNELS for f in ("per_unit", "multiple", "price")}
 
@@ -468,8 +467,13 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
                 "unit": product.uom,
                 "status": product.status,
                 "storage": product.storage_rule,
-                "weight_g": product.weight_g,
-                "weight_unit": product.weight_unit,
+                # The sheet carries the supplier's own figure and says which
+                # unit it is in. Grams is what the database keeps and what
+                # delivery cost is computed from, but converting is this code's
+                # job, not the job of whoever is reading a catalogue.
+                "weight": weight_in(product.weight_g, product.weight_unit),
+                "weight_unit": (product.weight_unit
+                                or ("g" if product.weight_g is not None else None)),
                 "notes": product.notes,
             }
             if link is not None:

@@ -20,6 +20,8 @@ bought that. A fixed list is the fix.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 #: What we accept, folded. Whatever is ALREADY recorded is added to this at
 #: run time by `known_uoms` — an export must import back unchanged, and
 #: rejecting a value the system itself wrote would make the round trip a lie.
@@ -47,6 +49,47 @@ CANONICAL_UOMS = [
 def fold(value: str) -> str:
     """Lower-case and collapse whitespace, for comparison only."""
     return " ".join(str(value or "").strip().lower().split())
+
+
+# ── weight ──────────────────────────────────────────────────────────────────
+# Weight is stored canonically in grams and nothing else reads it, so the two
+# functions below are the whole boundary between that and the figure a supplier
+# actually printed. They live together because they are inverses: a sheet that
+# shows 4 lb and an importer that reads 4 lb have to agree on what a pound is,
+# and the way they stop agreeing is by each keeping their own table.
+
+#: Grams in one of each unit anyone may state a weight in.
+GRAMS_PER = {
+    "g": Decimal(1),
+    "kg": Decimal(1000),
+    "lb": Decimal("453.59237"),
+    "oz": Decimal("28.349523"),
+}
+
+#: Offered wherever a weight is entered. Grams first because that is what an
+#: unstated unit means — the number is already canonical.
+WEIGHT_UNITS = ["g", "kg", "lb", "oz"]
+
+
+def weight_in(grams, unit) -> float | None:
+    """`grams` as the figure a supplier would recognise, in `unit`.
+
+    A missing or unrecognised unit means the number is already grams, which is
+    how 5,543 products with no stated unit are recorded.
+    """
+    if grams in (None, ""):
+        return None
+    per = GRAMS_PER.get(fold(unit))
+    if per is None:
+        return float(grams)
+    return float((Decimal(str(grams)) / per).quantize(Decimal("0.001")).normalize())
+
+
+def weight_to_grams(value, unit) -> float | None:
+    """The inverse: a printed figure and its unit, as canonical grams."""
+    if value in (None, ""):
+        return None
+    return float(Decimal(str(value)) * GRAMS_PER.get(fold(unit), Decimal(1)))
 
 
 # The guarantee that makes one vocabulary out of two: nothing may be offered
