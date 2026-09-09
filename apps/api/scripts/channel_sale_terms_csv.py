@@ -48,16 +48,7 @@ CLEAR = "-"
 #: this only catches typos. Whatever is ALREADY recorded is added to this at
 #: run time: an export must import back unchanged, and rejecting a value the
 #: system itself wrote would make the round trip a lie.
-BASE_UOMS = {
-    "ml", "l", "g", "kg", "mg", "unit(s)", "units", "unit", "pcs", "pc",
-    "bag(s)", "box(es)", "bottle(s)", "can(s)", "pouch(es)", "tablet(s)",
-    "capsule(s)", "vial(s)", "tube(s)", "sachet(s)", "pack(s)", "syringe(s)",
-    "collar(s)", "pipette(s)", "packet(s)", "pad(s)", "dose(s)", "strip(s)",
-}
-
-
-def _fold(value: str) -> str:
-    return " ".join(str(value or "").strip().lower().split())
+from services.uom_vocabulary import BASE_UOMS, fold as _fold  # noqa: E402,F401
 
 
 def known_uoms(db) -> set[str]:

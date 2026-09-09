@@ -21,6 +21,10 @@ ALLOWLIST = {
     "collections.py::suggest",          # returns AI draft collections, saves nothing
     "config.py::validate",              # dry-run validates a proposed config edit, saves nothing
     "catalogue_ingestions.py::removed_v1_catalogue_import",  # static 410 tombstone for the removed v1 import; mutates nothing
+    # A download, not a mutation. It is POST only because the inventory page
+    # sends the SKUs it is showing — the page filters in the browser, and that
+    # list is too long for a query string at catalogue size.
+    "products.py::download_upload_workbook",
     # Persist via a delegated, already-audited function — auditing here would double-log:
     "products.py::update_product_slash",  # -> update_product (audited)
 }

@@ -1,0 +1,598 @@
+"""Build the SKU upload workbook — two sheets, every closed field a dropdown.
+
+Serves both the CLI (scripts/build_upload_workbook.py) and the inventory
+page's Export, which is why it lives here rather than in scripts/.
+
+`--template` writes an empty workbook to add products with. `--export` fills
+it with what is already recorded, which is how you MODIFY: editing real rows
+beats retyping SKUs, and a round trip that changes nothing must import back
+unchanged.
+
+Why a script and not a file someone drew once: the dropdown options are the
+values this code and this database actually accept, read at build time. A
+hand-made workbook drifts from them within a month, and drift is precisely
+what put `#N/A` in as the single most common sell unit in the catalogue —
+1,187 products carrying a spreadsheet error string as a fact. Re-run this
+after adding a supplier or a category and the sheet catches up.
+
+The sheet says three things in colour, and only three:
+
+    solid header   required — a row cannot be created without it
+    amber cell     required, and this row left it empty
+    red cell       the value is wrong: off its dropdown, text where a number
+                   belongs, or contradicting another cell on the row
+
+A dropdown governs what is TYPED and nothing else, so an export can and does
+open with red in it — 1,531 products hold a sell unit no list will accept.
+That is the state of the data, shown rather than smuggled through.
+
+Import into Google Sheets and the dropdowns, hidden lists and conditional
+formatting all survive. Export is File → Download → CSV, which takes the
+ACTIVE SHEET ONLY, so it is two downloads: one per data sheet.
+"""
+
+from __future__ import annotations
+
+from io import BytesIO
+
+from openpyxl import Workbook  # noqa: E402
+from openpyxl.formatting.rule import FormulaRule  # noqa: E402
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side  # noqa: E402
+from openpyxl.utils import get_column_letter  # noqa: E402
+from openpyxl.worksheet.datavalidation import DataValidation  # noqa: E402
+
+from services.uom_vocabulary import CANONICAL_UOMS  # noqa: E402
+
+# ── the vocabularies ────────────────────────────────────────────────────────
+
+STATUSES = ["ACTIVE", "INACTIVE", "DISCONTINUED"]
+STORAGE = ["any", "clinic_only"]
+SPECIES = ["dog", "cat", "both", "other"]
+SEGMENTS = ["vet", "non_vet"]
+WEIGHT_UNITS = ["kg", "lb", "oz", "g"]
+COST_PER = ["pack", "unit"]
+DEAL_KINDS = ["flat_unit_cost", "tier", "buy_x_get_y", "spend_discount"]
+CHANNELS = ["clinic", "shopify", "hktv"]
+
+# ── the columns ─────────────────────────────────────────────────────────────
+# (header, list-name or None, width, note-for-the-readme)
+
+PRODUCT_COLUMNS: list[tuple[str, str | None, int, str]] = [
+    ("sku",              None,          13, "Blank mints a new SKU. Filled updates that one."),
+    ("name",             None,          34, "Required to create. Our name, not the supplier's."),
+    ("brand",            None,          18, ""),
+    ("category",         "categories",  16, "Required to create."),
+    ("subcategory",      None,          18, "Functional class — antibiotic, dental, joint."),
+    ("species",          "species",     10, ""),
+    ("segment",          "segments",    11, ""),
+    ("unit",             "uoms",        13, "Required. What ONE of the thing is — every number resolves to it."),
+    ("status",           "statuses",    14, ""),
+    ("storage",          "storage",     13, ""),
+    ("weight_g",         None,          10, "Grams. Delivery cost is computed from this."),
+    ("weight_unit",      "weight_units", 12, "How the supplier printed it. Grams stays canonical."),
+    ("notes",            None,          28, ""),
+    ("buy.supplier",     "suppliers",   24, "Must already exist. Unknown names are reported, never created."),
+    ("buy.sku",          None,          16, "Their code for it."),
+    ("buy.barcode",      None,          16, ""),
+    ("buy.pack",         "uoms",        13, "What one purchase unit is called — case, carton, box."),
+    ("buy.per_pack",     None,          12, "How many `unit` are inside it."),
+    ("buy.cost",         None,          11, "What we pay."),
+    ("buy.cost_per",     "cost_per",    12, "REQUIRED whenever buy.cost is filled."),
+    ("buy.rrp",          None,          10, "Their recommended retail."),
+    ("buy.min_qty",      None,          11, "Smallest order they accept."),
+    ("buy.min_qty_uom",  "uoms",        14, "What that count is in. Blank reads as `unit`."),
+    ("buy.multiple",     None,          11, "Order in steps of this."),
+    ("buy.multiple_uom", "uoms",        14, "What that step is in. Blank reads as `unit`."),
+    ("buy.note",         None,          24, ""),
+]
+for _ch in CHANNELS:
+    PRODUCT_COLUMNS += [
+        (f"sell.{_ch}.uom",      "uoms", 14, f"What a {_ch} customer is charged in."),
+        (f"sell.{_ch}.per_unit", None,   14, "How many of those make one `unit`. Blank reads as 1."),
+        (f"sell.{_ch}.multiple", None,   14, "Customer buys in multiples of this."),
+        (f"sell.{_ch}.price",    None,   12, "Per one sell uom."),
+    ]
+
+DEAL_COLUMNS: list[tuple[str, str | None, int, str]] = [
+    ("sku",          None,        13, "Which product. Matched by value — sort the file freely."),
+    ("supplier",     "suppliers", 24, "Whose deal it is. The pair must already be linked."),
+    ("kind",         "kinds",     17, "Which of the four shapes."),
+    ("min_qty",      None,        11, "tier · buy_x_get_y"),
+    ("min_spend",    None,        12, "spend_discount"),
+    ("free_qty",     None,        11, "buy_x_get_y"),
+    ("discount_pct", None,        13, "spend_discount — a number, 12.5 not 0.125."),
+    ("unit_cost",    None,        11, "flat_unit_cost · tier. Always per `unit`."),
+    ("note",         None,        30, "What the supplier called it."),
+]
+
+#: Filling this in is what makes a new row a product (or a deal) at all.
+REQUIRED = {
+    "products": {"name", "category", "unit"},
+    "deals": {"sku", "supplier", "kind"},
+}
+
+#: Columns that must hold a number. Flagged rather than validated: a dash is a
+#: legitimate value here — it is how the sheet says "clear this" — and a
+#: numeric validation would refuse it.
+NUMERIC_COLUMNS = {
+    "weight_g", "buy.per_pack", "buy.cost", "buy.rrp", "buy.min_qty", "buy.multiple",
+    "min_qty", "min_spend", "free_qty", "discount_pct", "unit_cost",
+} | {f"sell.{c}.{f}" for c in CHANNELS for f in ("per_unit", "multiple", "price")}
+
+#: Identifiers, which must never be arithmetic. The longest barcode we hold is
+#: eighteen digits and 974 of them are twelve or more — read as a number, one
+#: displays as 8.0E+17, and a CSV download writes back what is displayed. Nine
+#: of our own SKUs and forty-nine supplier codes begin with a zero, which the
+#: same parse eats without a word. Formatting the column as text is what stops
+#: a spreadsheet helping.
+TEXT_COLUMNS = {"sku", "buy.sku", "buy.barcode"}
+
+# A column named in a set above but absent from the sheet would silently do
+# nothing, and the sets are the only place any of this is written down.
+_HEADERS = {h for h, *_ in PRODUCT_COLUMNS} | {h for h, *_ in DEAL_COLUMNS}
+_named = set().union(*REQUIRED.values()) | NUMERIC_COLUMNS | TEXT_COLUMNS
+assert _named <= _HEADERS, f"named columns that do not exist: {sorted(_named - _HEADERS)}"
+
+# Red means "this value is wrong", and on a numeric column the only way to earn
+# it is to not be a number. That reading holds only while the two are disjoint.
+_DROPDOWNS = {h for h, li, *_ in PRODUCT_COLUMNS + DEAL_COLUMNS if li}
+assert not (NUMERIC_COLUMNS & _DROPDOWNS), \
+    f"numeric columns cannot also be dropdowns: {sorted(NUMERIC_COLUMNS & _DROPDOWNS)}"
+
+
+# ── look ────────────────────────────────────────────────────────────────────
+
+INK = "FF0E141B"
+
+#: Header fills, strong for a required column and a tint of the same hue for an
+#: optional one — so "must I fill this in?" is answered before anyone types,
+#: without losing which group a column belongs to.
+GROUP_FILLS = {
+    "key":  ("FF7A4E9C", "FFEFE7F5"),
+    "buy":  ("FF8A5F14", "FFF6EBD6"),
+    "sell": ("FF1F6B3D", "FFE2F1E8"),
+}
+
+THIN = Side(style="thin", color="FFD3DAE1")
+
+
+def _cf_fill(rgb: str) -> PatternFill:
+    """A conditional-format fill that actually paints.
+
+    A conditional format carries its own style record (a `dxf`), and a fill
+    inside one is not read like a cell fill: Excel swaps foreground and
+    background there. Built the ordinary way — foreground only, which is how a
+    cell fill is written — the amber and red rules below reached the file as
+    `<patternFill><fgColor/></patternFill>` and rendered as no highlight at
+    all, so nothing marked a missing required field.
+
+    Every workbook Excel and Sheets write themselves sets BOTH colours to the
+    same value, in explicit FF-alpha ARGB. Doing the same makes the swap moot.
+    """
+    return PatternFill("solid", fgColor=rgb, bgColor=rgb)
+
+
+AMBER = _cf_fill("FFFDF0D5")
+RED = _cf_fill("FFF9DEDA")
+
+
+def _group(header: str) -> str:
+    """Which block a column belongs to — the prefix, made visible."""
+    if header.startswith("buy."):
+        return "buy"
+    if header.startswith("sell."):
+        return "sell"
+    return "key"
+
+
+def _write_header(ws, columns, required: set[str]) -> None:
+    for index, (header, _list, width, _note) in enumerate(columns, start=1):
+        strong, tint = GROUP_FILLS[_group(header)]
+        needed = header in required
+        cell = ws.cell(row=1, column=index, value=header)
+        cell.font = Font(bold=True, color="FFFFFFFF" if needed else INK, size=10)
+        cell.fill = PatternFill("solid", fgColor=strong if needed else tint,
+                                bgColor=strong if needed else tint)
+        cell.alignment = Alignment(vertical="center")
+        cell.border = Border(bottom=THIN)
+        ws.column_dimensions[get_column_letter(index)].width = width
+    ws.row_dimensions[1].height = 22
+    ws.freeze_panes = "C2"
+
+
+def _lists_sheet(wb, suppliers: list[str], categories: list[str]):
+    """Every dropdown's options, one column each, on a hidden sheet.
+
+    Hidden rather than absent because Sheets and Excel both need the range to
+    resolve, and because someone will eventually want to see what is on offer.
+    """
+    ws = wb.create_sheet("lists")
+    named = {
+        "uoms": CANONICAL_UOMS,
+        "statuses": STATUSES,
+        "storage": STORAGE,
+        "species": SPECIES,
+        "segments": SEGMENTS,
+        "weight_units": WEIGHT_UNITS,
+        "cost_per": COST_PER,
+        "kinds": DEAL_KINDS,
+        "categories": categories,
+        "suppliers": suppliers,
+    }
+    ranges: dict[str, str] = {}
+    for index, (name, values) in enumerate(named.items(), start=1):
+        letter = get_column_letter(index)
+        header = ws.cell(row=1, column=index, value=name)
+        header.font = Font(bold=True, size=9)
+        for offset, value in enumerate(values, start=2):
+            ws.cell(row=offset, column=index, value=value)
+        ws.column_dimensions[letter].width = max(12, min(30, max((len(v) for v in values), default=12) + 2))
+        ranges[name] = f"lists!${letter}$2:${letter}${len(values) + 1}"
+    ws.sheet_state = "hidden"
+    return ranges
+
+
+def _apply_text_format(ws, columns) -> None:
+    """Mark the identifier columns as text, so nothing helpfully rounds them.
+
+    Set on the COLUMN, which covers the empty rows below the data — the ones
+    someone pastes a barcode into — without bringing them into existence.
+    Writing the format cell by cell down to the validated row instead gave the
+    sheet four hundred trailing rows that were empty but no longer absent, and
+    a CSV download writes those out as four hundred blank lines.
+
+    The cells that already hold a value are formatted too: a column default
+    does not reach back over a cell that was written before it.
+    """
+    for index, (header, _list, _width, _note) in enumerate(columns, start=1):
+        if header not in TEXT_COLUMNS:
+            continue
+        ws.column_dimensions[get_column_letter(index)].number_format = "@"
+        for row in range(2, ws.max_row + 1):
+            ws.cell(row=row, column=index).number_format = "@"
+
+
+def _apply_validation(ws, columns, ranges: dict[str, str], last_row: int) -> None:
+    """Closed dropdowns: a value off the list is refused, not warned about.
+
+    Warning-style validation is clicked through as a reflex, and the whole
+    reason this workbook exists is that free text produced sixty-one spellings
+    of about twenty units.
+    """
+    for index, (header, list_name, _width, _note) in enumerate(columns, start=1):
+        if not list_name:
+            continue
+        letter = get_column_letter(index)
+        rule = DataValidation(
+            type="list",
+            formula1=ranges[list_name],
+            allow_blank=True,
+            showDropDown=False,   # openpyxl inverts this: False SHOWS the arrow
+        )
+        rule.error = "Pick a value from the list. Ask for a new one rather than typing it here."
+        rule.errorTitle = f"{header} is a fixed list"
+        rule.showErrorMessage = True
+        ws.add_data_validation(rule)
+        rule.add(f"{letter}2:{letter}{last_row}")
+
+
+def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, deals: bool) -> None:
+    """What a dropdown cannot say: which combinations make sense together."""
+    at = {header: get_column_letter(i) for i, (header, *_rest) in enumerate(columns, start=1)}
+    row_span = f"$A2:${get_column_letter(len(columns))}2"
+
+    # Amber wherever a row has been started and something it cannot do without
+    # is still empty. Sorted so two builds of the same sheet come out identical.
+    for header in sorted(REQUIRED[ws.title]):
+        column = at[header]
+        ws.conditional_formatting.add(
+            f"{column}2:{column}{last_row}",
+            FormulaRule(
+                formula=[f'AND(COUNTA({row_span})>0,{column}2="")'],
+                fill=AMBER, stopIfTrue=False,
+            ),
+        )
+
+    # A dropdown only governs what someone TYPES. Values already in the sheet
+    # arrived from the database, and 1,935 products carry a sell unit that is
+    # not on the list — `#N/A` on 1,187 of them. Unflagged they look fine until
+    # the cell is touched and refuses to keep its own value, so flag them now.
+    # COUNTIF is case-insensitive, which under-flags pure case differences
+    # (`PCS` for `Pcs`); the exact-match alternative is a SUMPRODUCT per cell,
+    # and this sheet has to open with eleven thousand rows in it.
+    for index, (header, list_name, _width, _note) in enumerate(columns, start=1):
+        if not list_name:
+            continue
+        column = get_column_letter(index)
+        ws.conditional_formatting.add(
+            f"{column}2:{column}{last_row}",
+            FormulaRule(
+                formula=[f'AND({column}2<>"",COUNTIF({ranges[list_name]},{column}2)=0)'],
+                fill=RED, stopIfTrue=False,
+            ),
+        )
+
+    # A number that arrived as text is invisible: same digits, same column, and
+    # every total downstream quietly leaves it out. ISNUMBER is the only thing
+    # that can see the difference. The dash is exempt — it means "clear this".
+    for index, (header, _list, _width, _note) in enumerate(columns, start=1):
+        if header not in NUMERIC_COLUMNS:
+            continue
+        column = get_column_letter(index)
+        ws.conditional_formatting.add(
+            f"{column}2:{column}{last_row}",
+            FormulaRule(
+                formula=[f'AND({column}2<>"",{column}2<>"-",NOT(ISNUMBER({column}2)))'],
+                fill=RED, stopIfTrue=False,
+            ),
+        )
+
+    if not deals:
+        # A cost with no basis is the case-price bug waiting to happen.
+        cost, basis = at["buy.cost"], at["buy.cost_per"]
+        ws.conditional_formatting.add(
+            f"{basis}2:{basis}{last_row}",
+            FormulaRule(formula=[f'AND({cost}2<>"",{basis}2="")'], fill=RED, stopIfTrue=False),
+        )
+        return
+
+    # Each deal kind uses two fields and ignores the rest; filling one it
+    # ignores means the row would half-apply, so flag it before upload does.
+    kind = at["kind"]
+    ignored = {
+        "flat_unit_cost": ("min_qty", "min_spend", "free_qty", "discount_pct"),
+        "tier": ("min_spend", "free_qty", "discount_pct"),
+        "buy_x_get_y": ("min_spend", "discount_pct", "unit_cost"),
+        "spend_discount": ("min_qty", "free_qty", "unit_cost"),
+    }
+    for kind_value, fields in ignored.items():
+        for field in fields:
+            column = at[field]
+            ws.conditional_formatting.add(
+                f"{column}2:{column}{last_row}",
+                FormulaRule(
+                    formula=[f'AND(${kind}2="{kind_value}",{column}2<>"")'],
+                    fill=RED, stopIfTrue=False,
+                ),
+            )
+
+
+def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
+    ws = wb.create_sheet("readme", 0)
+    ws.column_dimensions["A"].width = 30
+    ws.column_dimensions["B"].width = 96
+
+    def line(a: str = "", b: str = "", *, bold: bool = False, size: int = 11) -> None:
+        row = ws.max_row + 1 if ws.max_row > 1 or ws["A1"].value else 1
+        ws.cell(row=row, column=1, value=a).font = Font(bold=True, size=size, color=INK)
+        cell = ws.cell(row=row, column=2, value=b)
+        cell.font = Font(bold=bold, size=size, color=INK)
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+
+    line("Rosetta SKU upload", "Add products, or edit the ones already here, then send each sheet as its own CSV.", bold=True, size=13)
+    line()
+    line("Two sheets", "products — one row per product, per supplier.    deals — one row per deal.")
+    line("", "A product bought from three suppliers is three rows sharing a sku.")
+    line()
+    line("Exporting", "File → Download → Comma-separated values. It takes the SHEET YOU ARE ON, so do it twice.")
+    line()
+    line("blank sku", "Mints a new SKU. name, category and unit must be filled.")
+    line("blank cell", "Leaves whatever is already recorded alone.")
+    line("a dash  -", "Clears the value.")
+    line()
+    line("Solid header", "Required — a row without it cannot be created.  Pale header: optional.")
+    line("Amber cell", "Something required on this row is missing.")
+    line("Red cell", "The value is wrong — off its dropdown, text where a number belongs, a")
+    line("", "cost with no basis, or a deal field the kind it names ignores.")
+    line("", "Exported rows can already be red: a unit recorded before the lists were")
+    line("", "fixed is shown as what it is, not quietly kept.")
+    line()
+    line("buy.cost_per", "Say pack or unit every time you write a cost. A case price read as a unit price is")
+    line("", "wrong by the pack size, and nothing downstream can tell.")
+    line()
+    line("Numbers", "Quantities, costs and prices must be numbers. A number typed with a unit")
+    line("", 'or a stray space ("12 kg", " 12") is text, sums as zero, and turns red.')
+    line()
+    line("sku, barcode", "Formatted as text on purpose. Left as numbers a long barcode becomes")
+    line("", "8.0E+17 and a leading zero disappears — both permanently, on download.")
+    line()
+    line("Dropdowns", f"Fixed lists, taken from what the system accepts — including all {supplier_count} suppliers.")
+    line("", "A value not on the list is refused. If you need a new one, ask rather than typing it.")
+    line()
+    line("Rebuilding", "scripts/build_upload_workbook.py --template out.xlsx   (or --export to pull current data)")
+    line("", "Re-run it after a supplier or category is added, or the dropdowns will be out of date.")
+    line()
+    line("Columns", "")
+    for sheet_name, columns in columns_by_sheet.items():
+        line(f"  {sheet_name}", "")
+        for header, list_name, _width, note in columns:
+            suffix = "  (dropdown)" if list_name else ""
+            line(f"    {header}", f"{note}{suffix}")
+
+
+# ── data for --export ───────────────────────────────────────────────────────
+
+def _export_rows(limit: int | None, skus: list[str] | None = None):
+    """Current products, one row per supplier link, in the sheet's own shape.
+
+    `skus` is how the inventory page's Export stays honest. Its filtering —
+    search, supplier, collection, channel, category, quick filters, pinned —
+    all happens in the browser, over rows already loaded. The server has never
+    heard of a pinned SKU, so reproducing those filters here would drift the
+    moment someone adds one, and would quietly export the wrong rows rather
+    than failing. The page sends what it is showing instead.
+    """
+    import database
+    import models
+    from services import offering_costs
+
+    db = next(database.get_db())
+    products = db.query(models.ProductVariant)
+    if skus:
+        # Chunked: SQLite caps variables per statement, and a whole-catalogue
+        # export is eleven thousand of them.
+        wanted, chunk = [], 900
+        unique = list(dict.fromkeys(skus))
+        for start in range(0, len(unique), chunk):
+            wanted.extend(
+                db.query(models.ProductVariant)
+                .filter(models.ProductVariant.sku_code.in_(unique[start:start + chunk]))
+                .all()
+            )
+        order = {sku: i for i, sku in enumerate(unique)}
+        products = sorted(wanted, key=lambda p: order.get(p.sku_code, len(order)))
+    else:
+        products = products.order_by(models.ProductVariant.sku_code)
+        if limit:
+            products = products.limit(limit)
+        products = products.all()
+
+    listings: dict[int, dict[str, object]] = {}
+    for item in db.query(models.SellingItem).all():
+        listings.setdefault(item.product_variant_id, {})[(item.channel or "").lower()] = item
+
+    rows = []
+    for product in products:
+        links = list(product.product_suppliers or ())
+        # A product with no supplier still deserves a row — its identity is
+        # editable even when nobody sells it to us yet.
+        for link in links or [None]:
+            base = {
+                "sku": product.sku_code,
+                "name": product.name,
+                "brand": product.brand,
+                "category": product.category,
+                "subcategory": product.subcategory,
+                "species": product.species,
+                "segment": product.segment,
+                "unit": product.uom,
+                "status": product.status,
+                "storage": product.storage_rule,
+                "weight_g": product.weight_g,
+                "weight_unit": product.weight_unit,
+                "notes": product.notes,
+            }
+            if link is not None:
+                base.update({
+                    "buy.supplier": link.supplier.name if link.supplier else None,
+                    "buy.sku": link.supplier_sku,
+                    "buy.barcode": link.barcode,
+                    "buy.per_pack": link.units_per_pack,
+                    "buy.cost": offering_costs.unit_cost_for_link(link),
+                    "buy.cost_per": "unit" if offering_costs.unit_cost_for_link(link) is not None else None,
+                    "buy.rrp": link.rrp,
+                    "buy.min_qty": link.minimum_order_qty,
+                    # Without these two the sheet says "41" where the database
+                    # says "41 Can(s)", and a round trip reads it back as 41
+                    # units — the buy.cost_per hazard, one column over.
+                    "buy.min_qty_uom": link.minimum_order_uom,
+                    "buy.multiple_uom": link.order_increment_uom,
+                    "buy.note": link.pricing_note,
+                })
+            for channel in CHANNELS:
+                item = listings.get(product.id, {}).get(channel)
+                if item is None:
+                    continue
+                base.update({
+                    f"sell.{channel}.uom": item.sell_uom,
+                    f"sell.{channel}.per_unit": float(item.sell_uom_count) if item.sell_uom_count is not None else None,
+                    f"sell.{channel}.multiple": item.order_multiple,
+                    f"sell.{channel}.price": item.selling_price,
+                })
+            rows.append(base)
+
+    # Deals follow the same filter: a workbook that described 200 products and
+    # 1,401 deals would be describing two different sets.
+    exported_ids = {p.id for p in products}
+    deals = []
+    for term, link in (
+        db.query(models.MbbTerm, models.ProductSupplier)
+        .join(models.ProductSupplier, models.ProductSupplier.id == models.MbbTerm.product_supplier_id)
+        .all()
+    ):
+        if link.product_id not in exported_ids:
+            continue
+        product = db.get(models.ProductVariant, link.product_id)
+        if product is None:
+            continue
+        deals.append({
+            "sku": product.sku_code,
+            "supplier": link.supplier.name if link.supplier else None,
+            "kind": term.kind,
+            "min_qty": term.min_qty,
+            "min_spend": term.min_spend,
+            "free_qty": term.free_qty,
+            "discount_pct": term.discount_pct,
+            "unit_cost": term.unit_cost,
+            "note": term.note,
+        })
+    return rows, deals
+
+
+def _reference_values():
+    """Suppliers and categories, as the database has them."""
+    import database
+    import models
+
+    db = next(database.get_db())
+    suppliers = sorted(
+        {(s.name or "").strip() for s in db.query(models.Supplier).all() if (s.name or "").strip()}
+    )
+    categories = sorted(
+        {
+            (c or "").strip()
+            for (c,) in db.query(models.ProductVariant.category).distinct()
+            if (c or "").strip()
+        }
+    )
+    return suppliers, categories
+
+
+# ── build ───────────────────────────────────────────────────────────────────
+
+def build(destination, *, with_data: bool, limit: int | None = None,
+          skus: list[str] | None = None) -> dict:
+    """Write the workbook to a path or a file-like object."""
+    suppliers, categories = _reference_values()
+    product_rows, deal_rows = _export_rows(limit, skus) if with_data else ([], [])
+
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    products = wb.create_sheet("products")
+    deals = wb.create_sheet("deals")
+    ranges = _lists_sheet(wb, suppliers, categories)
+
+    for ws, columns, rows in ((products, PRODUCT_COLUMNS, product_rows), (deals, DEAL_COLUMNS, deal_rows)):
+        _write_header(ws, columns, REQUIRED[ws.title])
+        for offset, row in enumerate(rows, start=2):
+            for index, (header, *_rest) in enumerate(columns, start=1):
+                value = row.get(header)
+                if value is not None:
+                    ws.cell(row=offset, column=index, value=value)
+        # Validation and formatting reach beyond the data so pasted rows are
+        # covered too — a sheet that stops validating at the last filled row
+        # is a sheet that stops validating exactly when someone adds work.
+        last = max(len(rows) + 1, 1) + 400
+        _apply_text_format(ws, columns)
+        _apply_validation(ws, columns, ranges, last)
+        _conditional_rules(ws, columns, ranges, last, deals=ws is deals)
+
+    _readme(wb, {"products": PRODUCT_COLUMNS, "deals": DEAL_COLUMNS}, len(suppliers))
+    wb.active = 0
+    wb.save(destination)
+    return {
+        "path": destination if isinstance(destination, str) else None,
+        "products": len(product_rows),
+        "deals": len(deal_rows),
+        "suppliers": len(suppliers),
+        "categories": len(categories),
+        "uoms": len(CANONICAL_UOMS),
+    }
+
+
+def build_bytes(*, with_data: bool, skus: list[str] | None = None) -> tuple[bytes, dict]:
+    """The workbook as bytes, for handing straight to a download response."""
+    buffer = BytesIO()
+    result = build(buffer, with_data=with_data, skus=skus)
+    return buffer.getvalue(), result

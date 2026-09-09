@@ -2,11 +2,11 @@ import csv
 import io
 import json
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File
-from fastapi.responses import StreamingResponse, JSONResponse, ORJSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, ORJSONResponse, Response
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 import models
@@ -328,17 +328,39 @@ def _blank(v):
     """None -> '' for CSV output, but keep 0 / 0.0 (a real value)."""
     return "" if v is None else v
 
+
+def _primary_link(product):
+    """The supplier link the CSV speaks for — primary, else the first.
+
+    The same one import-csv writes back to, so a value exported here returns
+    to the row it came from rather than to whichever link happened to sort
+    first on the way back.
+    """
+    links = list(product.product_suppliers or ())
+    return next((s for s in links if s.is_primary), None) or (links[0] if links else None)
+
+
+def _link_attr(product, attr):
+    link = _primary_link(product)
+    return getattr(link, attr, None) if link else None
+
 # Editable columns: written by export.csv AND accepted by import-csv — the round-trip set.
 # A module-level assert (next to the import helpers below) keeps the two in lock-step.
 _EDITABLE_COLS = [
-    "name", "brand", "category", "status", "hero_sku",
+    # identity
+    "name", "brand", "category", "subcategory", "segment", "species",
+    "status", "storage_rule", "hero_sku",
     "uom", "pack_unit", "units_per_pack", "min_purchase_qty", "min_sellable_qty",
     "weight_g", "weight_unit",
-    "supplier_name", "basic_cost", "rrp", "notes",
+    # supplier link
+    "supplier_name", "supplier_sku", "barcode", "basic_cost", "rrp",
+    "order_increment_qty", "order_increment_uom",
+    "minimum_order_qty", "minimum_order_uom", "minimum_order_source", "pricing_note",
+    "notes",
 ]
 # Read-only reference columns: exported for context, ignored by import-csv.
 _READONLY_COLS = [
-    "supplier_code", "supplier_sku", "cost_last_updated",
+    "supplier_code", "cost_last_updated",
     "clinic_selling_price", "shopify_selling_price", "clinic_gp_pct", "shopify_gp_pct",
     "gp_floor", "clinic_qty", "warehouse_qty", "total_qty", "weekly_demand", "woc",
 ]
@@ -380,6 +402,10 @@ def export_products_csv(
             "brand":                 d["brand"] or "",
             "category":              d["category"],
             "status":                d["status"],
+            "subcategory":           d.get("subcategory") or "",
+            "segment":               p.segment or "",
+            "species":               p.species or "",
+            "storage_rule":          p.storage_rule or "",
             "hero_sku":              1 if d.get("hero_sku") else 0,
             "uom":                   d["uom"] or "",
             "pack_unit":             d.get("pack_unit") or "",
@@ -389,12 +415,19 @@ def export_products_csv(
             "weight_g":              _blank(d.get("weight_g")),
             "weight_unit":           p.weight_unit or "",   # raw DB value (d defaults to 'kg' for display)
             "supplier_name":         d["supplier_name"] or "",
+            "supplier_sku":          d["supplier_sku"] or "",
+            "barcode":               (_primary_link(p).barcode if _primary_link(p) else "") or "",
             "basic_cost":            _blank(d.get("primary_cost")),
             "rrp":                   _blank(p.rrp),
+            "order_increment_qty":   _blank(_link_attr(p, "order_increment_qty")),
+            "order_increment_uom":   _link_attr(p, "order_increment_uom") or "",
+            "minimum_order_qty":     _blank(_link_attr(p, "minimum_order_qty")),
+            "minimum_order_uom":     _link_attr(p, "minimum_order_uom") or "",
+            "minimum_order_source":  _link_attr(p, "minimum_order_source") or "",
+            "pricing_note":          _link_attr(p, "pricing_note") or "",
             "notes":                 d.get("notes") or "",
             # --- read-only reference (ignored on import) ---
             "supplier_code":         d["supplier_code"] or "",
-            "supplier_sku":          d["supplier_sku"] or "",
             "cost_last_updated":     (d["cost_last_updated"] or "")[:10],
             "clinic_selling_price":  ch_map.get("clinic", {}).get("selling_price", "") or "",
             "shopify_selling_price": ch_map.get("shopify", {}).get("selling_price", "") or "",
@@ -1205,9 +1238,19 @@ _SUPPLIER_DATA_KEYS = ("basic_cost", "unit_cost_in", "_supplier_id", "units_per_
                        "minimum_order_qty", "minimum_order_uom", "minimum_order_source",
                        "pricing_note")
 
-# Lock-step guarantee: every editable column export.csv emits must be accepted by import-csv.
+# Lock-step guarantee, BOTH directions. The forward half was always here; the
+# reverse half is what was missing, and twelve columns drifted through the gap
+# — subcategory, segment, species, storage_rule, supplier_sku, barcode and the
+# ordering terms were all accepted on import while export never wrote them, so
+# nothing told an editor they could be filled in. A column the importer takes
+# and the exporter hides is a feature nobody can find.
 assert set(_EDITABLE_COLS) <= (_CSV_EDITABLE | set(_CSV_ALIASES)), \
-    f"export.csv / import-csv column drift: {set(_EDITABLE_COLS) - (_CSV_EDITABLE | set(_CSV_ALIASES))}"
+    f"export.csv emits a column import-csv rejects: {set(_EDITABLE_COLS) - (_CSV_EDITABLE | set(_CSV_ALIASES))}"
+# Alias targets are reachable only under their human-readable header (the
+# frontend's own export), so they are not expected as export.csv columns.
+assert (_CSV_EDITABLE - set(_CSV_ALIASES.values())) <= set(_EDITABLE_COLS), \
+    ("import-csv accepts a column export.csv never writes: "
+     f"{(_CSV_EDITABLE - set(_CSV_ALIASES.values())) - set(_EDITABLE_COLS)}")
 
 
 def _coerce_csv(key: str, val: str):
@@ -1221,6 +1264,54 @@ def _coerce_csv(key: str, val: str):
             f = f / 100.0
         return f
     return str(val)
+
+
+class UploadWorkbookRequest(BaseModel):
+    """Which products the workbook should describe.
+
+    The inventory page filters entirely in the browser — search, supplier,
+    collection, channel, category, quick filters, pinned — over rows already
+    loaded. The server has never heard of a pinned SKU, so it cannot rebuild
+    that selection and must be told. An empty list means the whole catalogue.
+    """
+
+    skus: list[str] = Field(default_factory=list)
+
+
+@router.post("/upload-workbook")
+def download_upload_workbook(
+    body: UploadWorkbookRequest,
+    template: bool = Query(False, description="empty sheet for adding, rather than current data"),
+    _user: models.User = Depends(require_capability("product_edit")),
+):
+    """The SKU upload workbook — .xlsx, with every closed field a dropdown.
+
+    Not a CSV, because the dropdowns are the point: free text is what put
+    sixty-one spellings of twenty units into the catalogue, `#N/A` among them.
+    Those only survive in a real workbook, and they survive an import into
+    Google Sheets.
+    """
+    from services import upload_workbook
+
+    payload, result = upload_workbook.build_bytes(
+        with_data=not template,
+        skus=body.skus or None,
+    )
+    stamp = datetime.utcnow().strftime("%Y-%m-%d")
+    name = "rosetta_upload_template" if template else "rosetta_products"
+    return Response(
+        content=payload,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{name}_{stamp}.xlsx"',
+            # So the page can report what it actually got rather than what it
+            # asked for — a filtered export that silently returned everything
+            # would be worse than one that failed.
+            "X-Rosetta-Products": str(result["products"]),
+            "X-Rosetta-Deals": str(result["deals"]),
+            "Access-Control-Expose-Headers": "X-Rosetta-Products, X-Rosetta-Deals",
+        },
+    )
 
 
 @router.post("/import-csv")
