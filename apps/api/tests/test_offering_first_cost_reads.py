@@ -240,3 +240,73 @@ def test_record_supplier_cost_is_noop_without_supplier_or_cost():
         offering_costs.record_supplier_cost(db, link, pack_cost=100.0)
         db.commit()
         assert db.query(models.SupplierOffering).count() == 0
+
+
+# ── the catalogue's own figure, undivided ───────────────────────────────────
+# Two readers, one set of rows. get_unit_cost answers what one sellable unit
+# costs, because that is what every margin runs on. catalogue_price_for_link
+# answers what the supplier's document actually said, because that is what
+# someone reconciling a sheet against that document is looking for. They differ
+# by exactly the division, and the sheet is the place it must not have happened.
+
+
+def test_catalogue_price_keeps_the_pack_price_the_supplier_printed():
+    with _session() as db:
+        link = _seed_link(db, pack_cost=None, units_per_pack=60)
+        _seed_offering_price(db, link, amount=130.0, basis_code="BOX",
+                             packaging=("BOX", "TABLET", 60))
+
+        price = offering_costs.catalogue_price_for_link(link)
+        assert price.amount == 130.0            # what Alfamedic's catalogue says
+        assert price.per == "pack"
+        assert price.units_per_pack == 60
+        assert price.pack_uom == "BOX"
+        # and the margin still gets its per-tablet number from the same row
+        assert get_unit_cost(link) == 130.0 / 60
+
+
+def test_catalogue_price_of_a_unit_priced_item_is_the_unit_price():
+    with _session() as db:
+        link = _seed_link(db, pack_cost=None, units_per_pack=12)
+        _seed_offering_price(db, link, amount=13.1, basis_code="UNIT")
+
+        price = offering_costs.catalogue_price_for_link(link)
+        assert (price.amount, price.per) == (13.1, "unit")
+        assert price.units_per_pack is None
+        assert get_unit_cost(link) == 13.1
+
+
+def test_a_case_price_with_no_count_still_reports_what_the_case_costs():
+    """The Royal Canin shape: priced by the case, no idea how many are in one.
+
+    get_unit_cost has to answer None — a cost nobody can derive must be absent
+    rather than confidently wrong. The catalogue price is not unknown, though:
+    the document plainly says 123.60 a case, and showing that is what tells
+    someone which count is missing.
+    """
+    with _session() as db:
+        link = _seed_link(db, pack_cost=None, units_per_pack=None)
+        _seed_offering_price(db, link, amount=123.60, basis_code="CASE")
+
+        price = offering_costs.catalogue_price_for_link(link)
+        assert (price.amount, price.per) == (123.60, "pack")
+        assert price.units_per_pack is None
+        assert price.pack_uom == "CASE"
+        assert get_unit_cost(link) is None
+
+
+def test_priced_by_the_thing_it_sells_is_a_unit_price_even_when_that_is_a_box():
+    with _session() as db:
+        link = _seed_link(db, pack_cost=None, units_per_pack=6)
+        _seed_offering_price(db, link, amount=48.0, basis_code="BOX",
+                             packaging=("CASE", "BOX", 6))
+
+        price = offering_costs.catalogue_price_for_link(link)
+        assert (price.amount, price.per) == (48.0, "unit")
+        assert get_unit_cost(link) == 48.0
+
+
+def test_a_link_with_no_offering_price_has_no_catalogue_price():
+    with _session() as db:
+        link = _seed_link(db, pack_cost=None, units_per_pack=12)
+        assert offering_costs.catalogue_price_for_link(link) is None

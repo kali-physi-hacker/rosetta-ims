@@ -17,12 +17,48 @@ price already based on the sellable unit stands in directly.
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 from sqlalchemy.orm import Session
 
 import models
 
 _SESSION_CACHE_KEY = "offering_unit_costs"
 _BULK_TERMS_CACHE_KEY = "offering_bulk_terms"
+_CATALOGUE_PRICE_CACHE_KEY = "offering_catalogue_prices"
+
+
+class CataloguePrice(NamedTuple):
+    """A supplier's price exactly as their catalogue states it.
+
+    ``amount`` is undivided. ``per`` says what one of it buys — the pack, or a
+    single sellable unit — and is the whole difference between $130 and $2.17.
+    ``units_per_pack`` and ``pack_uom`` are what turns one into the other.
+    """
+
+    amount: float
+    per: str                      # 'pack' | 'unit'
+    units_per_pack: float | None
+    pack_uom: str | None
+
+
+def _resolvable(ps) -> tuple[Session, tuple[int, int]] | None:
+    """The session and offering key for a link, or None if it has neither.
+
+    Callers may pass duck-typed stand-ins (reparse previews use SimpleNamespace
+    with just basic_cost/units_per_pack) — those have no supplier link and
+    therefore no offering.
+    """
+    supplier_id = getattr(ps, "supplier_id", None)
+    product_id = getattr(ps, "product_id", None)
+    if ps is None or supplier_id is None or product_id is None:
+        return None
+    if not isinstance(ps, models.ProductSupplier):
+        return None
+    session = Session.object_session(ps)
+    if session is None:
+        return None
+    return session, (supplier_id, product_id)
 
 
 def unit_cost_for_link(ps: models.ProductSupplier | None) -> float | None:
@@ -33,19 +69,32 @@ def unit_cost_for_link(ps: models.ProductSupplier | None) -> float | None:
     query, not one per row.
     """
 
-    # Callers may pass duck-typed stand-ins (reparse previews use
-    # SimpleNamespace with just basic_cost/units_per_pack) — those have no
-    # supplier link and therefore no offering.
-    supplier_id = getattr(ps, "supplier_id", None)
-    product_id = getattr(ps, "product_id", None)
-    if ps is None or supplier_id is None or product_id is None:
+    resolved = _resolvable(ps)
+    if resolved is None:
         return None
-    if not isinstance(ps, models.ProductSupplier):
+    session, key = resolved
+    return _session_map(session).get(key)
+
+
+def catalogue_price_for_link(ps: models.ProductSupplier | None) -> CataloguePrice | None:
+    """The supplier's own price for this link, before anything divides it.
+
+    ``unit_cost_for_link`` answers what one sellable unit costs, which is what
+    every margin runs on. This answers what the catalogue actually SAID, which
+    is what anyone checking a figure against the supplier's own document needs
+    — and the two are the same number only when the supplier priced by the
+    sellable unit. Alfamedic sells Keppra at $130 a box of 60; the margin needs
+    2.1666…, and a person needs to see 130.
+
+    Same rows, same packaging, same session cache as the per-unit read, so the
+    two can disagree about presentation and never about the facts.
+    """
+
+    resolved = _resolvable(ps)
+    if resolved is None:
         return None
-    session = Session.object_session(ps)
-    if session is None:
-        return None
-    return _session_map(session).get((supplier_id, product_id))
+    session, key = resolved
+    return _catalogue_price_map(session).get(key)
 
 
 def invalidate(session: Session) -> None:
@@ -54,6 +103,7 @@ def invalidate(session: Session) -> None:
 
     session.info.pop(_SESSION_CACHE_KEY, None)
     session.info.pop(_BULK_TERMS_CACHE_KEY, None)
+    session.info.pop(_CATALOGUE_PRICE_CACHE_KEY, None)
 
 
 def record_supplier_cost(
@@ -442,15 +492,9 @@ def _packaging_map(session: Session) -> dict[int, tuple[str | None, str | None, 
     return packaging
 
 
-def _session_map(session: Session) -> dict[tuple[int, int], float]:
-    cached = session.info.get(_SESSION_CACHE_KEY)
-    if cached is not None:
-        return cached
-
-    packaging = _packaging_map(session)
-
-    out: dict[tuple[int, int], float] = {}
-    price_rows = (
+def _current_price_rows(session: Session):
+    """Every current offering price, with the offering it belongs to."""
+    return (
         session.query(
             models.SupplierOffering.supplier_id,
             models.SupplierOffering.product_variant_id,
@@ -468,10 +512,49 @@ def _session_map(session: Session) -> dict[tuple[int, int], float]:
         )
         .all()
     )
-    for supplier_id, variant_id, offering_id, amount, basis_code in price_rows:
+
+
+def _session_map(session: Session) -> dict[tuple[int, int], float]:
+    cached = session.info.get(_SESSION_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    packaging = _packaging_map(session)
+    out: dict[tuple[int, int], float] = {}
+    for supplier_id, variant_id, offering_id, amount, basis_code in _current_price_rows(session):
         out[(supplier_id, variant_id)] = _per_sell_unit(float(amount), basis_code, packaging.get(offering_id))
 
     session.info[_SESSION_CACHE_KEY] = out
+    return out
+
+
+def _catalogue_price_map(session: Session) -> dict[tuple[int, int], CataloguePrice]:
+    """The same prices, undivided, with what it would take to divide them."""
+    cached = session.info.get(_CATALOGUE_PRICE_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    packaging = _packaging_map(session)
+    out: dict[tuple[int, int], CataloguePrice] = {}
+    for supplier_id, variant_id, offering_id, amount, basis_code in _current_price_rows(session):
+        purchase, sellable, per_purchase = packaging.get(offering_id) or (None, None, None)
+        code = (basis_code or "").strip().upper()
+        if code and code == (sellable or "").strip().upper():
+            # Sold by the box and priced by the box: the box IS the unit, and
+            # nothing here is owed a division.
+            per = "unit"
+        elif code and (code == (purchase or "").strip().upper() or code in _CONTAINER_BASIS_CODES):
+            per = "pack"
+        else:
+            per = "unit"
+        out[(supplier_id, variant_id)] = CataloguePrice(
+            amount=float(amount),
+            per=per,
+            units_per_pack=per_purchase,
+            pack_uom=purchase or (code if code in _CONTAINER_BASIS_CODES else None),
+        )
+
+    session.info[_CATALOGUE_PRICE_CACHE_KEY] = out
     return out
 
 

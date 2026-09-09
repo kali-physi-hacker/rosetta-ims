@@ -41,7 +41,9 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side  # noqa: 
 from openpyxl.utils import get_column_letter  # noqa: E402
 from openpyxl.worksheet.datavalidation import DataValidation  # noqa: E402
 
-from services.uom_vocabulary import CANONICAL_UOMS, WEIGHT_UNITS, weight_in  # noqa: E402
+from services.uom_vocabulary import (  # noqa: E402
+    CANONICAL_UOMS, WEIGHT_UNITS, canonical_for, weight_in,
+)
 
 # ── the vocabularies ────────────────────────────────────────────────────────
 
@@ -75,8 +77,8 @@ PRODUCT_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("buy.barcode",      None,          16, ""),
     ("buy.pack",         "uoms",        13, "What one purchase unit is called — case, carton, box."),
     ("buy.per_pack",     None,          12, "How many `unit` are inside it."),
-    ("buy.cost",         None,          11, "What we pay."),
-    ("buy.cost_per",     "cost_per",    12, "REQUIRED whenever buy.cost is filled."),
+    ("buy.cost",         None,          11, "The catalogue price, exactly as printed. Never divided."),
+    ("buy.cost_per",     "cost_per",    12, "What that price buys: the pack, or one `unit`. REQUIRED with a cost."),
     ("buy.rrp",          None,          10, "Their recommended retail."),
     ("buy.min_qty",      None,          11, "Smallest order they accept."),
     ("buy.min_qty_uom",  "uoms",        14, "What that count is in. Blank reads as `unit`."),
@@ -386,8 +388,11 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
     line("", "Exported rows can already be red: a unit recorded before the lists were")
     line("", "fixed is shown as what it is, not quietly kept.")
     line()
-    line("buy.cost_per", "Say pack or unit every time you write a cost. A case price read as a unit price is")
-    line("", "wrong by the pack size, and nothing downstream can tell.")
+    line("buy.cost", "Copy the catalogue price as printed. If it is $130 for a box of 60, write")
+    line("", "130 — not 2.17. Nothing in the buy columns is converted, either way.")
+    line()
+    line("buy.cost_per", "Say pack or unit every time you write a cost. A case price read as a unit")
+    line("", "price is wrong by the pack size, and nothing downstream can tell.")
     line()
     line("Numbers", "Quantities, costs and prices must be numbers. A number typed with a unit")
     line("", 'or a stray space ("12 kg", " 12") is text, sums as zero, and turns red.')
@@ -477,13 +482,26 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
                 "notes": product.notes,
             }
             if link is not None:
+                # Everything under buy. is the supplier's own terms, unconverted:
+                # Alfamedic prices Keppra at 130 a box of 60, so the sheet says
+                # 130 / pack / 60, not the 2.1666… per tablet every margin runs
+                # on. Deriving one from the other is this code's job, and a
+                # person checking the sheet against the catalogue PDF should
+                # find the number they are looking at.
+                price = offering_costs.catalogue_price_for_link(link)
                 base.update({
                     "buy.supplier": link.supplier.name if link.supplier else None,
                     "buy.sku": link.supplier_sku,
                     "buy.barcode": link.barcode,
-                    "buy.per_pack": link.units_per_pack,
-                    "buy.cost": offering_costs.unit_cost_for_link(link),
-                    "buy.cost_per": "unit" if offering_costs.unit_cost_for_link(link) is not None else None,
+                    # The packaging configuration wins where it exists: 29
+                    # priced offerings carry a real count there while the legacy
+                    # link still says 1, and it is the packaging figure the cost
+                    # maths actually divides by.
+                    "buy.pack": (canonical_for(price.pack_uom) or price.pack_uom) if price else None,
+                    "buy.per_pack": (price.units_per_pack if price and price.units_per_pack is not None
+                                     else link.units_per_pack),
+                    "buy.cost": price.amount if price else None,
+                    "buy.cost_per": price.per if price else None,
                     "buy.rrp": link.rrp,
                     "buy.min_qty": link.minimum_order_qty,
                     # Without these two the sheet says "41" where the database

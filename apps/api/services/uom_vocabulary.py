@@ -51,6 +51,24 @@ def fold(value: str) -> str:
     return " ".join(str(value or "").strip().lower().split())
 
 
+def canonical_for(code) -> str | None:
+    """The display spelling for a UOM code the pipeline stores — BOX, CASE, TABLET.
+
+    Returns None when we hold no spelling for one. That is a real answer, not a
+    failure: the sheet then shows the code itself and its off-list rule paints
+    it, which sends someone to add the unit rather than letting a name nobody
+    chose look official.
+    """
+    folded = fold(code)
+    if not folded:
+        return None
+    for candidate in CANONICAL_UOMS:
+        spelling = fold(candidate)
+        if spelling in (folded, f"{folded}(s)", f"{folded}(es)"):
+            return candidate
+    return None
+
+
 # ── weight ──────────────────────────────────────────────────────────────────
 # Weight is stored canonically in grams and nothing else reads it, so the two
 # functions below are the whole boundary between that and the figure a supplier
