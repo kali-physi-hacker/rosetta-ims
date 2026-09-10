@@ -204,6 +204,12 @@ def _base_query(db: Session):
         selectinload(models.ProductVariant.stock_levels),
         selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.supplier),
         selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.mbb_term_list),
+        # product_to_dict reads link.stock_events for every supplier link. Without
+        # this it lazy-loads one query per link — 4,601 round trips per inventory
+        # load, against a table holding no rows at all. Cheap on SQLite, which is
+        # why it survived; on Postgres over the container network it was most of
+        # the nine seconds the serialiser spent.
+        selectinload(models.ProductVariant.product_suppliers).selectinload(models.ProductSupplier.stock_events),
         selectinload(models.ProductVariant.sales_velocity),
         selectinload(models.ProductVariant.expiry_tracking),
     )
