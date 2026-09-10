@@ -99,7 +99,7 @@ DEAL_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("ref.name",     None,        34, "Read-only. Which product that is, so a deal can be read without looking it up."),
     ("supplier",     "suppliers", 24, "Whose deal it is. The pair must already be linked."),
     ("kind",         "kinds",     17, "Which of the four shapes."),
-    ("min_qty",      None,        11, "tier · buy_x_get_y"),
+    ("min_qty",      None,        11, "How many to unlock it. flat_unit_cost · tier · buy_x_get_y."),
     ("min_spend",    None,        12, "spend_discount"),
     ("free_qty",     None,        11, "buy_x_get_y"),
     ("discount_pct", None,        13, "spend_discount — a number, 12.5 not 0.125."),
@@ -347,7 +347,15 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
     # ignores means the row would half-apply, so flag it before upload does.
     kind = at["kind"]
     ignored = {
-        "flat_unit_cost": ("min_qty", "min_spend", "free_qty", "discount_pct"),
+        # flat_unit_cost takes a min_qty. It was listed as ignored here, which
+        # painted 113 stored terms red for carrying a perfectly good threshold —
+        # and the rest of the codebase never agreed with that rule: cost-to-hit
+        # charges "min_qty units at the achieved cost" for tier AND flat, the
+        # inventory page renders "N+ units" for it, and the SKU page classifies a
+        # flat term with min_qty > 1 as a volume deal rather than an everyday
+        # price. The two kinds differ in whether there is a ladder above them,
+        # not in which fields apply.
+        "flat_unit_cost": ("min_spend", "free_qty", "discount_pct"),
         "tier": ("min_spend", "free_qty", "discount_pct"),
         "buy_x_get_y": ("min_spend", "discount_pct", "cost", "cost_per"),
         "spend_discount": ("min_qty", "free_qty", "cost", "cost_per"),
