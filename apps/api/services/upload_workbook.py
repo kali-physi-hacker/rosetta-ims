@@ -373,6 +373,41 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
         )
 
     if not deals:
+        # The products sheet's version of "a kind owes its fields": a BLOCK owes
+        # its fields once anyone starts filling it in.
+        #
+        # Supplier terms with no supplier cannot be attached to anything. 84 rows
+        # are in that state today, 81 of them stating a pack size for a supplier
+        # they never name.
+        buy_cols = [get_column_letter(i) for i, (h, *_r) in enumerate(columns, start=1)
+                    if h.startswith("buy.")]
+        assert buy_cols, "no buy block to check"
+        supplier = at["buy.supplier"]
+        ws.conditional_formatting.add(
+            f"{supplier}2:{supplier}{last_row}",
+            FormulaRule(
+                formula=[f'AND({supplier}2="",COUNTA(${buy_cols[0]}2:${buy_cols[-1]}2)>0)'],
+                fill=RED, stopIfTrue=False,
+            ),
+        )
+
+        # A count of a unit nobody named. Note this is NOT "a price with no uom":
+        # blank per_unit reads as 1, which makes a blank sell uom mean "priced per
+        # one `unit`" — a documented default, not an omission. Flagging those
+        # would paint 6,915 perfectly good rows. Stating how many of a thing make
+        # a unit, without saying what the thing is, is the contradiction — and no
+        # stored row does it, so this guards entry rather than accusing the data.
+        for channel in CHANNELS:
+            uom = at[f"sell.{channel}.uom"]
+            per_unit, multiple = at[f"sell.{channel}.per_unit"], at[f"sell.{channel}.multiple"]
+            ws.conditional_formatting.add(
+                f"{uom}2:{uom}{last_row}",
+                FormulaRule(
+                    formula=[f'AND({uom}2="",OR({per_unit}2<>"",{multiple}2<>""))'],
+                    fill=RED, stopIfTrue=False,
+                ),
+            )
+
         # A cost with no basis is the case-price bug waiting to happen.
         cost, basis = at["buy.cost"], at["buy.cost_per"]
         ws.conditional_formatting.add(
@@ -467,10 +502,14 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
     line("a dash  -", "Clears the value.")
     line()
     line("Solid header", "Required — a row without it cannot be created.  Pale header: optional.")
-    line("Red cell", "Fix before uploading. Either something required is missing — including")
-    line("", "what a deal KIND needs, so a buy_x_get_y owes min_qty and free_qty — or")
-    line("", "the value is wrong: off its dropdown, text where a number belongs, a cost")
-    line("", "with no basis, or a field the kind it names ignores.")
+    line("Red cell", "Fix before uploading. Either something required is missing — a deal KIND")
+    line("", "owes its own fields, so buy_x_get_y needs min_qty and free_qty, and a")
+    line("", "started buy block needs a supplier — or the value is wrong: off its")
+    line("", "dropdown, text where a number belongs, a cost with no basis, or a field")
+    line("", "the kind it names ignores.")
+    line("", "A sell price with no sell uom is NOT an error: blank per_unit reads as 1,")
+    line("", "so it means priced per one `unit`. Stating a count without naming the")
+    line("", "unit it counts is the error, and that turns red.")
     line("", "Exported rows can already be red: a unit recorded before the lists were")
     line("", "fixed is shown as what it is, not quietly kept.")
     line()
