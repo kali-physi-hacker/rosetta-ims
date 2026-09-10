@@ -102,7 +102,9 @@ DEAL_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("min_spend",    None,        12, "spend_discount"),
     ("free_qty",     None,        11, "buy_x_get_y"),
     ("discount_pct", None,        13, "spend_discount — a number, 12.5 not 0.125."),
-    ("unit_cost",    None,        11, "flat_unit_cost · tier. Always per `unit`."),
+    ("cost",         None,        11, "flat_unit_cost · tier. The deal price, exactly as printed."),
+    ("cost_per",     "cost_per",  12, "What that price buys: the pack, or one `unit`. REQUIRED with a cost."),
+    ("ref.unit_cost", None,       14, "Read-only. What one unit costs WITHOUT this deal, to compare against."),
     ("note",         None,        30, "What the supplier called it."),
 ]
 
@@ -117,7 +119,7 @@ REQUIRED = {
 #: numeric validation would refuse it.
 NUMERIC_COLUMNS = {
     "weight", "buy.per_pack", "buy.cost", "buy.rrp", "buy.min_qty", "buy.multiple",
-    "min_qty", "min_spend", "free_qty", "discount_pct", "unit_cost",
+    "min_qty", "min_spend", "free_qty", "discount_pct", "cost", "ref.unit_cost",
 } | {f"sell.{c}.{f}" for c in CHANNELS for f in ("per_unit", "multiple", "price")}
 
 #: Identifiers, which must never be arithmetic. The longest barcode we hold is
@@ -152,6 +154,8 @@ GROUP_FILLS = {
     "key":  ("FF7A4E9C", "FFEFE7F5"),
     "buy":  ("FF8A5F14", "FFF6EBD6"),
     "sell": ("FF1F6B3D", "FFE2F1E8"),
+    # Reference, not input. Grey because nothing here is written back.
+    "ref":  ("FF5B6472", "FFEDEFF2"),
 }
 
 THIN = Side(style="thin", color="FFD3DAE1")
@@ -183,6 +187,8 @@ def _group(header: str) -> str:
         return "buy"
     if header.startswith("sell."):
         return "sell"
+    if header.startswith("ref."):
+        return "ref"
     return "key"
 
 
@@ -343,8 +349,8 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
     ignored = {
         "flat_unit_cost": ("min_qty", "min_spend", "free_qty", "discount_pct"),
         "tier": ("min_spend", "free_qty", "discount_pct"),
-        "buy_x_get_y": ("min_spend", "discount_pct", "unit_cost"),
-        "spend_discount": ("min_qty", "free_qty", "unit_cost"),
+        "buy_x_get_y": ("min_spend", "discount_pct", "cost", "cost_per"),
+        "spend_discount": ("min_qty", "free_qty", "cost", "cost_per"),
     }
     for kind_value, fields in ignored.items():
         for field in fields:
@@ -356,6 +362,36 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
                     fill=RED, stopIfTrue=False,
                 ),
             )
+
+    # A deal price with no basis is the case-price bug, and this sheet is where
+    # it actually happened: mbb_terms.unit_cost was declared to be per sellable
+    # unit and had no way to say otherwise, so pack prices went in as unit
+    # prices and every margin at that tier read too dear.
+    cost, basis = at["cost"], at["cost_per"]
+    ws.conditional_formatting.add(
+        f"{basis}2:{basis}{last_row}",
+        FormulaRule(formula=[f'AND({cost}2<>"",{basis}2="")'], fill=RED, stopIfTrue=False),
+    )
+
+    # And the check that needed no basis at all to catch them: a bulk price
+    # dearer than the ordinary one is not a bulk price. 107 stored terms fail
+    # it today, 33 of them by almost exactly their own pack size.
+    #
+    # The 1% is not slack, it is the difference between a finding and noise.
+    # Costs are stored rounded, so four terms sit a fraction of a cent above a
+    # reference they are meant to equal — 2.7667 against 2.76666… — and a
+    # colour that fires on those is a colour people learn to ignore.
+    reference = at["ref.unit_cost"]
+    ws.conditional_formatting.add(
+        f"{cost}2:{cost}{last_row}",
+        FormulaRule(
+            formula=[
+                f'AND({cost}2<>"",{basis}2="unit",{reference}2<>"",'
+                f'ISNUMBER({cost}2),ISNUMBER({reference}2),{cost}2>{reference}2*1.01)'
+            ],
+            fill=RED, stopIfTrue=False,
+        ),
+    )
 
 
 def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
@@ -390,6 +426,13 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
     line()
     line("buy.cost", "Copy the catalogue price as printed. If it is $130 for a box of 60, write")
     line("", "130 — not 2.17. Nothing in the buy columns is converted, either way.")
+    line()
+    line("deal cost", "Same rule on the deals sheet, and the same cost_per beside it. A bulk")
+    line("", "price is only a bulk price if it is CHEAPER — ref.unit_cost is there to")
+    line("", "compare against, and a per-unit cost above it turns red.")
+    line()
+    line("ref. columns", "Read-only, and grey in the header. Shown so a number can be checked")
+    line("", "against something; nothing in them is written back.")
     line()
     line("buy.cost_per", "Say pack or unit every time you write a cost. A case price read as a unit")
     line("", "price is wrong by the pack size, and nothing downstream can tell.")
@@ -545,7 +588,14 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
             "min_spend": term.min_spend,
             "free_qty": term.free_qty,
             "discount_pct": term.discount_pct,
-            "unit_cost": term.unit_cost,
+            # mbb_terms.unit_cost is declared to be per sellable unit and has no
+            # basis of its own, so that is what the sheet says it is. The point
+            # of stating it is that the claim becomes visible: beside the
+            # reference cost, a "unit" price dearer than the ordinary one is
+            # obviously a pack price, and the rule paints it.
+            "cost": term.unit_cost,
+            "cost_per": "unit" if term.unit_cost is not None else None,
+            "ref.unit_cost": offering_costs.unit_cost_for_link(link),
             "note": term.note,
         })
     return rows, deals
