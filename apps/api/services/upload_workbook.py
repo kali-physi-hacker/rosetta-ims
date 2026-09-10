@@ -96,6 +96,7 @@ for _ch in CHANNELS:
 
 DEAL_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("sku",          None,        13, "Which product. Matched by value — sort the file freely."),
+    ("ref.name",     None,        34, "Read-only. Which product that is, so a deal can be read without looking it up."),
     ("supplier",     "suppliers", 24, "Whose deal it is. The pair must already be linked."),
     ("kind",         "kinds",     17, "Which of the four shapes."),
     ("min_qty",      None,        11, "tier · buy_x_get_y"),
@@ -104,7 +105,6 @@ DEAL_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("discount_pct", None,        13, "spend_discount — a number, 12.5 not 0.125."),
     ("cost",         None,        11, "flat_unit_cost · tier. The deal price, exactly as printed."),
     ("cost_per",     "cost_per",  12, "What that price buys: the pack, or one `unit`. REQUIRED with a cost."),
-    ("ref.unit_cost", None,       14, "Read-only. What one unit costs WITHOUT this deal, to compare against."),
     ("note",         None,        30, "What the supplier called it."),
 ]
 
@@ -119,7 +119,7 @@ REQUIRED = {
 #: numeric validation would refuse it.
 NUMERIC_COLUMNS = {
     "weight", "buy.per_pack", "buy.cost", "buy.rrp", "buy.min_qty", "buy.multiple",
-    "min_qty", "min_spend", "free_qty", "discount_pct", "cost", "ref.unit_cost",
+    "min_qty", "min_spend", "free_qty", "discount_pct", "cost",
 } | {f"sell.{c}.{f}" for c in CHANNELS for f in ("per_unit", "multiple", "price")}
 
 #: Identifiers, which must never be arithmetic. The longest barcode we hold is
@@ -367,28 +367,17 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
     # it actually happened: mbb_terms.unit_cost was declared to be per sellable
     # unit and had no way to say otherwise, so pack prices went in as unit
     # prices and every margin at that tier read too dear.
+    #
+    # Owed only by the two kinds that name a price. buy_x_get_y and
+    # spend_discount have no cost of their own — a cost on one of those is
+    # already red for being a field its kind ignores, and demanding a basis for
+    # it as well would be a second colour for one mistake.
     cost, basis = at["cost"], at["cost_per"]
+    priced = ",".join(f'${kind}2="{k}"' for k in ("flat_unit_cost", "tier"))
     ws.conditional_formatting.add(
         f"{basis}2:{basis}{last_row}",
-        FormulaRule(formula=[f'AND({cost}2<>"",{basis}2="")'], fill=RED, stopIfTrue=False),
-    )
-
-    # And the check that needed no basis at all to catch them: a bulk price
-    # dearer than the ordinary one is not a bulk price. 107 stored terms fail
-    # it today, 33 of them by almost exactly their own pack size.
-    #
-    # The 1% is not slack, it is the difference between a finding and noise.
-    # Costs are stored rounded, so four terms sit a fraction of a cent above a
-    # reference they are meant to equal — 2.7667 against 2.76666… — and a
-    # colour that fires on those is a colour people learn to ignore.
-    reference = at["ref.unit_cost"]
-    ws.conditional_formatting.add(
-        f"{cost}2:{cost}{last_row}",
         FormulaRule(
-            formula=[
-                f'AND({cost}2<>"",{basis}2="unit",{reference}2<>"",'
-                f'ISNUMBER({cost}2),ISNUMBER({reference}2),{cost}2>{reference}2*1.01)'
-            ],
+            formula=[f'AND(OR({priced}),{cost}2<>"",{basis}2="")'],
             fill=RED, stopIfTrue=False,
         ),
     )
@@ -427,12 +416,11 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
     line("buy.cost", "Copy the catalogue price as printed. If it is $130 for a box of 60, write")
     line("", "130 — not 2.17. Nothing in the buy columns is converted, either way.")
     line()
-    line("deal cost", "Same rule on the deals sheet, and the same cost_per beside it. A bulk")
-    line("", "price is only a bulk price if it is CHEAPER — ref.unit_cost is there to")
-    line("", "compare against, and a per-unit cost above it turns red.")
+    line("deal cost", "Same rule on the deals sheet, and the same cost_per beside it — asked")
+    line("", "for only by the two kinds that name a price, flat_unit_cost and tier.")
     line()
-    line("ref. columns", "Read-only, and grey in the header. Shown so a number can be checked")
-    line("", "against something; nothing in them is written back.")
+    line("ref. columns", "Read-only, and grey in the header. There to tell you what a row is")
+    line("", "about; nothing in them is written back.")
     line()
     line("buy.cost_per", "Say pack or unit every time you write a cost. A case price read as a unit")
     line("", "price is wrong by the pack size, and nothing downstream can tell.")
@@ -582,6 +570,7 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
             continue
         deals.append({
             "sku": product.sku_code,
+            "ref.name": product.name,
             "supplier": link.supplier.name if link.supplier else None,
             "kind": term.kind,
             "min_qty": term.min_qty,
@@ -595,7 +584,6 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
             # obviously a pack price, and the rule paints it.
             "cost": term.unit_cost,
             "cost_per": "unit" if term.unit_cost is not None else None,
-            "ref.unit_cost": offering_costs.unit_cost_for_link(link),
             "note": term.note,
         })
     return rows, deals
@@ -655,7 +643,13 @@ def build(destination, *, with_data: bool, limit: int | None = None,
     wb.save(destination)
     return {
         "path": destination if isinstance(destination, str) else None,
-        "products": len(product_rows),
+        # Two counts, because they differ and the difference has been reported
+        # as a bug: the products sheet is one row per product PER SUPPLIER, so a
+        # SKU bought from two suppliers is two rows sharing a sku. Reporting the
+        # row count as "products" is what made the page promise one number and
+        # the download announce another.
+        "skus": len({row["sku"] for row in product_rows if row.get("sku")}),
+        "rows": len(product_rows),
         "deals": len(deal_rows),
         "suppliers": len(suppliers),
         "categories": len(categories),

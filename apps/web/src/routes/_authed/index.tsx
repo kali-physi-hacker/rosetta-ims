@@ -854,9 +854,19 @@ function InventoryView() {
       URL.revokeObjectURL(url)
       // Report what came back, not what was asked for — a filtered export that
       // quietly returned everything would be worse than one that failed.
-      const products = res.headers.get('X-Rosetta-Products')
+      //
+      // Both counts, because they are different numbers: the products sheet is
+      // one row per SKU per supplier, so 31 SKUs with two suppliers make the
+      // file 31 rows longer than the button promised. Announcing only the rows
+      // is what made the download look like it had exported the wrong set.
+      const skus = res.headers.get('X-Rosetta-Skus')
+      const rows = res.headers.get('X-Rosetta-Rows')
       const deals = res.headers.get('X-Rosetta-Deals')
-      toast.success(products ? `Workbook: ${products} rows, ${deals} deals` : 'Workbook downloaded')
+      toast.success(
+        skus
+          ? `Workbook: ${skus} SKUs in ${rows} rows, ${deals} deals`
+          : 'Workbook downloaded',
+      )
       setShowExportCols(false)
     } catch (e: any) {
       toast.error(`Could not build the workbook — ${String(e?.message ?? e)}`)
@@ -1307,11 +1317,13 @@ function InventoryView() {
                     <div className="exp-bulk" style={{ display: 'block' }}>
                       <button className="btn" style={{ width: '100%', justifyContent: 'center' }}
                         onClick={downloadWorkbook} disabled={workbookBusy || sorted.length === 0}>
-                        {workbookBusy ? 'Building…' : `↓ Edit in Sheets — workbook of ${sorted.length.toLocaleString()}`}
+                        {workbookBusy ? 'Building…' : `↓ Edit in Sheets — ${sorted.length.toLocaleString()} SKUs`}
                       </button>
                       <div className="exp-note" style={{ padding: '7px 0 0' }}>
-                        An <b>.xlsx</b> of these {sorted.length.toLocaleString()} rows and their deals, with dropdowns
+                        An <b>.xlsx</b> of these {sorted.length.toLocaleString()} SKUs and their deals, with dropdowns
                         on every fixed field. Open it in Google Sheets, edit, and upload it back.
+                        A SKU bought from more than one supplier gets a row per supplier, so the
+                        file runs a little longer than the count above.
                       </div>
                     </div>
                     <div className="exp-foot">

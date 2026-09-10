@@ -54,7 +54,7 @@ def main() -> int:
     result = build(path, with_data=bool(args.export), limit=args.limit)
     print(
         f"wrote {result['path']}  "
-        f"products={result['products']} deals={result['deals']}  "
+        f"{result['skus']} SKUs in {result['rows']} rows, {result['deals']} deals  "
         f"dropdowns: {result['suppliers']} suppliers, {result['categories']} categories, "
         f"{result['uoms']} units"
     )

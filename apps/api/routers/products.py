@@ -1307,9 +1307,13 @@ def download_upload_workbook(
             # So the page can report what it actually got rather than what it
             # asked for — a filtered export that silently returned everything
             # would be worse than one that failed.
-            "X-Rosetta-Products": str(result["products"]),
+            # SKUs and rows are different numbers: the products sheet carries one
+            # row per product PER SUPPLIER. Sending only one of them is what let
+            # the page promise a count the download then contradicted.
+            "X-Rosetta-Skus": str(result["skus"]),
+            "X-Rosetta-Rows": str(result["rows"]),
             "X-Rosetta-Deals": str(result["deals"]),
-            "Access-Control-Expose-Headers": "X-Rosetta-Products, X-Rosetta-Deals",
+            "Access-Control-Expose-Headers": "X-Rosetta-Skus, X-Rosetta-Rows, X-Rosetta-Deals",
         },
     )
 
