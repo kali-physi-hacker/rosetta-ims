@@ -370,9 +370,12 @@ class SupplierStockEvent(Base):
 
 class MbbTerm(Base):
     """One Max-Bulk-Buy term on a (SKU x supplier) link. A ProductSupplier has 0..N of these —
-    it replaces the old flat mbb_* scalars, which could only hold a SINGLE term. Each term is
-    typed, and its effective per-SELL-unit cost is DERIVED from the per-unit base cost, so there
-    is no stored per-box number to mis-divide (that was the source of the old basis bug)."""
+    it replaces the old flat mbb_* scalars, which could only hold a SINGLE term.
+
+    The computed kinds (buy_x_get_y, spend_discount) derive their effective cost from the base
+    per-unit cost and store no amount at all. The stated kinds (tier, flat_unit_cost) do store an
+    amount, and `cost_basis` says what it buys — without which the person entering it had to do
+    the division themselves, and one in six got it wrong in one direction or the other."""
     __tablename__ = "mbb_terms"
 
     id                  = Column(Integer, primary_key=True, autoincrement=True)
@@ -384,7 +387,16 @@ class MbbTerm(Base):
     # benefits — only the one matching `kind` is set
     free_qty            = Column(Integer, nullable=True)   # buy_x_get_y: get Y free
     discount_pct        = Column(Float, nullable=True)     # spend_discount: fraction off, e.g. 0.10
-    unit_cost           = Column(Float, nullable=True)     # tier / flat_unit_cost: explicit per-SELL-unit cost
+    unit_cost           = Column(Float, nullable=True)     # tier / flat_unit_cost: the stated amount
+    #: What one `unit_cost` buys: 'pack' or 'unit'. NULL means unit, which is
+    #: what every row written before this column existed meant.
+    #:
+    #: The docstring above used to claim a stored per-box number was impossible.
+    #: It was not: the column accepted whatever anyone typed, and of 1,190 terms
+    #: carrying a cost, 113 hold a pack price and 66 hold a unit price divided by
+    #: the pack size a second time. Naming the basis is what makes the number
+    #: checkable instead of a figure someone worked out in their head.
+    cost_basis          = Column(String, nullable=True)    # 'pack' | 'unit' (NULL = unit)
     note                = Column(String, nullable=True)    # human label (was the free-text mbb_terms)
     sort_order          = Column(Integer, nullable=False, default=0)
     created_at          = Column(String, nullable=False)

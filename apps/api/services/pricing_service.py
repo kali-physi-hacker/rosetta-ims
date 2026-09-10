@@ -99,8 +99,33 @@ def _term_unit_cost(term, base_unit_cost: float | None) -> float | None:
         return engine.evaluate("mbb_spend_discount",
                                {"base": base_unit_cost, "discount_pct": term.discount_pct})
     if k in ('tier', 'flat_unit_cost'):
-        return term.unit_cost
+        return _stated_per_unit(term)
     return None
+
+
+def _stated_per_unit(term) -> float | None:
+    """A stated term's amount, as the cost of ONE sellable unit.
+
+    `cost_basis` says what the amount buys. NULL means per unit, which is what
+    every row written before that column existed meant, so nothing changes for
+    them. A pack price divides by the pack — and if the pack size is unknown it
+    returns None rather than a number that is wrong by that factor, the same
+    rule the catalogue prices follow.
+
+    The link is reached through the relationship rather than passed in: it is
+    already in the identity map wherever terms were loaded from it, so this
+    costs no query.
+    """
+    amount = term.unit_cost
+    if amount is None:
+        return None
+    if (getattr(term, 'cost_basis', None) or 'unit').strip().lower() != 'pack':
+        return amount
+    link = getattr(term, 'product_supplier', None)
+    per_pack = getattr(link, 'units_per_pack', None) if link is not None else None
+    if not per_pack or per_pack <= 0:
+        return None
+    return amount / per_pack
 
 
 @dataclass(frozen=True)

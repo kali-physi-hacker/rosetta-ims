@@ -577,13 +577,13 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
             "min_spend": term.min_spend,
             "free_qty": term.free_qty,
             "discount_pct": term.discount_pct,
-            # mbb_terms.unit_cost is declared to be per sellable unit and has no
-            # basis of its own, so that is what the sheet says it is. The point
-            # of stating it is that the claim becomes visible: beside the
-            # reference cost, a "unit" price dearer than the ordinary one is
-            # obviously a pack price, and the rule paints it.
+            # The amount as stated, and what it buys. cost_basis is NULL on every
+            # row written before the column existed, and NULL has always meant
+            # per unit — so that is what the sheet reports for them, which is
+            # also the claim worth showing, since 179 of those rows are wrong by
+            # exactly a pack-size factor in one direction or the other.
             "cost": term.unit_cost,
-            "cost_per": "unit" if term.unit_cost is not None else None,
+            "cost_per": (term.cost_basis or "unit") if term.unit_cost is not None else None,
             "note": term.note,
         })
     return rows, deals

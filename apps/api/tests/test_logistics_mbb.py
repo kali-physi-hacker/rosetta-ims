@@ -92,3 +92,54 @@ def test_cost_to_hit_mbb_by_term_kind():
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+# ── a stated term says what its amount buys ─────────────────────────────────
+# mbb_terms.unit_cost was documented as per-sell-unit and had no way to say
+# otherwise, so whoever entered a deal did the division in their head. Of 1,190
+# stored terms carrying a cost, 113 hold a pack price and 66 hold a unit price
+# divided by the pack size a second time. cost_basis is what removes the
+# arithmetic from the person entering it.
+
+def _stated(basis, amount=130.0, units_per_pack=60):
+    """A stated term on a link with a known pack size. Real mapped objects, not
+    stand-ins: the divisor is reached through the relationship, so a stub would
+    not exercise the path that actually runs."""
+    t = models.MbbTerm(kind="flat_unit_cost", unit_cost=amount, cost_basis=basis,
+                       created_at="2026-09-10T00:00:00+00:00")
+    t.product_supplier = models.ProductSupplier(
+        units_per_pack=units_per_pack, updated_at="2026-09-10T00:00:00+00:00")
+    return t
+
+
+def test_a_pack_price_is_divided_by_the_pack():
+    # $130 for a box of 60 is $2.17 a tablet, and nobody has to work that out.
+    assert P._term_unit_cost(_stated("pack"), 3.0) == 130.0 / 60
+
+
+def test_an_absent_basis_still_means_per_unit():
+    """Every row written before the column existed meant per unit, and must not move."""
+    assert P._term_unit_cost(_stated(None), 3.0) == 130.0
+    assert P._term_unit_cost(_stated("unit"), 3.0) == 130.0
+
+
+def test_the_basis_is_read_case_and_space_insensitively():
+    assert P._term_unit_cost(_stated(" PACK "), 3.0) == 130.0 / 60
+
+
+def test_a_pack_price_with_no_pack_size_is_absent_rather_than_wrong():
+    """The same rule the catalogue prices follow: a cost nobody can derive has to
+    be missing, because a blank margin sends someone to look and a confident
+    wrong one does not."""
+    assert P._term_unit_cost(_stated("pack", units_per_pack=None), 3.0) is None
+    assert P._term_unit_cost(_stated("pack", units_per_pack=0), 3.0) is None
+
+
+def test_a_flat_percentage_discount_needs_no_spend_threshold():
+    """373 deals whose note reads "15%" were stored as flat_unit_cost with a
+    number worked out by hand. They did not need a new kind: spend_discount
+    computes it from the base, and min_spend is optional."""
+    t = models.MbbTerm(kind="spend_discount", discount_pct=0.15, min_spend=None,
+                       created_at="2026-09-10T00:00:00+00:00")
+    assert P._term_unit_cost(t, 30.0) == 25.5
+    assert P._cost_to_hit_mbb(t, 30.0, 25.5) is None    # nothing to hit
