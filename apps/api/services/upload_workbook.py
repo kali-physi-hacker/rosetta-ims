@@ -122,6 +122,25 @@ NUMERIC_COLUMNS = {
     "min_qty", "min_spend", "free_qty", "discount_pct", "cost",
 } | {f"sell.{c}.{f}" for c in CHANNELS for f in ("per_unit", "multiple", "price")}
 
+#: What each deal kind cannot do without. The sheet already flagged fields a
+#: kind IGNORES; this is the other half, and without it a buy_x_get_y with no
+#: quantities looked perfectly fine.
+#:
+#: Absent here means optional, and two absences are deliberate. min_spend on
+#: spend_discount: a flat "15% off" has no threshold, and 373 stored deals whose
+#: note reads like a percentage need exactly that shape to be re-entered
+#: correctly — requiring it would block the fix. min_qty on flat_unit_cost:
+#: that is the everyday-price case, which 822 of 935 stored flat terms are.
+#:
+#: cost_per is not listed: it has its own rule, which fires only once a cost is
+#: present, and two rules for one mistake is one colour too many.
+KIND_NEEDS = {
+    "buy_x_get_y":    ("min_qty", "free_qty"),
+    "spend_discount": ("discount_pct",),
+    "tier":           ("min_qty", "cost"),
+    "flat_unit_cost": ("cost",),
+}
+
 #: Identifiers, which must never be arithmetic. The longest barcode we hold is
 #: eighteen digits and 974 of them are twelve or more — read as a number, one
 #: displays as 8.0E+17, and a CSV download writes back what is displayed. Nine
@@ -135,6 +154,19 @@ TEXT_COLUMNS = {"sku", "buy.sku", "buy.barcode"}
 _HEADERS = {h for h, *_ in PRODUCT_COLUMNS} | {h for h, *_ in DEAL_COLUMNS}
 _named = set().union(*REQUIRED.values()) | NUMERIC_COLUMNS | TEXT_COLUMNS
 assert _named <= _HEADERS, f"named columns that do not exist: {sorted(_named - _HEADERS)}"
+
+# A kind cannot both need a field and ignore it. Nothing would tell you which
+# rule won; the sheet would simply contradict itself in two colours.
+_IGNORED_BY_KIND = {
+    "flat_unit_cost": {"min_spend", "free_qty", "discount_pct"},
+    "tier": {"min_spend", "free_qty", "discount_pct"},
+    "buy_x_get_y": {"min_spend", "discount_pct", "cost", "cost_per"},
+    "spend_discount": {"min_qty", "free_qty", "cost", "cost_per"},
+}
+for _kind, _needed in KIND_NEEDS.items():
+    _clash = set(_needed) & _IGNORED_BY_KIND.get(_kind, set())
+    assert not _clash, f"{_kind} both needs and ignores {sorted(_clash)}"
+assert set(KIND_NEEDS) == set(_IGNORED_BY_KIND) == set(DEAL_KINDS), "a kind is missing a rule set"
 
 # Red means "this value is wrong", and on a numeric column the only way to earn
 # it is to not be a number. That reading holds only while the two are disjoint.
@@ -177,7 +209,9 @@ def _cf_fill(rgb: str) -> PatternFill:
     return PatternFill("solid", fgColor=rgb, bgColor=rgb)
 
 
-AMBER = _cf_fill("FFFDF0D5")
+# One colour, because there is one outcome: this row cannot be uploaded as it
+# stands. Missing and contradictory were amber and red until it became clear
+# that splitting them just nominates one as the ignorable kind.
 RED = _cf_fill("FFF9DEDA")
 
 
@@ -288,15 +322,19 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
     at = {header: get_column_letter(i) for i, (header, *_rest) in enumerate(columns, start=1)}
     row_span = f"$A2:${get_column_letter(len(columns))}2"
 
-    # Amber wherever a row has been started and something it cannot do without
-    # is still empty. Sorted so two builds of the same sheet come out identical.
+    # Red wherever a row has been started and something it cannot do without is
+    # still empty. Red rather than amber because the row cannot be used either
+    # way: "fill this in" and "this contradicts itself" are both things to fix
+    # before uploading, and two colours for one outcome only invites deciding
+    # that one of them is the ignorable kind.
+    # Sorted so two builds of the same sheet come out identical.
     for header in sorted(REQUIRED[ws.title]):
         column = at[header]
         ws.conditional_formatting.add(
             f"{column}2:{column}{last_row}",
             FormulaRule(
                 formula=[f'AND(COUNTA({row_span})>0,{column}2="")'],
-                fill=AMBER, stopIfTrue=False,
+                fill=RED, stopIfTrue=False,
             ),
         )
 
@@ -371,6 +409,20 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
                 ),
             )
 
+    # The mirror of the ignored map. A buy_x_get_y with no quantities, or a tier
+    # with no threshold, described nothing at all and the sheet said nothing
+    # about it — only fields that should have been EMPTY were ever flagged.
+    for kind_value, fields in KIND_NEEDS.items():
+        for field in fields:
+            column = at[field]
+            ws.conditional_formatting.add(
+                f"{column}2:{column}{last_row}",
+                FormulaRule(
+                    formula=[f'AND(${kind}2="{kind_value}",{column}2="")'],
+                    fill=RED, stopIfTrue=False,
+                ),
+            )
+
     # A deal price with no basis is the case-price bug, and this sheet is where
     # it actually happened: mbb_terms.unit_cost was declared to be per sellable
     # unit and had no way to say otherwise, so pack prices went in as unit
@@ -415,9 +467,10 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
     line("a dash  -", "Clears the value.")
     line()
     line("Solid header", "Required — a row without it cannot be created.  Pale header: optional.")
-    line("Amber cell", "Something required on this row is missing.")
-    line("Red cell", "The value is wrong — off its dropdown, text where a number belongs, a")
-    line("", "cost with no basis, or a deal field the kind it names ignores.")
+    line("Red cell", "Fix before uploading. Either something required is missing — including")
+    line("", "what a deal KIND needs, so a buy_x_get_y owes min_qty and free_qty — or")
+    line("", "the value is wrong: off its dropdown, text where a number belongs, a cost")
+    line("", "with no basis, or a field the kind it names ignores.")
     line("", "Exported rows can already be red: a unit recorded before the lists were")
     line("", "fixed is shown as what it is, not quietly kept.")
     line()
