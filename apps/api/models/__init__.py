@@ -20,6 +20,16 @@ from models.ingestion_run import (  # noqa: F401
     IngestionRunStatus,
 )
 from models.catalogue_submission import CatalogueSubmissionIdempotency  # noqa: F401
+from models.purchase_orders import (  # noqa: F401
+    PoReceipt,
+    PoReceiptItem,
+    PoRequestIdempotency,
+    PoSyncAttempt,
+    PoSyncWatermark,
+    PoValidationIssueRecord,
+    PurchaseOrder,
+    PurchaseOrderLine,
+)
 from models.catalogue_pipeline import (  # noqa: F401
     CatalogueMasteringCandidate,
     CatalogueExtractionAttempt,

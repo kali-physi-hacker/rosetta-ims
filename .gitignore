@@ -36,3 +36,9 @@ apps/api/.golden-reports/
 
 # 2.5MB debug dump from a catalogue run — an artefact, not source.
 sample.json
+
+# HAR captures record live session cookies, vetter-token and login credentials — never commit
+*.har
+
+# Daysmart proprietary frontend source saved from DevTools — read locally, never commit
+Sources/

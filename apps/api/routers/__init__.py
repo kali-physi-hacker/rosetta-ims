@@ -22,6 +22,9 @@ from . import (
     ops_db,
     pricing,
     products,
+    purchase_order_lines,
+    purchase_order_receipts,
+    purchase_orders,
     sku,
     stock,
     suppliers,
@@ -39,6 +42,9 @@ def include_routers(target: FastAPI, *, include_in_schema: bool = True) -> None:
     target.include_router(suppliers.router, include_in_schema=include_in_schema)
     target.include_router(sku.router, include_in_schema=include_in_schema)
     target.include_router(catalogue_ingestions.router, include_in_schema=include_in_schema)
+    target.include_router(purchase_orders.router, include_in_schema=include_in_schema)
+    target.include_router(purchase_order_lines.router, include_in_schema=include_in_schema)
+    target.include_router(purchase_order_receipts.router, include_in_schema=include_in_schema)
     target.include_router(ops_db.router, include_in_schema=include_in_schema)
     target.include_router(stock.router, include_in_schema=include_in_schema)
     target.include_router(sync.router, include_in_schema=include_in_schema)

@@ -1,0 +1,154 @@
+{
+  "response": {
+    "resources": {
+      "id": 3937545,
+      "item_id": "DIT-ed47392c-6e6",
+      "ndc_code": "2345676",
+      "purchase_order_item_id": 3980834,
+      "purchase_order_id": 795607,
+      "quantity_received": 1,
+      "amount": 1,
+      "quantity_in_stock": 1,
+      "in_stock_uom_id": 22,
+      "shipping": null,
+      "tax": 2,
+      "manufacturer": "none",
+      "lot_number": "3",
+      "expiration_date": 1790179200,
+      "quantity_rejected": 0,
+      "reject_type_id": 0,
+      "reject_action": 0,
+      "reject_notes": null,
+      "status": 0,
+      "is_active": true,
+      "purchase_order_receipt_id": 829054,
+      "purchase_id": null,
+      "business_id": "9be52b5b-092d-45",
+      "create_by": "385eaec8-2ba3-4e",
+      "create_at": {
+        "date": "2026-09-02 08:49:49.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "update_by": "385eaec8-2ba3-4e",
+      "update_at": {
+        "date": "2026-09-02 08:52:30.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "purchase_order_item": {
+        "id": 3980834,
+        "item_id": "DIT-ed47392c-6e6",
+        "master_item_id": null,
+        "source_catalog": null,
+        "source_product_id": "",
+        "catalog_basket_guid": null,
+        "unit_quantity": 0,
+        "quantity_ordered": 1,
+        "quantity_received": 0,
+        "unit": 0,
+        "price": 1,
+        "line_total": 1,
+        "notes": "Test",
+        "container_type_id": null,
+        "catalog_unit": null,
+        "back_ordered": 0,
+        "is_active": true,
+        "purchase_order_id": 795607,
+        "business_id": "9be52b5b-092d-45",
+        "create_by": "385eaec8-2ba3-4e",
+        "create_at": {
+          "date": "2026-09-01 20:58:29.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": "385eaec8-2ba3-4e",
+        "update_at": {
+          "date": "2026-09-01 20:58:52.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "item_name": "10009870 - Hills F9 c/d 6kg"
+      },
+      "purchase": null,
+      "purchase_order_receipt": {
+        "id": 829054,
+        "index": 495,
+        "status": 0,
+        "date": {
+          "date": "2026-08-16 16:00:00.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "888046260817",
+        "amount": 1,
+        "tax": 2,
+        "tax_percentage": null,
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": null,
+        "supplier_id": "3cd1ace0-ddd6-4a",
+        "business_id": "9be52b5b-092d-45",
+        "post_by": null,
+        "post_at": null,
+        "create_by": "385eaec8-2ba3-4e",
+        "create_at": {
+          "date": "2026-09-02 08:49:49.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": "385eaec8-2ba3-4e",
+        "update_at": {
+          "date": "2026-09-02 08:52:30.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "receipt_items": [
+          {
+            "id": 3937545,
+            "item_id": "DIT-ed47392c-6e6",
+            "ndc_code": "2345676",
+            "purchase_order_item_id": 3980834,
+            "purchase_order_id": 795607,
+            "quantity_received": 1,
+            "amount": 1,
+            "quantity_in_stock": 1,
+            "in_stock_uom_id": 22,
+            "shipping": null,
+            "tax": "2.00",
+            "manufacturer": "none",
+            "lot_number": "3",
+            "expiration_date": 1790179200,
+            "quantity_rejected": 0,
+            "reject_type_id": 0,
+            "reject_action": 0,
+            "reject_notes": null,
+            "status": 0,
+            "is_active": true,
+            "purchase_order_receipt_id": 829054,
+            "purchase_id": null,
+            "business_id": "9be52b5b-092d-45",
+            "create_by": "385eaec8-2ba3-4e",
+            "create_at": {
+              "date": "2026-09-02 08:49:49.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "update_by": "385eaec8-2ba3-4e",
+            "update_at": {
+              "date": "2026-09-02 08:52:30.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            }
+          }
+        ]
+      }
+    },
+    "message": {
+      "code": 200
+    }
+  }
+}

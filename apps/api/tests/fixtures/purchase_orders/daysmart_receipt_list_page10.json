@@ -1,0 +1,734 @@
+{
+  "response": {
+    "meta": {
+      "total": 467,
+      "perPage": 50,
+      "currentPage": 10,
+      "lastPage": 10,
+      "nextPageUrl": "https://vettersoftware.com/barramundi/receipt?status=all&page=11",
+      "prevPageUrl": "https://vettersoftware.com/barramundi/receipt?status=all&page=9",
+      "from": 1,
+      "to": 50,
+      "count": 0
+    },
+    "resources": [
+      {
+        "id": 615165,
+        "index": 23,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-27 05:37:57.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "20250800186",
+        "amount": "720.00",
+        "tax": "",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 592098,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "57eb62f4-8122-4c",
+        "post_at": {
+          "date": "2025-08-27 05:39:04.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "57eb62f4-8122-4c",
+        "create_at": "2025-08-27T13:38:57+08:00",
+        "update_by": "57eb62f4-8122-4c",
+        "update_at": "2025-08-27T13:39:04+08:00",
+        "name": "Receipt #23",
+        "item_count": 1,
+        "total_amount": 720,
+        "supplier": {
+          "id": "ae560f3b-daaf-43",
+          "encoded_id": "dU9BWGZOWE5tK3RpdjBmMFl4SENGeVZBNko2SVBiRUl3d0FFUnhsc084ST06Ov4yHhCDm90czBbiOnf_CZ4",
+          "name": "Wings Pharmaceutical Limited"
+        }
+      },
+      {
+        "id": 614329,
+        "index": 21,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-26 06:42:14.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "",
+        "amount": "6274.00",
+        "tax": "",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 592078,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-26 06:43:13.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-26T14:42:28+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-26T14:43:13+08:00",
+        "name": "Receipt #21",
+        "item_count": 4,
+        "total_amount": 6274,
+        "supplier": {
+          "id": "fbae04a9-0925-48",
+          "encoded_id": "NlZDZ1VlL090OGJ5STd6b0JXcGwyMjF4bmxUZGRwRGpXOWNILzg3S2V3ST06OtQYQtya-WP_JSSzrFc9gGM",
+          "name": "Asia Vet Medical Limited"
+        }
+      },
+      {
+        "id": 614328,
+        "index": 20,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-26 06:30:47.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "202550434, 202550367",
+        "amount": "6606.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 592090,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-26 06:40:57.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-26T14:31:10+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-26T14:40:57+08:00",
+        "name": "Receipt #20",
+        "item_count": 7,
+        "total_amount": 6606,
+        "supplier": {
+          "id": "3cd1ace0-ddd6-4a",
+          "encoded_id": "U0FjbWV6bHpOWU5MdjUyWmtXMVZFN3lwVlhaeHo1WTNRVnRsZll5VStWMD06OtpAk-wxWJtMfF8c_AjUrms",
+          "name": "Alfamedic"
+        }
+      },
+      {
+        "id": 614327,
+        "index": 19,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-26 06:22:34.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "888046 250825",
+        "amount": "6400.00",
+        "tax": "",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 592092,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-26 06:22:58.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-26T14:22:54+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-26T14:22:58+08:00",
+        "name": "Receipt #19",
+        "item_count": 2,
+        "total_amount": 6400,
+        "supplier": {
+          "id": "c0e4123c-ae98-48",
+          "encoded_id": "WWJvUVBVUU5kR1RiUzJNR0hUbXJNbko4NU9sQTNOemJMMjQvc1h6ZEhtST06OsUFxc1GHBtONiCzZoGQPTg",
+          "name": "Queen's Pharma Limited"
+        }
+      },
+      {
+        "id": 614326,
+        "index": 18,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-26 06:19:57.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "IVG00100037",
+        "amount": "4600.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 592077,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-26 06:22:07.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-26T14:20:14+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-26T14:22:07+08:00",
+        "name": "Receipt #18",
+        "item_count": 2,
+        "total_amount": 4600,
+        "supplier": {
+          "id": "2fc51f32-7cb0-48",
+          "encoded_id": "R0t1NG9tZG80SU00aVBvT1N6ekI4OVFhdURYdzc1MHdmQXZ5SXoyTEVZQT06Ov2ffvf0O3Dd0SkmBbiwwB8",
+          "name": "C.Vetapet & Company"
+        }
+      },
+      {
+        "id": 614319,
+        "index": 17,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-26 03:02:54.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "7200036403",
+        "amount": "6073.30",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 591538,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "72e664fb-098b-47",
+        "post_at": {
+          "date": "2025-08-26 03:04:27.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "72e664fb-098b-47",
+        "create_at": "2025-08-26T11:03:09+08:00",
+        "update_by": "ae648b8b-decf-49",
+        "update_at": "2025-11-10T01:25:18+08:00",
+        "name": "Receipt #17",
+        "item_count": 10,
+        "total_amount": 6073.3,
+        "supplier": {
+          "id": "2f38fcdb-31d1-49",
+          "encoded_id": "dXhJQlA3c25zRmJLdUtRY2paRUFOa3NPZHRCWlJBWWx0bm1aQW0yTHFtYz06OtK3OoSMHRAz8tmEmlg7MDw",
+          "name": "Hill's"
+        }
+      },
+      {
+        "id": 613806,
+        "index": 16,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-25 03:28:47.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "SIP2528607",
+        "amount": "3901.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 591540,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-25 03:29:53.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-25T11:29:11+08:00",
+        "update_by": "ae648b8b-decf-49",
+        "update_at": "2025-11-03T10:32:10+08:00",
+        "name": "Receipt #16",
+        "item_count": 10,
+        "total_amount": 3901,
+        "supplier": {
+          "id": "e2cd091e-6b37-4e",
+          "encoded_id": "RlhaUlZ0Zk0zRDdZdSt0VUNudHpCNnpQWTRkUDJIMGRKNk8rNlFRdFJhND06OsFtj0o0nbsLGij135sTt7M",
+          "name": "Royal Canin Hong Kong Limited"
+        }
+      },
+      {
+        "id": 612989,
+        "index": 15,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-22 08:55:50.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "201448",
+        "amount": "1410.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 590992,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-22 08:56:08.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-22T16:56:03+08:00",
+        "update_by": "4fae2b27-bf66-47",
+        "update_at": "2025-11-21T17:47:56+08:00",
+        "name": "Receipt #15",
+        "item_count": 2,
+        "total_amount": 1410,
+        "supplier": {
+          "id": "fbae04a9-0925-48",
+          "encoded_id": "T24zdTVVK3JRclBPYkJTVG1tZGlMYUU4cTFlYWtjL1VPblZpMGpmaENPST06OqaQ9EYR3i7q9biPQLK64p4",
+          "name": "Asia Vet Medical Limited"
+        }
+      },
+      {
+        "id": 612983,
+        "index": 14,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-22 06:22:34.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "7200036236",
+        "amount": "3234.50",
+        "tax": "",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 588459,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-22 06:23:10.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-22T14:22:55+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-22T14:23:10+08:00",
+        "name": "Receipt #14",
+        "item_count": 5,
+        "total_amount": 3234.5,
+        "supplier": {
+          "id": "2f38fcdb-31d1-49",
+          "encoded_id": "b0FvN1BpWHBEbU5MWTduR2JhTTZIZ0xVK0s4c2xFMWpGOFdtaTZQYWlwND06OlUxw2Gpwafbu0xCcPELxq4",
+          "name": "Hill's"
+        }
+      },
+      {
+        "id": 612982,
+        "index": 13,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-22 05:53:02.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "202550095, V251284",
+        "amount": "4515.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 590330,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-22 05:57:51.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-22T13:57:01+08:00",
+        "update_by": "4fae2b27-bf66-47",
+        "update_at": "2025-11-20T15:02:45+08:00",
+        "name": "Receipt #13",
+        "item_count": 4,
+        "total_amount": 4515,
+        "supplier": {
+          "id": "3cd1ace0-ddd6-4a",
+          "encoded_id": "ZkN1eGRlcGFhaHBwVGYzcXZEN1RXN29ya2NESTZPdklKb1lzSFFvc21NUT06Op87_dAyE2cV0lOOGKEV7Qs",
+          "name": "Alfamedic"
+        }
+      },
+      {
+        "id": 612240,
+        "index": 11,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-21 01:29:52.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "1156933117",
+        "amount": "1800.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 590339,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-21 01:30:17.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-21T09:30:11+08:00",
+        "update_by": "4fae2b27-bf66-47",
+        "update_at": "2025-11-20T11:51:51+08:00",
+        "name": "Receipt #11",
+        "item_count": 1,
+        "total_amount": 1800,
+        "supplier": {
+          "id": "266e24ff-ccc2-49",
+          "encoded_id": "OUNseGxTWFMwcWxYY3IraTRBeW9ySjlydk9EY2hlSFdtc3hyUEdDZ3p1Yz06OmrNyjdxts0ykvCiL_fdDt8",
+          "name": "MSD"
+        }
+      },
+      {
+        "id": 610469,
+        "index": 9,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-19 06:39:15.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "SIP2528017",
+        "amount": "5118.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 588460,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-19 06:39:54.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-19T14:39:49+08:00",
+        "update_by": "ae648b8b-decf-49",
+        "update_at": "2025-11-03T14:41:03+08:00",
+        "name": "Receipt #9",
+        "item_count": 12,
+        "total_amount": 5118,
+        "supplier": {
+          "id": "e2cd091e-6b37-4e",
+          "encoded_id": "VGI3UXVWMU1vVkVNNVptUzFaUzdGZjFaVlhMaHFXS3E1dyt0ZUhIWkZSYz06OjJ2JTW6SA32H9_yTUwoPbM",
+          "name": "Royal Canin Hong Kong Limited"
+        }
+      },
+      {
+        "id": 610468,
+        "index": 8,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-19 06:33:31.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "VSRx-31688",
+        "amount": "660.00",
+        "tax": "",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 587922,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-19 06:34:53.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-19T14:33:50+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-19T14:34:53+08:00",
+        "name": "Receipt #8",
+        "item_count": 1,
+        "total_amount": 660,
+        "supplier": {
+          "id": "147d2438-3e97-4d",
+          "encoded_id": "RDg5SUUvSUZmYzJvOUtTaVR1ZzRWZlpjZEtVdDJUVmVDZytmeGhMancxcz06Oo7Q6xevK9kXGR9iuUJ9AB0",
+          "name": "Veterinary Specialty Pharmacy"
+        }
+      },
+      {
+        "id": 610463,
+        "index": 7,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-19 05:15:43.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "202549801, 202549800",
+        "amount": "8082.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 588453,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-19 05:25:02.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-19T13:24:13+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-19T16:28:00+08:00",
+        "name": "Receipt #7",
+        "item_count": 5,
+        "total_amount": 8082,
+        "supplier": {
+          "id": "3cd1ace0-ddd6-4a",
+          "encoded_id": "bDVlaFVlVXEyQS9PUnB4TTBFbnY1TVRvSzJkdm91NGhObzdVcDI5Q1hWWT06OkHZVBHqyTXVTYpd6c8Z1lc",
+          "name": "Alfamedic"
+        }
+      },
+      {
+        "id": 610462,
+        "index": 6,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-19 05:14:14.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "201261",
+        "amount": "5960.00",
+        "tax": "",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 588452,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-19 05:14:42.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-19T13:14:29+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-19T13:14:42+08:00",
+        "name": "Receipt #6",
+        "item_count": 4,
+        "total_amount": 5960,
+        "supplier": {
+          "id": "fbae04a9-0925-48",
+          "encoded_id": "KzdsaVpZU0NQb2h3MkJTMUgra0ZDWjF4NUdGSUQ3M09aNUdVaTdRaWFBST06OvjiOjt9C8LXEiv4yLN_oeI",
+          "name": "Asia Vet Medical Limited"
+        }
+      },
+      {
+        "id": 610461,
+        "index": 5,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-19 05:12:04.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "IVG00099776",
+        "amount": "2628.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "0.00",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 1,
+        "purchase_order_id": 588454,
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-19 05:13:39.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-19T13:13:27+08:00",
+        "update_by": "4fae2b27-bf66-47",
+        "update_at": "2025-11-20T10:08:06+08:00",
+        "name": "Receipt #5",
+        "item_count": 1,
+        "total_amount": 2628,
+        "supplier": {
+          "id": "2fc51f32-7cb0-48",
+          "encoded_id": "dGZMQU1KVWRjMHlMN3kzWk10amlJQ1hKUlNPL1p5MTdMcXFPMHMycS9TVT06OpZbzBjqaDhJ1rgtxN6Olzg",
+          "name": "C.Vetapet & Company"
+        }
+      },
+      {
+        "id": 609016,
+        "index": 4,
+        "status": {
+          "id": 1,
+          "label": "Posted"
+        },
+        "date": {
+          "date": "2025-08-15 03:13:57.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "invoice_number": "91849400",
+        "amount": "2544.00",
+        "tax": "0.00",
+        "tax_percentage": "",
+        "tax_type": 0,
+        "shipping": "",
+        "notes": "",
+        "is_active": true,
+        "is_with_order": 0,
+        "purchase_order_id": "",
+        "business_id": "9be52b5b-092d-45",
+        "post_by": "865e4592-c51c-48",
+        "post_at": {
+          "date": "2025-08-15 03:31:04.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "create_by": "865e4592-c51c-48",
+        "create_at": "2025-08-15T11:14:12+08:00",
+        "update_by": "865e4592-c51c-48",
+        "update_at": "2025-08-15T11:31:04+08:00",
+        "name": "Receipt #4",
+        "item_count": 2,
+        "total_amount": 2544,
+        "supplier": {
+          "id": "b5e450f2-0afb-40",
+          "encoded_id": "MXNEQ043ZmZabCtWc21yeWFSUE84c1hYK0dhb3BvNkhSSS9DTnBVNTNYRT06OjDjbKs5nYBLWTV-Hp3Uyxs",
+          "name": "Mekim Limited"
+        }
+      }
+    ],
+    "message": {
+      "code": 200
+    }
+  }
+}

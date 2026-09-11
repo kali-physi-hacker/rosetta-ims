@@ -1,0 +1,53 @@
+{
+  "response": {
+    "resources": [
+      {
+        "id": 3906196,
+        "order_id": 785384,
+        "item_name": "Cytopoint Inj 10mg",
+        "post_to_id": "DIT-ebc6f1b0-6e6",
+        "post_to": "Cytopoint Inj 10mg",
+        "reference": "Order #505",
+        "quantity_received": 6,
+        "quantity_in_stock": 6,
+        "item_uom": "Vial(s)",
+        "stock_uom": "Vial(s)",
+        "cost": 1950,
+        "manufacturer": null,
+        "lot_number": null,
+        "expiration_date": 1817481600,
+        "tax": "0.00",
+        "ndc_code": null,
+        "item_encoded_id": "N1VNZFBka0ZYT3k4WVlJdjY2NzU3QT09OjpTJgOewoUd1URkEEw5Jyto",
+        "post_to_encoded_id": "bkQ2Y3NpQTdLcnF1Nkt2R1hwTk9DNG1MRWV1M203cGVveDFDWG9JSHR3UT06OvoWx0BJiAuEk55Gl22GJ-o",
+        "reference_encoded_id": "SHdGNFZxbEh6eEE3Z1l5dVRiUmx1dz09OjpouXuLiZCW0dwPWMcd46ZT",
+        "show_tax": true
+      },
+      {
+        "id": 3906197,
+        "order_id": 785384,
+        "item_name": "Cytopoint Inj 20mg",
+        "post_to_id": "DIT-ebcb19a7-6e6",
+        "post_to": "Cytopoint Inj 20mg",
+        "reference": "Order #505",
+        "quantity_received": 4,
+        "quantity_in_stock": 4,
+        "item_uom": "Vial(s)",
+        "stock_uom": "Vial(s)",
+        "cost": 1900,
+        "manufacturer": null,
+        "lot_number": null,
+        "expiration_date": 1800633600,
+        "tax": "0.00",
+        "ndc_code": null,
+        "item_encoded_id": "dGtxcFlDRHhUZG1HREVKUlpidmZ6QT09OjqOr9S4dSiE8jGf9oYGTcRE",
+        "post_to_encoded_id": "Rnc2ZzdXZE80dmQxdUVuclA2dDFrRmpMMkhyZ2hJbDJrN2p6TmdNZEN2QT06OjTkuJD9ZAxqhfnHA3nGogs",
+        "reference_encoded_id": "ZTBpaURRTVR5SEEvOXRyd3RRcW5Ndz09OjpY8kXw76_fJaQKq-nUy_1_",
+        "show_tax": true
+      }
+    ],
+    "message": {
+      "code": 200
+    }
+  }
+}

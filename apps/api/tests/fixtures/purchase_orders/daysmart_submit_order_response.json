@@ -1,0 +1,45 @@
+{
+  "response": {
+    "resources": {
+      "id": 795607,
+      "index": 529,
+      "supplier_id": "3cd1ace0-ddd6-4a",
+      "account_no": null,
+      "order_date": {
+        "date": "2026-09-01 11:39:00.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "ship_to_id": 861040,
+      "bill_to_id": 861040,
+      "sub_total": "1.00",
+      "shipping": "0.00",
+      "tax": "0.00",
+      "total": "1.00",
+      "payment_terms": "",
+      "notes": "TEST — Rosetta API trial, please ignore",
+      "status": 2,
+      "source_catalog": null,
+      "catalog_basket_guid": null,
+      "order_name": null,
+      "is_active": true,
+      "business_id": "9be52b5b-092d-45",
+      "create_by": "385eaec8-2ba3-4e",
+      "create_at": {
+        "date": "2026-09-01 20:52:47.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "update_by": "385eaec8-2ba3-4e",
+      "update_at": {
+        "date": "2026-09-01 21:00:03.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      }
+    },
+    "message": {
+      "code": 200,
+      "message": "Order submitted successfully."
+    }
+  }
+}

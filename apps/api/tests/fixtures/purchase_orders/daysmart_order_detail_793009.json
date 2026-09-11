@@ -1,0 +1,215 @@
+{
+  "response": {
+    "resources": {
+      "id": 793009,
+      "index": 524,
+      "supplier_id": "3cd1ace0-ddd6-4a",
+      "account_no": null,
+      "order_date": {
+        "date": "2026-08-28 07:59:37.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "ship_to_id": 861040,
+      "bill_to_id": 861040,
+      "sub_total": null,
+      "shipping": null,
+      "tax": null,
+      "total": "0.00",
+      "payment_terms": "",
+      "notes": null,
+      "status": 1,
+      "source_catalog": null,
+      "catalog_basket_guid": null,
+      "order_name": null,
+      "is_active": true,
+      "business_id": "9be52b5b-092d-45",
+      "create_by": "385eaec8-2ba3-4e",
+      "create_at": {
+        "date": "2026-08-28 08:00:14.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "update_by": "385eaec8-2ba3-4e",
+      "update_at": {
+        "date": "2026-08-28 08:00:14.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+      },
+      "status_label": "Open",
+      "mwi_order_name": null,
+      "ship_to_address": {
+        "id": 861040,
+        "name": "Ohana Animal Hospital",
+        "address": "2A Wing Hing Street",
+        "city": "Tin Hau",
+        "county": null,
+        "state": "HK",
+        "country": "",
+        "zipcode": "",
+        "phone": null,
+        "fax": null,
+        "is_primary": 1,
+        "is_active": true,
+        "is_show_address": 1,
+        "business_id": "9be52b5b-092d-45",
+        "create_by": null,
+        "create_at": {
+          "date": "2026-03-21 01:49:10.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": null,
+        "update_at": {
+          "date": "2026-03-21 01:51:20.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        }
+      },
+      "bill_to_address": {
+        "id": 861040,
+        "name": "Ohana Animal Hospital",
+        "address": "2A Wing Hing Street",
+        "city": "Tin Hau",
+        "county": null,
+        "state": "HK",
+        "country": "",
+        "zipcode": "",
+        "phone": null,
+        "fax": null,
+        "is_primary": 1,
+        "is_active": true,
+        "is_show_address": 1,
+        "business_id": "9be52b5b-092d-45",
+        "create_by": null,
+        "create_at": {
+          "date": "2026-03-21 01:49:10.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": null,
+        "update_at": {
+          "date": "2026-03-21 01:51:20.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        }
+      },
+      "supplier": {
+        "id": "3cd1ace0-ddd6-4a",
+        "name": "Alfamedic",
+        "address": "",
+        "city": null,
+        "state": null,
+        "zipcode": null,
+        "phone": "",
+        "phone_country_code": 852,
+        "fax": "",
+        "fax_country_code": 852,
+        "email": "",
+        "twitter": null,
+        "facebook": null,
+        "website": "",
+        "operation_hour": null,
+        "photo": "assets/img/no_avatar.png",
+        "isactive": true,
+        "create_by": "72e664fb-098b-47",
+        "create_at": {
+          "date": "2025-08-04 06:54:59.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "update_by": "72e664fb-098b-47",
+        "update_at": {
+          "date": "2025-08-04 06:54:59.000000",
+          "timezone_type": 3,
+          "timezone": "UTC"
+        },
+        "description": null,
+        "verified_email": null,
+        "county": null,
+        "country": null,
+        "account_no": "",
+        "relation_type": 2,
+        "instance_type": null,
+        "api_key": null,
+        "external_id": null,
+        "zuora_update_at": null,
+        "registration_number": null,
+        "legal_name": null,
+        "registration_type": null,
+        "registration_country": null,
+        "registration_authority": null,
+        "dea_number": null,
+        "pharmacy_permit_license_number": null,
+        "privacy_policy_url": null,
+        "terms_conditions_url": null,
+        "ci_contact_url": "/apps/index.php/contact/company/view/RnJCQkhaNnFDSHlxWGUzUEoxUXRLYU5ZQUN1VzFOUTBtMjJXN0VHbnFyST06Op-cJUWrNfJhpaEBB3oEqJo",
+        "encoded_id": "WWd4c3h5ZFhtZ1JFUTV1OE9Xc1ErTm42SE9RMFlHNnpTN3hTdUovOGg0Yz06OpxoS8-dlNWNS3leifn4mig",
+        "business_full_address": "",
+        "label": "Alfamedic",
+        "primary_business_address": [
+          {
+            "id": 794946,
+            "name": "Alfamedic",
+            "address": "",
+            "city": null,
+            "county": null,
+            "state": null,
+            "country": null,
+            "zipcode": null,
+            "phone": null,
+            "fax": "",
+            "is_primary": 1,
+            "is_active": true,
+            "is_show_address": 1,
+            "business_id": "3cd1ace0-ddd6-4a",
+            "create_by": null,
+            "create_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "update_by": null,
+            "update_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            }
+          },
+          {
+            "id": 794947,
+            "name": "Alfamedic",
+            "address": "",
+            "city": null,
+            "county": null,
+            "state": null,
+            "country": null,
+            "zipcode": null,
+            "phone": null,
+            "fax": "",
+            "is_primary": 1,
+            "is_active": true,
+            "is_show_address": 1,
+            "business_id": "3cd1ace0-ddd6-4a",
+            "create_by": null,
+            "create_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "update_by": null,
+            "update_at": {
+              "date": "2025-08-04 06:55:00.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            }
+          }
+        ]
+      },
+      "purchase_order_items": []
+    },
+    "message": {
+      "code": 200
+    }
+  }
+}
