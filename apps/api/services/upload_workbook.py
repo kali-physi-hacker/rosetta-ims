@@ -126,20 +126,35 @@ NUMERIC_COLUMNS = {
 #: kind IGNORES; this is the other half, and without it a buy_x_get_y with no
 #: quantities looked perfectly fine.
 #:
-#: Absent here means optional, and two absences are deliberate. min_spend on
-#: spend_discount: a flat "15% off" has no threshold, and 373 stored deals whose
-#: note reads like a percentage need exactly that shape to be re-entered
-#: correctly — requiring it would block the fix. min_qty on flat_unit_cost:
-#: that is the everyday-price case, which 822 of 935 stored flat terms are.
+#: A spend_discount owes its threshold: the kind is named for one, and a
+#: percentage with no spend to unlock it is a different deal wearing this kind's
+#: label. All 55 stored spend_discounts already carry a min_spend, so this
+#: formalises what the data already does — and it leaves the 373 hand-computed
+#: percentage deals without a home, which is a modelling question, not a
+#: validation one.
+#:
+#: min_qty on flat_unit_cost is left out pending that same question: requiring it
+#: would redden 822 of 935 stored flat terms AND make flat_unit_cost and tier
+#: identical in every field, which is the confusion rather than the fix.
 #:
 #: cost_per is not listed: it has its own rule, which fires only once a cost is
 #: present, and two rules for one mistake is one colour too many.
 KIND_NEEDS = {
     "buy_x_get_y":    ("min_qty", "free_qty"),
-    "spend_discount": ("discount_pct",),
+    "spend_discount": ("min_spend", "discount_pct"),
     "tier":           ("min_qty", "cost"),
     "flat_unit_cost": ("cost",),
 }
+
+#: Filling these in is what makes a NEW product usable. A blank sku mints one,
+#: and a product nobody can be bought from is a name with nothing behind it — no
+#: cost, so no margin, so nothing the rest of the system can answer about it.
+#:
+#: Deliberately absent: barcode, rrp, min_qty and multiple. They are supplier
+#: facts worth having and none of them stops a product working.
+CREATION_NEEDS = (
+    "buy.supplier", "buy.sku", "buy.pack", "buy.per_pack", "buy.cost", "buy.cost_per",
+)
 
 #: Identifiers, which must never be arithmetic. The longest barcode we hold is
 #: eighteen digits and 974 of them are twelve or more — read as a number, one
@@ -152,7 +167,7 @@ TEXT_COLUMNS = {"sku", "buy.sku", "buy.barcode"}
 # A column named in a set above but absent from the sheet would silently do
 # nothing, and the sets are the only place any of this is written down.
 _HEADERS = {h for h, *_ in PRODUCT_COLUMNS} | {h for h, *_ in DEAL_COLUMNS}
-_named = set().union(*REQUIRED.values()) | NUMERIC_COLUMNS | TEXT_COLUMNS
+_named = set().union(*REQUIRED.values()) | NUMERIC_COLUMNS | TEXT_COLUMNS | set(CREATION_NEEDS)
 assert _named <= _HEADERS, f"named columns that do not exist: {sorted(_named - _HEADERS)}"
 
 # A kind cannot both need a field and ignore it. Nothing would tell you which
@@ -390,6 +405,20 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
                 fill=RED, stopIfTrue=False,
             ),
         )
+
+        # A blank sku mints a new product, and a new product owes the terms it is
+        # bought on. An EXISTING row (sku filled) is exempt: editing a name should
+        # not demand that someone re-state the whole supplier block.
+        sku = at["sku"]
+        for header in CREATION_NEEDS:
+            column = at[header]
+            ws.conditional_formatting.add(
+                f"{column}2:{column}{last_row}",
+                FormulaRule(
+                    formula=[f'AND(${sku}2="",COUNTA({row_span})>0,{column}2="")'],
+                    fill=RED, stopIfTrue=False,
+                ),
+            )
 
         # A count of a unit nobody named. Note this is NOT "a price with no uom":
         # blank per_unit reads as 1, which makes a blank sell uom mean "priced per
