@@ -95,10 +95,13 @@ def _term_unit_cost(term, base_unit_cost: float | None) -> float | None:
     if k == 'buy_x_get_y':
         return engine.evaluate("mbb_buy_x_get_y",
                                {"base": base_unit_cost, "min_qty": term.min_qty, "free_qty": term.free_qty})
-    if k == 'spend_discount':
+    # Three ways to say "a percentage off", differing only in what unlocks it —
+    # nothing, a quantity, or a spend. The arithmetic is one formula.
+    if k in ('spend_discount', 'qty_discount', 'percentage_discount'):
         return engine.evaluate("mbb_spend_discount",
                                {"base": base_unit_cost, "discount_pct": term.discount_pct})
-    if k in ('tier', 'flat_unit_cost'):
+    # And three ways to state a price outright, differing the same way.
+    if k in ('tier', 'flat_unit_cost', 'spend_unit_price'):
         return _stated_per_unit(term)
     return None
 
@@ -195,8 +198,12 @@ def _cost_to_hit_mbb(term, base_unit_cost: float | None, achieved_unit_cost: flo
         return round(term.min_spend, 0)
     if term.kind == 'buy_x_get_y' and base_unit_cost and term.min_qty:
         return round(base_unit_cost * term.min_qty, 0)
-    if term.kind == 'spend_discount' and term.min_spend:
+    # Anything unlocked by spending: the threshold IS the outlay.
+    if term.kind in ('spend_discount', 'spend_unit_price') and term.min_spend:
         return round(term.min_spend, 0)
+    # A percentage with nothing to unlock it costs nothing to reach.
+    if term.kind == 'percentage_discount':
+        return None
     if term.min_qty and achieved_unit_cost:
         return round(achieved_unit_cost * term.min_qty, 0)
     return None

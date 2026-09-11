@@ -331,6 +331,20 @@ function DDField({ id, options, current, onPick, active, openMenu, setOpenMenu }
 // ── CSV export columns ───────────────────────────────────────────────────────
 // `default` = the columns the Export button has always written (stay on by default).
 // `extra`   = opt-in columns, off by default, chosen per-export via the column picker.
+// One label for every deal kind. Was a nested ternary covering three of them;
+// the four added since would all have fallen through to "Flat".
+function mbbLabel(t: { kind: string; min_qty?: number | null; free_qty?: number | null; min_spend?: number | null; discount_pct?: number | null }): string {
+  const pct = t.discount_pct != null ? `${(t.discount_pct * 100).toFixed(0)}%` : '?'
+  switch (t.kind) {
+    case 'buy_x_get_y':         return `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free`
+    case 'spend_discount':      return `Spend $${t.min_spend ?? '?'} → ${pct}`
+    case 'qty_discount':        return `${t.min_qty ?? '?'}+ units → ${pct}`
+    case 'percentage_discount': return `${pct} off, no minimum`
+    case 'spend_unit_price':    return `Spend $${t.min_spend ?? '?'} → fixed price`
+    default:                    return t.min_qty ? `${t.min_qty}+ units` : 'Flat'
+  }
+}
+
 const csvEsc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
 const csvHkd = (v: number | null | undefined) => (v != null ? v.toFixed(2) : '')
 const csvPct = (v: number | null | undefined) => (v != null ? `${(v * 100).toFixed(1)}%` : '')
@@ -1120,7 +1134,7 @@ function InventoryView() {
       <div className="pop-b">
         {terms.length === 0 && <div style={{ fontSize: '12px', color: '#8A93A2' }}>No MBB terms on record.</div>}
         {terms.map(t => <div className="mbb-row" key={t.id}>
-          <span className="mbb-k">{t.kind === 'buy_x_get_y' ? `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free` : t.kind === 'spend_discount' ? `Spend $${t.min_spend ?? '?'} → ${t.discount_pct != null ? (t.discount_pct * 100).toFixed(0) : '?'}%` : `${t.min_qty ? `${t.min_qty}+ units` : 'Flat'}`}</span>
+          <span className="mbb-k">{mbbLabel(t)}</span>
           <span className="mbb-v">{t.effective_unit_cost != null ? `${imsMoney(t.effective_unit_cost)}/${item.uom ?? 'unit'}` : '—'}</span>
         </div>)}
       </div>

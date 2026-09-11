@@ -1025,9 +1025,15 @@ function termDeal(t: AnyTerm, uom: string): string {
     if (t.benefit_type === 'percentage_discount') return t.discount_pct != null ? `${t.discount_pct}% off` : 'Discount'
     return t.condition_type === 'minimum_spend' ? 'Order-value price' : 'Volume price'
   }
+  const pct = t.discount_pct != null ? `${(t.discount_pct * 100).toFixed(0)}%` : null
   switch (t.kind) {
     case 'buy_x_get_y': return `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free`
-    case 'spend_discount': return t.discount_pct != null ? `${(t.discount_pct * 100).toFixed(0)}% off order` : 'Order discount'
+    case 'spend_discount': return pct ? `${pct} off order` : 'Order discount'
+    case 'qty_discount': return pct ? `${pct} off from ${t.min_qty ?? '?'}` : 'Volume discount'
+    case 'percentage_discount': return pct ? `${pct} off, no minimum` : 'Standing discount'
+    case 'spend_unit_price': return `Order-value ${uom} price`
+    case 'tier': return 'Volume price'
+    case 'flat_unit_cost': return `Everyday ${uom} price`
     default: return t.min_qty != null && t.min_qty > 1 ? 'Volume price' : `Everyday ${uom} price`
   }
 }
@@ -1407,14 +1413,24 @@ function AvailabilityDialog({ sku, link, onProduct, onClose }: { sku: string; li
 // calculation runs on. A deal's shape is fixed after creation (the API
 // PATCH can't clear fields across shapes); changing shape = replace.
 type DealShape = 'volume' | 'everyday' | 'freegoods' | 'discount'
+                | 'qtydiscount' | 'standing' | 'ordervalue'
 const SHAPES: { key: DealShape; kinds: string[]; name: string; desc: string; relative: boolean }[] = [
   { key: 'volume', kinds: ['tier'], name: 'Volume price', desc: 'Buying at least N drops the unit price', relative: false },
   { key: 'everyday', kinds: ['flat_unit_cost'], name: 'Everyday price', desc: 'A flat unit price, no minimum', relative: false },
   { key: 'freegoods', kinds: ['buy_x_get_y'], name: 'Free goods', desc: 'Buy N, get M free — derived from base cost', relative: true },
   { key: 'discount', kinds: ['spend_discount'], name: 'Order discount', desc: 'Spend HK$S → P% off — derived from base cost', relative: true },
+  { key: 'qtydiscount', kinds: ['qty_discount'], name: 'Volume discount', desc: 'Buying at least N → P% off — derived from base cost', relative: true },
+  { key: 'standing', kinds: ['percentage_discount'], name: 'Standing discount', desc: 'P% off with no minimum at all — derived from base cost', relative: true },
+  { key: 'ordervalue', kinds: ['spend_unit_price'], name: 'Order-value price', desc: 'Spending at least HK$S sets the unit price', relative: false },
 ]
 const shapeOfKind = (kind: string, minQty: number | null): DealShape =>
-  kind === 'buy_x_get_y' ? 'freegoods' : kind === 'spend_discount' ? 'discount'
+  kind === 'buy_x_get_y' ? 'freegoods'
+  : kind === 'spend_discount' ? 'discount'
+  : kind === 'qty_discount' ? 'qtydiscount'
+  : kind === 'percentage_discount' ? 'standing'
+  : kind === 'spend_unit_price' ? 'ordervalue'
+  : kind === 'tier' ? 'volume'
+  // A flat price carrying a threshold predates the volume kinds and reads as one.
   : kind === 'flat_unit_cost' && (minQty == null || minQty <= 1) ? 'everyday' : 'volume'
 
 function TermsBuilder({ sku, link, unitNow, upp, clinicNetAt, clinicLabel, floor, uom, packUnit, onProduct, onClose }: {

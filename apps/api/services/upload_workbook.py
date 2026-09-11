@@ -52,7 +52,11 @@ STORAGE = ["any", "clinic_only"]
 SPECIES = ["dog", "cat", "both", "other"]
 SEGMENTS = ["vet", "non_vet"]
 COST_PER = ["pack", "unit"]
-DEAL_KINDS = ["flat_unit_cost", "tier", "buy_x_get_y", "spend_discount"]
+DEAL_KINDS = [
+    "flat_unit_cost", "tier", "spend_unit_price",
+    "percentage_discount", "qty_discount", "spend_discount",
+    "buy_x_get_y",
+]
 CHANNELS = ["clinic", "shopify", "hktv"]
 
 # ── the columns ─────────────────────────────────────────────────────────────
@@ -140,10 +144,14 @@ NUMERIC_COLUMNS = {
 #: cost_per is not listed: it has its own rule, which fires only once a cost is
 #: present, and two rules for one mistake is one colour too many.
 KIND_NEEDS = {
-    "buy_x_get_y":    ("min_qty", "free_qty"),
-    "spend_discount": ("min_spend", "discount_pct"),
-    "tier":           ("min_qty", "cost"),
-    "flat_unit_cost": ("cost",),
+    # what unlocks it          what it gives
+    "flat_unit_cost":      ("cost",),
+    "tier":                ("min_qty", "cost"),
+    "spend_unit_price":    ("min_spend", "cost"),
+    "percentage_discount": ("discount_pct",),
+    "qty_discount":        ("min_qty", "discount_pct"),
+    "spend_discount":      ("min_spend", "discount_pct"),
+    "buy_x_get_y":         ("min_qty", "free_qty"),
 }
 
 #: Filling these in is what makes a NEW product usable. A blank sku mints one,
@@ -173,10 +181,13 @@ assert _named <= _HEADERS, f"named columns that do not exist: {sorted(_named - _
 # A kind cannot both need a field and ignore it. Nothing would tell you which
 # rule won; the sheet would simply contradict itself in two colours.
 _IGNORED_BY_KIND = {
-    "flat_unit_cost": {"min_spend", "free_qty", "discount_pct"},
-    "tier": {"min_spend", "free_qty", "discount_pct"},
-    "buy_x_get_y": {"min_spend", "discount_pct", "cost", "cost_per"},
-    "spend_discount": {"min_qty", "free_qty", "cost", "cost_per"},
+    "flat_unit_cost":      {"min_spend", "free_qty", "discount_pct"},
+    "tier":                {"min_spend", "free_qty", "discount_pct"},
+    "spend_unit_price":    {"min_qty", "free_qty", "discount_pct"},
+    "percentage_discount": {"min_qty", "min_spend", "free_qty", "cost", "cost_per"},
+    "qty_discount":        {"min_spend", "free_qty", "cost", "cost_per"},
+    "spend_discount":      {"min_qty", "free_qty", "cost", "cost_per"},
+    "buy_x_get_y":         {"min_spend", "discount_pct", "cost", "cost_per"},
 }
 for _kind, _needed in KIND_NEEDS.items():
     _clash = set(_needed) & _IGNORED_BY_KIND.get(_kind, set())
@@ -457,10 +468,7 @@ def _conditional_rules(ws, columns, ranges: dict[str, str], last_row: int, *, de
         # flat term with min_qty > 1 as a volume deal rather than an everyday
         # price. The two kinds differ in whether there is a ladder above them,
         # not in which fields apply.
-        "flat_unit_cost": ("min_spend", "free_qty", "discount_pct"),
-        "tier": ("min_spend", "free_qty", "discount_pct"),
-        "buy_x_get_y": ("min_spend", "discount_pct", "cost", "cost_per"),
-        "spend_discount": ("min_qty", "free_qty", "cost", "cost_per"),
+        k: tuple(sorted(v)) for k, v in _IGNORED_BY_KIND.items()
     }
     for kind_value, fields in ignored.items():
         for field in fields:

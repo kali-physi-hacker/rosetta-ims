@@ -260,6 +260,9 @@ const termLabel = (t: ReturnType<typeof bestTerm>, uom: string): string | null =
   if (!t) return null
   if (t.kind === 'buy_x_get_y') return `Buy ${t.min_qty ?? '?'} get ${t.free_qty ?? '?'} free`
   if (t.kind === 'spend_discount') return `Spend ${t.min_spend != null ? money(t.min_spend) : '?'} → ${t.discount_pct != null ? (t.discount_pct * 100).toFixed(0) : '?'}% off`
+  if (t.kind === 'qty_discount') return `${t.min_qty ?? '?'}+ → ${t.discount_pct != null ? (t.discount_pct * 100).toFixed(0) : '?'}% off`
+  if (t.kind === 'percentage_discount') return `${t.discount_pct != null ? (t.discount_pct * 100).toFixed(0) : '?'}% off, no minimum`
+  if (t.kind === 'spend_unit_price') return `Spend ${t.min_spend != null ? money(t.min_spend) : '?'} → fixed unit price`
   return t.min_qty && t.min_qty > 1 ? `${t.min_qty}+ ${plural(uom)}` : `Flat ${uom} price`
 }
 

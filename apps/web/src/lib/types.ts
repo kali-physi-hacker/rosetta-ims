@@ -23,7 +23,10 @@ export interface ChannelMarginRange {
 
 export interface MbbTerm {
   id: number
-  kind: 'buy_x_get_y' | 'spend_discount' | 'tier' | 'flat_unit_cost'
+  // condition x benefit: what unlocks the term, and what it gives.
+  kind: 'flat_unit_cost' | 'tier' | 'spend_unit_price'
+      | 'percentage_discount' | 'qty_discount' | 'spend_discount'
+      | 'buy_x_get_y'
   min_qty: number | null
   min_spend: number | null
   free_qty: number | null

@@ -1478,7 +1478,20 @@ class SupplierLink(BaseModel):
 
 
 # ── Relational MBB terms (0..N per supplier link) ───────────────────────────
-_MBB_KINDS = ("buy_x_get_y", "spend_discount", "tier", "flat_unit_cost")
+# Condition x benefit, spelled out as labels. What unlocks a term (nothing, a
+# quantity, a spend) and what it gives (a price, a percentage, free goods) were
+# collapsed into four names, so two real shapes had nowhere to go: a standing
+# "15% off this brand" with no minimum, and a percentage unlocked by quantity.
+# Both were being entered as flat_unit_cost with the price worked out by hand.
+_MBB_KINDS = (
+    "flat_unit_cost",      # nothing      -> a price
+    "tier",                # a quantity   -> a price
+    "spend_unit_price",    # a spend      -> a price
+    "percentage_discount",  # nothing     -> a percentage
+    "qty_discount",        # a quantity   -> a percentage
+    "spend_discount",      # a spend      -> a percentage
+    "buy_x_get_y",         # a quantity   -> free goods
+)
 
 
 class MbbTermBody(BaseModel):

@@ -143,3 +143,52 @@ def test_a_flat_percentage_discount_needs_no_spend_threshold():
                        created_at="2026-09-10T00:00:00+00:00")
     assert P._term_unit_cost(t, 30.0) == 25.5
     assert P._cost_to_hit_mbb(t, 30.0, 25.5) is None    # nothing to hit
+
+
+# ── the kinds added once the deal space was actually counted ────────────────
+# Four labels were being asked to carry seven shapes. What unlocks a term
+# (nothing / a quantity / a spend) and what it gives (a price / a percentage /
+# free goods) are independent, and three real combinations had nowhere to go:
+# 141 stored terms are a percentage with no minimum, 110 a percentage unlocked
+# by quantity, 50 a price unlocked by spend. All were entered as flat_unit_cost
+# with the number worked out by hand.
+
+
+def _term(kind, **kw):
+    return models.MbbTerm(kind=kind, created_at="2026-09-11T00:00:00+00:00", **kw)
+
+
+def test_a_percentage_needs_no_minimum():
+    """"15% off this brand" — 141 stored terms, none with a threshold."""
+    t = _term("percentage_discount", discount_pct=0.15)
+    assert P._term_unit_cost(t, 30.0) == 25.5
+    assert P._cost_to_hit_mbb(t, 30.0, 25.5) is None      # nothing to reach
+
+
+def test_a_percentage_can_be_unlocked_by_quantity():
+    t = _term("qty_discount", min_qty=12, discount_pct=0.10)
+    assert P._term_unit_cost(t, 30.0) == 27.0
+    # 12 units at the discounted price is what it takes to get there
+    assert P._cost_to_hit_mbb(t, 30.0, 27.0) == round(27.0 * 12, 0)
+
+
+def test_a_price_can_be_unlocked_by_spend():
+    """The pipeline already records this shape (minimum_spend x
+    discounted_unit_price); the hand-entered side had no name for it."""
+    t = _term("spend_unit_price", min_spend=5000, unit_cost=24.0)
+    assert P._term_unit_cost(t, 30.0) == 24.0
+    assert P._cost_to_hit_mbb(t, 30.0, 24.0) == 5000      # the threshold IS the outlay
+
+
+def test_a_spend_unlocked_price_honours_its_basis_too():
+    t = _term("spend_unit_price", min_spend=5000, unit_cost=130.0, cost_basis="pack")
+    t.product_supplier = models.ProductSupplier(
+        units_per_pack=60, updated_at="2026-09-11T00:00:00+00:00")
+    assert P._term_unit_cost(t, 30.0) == 130.0 / 60
+
+
+def test_the_older_kinds_are_unmoved():
+    """Adding names must not shift what the 1,401 stored terms already read as."""
+    assert P._term_unit_cost(_term("flat_unit_cost", unit_cost=9.0), 30.0) == 9.0
+    assert P._term_unit_cost(_term("tier", min_qty=12, unit_cost=8.0), 30.0) == 8.0
+    assert P._term_unit_cost(_term("spend_discount", min_spend=1000, discount_pct=0.1), 30.0) == 27.0
