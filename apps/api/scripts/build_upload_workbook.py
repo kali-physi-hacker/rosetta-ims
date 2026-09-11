@@ -55,7 +55,7 @@ def main() -> int:
     print(
         f"wrote {result['path']}  "
         f"{result['skus']} SKUs in {result['rows']} rows, {result['deals']} deals  "
-        f"dropdowns: {result['suppliers']} suppliers, {result['categories']} categories, "
+        f"dropdowns: {result['suppliers']} suppliers, {result['brands']} brands, {result['categories']} categories, "
         f"{result['uoms']} units"
     )
     return 0

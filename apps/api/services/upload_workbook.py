@@ -65,7 +65,6 @@ CHANNELS = ["clinic", "shopify", "hktv"]
 PRODUCT_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("sku",              None,          13, "Blank mints a new SKU. Filled updates that one."),
     ("name",             None,          34, "Required to create. Our name, not the supplier's."),
-    ("brand",            None,          18, ""),
     ("category",         "categories",  16, "Required to create."),
     ("subcategory",      None,          18, "Functional class — antibiotic, dental, joint."),
     ("species",          "species",     10, ""),
@@ -77,6 +76,7 @@ PRODUCT_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("weight_unit",      "weight_units", 12, "Which unit that number is in. Blank means grams."),
     ("notes",            None,          28, ""),
     ("buy.supplier",     "suppliers",   24, "Must already exist. Unknown names are reported, never created."),
+    ("buy.brand",        "brands",      22, "Whose brand it is. Supplier information, not part of the product's identity."),
     ("buy.sku",          None,          16, "Their code for it."),
     ("buy.barcode",      None,          16, ""),
     ("buy.pack",         "uoms",        13, "What one purchase unit is called — case, carton, box."),
@@ -267,7 +267,7 @@ def _write_header(ws, columns, required: set[str]) -> None:
     ws.freeze_panes = "C2"
 
 
-def _lists_sheet(wb, suppliers: list[str], categories: list[str]):
+def _lists_sheet(wb, suppliers: list[str], categories: list[str], brands: list[str]):
     """Every dropdown's options, one column each, on a hidden sheet.
 
     Hidden rather than absent because Sheets and Excel both need the range to
@@ -285,6 +285,7 @@ def _lists_sheet(wb, suppliers: list[str], categories: list[str]):
         "kinds": DEAL_KINDS,
         "categories": categories,
         "suppliers": suppliers,
+        "brands": brands,
     }
     ranges: dict[str, str] = {}
     for index, (name, values) in enumerate(named.items(), start=1):
@@ -632,9 +633,14 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
             base = {
                 "sku": product.sku_code,
                 "name": product.name,
-                "brand": product.brand,
                 "category": product.category,
                 "subcategory": product.subcategory,
+                # Grouped with the buy block because that is where it reads —
+                # a brand is whose line the supplier carries — but stored on the
+                # PRODUCT, so it belongs to every row of that sku including the
+                # 6,366 that have no supplier link at all. Setting it inside the
+                # link branch dropped it for exactly those.
+                "buy.brand": product.brand,
                 "species": product.species,
                 "segment": product.segment,
                 "unit": product.uom,
@@ -727,7 +733,20 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
 
 
 def _reference_values():
-    """Suppliers and categories, as the database has them."""
+    """Suppliers, categories and brands, as the database has them.
+
+    Brands need folding before they can be offered. products.brand is free text
+    and 511 spellings collapse to 463 once case and punctuation are ignored —
+    `ZIGNATURE` beside `Zignature`, `almo nature` beside `Almo Nature`. The most
+    used spelling of each wins, so the list is what people already write rather
+    than a ruling from outside. supplier_brands adds 117 more that no product
+    carries yet, which is exactly what a NEW product needs to be able to pick.
+    """
+    import re
+    from collections import defaultdict
+
+    from sqlalchemy import func
+
     import database
     import models
 
@@ -742,7 +761,17 @@ def _reference_values():
             if (c or "").strip()
         }
     )
-    return suppliers, categories
+    fold = lambda b: re.sub(r"[^a-z0-9]", "", b.lower())   # noqa: E731
+    groups: dict[str, list[tuple[int, str]]] = defaultdict(list)
+    for name, uses in db.query(models.ProductVariant.brand, func.count()).group_by(
+            models.ProductVariant.brand).all():
+        if (name or "").strip():
+            groups[fold(name)].append((uses, name.strip()))
+    for (name,) in db.query(models.SupplierBrand.brand_name).distinct():
+        if (name or "").strip():
+            groups[fold(name)].append((0, name.strip()))
+    brands = sorted({max(v)[1] for v in groups.values()}, key=str.lower)
+    return suppliers, categories, brands
 
 
 # ── build ───────────────────────────────────────────────────────────────────
@@ -750,7 +779,7 @@ def _reference_values():
 def build(destination, *, with_data: bool, limit: int | None = None,
           skus: list[str] | None = None) -> dict:
     """Write the workbook to a path or a file-like object."""
-    suppliers, categories = _reference_values()
+    suppliers, categories, brands = _reference_values()
     product_rows, deal_rows = _export_rows(limit, skus) if with_data else ([], [])
 
     wb = Workbook()
@@ -758,7 +787,7 @@ def build(destination, *, with_data: bool, limit: int | None = None,
 
     products = wb.create_sheet("products")
     deals = wb.create_sheet("deals")
-    ranges = _lists_sheet(wb, suppliers, categories)
+    ranges = _lists_sheet(wb, suppliers, categories, brands)
 
     for ws, columns, rows in ((products, PRODUCT_COLUMNS, product_rows), (deals, DEAL_COLUMNS, deal_rows)):
         _write_header(ws, columns, REQUIRED[ws.title])
@@ -790,6 +819,7 @@ def build(destination, *, with_data: bool, limit: int | None = None,
         "deals": len(deal_rows),
         "suppliers": len(suppliers),
         "categories": len(categories),
+        "brands": len(brands),
         "uoms": len(CANONICAL_UOMS),
     }
 
