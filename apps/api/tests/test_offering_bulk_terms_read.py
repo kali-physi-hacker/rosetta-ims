@@ -60,9 +60,13 @@ def _seed(db: Session, *, unit_price: float = 13.1, packaging: tuple[str, str, f
             sellable_unit_uom_code=sellable, sellable_units_per_purchase_unit=per_purchase,
             created_at=NOW,
         ))
+    _word = packaging[0] if packaging else "UNIT"
     db.add(models.CatalogueSupplierPrice(
         supplier_product_id=offering.id, amount=unit_price, currency="HKD",
-        price_basis_uom_code=(packaging[0] if packaging else "UNIT"),
+        price_basis_uom_code=_word,
+        # As the startup backfill would state it: these stand in for rows the
+        # pipeline wrote, which reach the reader with their basis resolved.
+        basis=offering_costs._basis_from_word(_word, packaging),
         is_current=1, created_at=NOW,
     ))
     db.commit()

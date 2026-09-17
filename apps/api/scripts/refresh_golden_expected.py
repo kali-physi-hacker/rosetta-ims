@@ -30,6 +30,7 @@ import json
 import os
 import sys
 import tempfile
+from services import uom_vocabulary
 import urllib.request
 from pathlib import Path
 
@@ -42,7 +43,7 @@ SHEET_URL = (
     "https://docs.google.com/spreadsheets/d/1Rly4jB0HpBtL6tCNwzXsMSqNfoL_cV3cSp4vDL8hkWI"
     "/export?format=csv&gid=1535624888"
 )
-_NA_MARKERS = {"N/A", "#N/A", "NA", "-"}
+_NA_MARKERS = uom_vocabulary.PLACEHOLDERS
 
 
 def _load_tab(source: str | None) -> list[dict[str, str]]:
@@ -63,7 +64,7 @@ def _load_tab(source: str | None) -> list[dict[str, str]]:
 
 def _project(cell: str | None) -> str:
     text = (cell or "").strip()
-    return "" if text.upper() in _NA_MARKERS else text
+    return "" if uom_vocabulary.is_placeholder(text) else text
 
 
 def refresh(source: str | None, only: str | None) -> int:

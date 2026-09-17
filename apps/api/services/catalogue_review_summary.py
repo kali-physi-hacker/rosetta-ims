@@ -19,6 +19,7 @@ import re
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
+from services import uom_vocabulary
 
 import models
 from services import variant_similarity
@@ -218,13 +219,13 @@ def run_receipt(db: Session, run_uuid: UUID) -> dict[str, Any]:
     changes: list[dict[str, Any]] = []
     for price, offering, variant, supplier in rows:
         pack = packaging.get(offering.id)
-        new_unit = offering_costs._per_sell_unit(float(price.amount), price.price_basis_uom_code, pack)
+        new_unit = offering_costs._per_sell_unit(float(price.amount), price.basis, pack)
         prev = next(
             (p for p in reversed(history[offering.id]) if p.id < price.id),
             None,
         )
         old_unit = (
-            offering_costs._per_sell_unit(float(prev.amount), prev.price_basis_uom_code, pack)
+            offering_costs._per_sell_unit(float(prev.amount), prev.basis, pack)
             if prev is not None else None
         )
         delta_pct = (
@@ -569,7 +570,7 @@ def _current_offer_prices(db: Session, offer_keys: list[str]) -> dict[str, float
 # The catalogue's uom column is dirty: alongside real words (Can(s), Bag(s),
 # PCS) it holds "#N/A" and empty strings from years of sheet imports. A price
 # reads better with no unit at all than with "/ #N/A" after it.
-_JUNK_UOM = {"", "-", "n/a", "#n/a", "na", "null", "none"}
+_JUNK_UOM = uom_vocabulary.PLACEHOLDERS
 
 
 def _unit_label(raw: str | None) -> str | None:

@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse, JSONResponse, ORJSONResponse, R
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
+from services import uom_vocabulary
 from pydantic import BaseModel, Field
 from datetime import datetime
 
@@ -821,6 +822,10 @@ def list_supplier_links(sku: str, db: Session = Depends(database.get_db),
             "minimum_order_source": s.minimum_order_source, "pricing_note": s.pricing_note,
             "cost_source": s.cost_source, "cost_source_ref": s.cost_source_ref, "pack_source": s.pack_source,
             "cost_updated_at": s.cost_updated_at, "uom_verified_at": s.uom_verified_at,
+            "brand": s.brand,
+            "manual_review_status": s.manual_review_status,
+            "manual_reviewed_at": s.manual_reviewed_at,
+            "manual_reviewed_by": s.manual_reviewed_by,
             "is_primary": bool(s.is_primary), "is_preferred": s.id == pref_id, "stock_status": s.stock_status,
             "live_publication": live_publication.get(s.id),
         } for s in sups],
@@ -1324,6 +1329,62 @@ def download_upload_workbook(
     )
 
 
+@router.post("/import-workbook")
+async def import_workbook_products(
+    request: Request,
+    file: UploadFile = File(...),
+    dry_run: bool = Query(False),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(require_capability("product_edit")),
+):
+    """Apply the upload workbook's PRODUCTS sheet — creating and updating.
+
+    Takes the .xlsx itself or a CSV of that one sheet, because Google Sheets
+    exports one tab at a time and the readme tells people so.
+
+    Separate from the deals upload on purpose. A product row describes
+    something we sell; a deal row is a commercial term, and nobody should have
+    to accept one to record the other.
+    """
+    from services import workbook_import
+
+    content = await file.read()
+    try:
+        rows = workbook_import.read_rows(content, file.filename or "", "products")
+    except workbook_import.WorkbookFormatError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    result = workbook_import.import_products(
+        db, rows, actor=current_user, dry_run=dry_run, request=request)
+    _VERIFIED_CACHE["skus"] = None
+    return ORJSONResponse(result)
+
+
+@router.post("/import-deals")
+async def import_workbook_deals(
+    request: Request,
+    file: UploadFile = File(...),
+    dry_run: bool = Query(False),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(require_capability("product_edit")),
+):
+    """Add the upload workbook's DEALS sheet.
+
+    Add-only: this never edits a recorded term and never removes one. A row
+    that repeats a term we hold is reported as a duplicate, and one that
+    contradicts a term we hold is refused — so re-uploading a file changes
+    nothing, and correcting a live deal stays a decision made in Rosetta.
+    """
+    from services import workbook_import
+
+    content = await file.read()
+    try:
+        rows = workbook_import.read_rows(content, file.filename or "", "deals")
+    except workbook_import.WorkbookFormatError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return ORJSONResponse(workbook_import.import_deals(
+        db, rows, actor=current_user, dry_run=dry_run, request=request))
+
+
 @router.post("/import-csv")
 async def import_products_csv(
     request: Request,
@@ -1440,7 +1501,7 @@ def _return_product(db: Session, sku: str) -> dict:
 
 # Literal placeholders that must never be persisted as real values (Rule F) — spreadsheet/CSV
 # exports leak these into string cells. Normalise them to None on write.
-_PLACEHOLDERS = {"", "#n/a", "n/a", "na", "nan", "none", "null", "-", "—"}
+_PLACEHOLDERS = uom_vocabulary.PLACEHOLDERS
 
 
 def _clean_str(v):
@@ -1777,6 +1838,49 @@ def set_supplier_stock(sku: str, ps_id: int, body: SupplierStockBody,
 
     _audit_product(db, current_user, "product.supplier_stock", product,
                    supplier_id=link.supplier_id, status=new)
+    product.updated_at = now
+    db.commit()
+    return _return_product(db, sku)
+
+
+class OpsReviewBody(BaseModel):
+    """`reviewed=False` withdraws the mark, which is why this is a status and
+    not a flag: never reviewed and withdrawn are different facts."""
+
+    reviewed: bool = True
+    note: Optional[str] = None
+
+
+@router.patch("/{sku:path}/suppliers/{ps_id}/ops-review")
+def set_supplier_ops_review(sku: str, ps_id: int, body: OpsReviewBody, request: Request,
+                            db: Session = Depends(database.get_db),
+                            current_user: models.User = Depends(require_capability("product_edit"))):
+    """Mark a supplier link reviewed, so the ops sheet may publish it.
+
+    The sheet carries what someone has agreed to, and there are two ways to
+    agree: a serving publication from the catalogue desk, or a person saying so
+    — by applying the upload workbook, or by pressing this. Without it a SKU
+    entered by hand is recorded, priced, and invisible to the people costing
+    orders from that sheet.
+
+    Marking does not by itself put a row on the sheet: the export still refuses
+    a link with no agreed cost, because nobody can cost an order from a blank
+    price.
+    """
+    product, link = _find_supplier_link(db, sku, ps_id)
+    now = datetime.utcnow().isoformat()
+    if body.reviewed:
+        link.manual_review_status = "manual_review"
+        link.manual_reviewed_at = now
+        link.manual_reviewed_by = current_user.display_name
+    else:
+        link.manual_review_status = None
+        link.manual_reviewed_at = None
+        link.manual_reviewed_by = None
+    link.updated_at = now
+    _audit_product(db, current_user, "product.ops_review", product,
+                   supplier_id=link.supplier_id,
+                   reviewed=body.reviewed, note=(body.note or None), request=request)
     product.updated_at = now
     db.commit()
     return _return_product(db, sku)

@@ -1190,6 +1190,7 @@
       "type": "object"
     },
     "UnitCode": {
+      "description": "Every unit a contract may name. Kept in step with services.uom_vocabulary,\nwhich holds the spellings and the dimension for each of these.\n\nThe additions below are units the catalogue already holds and this enum had\nno home for. catalogue_conformance refused to map \"pot\", \"roll\" and \"set\" for\nexactly that reason — mapping them to OTHER \"would assert knowledge nobody\nhas\" — so an honest home is what they were owed. Nothing resolves to OTHER on\ntheir behalf any more.",
       "enum": [
         "PIECE",
         "UNIT",
@@ -1214,6 +1215,22 @@
         "LB",
         "L",
         "ML",
+        "GALLON",
+        "MG",
+        "PACKET",
+        "TUB",
+        "JAR",
+        "POT",
+        "SYRINGE",
+        "PIPETTE",
+        "COLLAR",
+        "PAD",
+        "WIPE",
+        "CHEW",
+        "DOSE",
+        "PEN",
+        "ROLL",
+        "SET",
         "OTHER",
         "UNKNOWN"
       ],

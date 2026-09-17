@@ -376,8 +376,31 @@ def compute_gp(selling_price: float | None, cost_price: float | None) -> float |
     return engine.evaluate("gross_gp", {"price": selling_price, "cost": cost_price})
 
 
+def _priced_in_costing_unit(channel: ProductChannel, product: ProductVariant | None = None):
+    """This channel's selling price, restated in the unit the cost is in.
+
+    A channel that lists the pack while we cost the unit is comparing unlike
+    things: HKTV's $113.50 box against $8.75 a pouch reads as a 92% margin and
+    is really 7.5%. `sell_uom_count` says how many units the listed thing
+    holds; blank or 1 is every row recorded today, so this is inert until the
+    sell side is populated.
+    """
+    from services import channel_sale_terms
+
+    price = getattr(channel, "selling_price", None)
+    if price is None:
+        return None
+    owner = product if product is not None else channel
+    session = Session.object_session(owner)
+    if session is None:
+        return price
+    product_id = getattr(product, "id", None) or getattr(channel, "product_id", None)
+    return channel_sale_terms.price_in_costing_unit(
+        session, product_id, getattr(channel, "channel", None), price)
+
+
 def channel_to_dict(channel: ProductChannel, cost: float | None, gp_floor: float) -> dict:
-    gp_pct = compute_gp(channel.selling_price, cost)
+    gp_pct = compute_gp(_priced_in_costing_unit(channel), cost)
     recommendation = None
     gap_pct = None
 
@@ -438,8 +461,9 @@ def _term_margin_dict(product: ProductVariant, term, base_unit: float | None,
         "unit_cost":   t_landed,
         "channels": [
             {"channel": ch.channel,
-             "gp_pct":  compute_gp(ch.selling_price, t_landed),
-             "margin":  _channel_margin(ch.selling_price, t_landed, *_fee_delivery(ch, product))}
+             "gp_pct":  compute_gp(_priced_in_costing_unit(ch, product), t_landed),
+             "margin":  _channel_margin(_priced_in_costing_unit(ch, product), t_landed,
+                                        *_fee_delivery(ch, product))}
             for ch in _all_channels(product)
         ],
     }
@@ -464,12 +488,17 @@ def margin_range(product: ProductVariant, cat_rules: dict) -> dict:
 
     channel_ranges = []
     for ch in _all_channels(product):
-        sp = ch.selling_price
+        # Two different numbers, deliberately: `listed` is what the channel
+        # charges and is what a person should see; `sp` is that restated into
+        # the unit we cost in, and is the only one a margin may use. Reporting
+        # the restated one would show $9.46 where HKTV charges $113.50.
+        listed = ch.selling_price
+        sp = _priced_in_costing_unit(ch, product)
         fee, delivery = _fee_delivery(ch, product)   # HKTV -> fee, Shopify -> logistics, Clinic -> neither
 
         channel_ranges.append({
             "channel":       ch.channel,
-            "selling_price": sp,
+            "selling_price": listed,
             "gp_pct_mbb":    compute_gp(sp, mbb_cost) if mbb_cost else None,  # gross margin at MBB landed cost
             "basic_margin":  _channel_margin(sp, basic_cost, fee, delivery),
             "mbb_margin":    _channel_margin(sp, mbb_cost, fee, delivery) if mbb_cost else None,
@@ -505,8 +534,9 @@ def margin_range(product: ProductVariant, cat_rules: dict) -> dict:
             "basic_cost":   s_basic_landed,
             "basic_channels": [
                 {"channel": ch.channel,
-                 "gp_pct":  compute_gp(ch.selling_price, s_basic_landed),
-                 "margin":  _channel_margin(ch.selling_price, s_basic_landed, *_fee_delivery(ch, product))}
+                 "gp_pct":  compute_gp(_priced_in_costing_unit(ch, product), s_basic_landed),
+                 "margin":  _channel_margin(_priced_in_costing_unit(ch, product), s_basic_landed,
+                                            *_fee_delivery(ch, product))}
                 for ch in _all_channels(product)
             ],
             "term_margins": [d for d in (

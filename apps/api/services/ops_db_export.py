@@ -21,6 +21,7 @@ import sqlalchemy
 
 import models
 from services import offering_costs
+from services.uom_vocabulary import is_placeholder
 from services.catalogue_golden_export import (
     _identity_packaging,
     _mbb_text,
@@ -75,6 +76,11 @@ BASE_COLUMNS = (
     for column in (
         f"selling_price_{channel}",
         f"selling_price_{channel}_uom",
+        # What that listing comes to for ONE costing unit. The margin is taken
+        # from this, never from the listed price: HKTV charges $113.50 for a box
+        # of twelve pouches we cost $8.75 each, and the difference between the
+        # two columns is a 7.5% margin and a fictional 92% one.
+        f"selling_price_{channel}_per_unit",
         f"logistics_cost_per_unit_{channel}",
         f"platform_fee_percent_{channel}",
         f"{channel}_gross_margin",
@@ -185,7 +191,7 @@ def _channel_uom(raw) -> str:
     shared. Placeholder junk ("#N/A") means nothing was stated.
     """
     text = (raw or "").strip()
-    return "" if text.upper() in {"#N/A", "N/A", "NA", "-"} else text.upper()
+    return "" if is_placeholder(text) else text.upper()
 
 
 def _price_in_sellable_unit(price, channel_uom, row):
@@ -394,8 +400,20 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
             unit_price = unit_price / uom_count
         # Restated in the unit we cost in; None when the two cannot be bridged.
         unit_price = _price_in_sellable_unit(unit_price, channel_uom, row)
+        # Quantized to the same four places as cost_per_unit, and BEFORE the
+        # margins are taken. The sheet's formulas read the published column, so
+        # rounding after the fact would leave the two computing the same margin
+        # from different numbers — which is the whole failure being repaired.
+        if unit_price is not None:
+            unit_price = Decimal(str(unit_price)).quantize(Decimal("0.0001"))
 
         row[f"selling_price_{key}"] = _num(price) if price is not None else ""
+        # Published, not just used and discarded. The sheet computes its margins
+        # in live formulas, and those formulas had no way to reach this number —
+        # so they divided by nothing and printed 92.29% where this module had
+        # already worked out 7.49%. Giving it a column is what lets one
+        # restatement serve both.
+        row[f"selling_price_{key}_per_unit"] = _num(unit_price) if unit_price is not None else ""
         # The printed unit is the one the arithmetic used: placeholder junk
         # ("#N/A") states no unit, and writing it would land in the sheet as a
         # live error value that poisons every margin formula referencing it.
@@ -419,7 +437,15 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
 
 
 def _unit_divisor(sellable_uom, purchase_uom, pack_count, basis_uom):
-    """How many sellable units one priced purchase covers.
+    """How many sellable units one priced purchase covers, for DEAL rungs.
+
+    The cost of a product no longer comes through here: a supplier price states
+    what it buys and offering_costs acts on it. This survives for bulk-price
+    terms, which still state a basis as a word and have no flag of their own —
+    377 published rows carry one. Rewriting them onto the shared resolver
+    without that flag would change what a generic basis means for every one of
+    them, so the honest order is to give terms a basis first.
+
 
     Costs are stated per single unit even when the catalogue prices per pack,
     so this is the number the pack price is divided by. A price already quoted
@@ -670,6 +696,18 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
         sellable_uom = purchase_uom
 
     cost = _dec(cost_amount)
+    #: The packaging as the cost reader takes it. `purchase_uom` and
+    #: `sellable_uom` have already fallen back above, so this is the row's best
+    #: account of what one purchase holds.
+    pack_tuple = (
+        (purchase_uom or None) and purchase_uom.strip().upper(),
+        (sellable_uom or None) and sellable_uom.strip().upper(),
+        float(_dec(per_purchase)) if _dec(per_purchase) else None,
+    )
+    #: Still this module's own, and only for BULK-PRICE deal rungs. A term
+    #: states its basis as a word and has no flag of its own yet, so the
+    #: question it answers is genuinely the old one. Giving terms an explicit
+    #: basis — as supplier prices now have — is what retires this for good.
     divisor = _unit_divisor(sellable_uom, purchase_uom, per_purchase, cost_basis)
     # The cost the REST of the system uses, where there is one. This module used
     # to derive its own from the packaging labels, and two implementations of
@@ -720,8 +758,19 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
                 cost_basis = purchase_uom or priced.pack_uom or cost_basis
             else:
                 cost_basis = sellable_uom or cost_basis
+    elif cost is not None:
+        # No offering to ask — three published rows are in that state. They go
+        # through the same conversion as everything else rather than a divisor
+        # of this module's own: two answers to "what does one unit cost" is what
+        # published 0.7333 against a true 17.60 on a Can(s) product whose
+        # purchase uom read Capsule(s), and a 96.6% margin where it is 18.3%.
+        basis, _agreed = offering_costs.resolve_basis(cost_basis, pack_tuple)
+        derived = offering_costs._per_sell_unit(float(cost), basis, pack_tuple)
+        per_unit_cost = (
+            Decimal(str(derived)).quantize(Decimal("0.0001")) if derived is not None else None
+        )
     else:
-        per_unit_cost = (cost / divisor).quantize(Decimal("0.0001")) if cost is not None and divisor else None
+        per_unit_cost = None
     per_unit = _num(per_unit_cost) if per_unit_cost is not None else ""
 
     code = str(sku or "").strip().upper()

@@ -120,23 +120,21 @@ def _formula(column: str, line: int, data: dict) -> str | None:
                 f'{price},IF(N({per})>0,{price}/{per},"")))')
 
     for channel in CHANNELS:
-        sell = at(f"selling_price_{channel}")
         fee, logistics = at(f"platform_fee_percent_{channel}"), at(f"logistics_cost_per_unit_{channel}")
-        # Each channel sells in its own unit. Where it prices by the measure our
-        # pack contains — per mL of a 30 mL bottle — the price is restated in
-        # the unit we cost in before any margin is taken, in the formula itself
-        # so the arithmetic stays visible to whoever opens the sheet.
-        # IFERROR: an error value in the uom cell states no unit, so no
-        # restatement happens — the margin still computes from the raw price
-        # instead of collapsing to #N/A.
-        priced = (f'IF(IFERROR(AND(UPPER({at(f"selling_price_{channel}_uom")})=UPPER({at("content_uom")}),'
-                  f'N({at("content_amount")})>0),FALSE),{sell}*{at("content_amount")},{sell})')
+        # Each channel sells in its own unit, and the exporter has already
+        # restated the listing into the unit we cost in. It reads that column
+        # rather than redoing the work: this formula used to restate by the
+        # pack's content measure and nothing else, so a listing that bundles
+        # twelve pouches was compared whole against the cost of one and HKTV
+        # published 92.29% where the truth is 7.49%. A second implementation of
+        # a conversion is how the two answers part company; there is now one.
+        priced = at(f"selling_price_{channel}_per_unit")
 
         def gross(cost: str, priced: str = priced) -> str:
-            return f'=IF(OR({cost}="",{sell}=""),"",ROUND(({priced}-{cost})/({priced})*100,2))'
+            return f'=IF(OR({cost}="",{priced}=""),"",ROUND(({priced}-{cost})/({priced})*100,2))'
 
         def net(cost: str, priced: str = priced) -> str:
-            return (f'=IF(OR({cost}="",{sell}=""),"",ROUND((({priced})-{cost}-'
+            return (f'=IF(OR({cost}="",{priced}=""),"",ROUND((({priced})-{cost}-'
                     f'(({priced})*N({fee})/100)-N({logistics}))/({priced})*100,2))')
 
         if column == f"{channel}_gross_margin":

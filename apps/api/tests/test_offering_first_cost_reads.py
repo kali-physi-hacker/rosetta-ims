@@ -104,6 +104,11 @@ def _seed_offering_price(
             amount=amount,
             currency="HKD",
             price_basis_uom_code=basis_code,
+            # What the startup backfill would have stated for a row of this
+            # shape. These rows stand in for pipeline-written ones, which reach
+            # the reader with their basis already resolved; seeding the word
+            # alone would test a state production does not serve.
+            basis=offering_costs._basis_from_word(basis_code, packaging),
             is_current=is_current,
             created_at="2026-07-29T00:00:00+00:00",
         )
@@ -310,3 +315,21 @@ def test_a_link_with_no_offering_price_has_no_catalogue_price():
     with _session() as db:
         link = _seed_link(db, pack_cost=None, units_per_pack=12)
         assert offering_costs.catalogue_price_for_link(link) is None
+
+
+def test_a_price_in_the_purchase_unit_with_no_count_has_no_unit_cost():
+    """Royal Canin 10008555, exactly as production holds it.
+
+    $378 buys one CAN(S) — the packaging's own purchase unit — and nobody
+    recorded how many sellable units that holds. The old reader refused only on
+    a container WORD, and "CAN(S)" is not one, so 378 passed through as the cost
+    of a single can and the sheet published a -663% margin against a $49.50
+    listing. There is no honest per-unit cost here; a blank sends someone to
+    find the pack count, a confident -663% sends them to renegotiate a price
+    that was never wrong.
+    """
+    with _session() as db:
+        link = _seed_link(db, pack_cost=None, units_per_pack=None)
+        _seed_offering_price(db, link, amount=378, basis_code="CAN(S)",
+                             packaging=("CAN(S)", "UNIT", None))
+        assert get_unit_cost(link) is None

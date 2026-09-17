@@ -19,6 +19,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import models
+from services.offering_costs import resolve_basis
 from schemas.catalogue_pipeline import (
     MasteringCandidateV1,
     ExtractedEvidenceV1,
@@ -1593,12 +1594,34 @@ class ApprovedCommercialStateService(_TransactionalService):
             current.is_current = 0
             current.effective_to = current.effective_to or _iso(applied_at)
             current.superseded_at = _iso(applied_at)
+        # The packaging this price is stated against, written moments ago in the
+        # same apply. Read back rather than passed in: these are separate
+        # methods, and it is the only thing that can say whether the amount buys
+        # a pack or one unit. Deciding that at read time from the words is what
+        # published a $378 case as the cost of one can.
+        pack_row = (
+            self.db.query(models.CataloguePackagingConfiguration)
+            .filter_by(supplier_product_id=supplier_product.id, superseded_at=None)
+            .order_by(models.CataloguePackagingConfiguration.id.desc())
+            .first()
+        )
+        per_purchase = getattr(pack_row, "sellable_units_per_purchase_unit", None)
+        basis, agreed = resolve_basis(
+            cost.price_basis.code.value,
+            (
+                getattr(pack_row, "purchase_uom_code", None),
+                getattr(pack_row, "sellable_unit_uom_code", None),
+                float(per_purchase) if per_purchase is not None else None,
+            ),
+        )
         row = models.CatalogueSupplierPrice(
             supplier_product_id=supplier_product.id,
             amount=cost.amount,
             currency=cost.currency,
             price_basis_uom_code=cost.price_basis.code.value,
             price_basis_uom_label=cost.price_basis.label,
+            basis=basis,
+            basis_verified=1 if agreed else 0,
             effective_from=_iso(candidate.supplier_price_resolution.effective_from or applied_at),
             effective_to=_iso(candidate.supplier_price_resolution.effective_to) if candidate.supplier_price_resolution.effective_to else None,
             source_document_id=_source_document_id(self.db, candidate.trace.supplier_catalogue_id),

@@ -29,6 +29,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
+from services.uom_vocabulary import is_placeholder
 
 import models
 
@@ -81,7 +82,7 @@ def _uom(code: str | None, label: str | None) -> str:
     """Prefer the supplier's own word; fall back to the contract code."""
     for candidate in (label, code):
         text = (candidate or "").strip()
-        if text and text.upper() not in {"#N/A", "N/A", "NA", "-"}:
+        if text and not is_placeholder(text):
             return text
     return ""
 
@@ -278,7 +279,7 @@ def _identity_packaging(variant, link) -> str:
 
 def _clean(raw: str | None) -> str:
     text = (raw or "").strip()
-    return "" if text.upper() in {"#N/A", "N/A", "NA", "-", ""} else text
+    return "" if is_placeholder(text) else text
 
 
 def _normalized_rrps(db: Session, run: str) -> dict[str, tuple[str, str | None]]:

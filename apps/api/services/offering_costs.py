@@ -153,6 +153,96 @@ def record_supplier_cost(
     invalidate(db)
 
 
+def record_catalogue_price(
+    db: Session,
+    link: models.ProductSupplier,
+    *,
+    amount: float | None,
+    per: str | None,
+    pack_uom: str | None = None,
+) -> None:
+    """Record a cost exactly as a supplier's catalogue states it.
+
+    ``record_supplier_cost`` takes a whole-pack number and always stores a
+    per-unit one. That is right for every caller that HAS a whole-pack number,
+    and wrong for the upload workbook, which carries the figure the catalogue
+    printed and a column saying what it buys. Storing $130 a box as $2.17 is
+    not a rounding difference — it is the loss of the only number a person can
+    check against the supplier's own document, and the next export would show
+    them 2.1666 where their PDF says 130.
+
+    So the basis is stored with the amount: a price stated per pack is written
+    against the offering's purchase-unit code, which is what makes the reading
+    side divide it by the pack size instead of treating it as a unit price.
+    The packaging row must already exist for that code to match — callers
+    write packaging first.
+
+    ``amount=None`` retires the current price without replacing it: the sheet's
+    dash, which is how someone says a cost they recorded should not stand.
+    Does not commit.
+    """
+
+    if link.supplier_id is None or link.product_id is None:
+        return
+    now = _utcnow_iso()
+    offering = _ensure_offering(db, link, now)
+    db.query(models.CatalogueSupplierPrice).filter_by(
+        supplier_product_id=offering.id, is_current=1
+    ).update({"is_current": 0, "superseded_at": now}, synchronize_session=False)
+    if amount is None:
+        invalidate(db)
+        return
+
+    variant = db.get(models.ProductVariant, link.product_id)
+    packaging = (
+        db.query(models.CataloguePackagingConfiguration)
+        .filter_by(supplier_product_id=offering.id, superseded_at=None)
+        .order_by(models.CataloguePackagingConfiguration.id.desc())
+        .first()
+    )
+    buys_a_pack = str(per or "unit").strip().lower() == "pack"
+    if buys_a_pack:
+        # Prefer the code already on the packaging row — the two only have to
+        # agree for the division to happen, and deriving it twice is how they
+        # stop agreeing. But 233 of 325 current packaging rows carry a NULL
+        # purchase_uom_code, so reading it without a fallback put a NULL into a
+        # NOT NULL column and turned a whole upload into a 500. Fall through to
+        # what the sheet said, then to PACK, and never to nothing.
+        stated = (pack_uom or "").strip()
+        basis_code = (
+            (packaging.purchase_uom_code if packaging is not None else None)
+            or (stated or "PACK").upper().replace(" ", "_")
+        )
+        basis_label = (
+            (packaging.purchase_uom_label if packaging is not None else None)
+            or stated
+            or None
+        )
+    else:
+        basis_code = (packaging.sellable_unit_uom_code if packaging is not None else None) or "UNIT"
+        basis_label = variant.uom if variant else None
+
+    db.add(
+        models.CatalogueSupplierPrice(
+            supplier_product_id=offering.id,
+            amount=float(amount),
+            currency="HKD",
+            price_basis_uom_code=basis_code,
+            price_basis_uom_label=basis_label,
+            # The sheet asked the question outright — "pack or unit?" — so the
+            # answer is recorded rather than left to be re-derived from the word
+            # beside it. And it is verified: a person chose the file, read the
+            # preview and pressed Apply, which is more than any inference has.
+            basis=PER_PURCHASE_UNIT if buys_a_pack else PER_SELLABLE_UNIT,
+            basis_verified=1,
+            effective_from=now,
+            is_current=1,
+            created_at=now,
+        )
+    )
+    invalidate(db)
+
+
 def _ensure_offering(db: Session, link: models.ProductSupplier, now: str) -> models.SupplierOffering:
     offering = (
         db.query(models.SupplierOffering)
@@ -160,12 +250,41 @@ def _ensure_offering(db: Session, link: models.ProductSupplier, now: str) -> mod
         .first()
     )
     if offering is None:
+        # A supplier's own code is unique per supplier in this table, and not
+        # unique in life: one of their codes routinely spans several of OUR
+        # SKUs, usually because we split a product they sell as one. Claiming a
+        # code another offering already holds raises an IntegrityError that
+        # surfaces as a failed upload, so the later offering goes without one.
+        # Nothing is lost: an offering is found by (supplier, variant), and the
+        # code still lives on the supplier link either way.
+        supplier_sku = link.supplier_sku
+        if supplier_sku and db.query(models.SupplierOffering.id).filter_by(
+            supplier_id=link.supplier_id, supplier_sku=supplier_sku
+        ).first():
+            supplier_sku = None
+        # Same treatment for the back-reference to the legacy link. Six
+        # offerings already name a link that has since been repointed at a
+        # different product, so the id they hold is taken while the offering
+        # itself is not the one we want. It is a convenience pointer, not the
+        # identity — an offering is found by (supplier, variant) — so leaving
+        # it unset costs nothing and claiming it fails the whole upload.
+        legacy_link_id = link.id
+        if db.query(models.SupplierOffering.id).filter_by(
+            legacy_product_supplier_id=legacy_link_id
+        ).first():
+            legacy_link_id = None
         offering = models.SupplierOffering(
-            supplier_product_key=f"supplier:{link.supplier_id}:offer:link:{link.id}",
-            legacy_product_supplier_id=link.id,
+            # The key must be unique too, and a link id alone is not: the same
+            # link can already own a key from when it pointed elsewhere.
+            supplier_product_key=(
+                f"supplier:{link.supplier_id}:offer:variant:{link.product_id}"
+                if legacy_link_id is None
+                else f"supplier:{link.supplier_id}:offer:link:{link.id}"
+            ),
+            legacy_product_supplier_id=legacy_link_id,
             supplier_id=link.supplier_id,
             product_variant_id=link.product_id,
-            supplier_sku=link.supplier_sku,
+            supplier_sku=supplier_sku,
             barcode=link.barcode,
             status="active",
             created_at=now,
@@ -232,6 +351,14 @@ def set_offering_packaging(
             created_at=now,
         )
     )
+    # The session runs autoflush=False, so without this the row above is
+    # invisible to the very next query — and the next query is
+    # `record_catalogue_price` reading the packaging to stamp a price with its
+    # purchase-unit code. It read the SUPERSEDED row instead and wrote a basis
+    # matching nothing: a $130 bottle of 60 stamped BOX against packaging that
+    # now said BOTTLE(S), which makes the per-unit cost unresolvable and every
+    # margin on that product blank.
+    db.flush()
     invalidate(db)
 
 
@@ -318,7 +445,7 @@ def _offering_entry(
         scanned = _scanned_files(db, {p.ingestion_run_uuid for p in price_rows if p.ingestion_run_uuid})
         history = [
             {
-                "unit_cost": _per_sell_unit(float(price.amount), price.price_basis_uom_code, pack_tuple),
+                "unit_cost": _per_sell_unit(float(price.amount), price.basis, pack_tuple),
                 "amount": float(price.amount),
                 "basis": price.price_basis_uom_label or price.price_basis_uom_code,
                 "since": price.effective_from or price.created_at,
@@ -390,7 +517,9 @@ def _term_effective_unit_cost(
     """
     if term.benefit_type == "discounted_unit_price" and term.discounted_price_amount is not None:
         return _per_sell_unit(
-            float(term.discounted_price_amount), term.discounted_price_basis_uom_code, pack
+            float(term.discounted_price_amount),
+            _basis_from_word(term.discounted_price_basis_uom_code, pack),
+            pack,
         )
     if base_unit_cost is None:
         return None
@@ -501,6 +630,7 @@ def _current_price_rows(session: Session):
             models.SupplierOffering.id,
             models.CatalogueSupplierPrice.amount,
             models.CatalogueSupplierPrice.price_basis_uom_code,
+            models.CatalogueSupplierPrice.basis,
         )
         .join(
             models.CatalogueSupplierPrice,
@@ -521,8 +651,8 @@ def _session_map(session: Session) -> dict[tuple[int, int], float]:
 
     packaging = _packaging_map(session)
     out: dict[tuple[int, int], float] = {}
-    for supplier_id, variant_id, offering_id, amount, basis_code in _current_price_rows(session):
-        out[(supplier_id, variant_id)] = _per_sell_unit(float(amount), basis_code, packaging.get(offering_id))
+    for supplier_id, variant_id, offering_id, amount, _word, basis in _current_price_rows(session):
+        out[(supplier_id, variant_id)] = _per_sell_unit(float(amount), basis, packaging.get(offering_id))
 
     session.info[_SESSION_CACHE_KEY] = out
     return out
@@ -536,22 +666,21 @@ def _catalogue_price_map(session: Session) -> dict[tuple[int, int], CataloguePri
 
     packaging = _packaging_map(session)
     out: dict[tuple[int, int], CataloguePrice] = {}
-    for supplier_id, variant_id, offering_id, amount, basis_code in _current_price_rows(session):
-        purchase, sellable, per_purchase = packaging.get(offering_id) or (None, None, None)
-        code = (basis_code or "").strip().upper()
-        if code and code == (sellable or "").strip().upper():
-            # Sold by the box and priced by the box: the box IS the unit, and
-            # nothing here is owed a division.
-            per = "unit"
-        elif code and (code == (purchase or "").strip().upper() or code in _CONTAINER_BASIS_CODES):
-            per = "pack"
-        else:
-            per = "unit"
+    for supplier_id, variant_id, offering_id, amount, word, basis in _current_price_rows(session):
+        purchase, _sellable, per_purchase = packaging.get(offering_id) or (None, None, None)
+        # The same flag the arithmetic reads. This block used to reach its own
+        # verdict from the words, which meant two answers to one question and,
+        # on the rows where they differed, a sheet that printed one number and
+        # divided the other.
+        per = "pack" if basis == PER_PURCHASE_UNIT else "unit"
         out[(supplier_id, variant_id)] = CataloguePrice(
             amount=float(amount),
             per=per,
             units_per_pack=per_purchase,
-            pack_uom=purchase or (code if code in _CONTAINER_BASIS_CODES else None),
+            # The unit a person checking this against the supplier's document
+            # would see. The packaging's word where there is one; failing that,
+            # and only for a pack price, the word the price itself used.
+            pack_uom=purchase or ((word or "").strip().upper() or None if per == "pack" else None),
         )
 
     session.info[_CATALOGUE_PRICE_CACHE_KEY] = out
@@ -578,41 +707,86 @@ def _scanned_files(db: Session, run_uuids: set[str]) -> dict[str, dict]:
     return {run: {"filename": filename, "received_at": received} for run, filename, received in rows}
 
 
+PER_SELLABLE_UNIT = "PER_SELLABLE_UNIT"
+PER_PURCHASE_UNIT = "PER_PURCHASE_UNIT"
+
 #: Basis words that name a MULTI-UNIT container by definition. Anything else —
 #: BOTTLE, TUBE, BAG, CAN, POUCH, PIECE — can legitimately BE the thing sold,
 #: so a price on one of those stands as a per-sell-unit cost.
-_CONTAINER_BASIS_CODES = frozenset({"CASE", "CARTON", "BOX", "PACK"})
+#:
+#: The last word-matching left in this module, and it reaches only bulk-deal
+#: terms, which do not state a basis of their own yet. Supplier prices stopped
+#: consulting it the day they started saying what they buy.
+_CONTAINER_WORDS = frozenset({"CASE", "CARTON", "BOX", "PACK"})
 
 
 def _per_sell_unit(
     amount: float,
-    basis_code: str | None,
+    basis: str | None,
     pack: tuple[str | None, str | None, float | None] | None,
 ) -> float | None:
     """The cost of ONE sellable unit, or None when the source cannot say.
 
-    Returning the amount unconverted used to be the fallback for everything,
-    and it is the wrong answer for exactly one shape: a price based on a
-    container we have no count for. Royal Canin prices wet food by the case, so
-    a $123.60 case stood in as the cost of one pouch and every margin built on
-    it read about -1000%. A cost nobody can derive has to be absent — a blank
-    margin sends someone to look, a confident -1023% sends them to renegotiate
-    a price that was never wrong.
+    Two lines of arithmetic, and that is the point. This used to decide whether
+    to divide by comparing the basis WORD against the packaging's words, and the
+    words do not cooperate: "CASE" against a purchase unit of "CAN(S)" is one
+    purchase spelled two ways, so the comparison refused and published nothing;
+    "UNIT", on 94% of rows, is the value meaning "no conversion needed", so it
+    never really asked. The price states what it buys now and this acts on it.
+
+    None stays a real answer for exactly one shape: a price that buys a pack
+    nobody counted. Royal Canin prices wet food by the case, so a $123.60 case
+    stood in as the cost of one pouch and every margin built on it read about
+    -1000%. A cost nobody can derive has to be absent — a blank margin sends
+    someone to look, a confident -1023% sends them to renegotiate a price that
+    was never wrong.
     """
-    purchase, sellable, per_purchase = pack or (None, None, None)
-    code = (basis_code or "").strip().upper()
-    if (
-        per_purchase is not None
-        and per_purchase > 1
-        and code
-        and purchase
-        and code == purchase
-        and code != (sellable or "")
-    ):
-        return amount / per_purchase
-    if code and code == (sellable or "").strip().upper():
-        # The basis IS the sellable unit — sold by the box, priced by the box.
-        return amount
-    if code in _CONTAINER_BASIS_CODES:
+    per_purchase = (pack or (None, None, None))[2]
+    if basis == PER_PURCHASE_UNIT:
+        if per_purchase and per_purchase > 0:
+            return amount / per_purchase
         return None
     return amount
+
+
+def resolve_basis(
+    basis_code: str | None,
+    pack: tuple[str | None, str | None, float | None] | None,
+) -> tuple[str, bool]:
+    """What a basis WORD implies, and whether the words actually agreed.
+
+    The old inference, in one named place rather than spread through the module,
+    and the only place it survives. Three rules, and the second value is the
+    difference between a fact and a reading:
+
+      the word IS the sellable unit  -> per unit, and the words agree
+      the word IS the purchase unit  -> per pack, and the words agree
+      the word names a container     -> per pack, but nothing confirms the count
+      anything else                  -> per unit, unconfirmed
+
+    The third rule is the one that matters. "CASE" over a packaging row that
+    says "CAN(S)" satisfies no comparison — that is what used to make the reader
+    refuse and publish nothing — but the two disagree about WHICH container, not
+    about whether it is one. Saying so is what keeps a case price from being
+    read as the price of one can.
+
+    Every source that states its own basis should stop calling this. Supplier
+    prices have; bulk-deal terms and the ingestion pipeline have not yet.
+    """
+    purchase, sellable, _per = pack or (None, None, None)
+    code = (basis_code or "").strip().upper()
+    if code and code == (sellable or "").strip().upper():
+        return PER_SELLABLE_UNIT, True
+    if code and code == (purchase or "").strip().upper():
+        return PER_PURCHASE_UNIT, True
+    if code in _CONTAINER_WORDS:
+        return PER_PURCHASE_UNIT, False
+    return PER_SELLABLE_UNIT, False
+
+
+def _basis_from_word(
+    basis_code: str | None,
+    pack: tuple[str | None, str | None, float | None] | None,
+) -> str:
+    """Just the basis, for callers that have nothing to do with the confidence."""
+    return resolve_basis(basis_code, pack)[0]

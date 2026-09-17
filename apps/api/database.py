@@ -207,6 +207,52 @@ def seed_category_rules(engine):
                 conn.commit()
 
 
+def seed_uoms(engine):
+    """Idempotent seed of the unit vocabulary and every spelling that resolves.
+
+    The list itself lives in services.uom_vocabulary, which is what the code
+    reads; this puts the same list in a table so a unit can be added without a
+    deploy. Portable across SQLite and Postgres, and — like the category seed —
+    it only ever establishes that a row exists. A spelling someone has corrected
+    by hand is never overwritten on the next boot.
+
+    Existing rows are read once rather than probed one at a time: there are
+    nearly four hundred spellings, and a query each would be four hundred round
+    trips on every start.
+    """
+    from services import uom_vocabulary as vocab
+
+    now = datetime.now(timezone.utc).isoformat()
+    with engine.connect() as conn:
+        have_codes = {r[0] for r in conn.execute(text("SELECT code FROM uoms"))}
+        for order, unit in enumerate(vocab.UNITS):
+            if unit.code in have_codes:
+                continue
+            conn.execute(
+                text(
+                    "INSERT INTO uoms "
+                    "(code, label_one, label_many, dimension, base_factor, sort_order, created_at) "
+                    "VALUES (:c, :one, :many, :d, :f, :o, :t)"
+                ),
+                {"c": unit.code, "one": unit.one, "many": unit.many,
+                 "d": unit.dimension,
+                 "f": float(unit.base_factor) if unit.base_factor is not None else None,
+                 "o": order, "t": now},
+            )
+        have_aliases = {r[0] for r in conn.execute(text("SELECT normalized FROM uom_aliases"))}
+        for normalized, code in sorted(vocab.ALIASES.items()):
+            if normalized in have_aliases:
+                continue
+            conn.execute(
+                text(
+                    "INSERT INTO uom_aliases (uom_code, alias, normalized, source, created_at) "
+                    "VALUES (:c, :a, :n, 'seed', :t)"
+                ),
+                {"c": code, "a": normalized, "n": normalized, "t": now},
+            )
+        conn.commit()
+
+
 def seed_default_users(engine):
     """Create default users on first run if the table is empty."""
     from passlib.context import CryptContext

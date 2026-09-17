@@ -16,6 +16,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.orm import Session
 
 import models
+from services.offering_costs import resolve_basis
 from services import offering_identity
 from schemas.catalogue_pipeline import (
     MasteringCandidateV1,
@@ -479,6 +480,29 @@ def _persist_packaging_configuration(db: Session, contract: ServingItemV1, suppl
     db.flush()
 
 
+def _stated_basis(contract: ServingItemV1) -> tuple[str, int]:
+    """What one amount of this contract's cost buys, and whether the words agreed."""
+    basis, agreed = resolve_basis(
+        contract.current_approved_cost.price_basis.code.value, _contract_pack(contract)
+    )
+    return basis, 1 if agreed else 0
+
+
+def _contract_pack(contract: ServingItemV1) -> tuple[str | None, str | None, float | None]:
+    """The packaging this contract states, in the shape the cost reader takes."""
+    packaging = contract.purchasing_packaging
+
+    def code(uom):
+        return uom.code.value if uom is not None and uom.code is not None else None
+
+    count = packaging.sellable_units_per_purchase_unit if packaging is not None else None
+    return (
+        code(packaging.purchase_uom) if packaging is not None else None,
+        code(packaging.sellable_unit_uom) if packaging is not None else None,
+        float(count) if count is not None else None,
+    )
+
+
 def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_product: models.SupplierOffering) -> None:
     now = _aware_iso(contract.published_at)
     for current in db.query(models.CatalogueSupplierPrice).filter_by(supplier_product_id=supplier_product.id, is_current=1).all():
@@ -491,6 +515,13 @@ def _persist_supplier_price(db: Session, contract: ServingItemV1, supplier_produ
         currency=contract.current_approved_cost.currency,
         price_basis_uom_code=contract.current_approved_cost.price_basis.code.value,
         price_basis_uom_label=contract.current_approved_cost.price_basis.label,
+        # Resolved here, at the write, rather than left for the startup backfill
+        # to notice. A contract states its basis as a word and its packaging as
+        # words, and this is the one place both are in hand; without it every
+        # newly ingested price would sit at the per-unit default until a reboot,
+        # and a case price that reads as a unit price in the meantime is the
+        # direction that costs money.
+        **dict(zip(("basis", "basis_verified"), _stated_basis(contract))),
         effective_from=now,
         ingestion_run_uuid=None,
         mastering_candidate_uuid=str(contract.lineage.mastering_candidate_id),

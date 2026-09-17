@@ -105,6 +105,7 @@ DEAL_COLUMNS: list[tuple[str, str | None, int, str]] = [
     ("kind",         "kinds",     17, "Which of the four shapes."),
     ("min_qty",      None,        11, "How many to unlock it. flat_unit_cost · tier · buy_x_get_y."),
     ("min_spend",    None,        12, "spend_discount"),
+    ("min_order_qty", None,       14, "Order this many before it applies at all. Separate from min_qty: 10+3 on orders of 50 is min_qty 10, min_order_qty 50."),
     ("free_qty",     None,        11, "buy_x_get_y"),
     ("discount_pct", None,        13, "spend_discount — a number, 12.5 not 0.125."),
     ("cost",         None,        11, "flat_unit_cost · tier. The deal price, exactly as printed."),
@@ -123,7 +124,7 @@ REQUIRED = {
 #: numeric validation would refuse it.
 NUMERIC_COLUMNS = {
     "weight", "buy.per_pack", "buy.cost", "buy.rrp", "buy.min_qty", "buy.multiple",
-    "min_qty", "min_spend", "free_qty", "discount_pct", "cost",
+    "min_qty", "min_spend", "min_order_qty", "free_qty", "discount_pct", "cost",
 } | {f"sell.{c}.{f}" for c in CHANNELS for f in ("per_unit", "multiple", "price")}
 
 #: What each deal kind cannot do without. The sheet already flagged fields a
@@ -143,6 +144,11 @@ NUMERIC_COLUMNS = {
 #:
 #: cost_per is not listed: it has its own rule, which fires only once a cost is
 #: present, and two rules for one mistake is one colour too many.
+#:
+#: min_order_qty is in neither map, deliberately. An order-size gate is
+#: orthogonal to the shape of the benefit — a discount, a price and a free
+#: quantity can each be conditional on how much is being ordered — so no kind
+#: requires it and no kind refuses it.
 KIND_NEEDS = {
     # what unlocks it          what it gives
     "flat_unit_cost":      ("cost",),
@@ -528,16 +534,32 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
         cell.font = Font(bold=bold, size=size, color=INK)
         cell.alignment = Alignment(wrap_text=True, vertical="top")
 
-    line("Rosetta SKU upload", "Add products, or edit the ones already here, then send each sheet as its own CSV.", bold=True, size=13)
+    line("Rosetta SKU upload", "Add products, or edit the ones already here, then upload each sheet.", bold=True, size=13)
     line()
     line("Two sheets", "products — one row per product, per supplier.    deals — one row per deal.")
     line("", "A product bought from three suppliers is three rows sharing a sku.")
     line()
-    line("Exporting", "File → Download → Comma-separated values. It takes the SHEET YOU ARE ON, so do it twice.")
+    line("Uploading", "Inventory → Upload workbook. Choose which sheet you are applying, then")
+    line("", "Preview changes before Apply — the preview is the real work, done and")
+    line("", "rolled back, so what it lists is what will happen.")
+    line("", "Two uploads, not one: send this file once for products and again for")
+    line("", "deals. Products and deals are separate decisions and move separately.")
+    line()
+    line("Exporting", "This file uploads as it is. If you would rather send CSVs, File → Download")
+    line("", "→ Comma-separated values takes the SHEET YOU ARE ON, so do it twice.")
     line()
     line("blank sku", "Mints a new SKU. name, category and unit must be filled.")
     line("blank cell", "Leaves whatever is already recorded alone.")
     line("a dash  -", "Clears the value.")
+    line()
+    line("Deals", "The deals sheet never REMOVES anything. A deal already recorded is")
+    line("", "skipped, so sending the same file twice changes nothing.")
+    line("", "A deal is identified by its thresholds — kind, min_qty, min_spend and")
+    line("", "min_order_qty. What it GIVES at those thresholds is written over, so a")
+    line("", "changed price, percentage or free quantity revises the deal instead of")
+    line("", "sitting beside it. Two rows sharing every threshold: the lower wins.")
+    line("", "A rung you leave OUT stays exactly as it is. Retiring one is done in")
+    line("", "Rosetta, on the SKU's supplier card, where you can see what goes.")
     line()
     line("Solid header", "Required — a row without it cannot be created.  Pale header: optional.")
     line("Red cell", "Fix before uploading. Either something required is missing — a deal KIND")
@@ -557,6 +579,12 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
     line("deal cost", "Same rule on the deals sheet, and the same cost_per beside it — asked")
     line("", "for only by the two kinds that name a price, flat_unit_cost and tier.")
     line()
+    line("min_order_qty", "A gate on the SIZE OF THE ORDER, not the buy-ratio. \"10+3 on orders")
+    line("", "of 50 or more\" is min_qty 10, free_qty 3, min_order_qty 50 — putting")
+    line("", "the 50 in min_qty instead says \"buy 50 get 3\", a different and")
+    line("", "cheaper-sounding deal. Any kind may carry one; leave it blank when the")
+    line("", "deal is always available.")
+    line()
     line("ref. columns", "Read-only, and grey in the header. There to tell you what a row is")
     line("", "about; nothing in them is written back.")
     line()
@@ -575,6 +603,10 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
     line("Rebuilding", "scripts/build_upload_workbook.py --template out.xlsx   (or --export to pull current data)")
     line("", "Re-run it after a supplier or category is added, or the dropdowns will be out of date.")
     line()
+    line("New products", "The SKU is issued here, from the category — Medicine and Supplement take")
+    line("", "a 5, Food a 1, Pet Hygiene a 4 — so leave sku blank and let it be minted.")
+    line("", "Never type a code that has not been issued.")
+    line()
     line("Columns", "")
     for sheet_name, columns in columns_by_sheet.items():
         line(f"  {sheet_name}", "")
@@ -584,6 +616,13 @@ def _readme(wb, columns_by_sheet: dict[str, list], supplier_count: int) -> None:
 
 
 # ── data for --export ───────────────────────────────────────────────────────
+
+def _percent(fraction):
+    """A stored fraction as the number the sheet asks for: 0.125 -> 12.5."""
+    if fraction is None:
+        return None
+    return round(float(fraction) * 100, 6)
+
 
 def _export_rows(limit: int | None, skus: list[str] | None = None):
     """Current products, one row per supplier link, in the sheet's own shape.
@@ -665,6 +704,11 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
                 price = offering_costs.catalogue_price_for_link(link)
                 base.update({
                     "buy.supplier": link.supplier.name if link.supplier else None,
+                    # The link's own label where it has one, the product's
+                    # otherwise. NULL on the link means "agrees with the
+                    # product", so the sheet shows what this supplier calls it
+                    # either way — and a round trip writes back what it showed.
+                    "buy.brand": link.brand or product.brand,
                     "buy.sku": link.supplier_sku,
                     "buy.barcode": link.barcode,
                     # The packaging configuration wins where it exists: 29
@@ -678,6 +722,12 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
                     "buy.cost_per": price.per if price else None,
                     "buy.rrp": link.rrp,
                     "buy.min_qty": link.minimum_order_qty,
+                    # The quantity was missing while its unit was exported, so
+                    # 94 links showed a step measured in Can(s) with no number
+                    # of them — and an import could not restore a figure the
+                    # sheet had never shown. A column the exporter hides is a
+                    # column the importer cannot round-trip.
+                    "buy.multiple": link.order_increment_qty,
                     # Without these two the sheet says "41" where the database
                     # says "41 Can(s)", and a round trip reads it back as 41
                     # units — the buy.cost_per hazard, one column over.
@@ -718,8 +768,15 @@ def _export_rows(limit: int | None, skus: list[str] | None = None):
             "kind": term.kind,
             "min_qty": term.min_qty,
             "min_spend": term.min_spend,
+            "min_order_qty": term.min_order_qty,
             "free_qty": term.free_qty,
-            "discount_pct": term.discount_pct,
+            # Stored as a fraction — `config.tsx` calls it "a fraction (0-1)",
+            # pricing multiplies by (1 - it), and every screen renders it as
+            # pct*100. The sheet asks for 12.5, so the sheet is handed 12.5.
+            # Emitting the raw 0.125 here made the export and the importer wrong
+            # in opposite directions and therefore consistent with each other,
+            # which is how a round trip can pass while both halves are wrong.
+            "discount_pct": _percent(term.discount_pct),
             # The amount as stated, and what it buys. cost_basis is NULL on every
             # row written before the column existed, and NULL has always meant
             # per unit — so that is what the sheet reports for them, which is

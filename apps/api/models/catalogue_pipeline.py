@@ -526,6 +526,13 @@ class CatalogueSupplierPrice(Base):
         CheckConstraint("price_basis_uom_code IS NOT NULL", name="ck_supplier_price_basis_required"),
         CheckConstraint("effective_to IS NULL OR effective_from IS NULL OR effective_to >= effective_from", name="ck_supplier_price_effective_range"),
         CheckConstraint("is_current IN (0, 1)", name="ck_supplier_price_is_current"),
+        # Declared so a fresh database gets it. It will NOT reach an existing
+        # one: run_migrations adds columns and indexes, never constraints, so
+        # production keeps an unconstrained column until an explicit migration
+        # adds it. Saying so here is better than a suite that enforces a rule
+        # production does not.
+        CheckConstraint("basis IN ('PER_SELLABLE_UNIT','PER_PURCHASE_UNIT')", name="ck_supplier_price_basis_kind"),
+        CheckConstraint("basis_verified IN (0, 1)", name="ck_supplier_price_basis_verified"),
         Index("ix_supplier_prices_supplier_product", "supplier_product_id", "effective_from", "effective_to"),
         Index("ix_supplier_prices_current", "supplier_product_id", "is_current"),
         Index("ix_supplier_prices_lineage", "ingestion_run_uuid", "mastering_candidate_uuid"),
@@ -538,6 +545,22 @@ class CatalogueSupplierPrice(Base):
     currency = Column(String(3), nullable=False, default="HKD")
     price_basis_uom_code = Column(String, nullable=False)
     price_basis_uom_label = Column(String, nullable=True)
+    #: What one `amount` BUYS — the pack, or one sellable unit. Stated, because
+    #: inferring it from the basis word is what this replaces: the word is
+    #: "CASE" while the packaging's purchase unit is "CAN(S)" often enough that
+    #: the comparison refused, and "UNIT" on 94% of rows means the question was
+    #: never really answered. A flag cannot be spelled two ways.
+    #:
+    #: NOT NULL with a server default on purpose. run_migrations refuses a
+    #: required column with no server default on a populated table, and rightly;
+    #: with one it adds the column and fills it in the same statement, which is
+    #: exactly the intended answer — every existing row keeps the arithmetic it
+    #: has today and says so explicitly.
+    basis = Column(String, nullable=False, server_default="PER_SELLABLE_UNIT")
+    #: Whether a person has confirmed that basis, or it is only what the old
+    #: word-matching would have concluded. 0 is not a defect; it is the honest
+    #: state of 2,778 rows nobody has checked, and it is the work queue.
+    basis_verified = Column(Integer, nullable=False, server_default="0")
     effective_from = Column(String, nullable=True)
     effective_to = Column(String, nullable=True)
     source_document_id = Column(Integer, ForeignKey("catalogue_source_documents.id"), nullable=True)

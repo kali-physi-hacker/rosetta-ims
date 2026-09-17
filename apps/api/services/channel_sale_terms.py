@@ -45,6 +45,28 @@ class SaleTerms:
 DEFAULT = SaleTerms()
 
 
+def price_in_costing_unit(session: Session, product_id: int | None, channel: str | None,
+                          selling_price):
+    """A channel's price restated in the unit the cost is expressed in.
+
+    Cost is one number per (supplier, product), in the product's own ``unit``.
+    A channel may price in something else: HKTV lists a box of twelve pouches
+    at $113.50 while the cost is $8.75 a pouch. Subtracting one from the other
+    is meaningless until they are in the same unit, and ``sell_uom_count`` is
+    what says how many units the listed thing holds — so the price divides by
+    it and the margin reads 7.5% instead of a flattering, fictional 92%.
+
+    A blank or 1 means the channel sells the unit itself, which is every row
+    recorded today, so this changes nothing until someone says otherwise.
+    """
+    if selling_price is None:
+        return None
+    count = terms_for(session, product_id, channel).sell_uom_count
+    if not count or count == 1:
+        return selling_price
+    return float(selling_price) / float(count)
+
+
 def terms_for(session: Session, product_id: int | None, channel: str | None) -> SaleTerms:
     """This channel's terms for this product, or the plain defaults.
 

@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import re
 
-# ── Placeholder scrub (shared vocabulary with routers/products.py::_clean_str) ──
-_PLACEHOLDERS = {"", "#n/a", "n/a", "na", "nan", "none", "null", "-", "—"}
+from services import uom_vocabulary
+
+# ── Placeholder scrub (the one shared set, in services/uom_vocabulary.py) ──
+_PLACEHOLDERS = uom_vocabulary.PLACEHOLDERS
 
 
 def clean_str(v):

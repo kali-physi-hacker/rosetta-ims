@@ -24,6 +24,16 @@ class ExtractionMethod(str, Enum):
 
 
 class UnitCode(str, Enum):
+    """Every unit a contract may name. Kept in step with services.uom_vocabulary,
+    which holds the spellings and the dimension for each of these.
+
+    The additions below are units the catalogue already holds and this enum had
+    no home for. catalogue_conformance refused to map "pot", "roll" and "set" for
+    exactly that reason — mapping them to OTHER "would assert knowledge nobody
+    has" — so an honest home is what they were owed. Nothing resolves to OTHER on
+    their behalf any more.
+    """
+
     PIECE = "PIECE"
     UNIT = "UNIT"
     PACK = "PACK"
@@ -47,6 +57,22 @@ class UnitCode(str, Enum):
     LB = "LB"
     L = "L"
     ML = "ML"
+    GALLON = "GALLON"
+    MG = "MG"
+    PACKET = "PACKET"
+    TUB = "TUB"
+    JAR = "JAR"
+    POT = "POT"
+    SYRINGE = "SYRINGE"
+    PIPETTE = "PIPETTE"
+    COLLAR = "COLLAR"
+    PAD = "PAD"
+    WIPE = "WIPE"
+    CHEW = "CHEW"
+    DOSE = "DOSE"
+    PEN = "PEN"
+    ROLL = "ROLL"
+    SET = "SET"
     OTHER = "OTHER"
     UNKNOWN = "UNKNOWN"
 

@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse, ORJSONResponse
 
 import models
 import database
+from services import price_basis_backfill
 from routers import include_routers
 
 # Preserve the known pipeline terminology rename before create_all can create
@@ -25,6 +26,14 @@ models.Base.metadata.create_all(bind=database.engine)
 database.run_migrations(database.engine)
 database.seed_default_users(database.engine)
 database.seed_category_rules(database.engine)
+database.seed_uoms(database.engine)
+
+# Say what each supplier price already means, once. Writes exactly the answer
+# the old word-matching reached, so nothing it touches changes value; rows it
+# cannot state without guessing keep their number and stay unverified.
+_basis = price_basis_backfill.backfill_price_basis(database.engine)
+if _basis["status"] not in ("already_backfilled", "no_table"):
+    print(f"[startup] price basis: {_basis}")
 
 # Materialize the explicit inventory and channel-selling identities for rows
 # created before the product-domain split. Additive and idempotent; while the

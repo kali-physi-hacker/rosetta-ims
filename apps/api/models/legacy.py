@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Numeric, ForeignKey, Index, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, Integer, String, Float, Numeric, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -69,6 +69,59 @@ class CategoryRule(Base):
     storage_rule      = Column(String, nullable=False, default='any')  # 'clinic_only' | 'any'
     channel_restriction = Column(String, nullable=True)         # NULL | 'clinic'
     sku_digit         = Column(String, nullable=True)           # 1 leading digit for generated SKUs
+
+
+class Uom(Base):
+    """A unit of measure the catalogue is allowed to name.
+
+    The spellings and dimensions live in services.uom_vocabulary, which every
+    read goes through; this table is the same list made editable, so a unit can
+    be added without a deploy. Seeded per row and never overwritten, exactly as
+    category_rules is — the seed establishes that a unit exists, and whoever
+    tunes its spelling afterwards owns it.
+
+    No column says whether one of these contains another. A BOTTLE holds sixty
+    tablets in one product and is the thing sold in the next, so a container
+    flag would be a guess dressed as a property. What a price buys is recorded
+    on the price.
+    """
+    __tablename__ = "uoms"
+
+    code        = Column(String, primary_key=True)          # matches UnitCode
+    label_one   = Column(String, nullable=False)            # "Can"
+    label_many  = Column(String, nullable=False)            # "Can(s)"
+    dimension   = Column(String, nullable=False)            # COUNT | MASS | VOLUME
+    #: Base units in one of these — grams for MASS, millilitres for VOLUME.
+    #: NULL for anything counted: two cans do not convert into a bag.
+    base_factor = Column(Float, nullable=True)
+    sort_order  = Column(Integer, nullable=True)
+    created_at  = Column(String)
+
+    aliases = relationship("UomAlias", back_populates="uom", cascade="all, delete-orphan")
+    __table_args__ = (
+        CheckConstraint("dimension IN ('COUNT','MASS','VOLUME')", name="ck_uom_dimension"),
+    )
+
+
+class UomAlias(Base):
+    """Every spelling that resolves to a unit — "Can(s)", "can", "CAN(S)", "cans".
+
+    The catalogue held eighty-six spellings of thirty-nine units, so this is
+    where the other eighty-five go. `normalized` is the folded form actually
+    matched on; `alias` keeps what someone wrote, which is what makes a
+    surprising resolution explainable later.
+    """
+    __tablename__ = "uom_aliases"
+
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    uom_code   = Column(String, ForeignKey("uoms.code"), nullable=False)
+    alias      = Column(String, nullable=False)
+    normalized = Column(String, nullable=False, index=True)
+    source     = Column(String)   # 'seed' | 'manual'
+    created_at = Column(String)
+
+    uom = relationship("Uom", back_populates="aliases")
+    __table_args__ = (UniqueConstraint("normalized", name="uq_uom_alias_normalized"),)
 
 
 class Supplier(Base):
@@ -305,6 +358,14 @@ class ProductSupplier(Base):
     product_id      = Column(Integer, ForeignKey("products.id"), nullable=False)
     supplier_id     = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
     supplier_sku    = Column(String)
+    #: This supplier's own brand label, and ONLY when it differs from the
+    #: product's. Two suppliers carrying one product under different brand
+    #: names is ordinary — Kangaroo sell 10008140 as "Purina Pro Plan - Vet"
+    #: and K.P.N. Trading sell the same product as "Purina Pro Plan" — and with
+    #: a single brand per product the second upload silently discarded the
+    #: first. NULL is the common case and means "the product's brand", so a
+    #: rename of the default still reaches every supplier that never disagreed.
+    brand           = Column(String, nullable=True)
     rrp             = Column(Float)   # this supplier's recommended retail price (HKD) — per supplier, not per variant
     barcode         = Column(String)
     # (catalogue_cost / daysmart_cost / cost_reconciled_at retired — invoice reconciliation is a
@@ -315,6 +376,19 @@ class ProductSupplier(Base):
     pack_source     = Column(String, nullable=False, default='sheet')   # sheet|manual|catalogue
     uom_verified_at = Column(String, nullable=True)   # IMS-stamped date UOM/pack size was manually confirmed
     uom_verified_by = Column(String, nullable=True)   # name/initials of person who confirmed the pack size
+    #: Reviewed by hand rather than through the catalogue desk.
+    #:
+    #: The ops sheet publishes what someone has agreed to, and until now the
+    #: only way to agree to something was a serving publication — so a SKU
+    #: entered through the upload workbook was recorded, priced, and then
+    #: silently absent from the sheet people cost orders against. This is the
+    #: second way a row can have been agreed: a person chose a file, read the
+    #: preview and applied it. 'manual_workbook' is the only value written
+    #: today; the column is a status rather than a flag because withdrawing one
+    #: is a different state from never having reviewed it.
+    manual_review_status = Column(String, nullable=True)   # 'manual_workbook' | NULL
+    manual_reviewed_at   = Column(String, nullable=True)
+    manual_reviewed_by   = Column(String, nullable=True)
     # Max-Bulk-Buy is now the relational `mbb_terms` table (0..N per supplier) — see MbbTerm.
     # The old flat scalars (bulk_buy_cost / bulk_buy_min_qty / mbb_terms / mbb_tiers / mbb_type /
     # mbb_min_amount / mbb_free_qty / mbb_discount_pct) are dropped in run_migrations.
@@ -381,9 +455,18 @@ class MbbTerm(Base):
     id                  = Column(Integer, primary_key=True, autoincrement=True)
     product_supplier_id = Column(Integer, ForeignKey("product_suppliers.id"), nullable=False, index=True)
     kind                = Column(String, nullable=False)   # buy_x_get_y | spend_discount | tier | flat_unit_cost
-    # unlock thresholds (either may apply to any kind)
+    # unlock thresholds (any may apply to any kind)
     min_qty             = Column(Integer, nullable=True)   # units to unlock — the "buy X"
     min_spend           = Column(Float, nullable=True)     # HK$ to unlock
+    #: A gate on the SIZE OF THE ORDER, separate from the buy-ratio above.
+    #:
+    #: Kangaroo sell NexGard at 10+2, and at 10+3 if the order is 50 units or
+    #: more. Both rungs are "buy 10", so min_qty cannot hold the 50 — putting it
+    #: there says "buy 50 get 3", which is a different and cheaper-sounding
+    #: deal. Recorded without a home, the condition lived in `note`, where it
+    #: reads to a person and to nothing else: 179 terms describe a threshold in
+    #: their note today, and one of them had the 50 flattened into min_qty=160.
+    min_order_qty       = Column(Integer, nullable=True)   # order this many before it applies
     # benefits — only the one matching `kind` is set
     free_qty            = Column(Integer, nullable=True)   # buy_x_get_y: get Y free
     discount_pct        = Column(Float, nullable=True)     # spend_discount: fraction off, e.g. 0.10

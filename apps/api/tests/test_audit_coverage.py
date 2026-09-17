@@ -27,6 +27,11 @@ ALLOWLIST = {
     "products.py::download_upload_workbook",
     # Persist via a delegated, already-audited function — auditing here would double-log:
     "products.py::update_product_slash",  # -> update_product (audited)
+    # -> workbook_import.import_products / import_deals, which record one
+    # product.create / product.update / product.mbb_term_add per applied row.
+    # Auditing at the endpoint too would log a batch beside every row in it.
+    "products.py::import_workbook_products",
+    "products.py::import_workbook_deals",
 }
 
 _AUDIT_ATTRS = {"record", "log_event"}          # audit_log.record(...) / audit.log_event(...)

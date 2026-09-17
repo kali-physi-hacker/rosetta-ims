@@ -116,6 +116,7 @@ def create_variant_from_draft(
     *,
     provenance: dict | None = None,
     attempts: int = 4,
+    nested: bool = True,
 ) -> models.ProductVariant:
     """Mint a canonical Product Variant from a reviewer's create draft.
 
@@ -128,6 +129,16 @@ def create_variant_from_draft(
     concurrent applies can still agree on a number. The unique index on
     ``sku_code`` is the real guard, so we retry a few times on the integrity
     error rather than trusting the read.
+
+    The rollback promise above is NOT currently true on SQLite, which is what
+    we run. pysqlite opens a transaction before an INSERT but not before a
+    SELECT, so a savepoint reached through reads alone — the shape this
+    function is called in — runs in autocommit and its write survives the
+    rollback. ``tests/test_transaction_boundaries.py`` pins the shape as xfail.
+
+    ``nested=False`` is the way out for a caller that MUST be able to discard
+    its work: it gives up the collision retry, which a preview has no
+    concurrent writer to need, in exchange for a rollback that works.
     """
     from sqlalchemy.exc import IntegrityError
 
@@ -168,6 +179,11 @@ def create_variant_from_draft(
         # this one attempt. The flush itself is required — a cluster of creates
         # in one apply must each see the previous one's SKU, or they all
         # allocate the same number off the same stale max(suffix).
+        if not nested:
+            db.add(variant)
+            db.flush()
+            ensure_inventory_item(db, variant)
+            return variant
         try:
             with db.begin_nested():
                 db.add(variant)
