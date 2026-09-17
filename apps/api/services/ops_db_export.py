@@ -20,6 +20,7 @@ from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal, InvalidOperation
 import sqlalchemy
 
 import models
+from services import offering_costs
 from services.catalogue_golden_export import (
     _identity_packaging,
     _mbb_text,
@@ -135,10 +136,17 @@ def _load_channels(db):
             "price": _dec(row[2]), "fee": _dec(row[3]), "units_per_listing": _dec(row[4])
         }
     for row in db.execute(
-        sqlalchemy.text("SELECT product_variant_id, channel, sell_uom, selling_price FROM selling_items")
+        sqlalchemy.text(
+            "SELECT product_variant_id, channel, sell_uom, selling_price, sell_uom_count"
+            "  FROM selling_items"
+        )
     ):
         entry = prices.setdefault((row[0], row[1]), {"price": _dec(row[3]), "fee": None, "units_per_listing": None})
         entry["uom"] = row[2]
+        # How many costing units the listed thing holds. A channel listing a
+        # box of twelve against a cost per pouch is comparing unlike things
+        # until this divides it.
+        entry["uom_count"] = _dec(row[4])
         if entry.get("price") is None:
             entry["price"] = _dec(row[3])
     return prices
@@ -378,6 +386,12 @@ def _fill_channels(row, product_id, channel_data, delivery_inputs=None):
         # A listing that states how many units it holds is divided down to one;
         # with nothing stated, one listing is one unit.
         unit_price = price / per_listing if price is not None and per_listing and per_listing > 0 else price
+        # The same division for the channel's own sell unit: HKTV lists a box
+        # of twelve pouches at $113.50 while we cost $8.75 a pouch, and without
+        # this the sheet publishes a 92% margin nobody can achieve.
+        uom_count = entry.get("uom_count")
+        if unit_price is not None and uom_count and uom_count > 1:
+            unit_price = unit_price / uom_count
         # Restated in the unit we cost in; None when the two cannot be bridged.
         unit_price = _price_in_sellable_unit(unit_price, channel_uom, row)
 
@@ -657,7 +671,57 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
 
     cost = _dec(cost_amount)
     divisor = _unit_divisor(sellable_uom, purchase_uom, per_purchase, cost_basis)
-    per_unit_cost = (cost / divisor).quantize(Decimal("0.0001")) if cost is not None and divisor else None
+    # The cost the REST of the system uses, where there is one. This module used
+    # to derive its own from the packaging labels, and two implementations of
+    # "what does one unit cost" drift: on five of nine products in a real sheet
+    # they disagreed, and not subtly — a Can(s) product whose purchase uom read
+    # Capsule(s) divided twice and published 0.7333 against a true 17.60, so the
+    # margin printed 96.6% where it is 18.3%. `offering_costs` is the one place
+    # that answers this for every screen; the sheet now asks it too, and only
+    # falls back to deriving when there is no offering to ask.
+    resolved = offering_costs.unit_cost_for_link(link) if link is not None else None
+    if resolved is not None:
+        per_unit_cost = Decimal(str(resolved)).quantize(Decimal("0.0001"))
+        # And where the amount beside it cannot produce it, that amount comes
+        # from the same price. A publication snapshots the cost the desk
+        # approved; the offering is what the supplier charges now, and where the
+        # two disagreed the row printed one number and divided the other:
+        # Amoxyclav 50010310 published a $720 box of 240 beside $3.50 a tablet —
+        # 840/240, the offering's purchase — and nine more rows printed a case
+        # price that does not divide into the unit cost next to it. Someone
+        # checking a row against the supplier's document needs amount over pack
+        # count to BE that unit cost. Dividing the snapshot instead is not open
+        # to us: its basis word ("CASE") is not the packaging's purchase unit
+        # ("CAN(S)"), so no count is owed to it and the division would be a
+        # guess this module refuses elsewhere.
+        #
+        # Only where it does not already. A publication stating the case price
+        # its own count divides cleanly is the most useful thing a row can
+        # print — it is what the supplier invoiced — so the 420 rows that
+        # already check out keep the number their reader checks against.
+        pack_count = _dec(per_purchase)
+        checks_out = cost is not None and (
+            cost == per_unit_cost
+            or bool(pack_count) and (cost / pack_count).quantize(Decimal("0.0001")) == per_unit_cost
+        )
+        priced = offering_costs.catalogue_price_for_link(link) if not checks_out else None
+        if priced is not None and priced.amount is not None:
+            cost = _dec(priced.amount)
+            # The basis word travels with the amount or the pair lies a second
+            # way: $29.50 is one can, and printing it under the snapshot's
+            # "CASE" swaps one unreadable row for another. `per` is decided by
+            # the same rule that divides the price, so the two always agree —
+            # a pack price prints the unit you buy, a unit price the unit you
+            # sell, and amount over pack count lands on the cost beside it.
+            # Same words the rest of the row uses: the packaging's own labels,
+            # not the raw codes behind them, or 300-odd rows that were never
+            # wrong would churn from "Box(es)" to "BOX(ES)".
+            if priced.per == "pack":
+                cost_basis = purchase_uom or priced.pack_uom or cost_basis
+            else:
+                cost_basis = sellable_uom or cost_basis
+    else:
+        per_unit_cost = (cost / divisor).quantize(Decimal("0.0001")) if cost is not None and divisor else None
     per_unit = _num(per_unit_cost) if per_unit_cost is not None else ""
 
     code = str(sku or "").strip().upper()
@@ -743,8 +807,53 @@ def _row(*, supplier_name, sku, barcode, name_supplier, name_rosetta, variant, p
     return _fill_channels(row, resolved_product_id, channel_data or {}, delivery_inputs)
 
 
+def _manual_offering_facts(db, link):
+    """The packaging and current price the workbook wrote for this link.
+
+    Same two tables the publication path reads, because the importer writes
+    there: packaging to `CataloguePackagingConfiguration`, price to
+    `CatalogueSupplierPrice`. A manually reviewed row is therefore built from
+    the same facts as a published one, not from a parallel set that could
+    disagree with it.
+    """
+    offering = (
+        db.query(models.SupplierOffering)
+        .filter_by(supplier_id=link.supplier_id, product_variant_id=link.product_id)
+        .first()
+    )
+    if offering is None:
+        return None, None
+    pack = (
+        db.query(models.CataloguePackagingConfiguration)
+        .filter_by(supplier_product_id=offering.id, superseded_at=None)
+        .order_by(models.CataloguePackagingConfiguration.id.desc())
+        .first()
+    )
+    price = (
+        db.query(models.CatalogueSupplierPrice)
+        .filter_by(supplier_product_id=offering.id, is_current=1)
+        .first()
+    )
+    return pack, price
+
+
 def build_published_rows(db) -> list[dict]:
-    publications = db.query(models.CatalogueServingPublication).all()
+    """Every row the ops sheet may publish, from BOTH ways a row gets agreed.
+
+    A serving publication is one: a candidate worked to APPROVED on the review
+    desk. A manual review is the other: someone applied the upload workbook,
+    having chosen the file and read the preview. Publishing only the first left
+    every hand-entered SKU recorded, priced and invisible to the people costing
+    orders from this sheet.
+
+    A publication wins where both exist for one (supplier, product) — the desk
+    is the stronger claim, and two rows for one pair would double it.
+    """
+    publications = (
+        db.query(models.CatalogueServingPublication)
+        .filter(models.CatalogueServingPublication.is_current == 1)
+        .all()
+    )
     offering_ids = {p.supplier_product_id for p in publications if p.supplier_product_id}
     packaging = {}
     for pack in (
@@ -781,9 +890,15 @@ def build_published_rows(db) -> list[dict]:
                 link=links.get((pub.supplier_id, pub.product_id)),
                 cost_amount=pub.current_approved_cost_amount,
                 cost_currency=pub.current_approved_cost_currency,
+                # The publication's OWN basis. This read it off the packaging
+                # row, which has no such column, so it was always None — and a
+                # cost already stated per unit then had the pack count divided
+                # into it a second time. Hill's 10006311 published $0.7333
+                # against a true $17.60, and most of the Royal Canin (Vet)
+                # range published margins near -650%.
                 cost_basis=_uom(
-                    getattr(packaging.get(pub.supplier_product_id), "price_basis_uom_code", None),
-                    getattr(packaging.get(pub.supplier_product_id), "price_basis_uom_label", None),
+                    pub.current_approved_cost_basis_uom_code,
+                    pub.current_approved_cost_basis_uom_label,
                 ),
                 rrp_amount=None,
                 rrp_currency=None,
@@ -791,6 +906,55 @@ def build_published_rows(db) -> list[dict]:
                 product_id=pub.product_id,
                 channel_data=channel_data,
                 supplier_id=pub.supplier_id,
+                supplier_sku_index=supplier_sku_index,
+                legacy_terms=legacy_terms,
+                delivery_inputs=delivery_inputs,
+                products_by_id=variants,
+            )
+        )
+
+    # ── the second way a row gets agreed ────────────────────────────────────
+    published_pairs = {(pub.supplier_id, pub.product_id) for pub in publications}
+    manual = (
+        db.query(models.ProductSupplier)
+        .filter(models.ProductSupplier.manual_review_status.isnot(None),
+                models.ProductSupplier.supplier_id.isnot(None),
+                models.ProductSupplier.product_id.isnot(None))
+        .all()
+    )
+    for link in manual:
+        if (link.supplier_id, link.product_id) in published_pairs:
+            continue                      # the review desk already speaks for it
+        variant = variants.get(link.product_id)
+        if variant is None:
+            continue
+        pack, price = _manual_offering_facts(db, link)
+        if price is None:
+            # No agreed cost means no row anyone can cost an order from. The
+            # same refusal the rest of this module makes: absent beats wrong.
+            continue
+        supplier = suppliers.get(link.supplier_id)
+        rows.append(
+            _row(
+                supplier_name=(supplier.name if supplier else ""),
+                sku=link.supplier_sku,
+                barcode=link.barcode,
+                # No supplier-printed name exists for a hand-entered row, so
+                # ours stands in rather than a blank in a column people read.
+                name_supplier=variant.name,
+                name_rosetta=variant.name,
+                variant=variant,
+                pack=pack,
+                link=link,
+                cost_amount=price.amount,
+                cost_currency=price.currency,
+                cost_basis=_uom(price.price_basis_uom_code, price.price_basis_uom_label),
+                rrp_amount=link.rrp,
+                rrp_currency=("HKD" if link.rrp is not None else None),
+                terms=[],                 # hand-entered deals arrive via legacy_terms
+                product_id=link.product_id,
+                channel_data=channel_data,
+                supplier_id=link.supplier_id,
                 supplier_sku_index=supplier_sku_index,
                 legacy_terms=legacy_terms,
                 delivery_inputs=delivery_inputs,
