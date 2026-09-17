@@ -205,3 +205,34 @@ def test_running_it_twice_does_nothing_the_second_time():
 def test_a_database_without_the_column_is_left_alone():
     engine = create_engine("sqlite:///:memory:")
     assert backfill_price_basis(engine)["status"] == "no_table"
+
+
+def test_two_placeholders_agreeing_is_not_confirmation():
+    """`UNIT` is what set_offering_packaging writes when no sellable unit is
+    known, and it is the price basis on 94% of rows. A basis of UNIT matching a
+    sellable unit of UNIT says only that neither was filled in.
+
+    Treating it as confirmation marked 485 production rows verified — among
+    them VSRx 60004260, a $485 "tablet" that is really a bottle of a hundred,
+    publishing a -16,067% margin under a flag that said someone had checked it.
+    """
+    engine = _engine()
+    with Session(engine) as db:
+        _price(db, sku="H1", supplier_id=41, amount=485, basis="UNIT",
+               packaging=("BOTTLE", "UNIT", 100))
+    backfill_price_basis(engine)
+    basis, verified = _rows(engine)["UNIT"]
+    assert basis == PER_SELLABLE_UNIT   # the number it publishes is unchanged
+    assert verified == 0                # but nobody has vouched for it
+
+
+def test_a_real_unit_still_counts_as_confirmation():
+    """The guard must not swallow the genuine ones: BOTTLE naming BOTTLE is two
+    facts agreeing, and 19 production rows are in that state.
+    """
+    engine = _engine()
+    with Session(engine) as db:
+        _price(db, sku="H2", supplier_id=42, amount=60, basis="BOTTLE",
+               packaging=("BOX", "BOTTLE", 12))
+    backfill_price_basis(engine)
+    assert _rows(engine)["BOTTLE"] == (PER_SELLABLE_UNIT, 1)

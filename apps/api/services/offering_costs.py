@@ -22,6 +22,7 @@ from typing import NamedTuple
 from sqlalchemy.orm import Session
 
 import models
+from services import uom_vocabulary
 
 _SESSION_CACHE_KEY = "offering_unit_costs"
 _BULK_TERMS_CACHE_KEY = "offering_bulk_terms"
@@ -719,6 +720,14 @@ PER_PURCHASE_UNIT = "PER_PURCHASE_UNIT"
 #: consulting it the day they started saying what they buy.
 _CONTAINER_WORDS = frozenset({"CASE", "CARTON", "BOX", "PACK"})
 
+#: Words that name "one of whatever this is" and so identify nothing. UNIT is
+#: what set_offering_packaging writes when no sellable unit is known, and it is
+#: the price basis on 94% of rows — so a price basis of UNIT matching a sellable
+#: unit of UNIT is two placeholders agreeing, not two facts. Treating that as
+#: confirmation marked 485 rows verified, among them a $485 "tablet" that is
+#: really a bottle of a hundred.
+_GENERIC_CODES = frozenset({"UNIT", "PIECE"})
+
 
 def _per_sell_unit(
     amount: float,
@@ -775,10 +784,13 @@ def resolve_basis(
     """
     purchase, sellable, _per = pack or (None, None, None)
     code = (basis_code or "").strip().upper()
+    # A match on a word that names nothing is not a match. Both sides being
+    # "UNIT" says only that neither was filled in.
+    names_something = uom_vocabulary.normalise(code) not in _GENERIC_CODES
     if code and code == (sellable or "").strip().upper():
-        return PER_SELLABLE_UNIT, True
+        return PER_SELLABLE_UNIT, names_something
     if code and code == (purchase or "").strip().upper():
-        return PER_PURCHASE_UNIT, True
+        return PER_PURCHASE_UNIT, names_something
     if code in _CONTAINER_WORDS:
         return PER_PURCHASE_UNIT, False
     return PER_SELLABLE_UNIT, False
